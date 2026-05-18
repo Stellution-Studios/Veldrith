@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using Veldrid.D3D11;
+using Veldrid.D3D12;
 using Veldrid.MTL;
-using Veldrid.OpenGL;
 using Veldrid.Vk;
 
 namespace Veldrid
@@ -179,33 +178,17 @@ namespace Veldrid
         {
             switch (backend)
             {
-                case GraphicsBackend.Direct3D11:
-#if !EXCLUDE_D3D11_BACKEND
-                    return RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-#else
-                    return false;
-#endif
+                case GraphicsBackend.Direct3D12:
+                    return D3D12GraphicsDevice.IsSupported();
                 case GraphicsBackend.Vulkan:
 #if !EXCLUDE_VULKAN_BACKEND
                     return VkGraphicsDevice.IsSupported();
 #else
                     return false;
 #endif
-                case GraphicsBackend.OpenGL:
-#if !EXCLUDE_OPENGL_BACKEND
-                    return true;
-#else
-                    return false;
-#endif
                 case GraphicsBackend.Metal:
 #if !EXCLUDE_METAL_BACKEND
                     return MtlGraphicsDevice.IsSupported();
-#else
-                    return false;
-#endif
-                case GraphicsBackend.OpenGLES:
-#if !EXCLUDE_OPENGL_BACKEND
-                    return !RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
 #else
                     return false;
 #endif
@@ -977,31 +960,29 @@ namespace Veldrid
             TextureUsage usage,
             out PixelFormatProperties properties);
 
-#if !EXCLUDE_D3D11_BACKEND
         /// <summary>
-        ///     Tries to get a <see cref="BackendInfoD3D11" /> for this instance. This method will only succeed if this is a D3D11
+        ///     Tries to get a <see cref="BackendInfoD3D12" /> for this instance. This method will only succeed if this is a D3D12
         ///     GraphicsDevice.
         /// </summary>
-        /// <param name="info">If successful, this will contain the <see cref="BackendInfoD3D11" /> for this instance.</param>
-        /// <returns>True if this is a D3D11 GraphicsDevice and the operation was successful. False otherwise.</returns>
-        public virtual bool GetD3D11Info(out BackendInfoD3D11 info)
+        /// <param name="info">If successful, this will contain the <see cref="BackendInfoD3D12" /> for this instance.</param>
+        /// <returns>True if this is a D3D12 GraphicsDevice and the operation was successful. False otherwise.</returns>
+        public virtual bool GetD3D12Info(out BackendInfoD3D12 info)
         {
             info = null;
             return false;
         }
 
         /// <summary>
-        ///     Gets a <see cref="BackendInfoD3D11" /> for this instance. This method will only succeed if this is a D3D11
+        ///     Gets a <see cref="BackendInfoD3D12" /> for this instance. This method will only succeed if this is a D3D12
         ///     GraphicsDevice. Otherwise, this method will throw an exception.
         /// </summary>
-        /// <returns>The <see cref="BackendInfoD3D11" /> for this instance.</returns>
-        public BackendInfoD3D11 GetD3D11Info()
+        /// <returns>The <see cref="BackendInfoD3D12" /> for this instance.</returns>
+        public BackendInfoD3D12 GetD3D12Info()
         {
-            if (!GetD3D11Info(out var info)) throw new VeldridException($"{nameof(GetD3D11Info)} can only be used on a D3D11 GraphicsDevice.");
+            if (!GetD3D12Info(out var info)) throw new VeldridException($"{nameof(GetD3D12Info)} can only be used on a D3D12 GraphicsDevice.");
 
             return info;
         }
-#endif
 
 #if !EXCLUDE_VULKAN_BACKEND
         /// <summary>
@@ -1030,39 +1011,12 @@ namespace Veldrid
         }
 #endif
 
-#if !EXCLUDE_OPENGL_BACKEND
-        /// <summary>
-        ///     Tries to get a <see cref="BackendInfoOpenGL" /> for this instance. This method will only succeed if this is an
-        ///     OpenGL
-        ///     GraphicsDevice.
-        /// </summary>
-        /// <param name="info">If successful, this will contain the <see cref="BackendInfoOpenGL" /> for this instance.</param>
-        /// <returns>True if this is an OpenGL GraphicsDevice and the operation was successful. False otherwise.</returns>
-        public virtual bool GetOpenGLInfo(out BackendInfoOpenGL info)
-        {
-            info = null;
-            return false;
-        }
-
-        /// <summary>
-        ///     Gets a <see cref="BackendInfoOpenGL" /> for this instance. This method will only succeed if this is an OpenGL
-        ///     GraphicsDevice. Otherwise, this method will throw an exception.
-        /// </summary>
-        /// <returns>The <see cref="BackendInfoOpenGL" /> for this instance.</returns>
-        public BackendInfoOpenGL GetOpenGLInfo()
-        {
-            if (!GetOpenGLInfo(out var info)) throw new VeldridException($"{nameof(GetOpenGLInfo)} can only be used on an OpenGL GraphicsDevice.");
-
-            return info;
-        }
-#endif
-
 #if !EXCLUDE_METAL_BACKEND
         /// <summary>
         ///     Tries to get a <see cref="BackendInfoMetal" /> for this instance.
         ///     This method will only succeed if this is a Metal GraphicsDevice.
         /// </summary>
-        /// <param name="info">If successful, this will contain the <see cref="BackendInfoOpenGL" /> for this instance.</param>
+        /// <param name="info">If successful, this will contain the <see cref="BackendInfoMetal" /> for this instance.</param>
         /// <returns>True if this is an Metal GraphicsDevice and the operation was successful. False otherwise.</returns>
         public virtual bool GetMetalInfo(out BackendInfoMetal info)
         {
@@ -1071,7 +1025,7 @@ namespace Veldrid
         }
 
         /// <summary>
-        ///     Gets a <see cref="BackendInfoMetal" /> for this instance. This method will only succeed if this is an OpenGL
+        ///     Gets a <see cref="BackendInfoMetal" /> for this instance. This method will only succeed if this is a Metal
         ///     GraphicsDevice. Otherwise, this method will throw an exception.
         /// </summary>
         /// <returns>The <see cref="BackendInfoMetal" /> for this instance.</returns>
@@ -1107,60 +1061,36 @@ namespace Veldrid
         }
 #endif
 
-#if !EXCLUDE_D3D11_BACKEND
         /// <summary>
-        ///     Creates a new <see cref="GraphicsDevice" /> using Direct3D 11.
+        ///     Creates a new <see cref="GraphicsDevice" /> using Direct3D 12.
         /// </summary>
         /// <param name="options">Describes several common properties of the GraphicsDevice.</param>
-        /// <returns>A new <see cref="GraphicsDevice" /> using the Direct3D 11 API.</returns>
-        public static GraphicsDevice CreateD3D11(GraphicsDeviceOptions options)
+        /// <returns>A new <see cref="GraphicsDevice" /> using the Direct3D 12 API.</returns>
+        public static GraphicsDevice CreateD3D12(GraphicsDeviceOptions options)
         {
-            return new D3D11GraphicsDevice(options, new D3D11DeviceOptions(), null);
+            return new D3D12GraphicsDevice(options, null);
         }
 
         /// <summary>
-        ///     Creates a new <see cref="GraphicsDevice" /> using Direct3D 11, with a main Swapchain.
+        ///     Creates a new <see cref="GraphicsDevice" /> using Direct3D 12, with a main Swapchain.
         /// </summary>
         /// <param name="options">Describes several common properties of the GraphicsDevice.</param>
         /// <param name="swapchainDescription">A description of the main Swapchain to create.</param>
-        /// <returns>A new <see cref="GraphicsDevice" /> using the Direct3D 11 API.</returns>
-        public static GraphicsDevice CreateD3D11(GraphicsDeviceOptions options, SwapchainDescription swapchainDescription)
+        /// <returns>A new <see cref="GraphicsDevice" /> using the Direct3D 12 API.</returns>
+        public static GraphicsDevice CreateD3D12(GraphicsDeviceOptions options, SwapchainDescription swapchainDescription)
         {
-            return new D3D11GraphicsDevice(options, new D3D11DeviceOptions(), swapchainDescription);
+            return new D3D12GraphicsDevice(options, swapchainDescription);
         }
 
         /// <summary>
-        ///     Creates a new <see cref="GraphicsDevice" /> using Direct3D 11.
-        /// </summary>
-        /// <param name="options">Describes several common properties of the GraphicsDevice.</param>
-        /// <param name="d3d11Options">The Direct3D11-specific options used to create the device.</param>
-        /// <returns>A new <see cref="GraphicsDevice" /> using the Direct3D 11 API.</returns>
-        public static GraphicsDevice CreateD3D11(GraphicsDeviceOptions options, D3D11DeviceOptions d3d11Options)
-        {
-            return new D3D11GraphicsDevice(options, d3d11Options, null);
-        }
-
-        /// <summary>
-        ///     Creates a new <see cref="GraphicsDevice" /> using Direct3D 11, with a main Swapchain.
-        /// </summary>
-        /// <param name="options">Describes several common properties of the GraphicsDevice.</param>
-        /// <param name="d3d11Options">The Direct3D11-specific options used to create the device.</param>
-        /// <param name="swapchainDescription">A description of the main Swapchain to create.</param>
-        /// <returns>A new <see cref="GraphicsDevice" /> using the Direct3D 11 API.</returns>
-        public static GraphicsDevice CreateD3D11(GraphicsDeviceOptions options, D3D11DeviceOptions d3d11Options, SwapchainDescription swapchainDescription)
-        {
-            return new D3D11GraphicsDevice(options, d3d11Options, swapchainDescription);
-        }
-
-        /// <summary>
-        ///     Creates a new <see cref="GraphicsDevice" /> using Direct3D 11, with a main Swapchain.
+        ///     Creates a new <see cref="GraphicsDevice" /> using Direct3D 12, with a main Swapchain.
         /// </summary>
         /// <param name="options">Describes several common properties of the GraphicsDevice.</param>
         /// <param name="hwnd">The Win32 window handle to render into.</param>
         /// <param name="width">The initial width of the window.</param>
         /// <param name="height">The initial height of the window.</param>
-        /// <returns>A new <see cref="GraphicsDevice" /> using the Direct3D 11 API.</returns>
-        public static GraphicsDevice CreateD3D11(GraphicsDeviceOptions options, IntPtr hwnd, uint width, uint height)
+        /// <returns>A new <see cref="GraphicsDevice" /> using the Direct3D 12 API.</returns>
+        public static GraphicsDevice CreateD3D12(GraphicsDeviceOptions options, IntPtr hwnd, uint width, uint height)
         {
             var swapchainDescription = new SwapchainDescription(
                 SwapchainSource.CreateWin32(hwnd, IntPtr.Zero),
@@ -1169,41 +1099,8 @@ namespace Veldrid
                 options.SyncToVerticalBlank,
                 options.SwapchainSrgbFormat);
 
-            return new D3D11GraphicsDevice(options, new D3D11DeviceOptions(), swapchainDescription);
+            return new D3D12GraphicsDevice(options, swapchainDescription);
         }
-
-        /// <summary>
-        ///     Creates a new <see cref="GraphicsDevice" /> using Direct3D 11, with a main Swapchain.
-        /// </summary>
-        /// <param name="options">Describes several common properties of the GraphicsDevice.</param>
-        /// <param name="swapChainPanel">
-        ///     A COM object which must implement the <see cref="Vortice.DXGI.ISwapChainPanelNative" />
-        ///     or <see cref="Vortice.DXGI.ISwapChainBackgroundPanelNative" /> interface. Generally, this should be a
-        ///     SwapChainPanel
-        ///     or SwapChainBackgroundPanel contained in your application window.
-        /// </param>
-        /// <param name="renderWidth">The renderable width of the swapchain panel.</param>
-        /// <param name="renderHeight">The renderable height of the swapchain panel.</param>
-        /// <param name="logicalDpi">The logical DPI of the swapchain panel.</param>
-        /// <returns></returns>
-        public static GraphicsDevice CreateD3D11(
-            GraphicsDeviceOptions options,
-            object swapChainPanel,
-            double renderWidth,
-            double renderHeight,
-            float logicalDpi)
-        {
-            var swapchainDescription = new SwapchainDescription(
-                SwapchainSource.CreateUwp(swapChainPanel, logicalDpi),
-                (uint)renderWidth,
-                (uint)renderHeight,
-                options.SwapchainDepthFormat,
-                options.SyncToVerticalBlank,
-                options.SwapchainSrgbFormat);
-
-            return new D3D11GraphicsDevice(options, new D3D11DeviceOptions(), swapchainDescription);
-        }
-#endif
 
 #if !EXCLUDE_VULKAN_BACKEND
         /// <summary>
@@ -1271,46 +1168,6 @@ namespace Veldrid
                 options.SwapchainSrgbFormat);
 
             return new VkGraphicsDevice(options, scDesc);
-        }
-#endif
-
-#if !EXCLUDE_OPENGL_BACKEND
-        /// <summary>
-        ///     Creates a new <see cref="GraphicsDevice" /> using OpenGL or OpenGL ES, with a main Swapchain.
-        /// </summary>
-        /// <param name="options">Describes several common properties of the GraphicsDevice.</param>
-        /// <param name="platformInfo">
-        ///     An <see cref="OpenGL.OpenGLPlatformInfo" /> object encapsulating necessary OpenGL context
-        ///     information.
-        /// </param>
-        /// <param name="width">The initial width of the window.</param>
-        /// <param name="height">The initial height of the window.</param>
-        /// <returns>A new <see cref="GraphicsDevice" /> using the OpenGL or OpenGL ES API.</returns>
-        public static GraphicsDevice CreateOpenGL(
-            GraphicsDeviceOptions options,
-            OpenGLPlatformInfo platformInfo,
-            uint width,
-            uint height)
-        {
-            return new OpenGLGraphicsDevice(options, platformInfo, width, height);
-        }
-
-        /// <summary>
-        ///     Creates a new <see cref="GraphicsDevice" /> using OpenGL ES, with a main Swapchain.
-        ///     This overload can only be used on iOS or Android to create a GraphicsDevice for an Android Surface or an iOS
-        ///     UIView.
-        /// </summary>
-        /// <param name="options">Describes several common properties of the GraphicsDevice.</param>
-        /// <param name="swapchainDescription">
-        ///     A description of the main Swapchain to create.
-        ///     The SwapchainSource must have been created from an Android Surface or an iOS UIView.
-        /// </param>
-        /// <returns>A new <see cref="GraphicsDevice" /> using the OpenGL or OpenGL ES API.</returns>
-        public static GraphicsDevice CreateOpenGLES(
-            GraphicsDeviceOptions options,
-            SwapchainDescription swapchainDescription)
-        {
-            return new OpenGLGraphicsDevice(options, swapchainDescription);
         }
 #endif
 

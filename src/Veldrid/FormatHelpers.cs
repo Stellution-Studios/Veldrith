@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 namespace Veldrid
 {
@@ -352,7 +351,36 @@ namespace Veldrid
 
         private static bool isSrgbCounterpart(PixelFormat viewFormat, PixelFormat realFormat)
         {
-            throw new NotImplementedException();
+            if (viewFormat == realFormat)
+            {
+                return true;
+            }
+
+            switch (realFormat)
+            {
+                case PixelFormat.Bc1RgbUNorm:
+                    return viewFormat == PixelFormat.Bc1RgbUNormSRgb;
+                case PixelFormat.Bc1RgbUNormSRgb:
+                    return viewFormat == PixelFormat.Bc1RgbUNorm;
+                case PixelFormat.Bc1RgbaUNorm:
+                    return viewFormat == PixelFormat.Bc1RgbaUNormSRgb;
+                case PixelFormat.Bc1RgbaUNormSRgb:
+                    return viewFormat == PixelFormat.Bc1RgbaUNorm;
+                case PixelFormat.Bc2UNorm:
+                    return viewFormat == PixelFormat.Bc2UNormSRgb;
+                case PixelFormat.Bc2UNormSRgb:
+                    return viewFormat == PixelFormat.Bc2UNorm;
+                case PixelFormat.Bc3UNorm:
+                    return viewFormat == PixelFormat.Bc3UNormSRgb;
+                case PixelFormat.Bc3UNormSRgb:
+                    return viewFormat == PixelFormat.Bc3UNorm;
+                case PixelFormat.Bc7UNorm:
+                    return viewFormat == PixelFormat.Bc7UNormSRgb;
+                case PixelFormat.Bc7UNormSRgb:
+                    return viewFormat == PixelFormat.Bc7UNorm;
+                default:
+                    return false;
+            }
         }
     }
 }

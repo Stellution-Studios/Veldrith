@@ -5,14 +5,11 @@ VisualStudioVersion = 15.0.27130.2027
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Veldrid", "Veldrid\Veldrid.csproj", "{60D56E4A-FA7A-4664-BEF0-0A29F41518BF}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Veldrid.OpenGLBindings", "Veldrid.OpenGLBindings\Veldrid.OpenGLBindings.csproj", "{6E93B2E1-BF0B-4268-94BA-E951ECC4DD7F}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Veldrid.MetalBindings", "Veldrid.MetalBindings\Veldrid.MetalBindings.csproj", "{6647F17C-02E9-4EF2-B882-40E22A187744}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Veldrid.D3D12.Tests", "Veldrid.D3D12.Tests\Veldrid.D3D12.Tests.csproj", "{7C52B60B-D5C6-4A20-9BBC-F499FAFA18D8}"
+EndProject
 Global
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|ARM = Debug|ARM
@@ -40,22 +37,6 @@ Global
 		{60D56E4A-FA7A-4664-BEF0-0A29F41518BF}.Release|x64.Build.0 = Release|Any CPU
 		{60D56E4A-FA7A-4664-BEF0-0A29F41518BF}.Release|x86.ActiveCfg = Release|Any CPU
 		{60D56E4A-FA7A-4664-BEF0-0A29F41518BF}.Release|x86.Build.0 = Release|Any CPU
-		{6E93B2E1-BF0B-4268-94BA-E951ECC4DD7F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6E93B2E1-BF0B-4268-94BA-E951ECC4DD7F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6E93B2E1-BF0B-4268-94BA-E951ECC4DD7F}.Debug|ARM.ActiveCfg = Debug|Any CPU
-		{6E93B2E1-BF0B-4268-94BA-E951ECC4DD7F}.Debug|ARM.Build.0 = Debug|Any CPU
-		{6E93B2E1-BF0B-4268-94BA-E951ECC4DD7F}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{6E93B2E1-BF0B-4268-94BA-E951ECC4DD7F}.Debug|x64.Build.0 = Debug|Any CPU
-		{6E93B2E1-BF0B-4268-94BA-E951ECC4DD7F}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{6E93B2E1-BF0B-4268-94BA-E951ECC4DD7F}.Debug|x86.Build.0 = Debug|Any CPU
-		{6E93B2E1-BF0B-4268-94BA-E951ECC4DD7F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6E93B2E1-BF0B-4268-94BA-E951ECC4DD7F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6E93B2E1-BF0B-4268-94BA-E951ECC4DD7F}.Release|ARM.ActiveCfg = Release|Any CPU
-		{6E93B2E1-BF0B-4268-94BA-E951ECC4DD7F}.Release|ARM.Build.0 = Release|Any CPU
-		{6E93B2E1-BF0B-4268-94BA-E951ECC4DD7F}.Release|x64.ActiveCfg = Release|Any CPU
-		{6E93B2E1-BF0B-4268-94BA-E951ECC4DD7F}.Release|x64.Build.0 = Release|Any CPU
-		{6E93B2E1-BF0B-4268-94BA-E951ECC4DD7F}.Release|x86.ActiveCfg = Release|Any CPU
-		{6E93B2E1-BF0B-4268-94BA-E951ECC4DD7F}.Release|x86.Build.0 = Release|Any CPU
 		{6647F17C-02E9-4EF2-B882-40E22A187744}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{6647F17C-02E9-4EF2-B882-40E22A187744}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6647F17C-02E9-4EF2-B882-40E22A187744}.Debug|ARM.ActiveCfg = Debug|Any CPU
@@ -72,27 +53,28 @@ Global
 		{6647F17C-02E9-4EF2-B882-40E22A187744}.Release|x64.Build.0 = Release|Any CPU
 		{6647F17C-02E9-4EF2-B882-40E22A187744}.Release|x86.ActiveCfg = Release|Any CPU
 		{6647F17C-02E9-4EF2-B882-40E22A187744}.Release|x86.Build.0 = Release|Any CPU
+		{7C52B60B-D5C6-4A20-9BBC-F499FAFA18D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C52B60B-D5C6-4A20-9BBC-F499FAFA18D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C52B60B-D5C6-4A20-9BBC-F499FAFA18D8}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{7C52B60B-D5C6-4A20-9BBC-F499FAFA18D8}.Debug|ARM.Build.0 = Debug|Any CPU
+		{7C52B60B-D5C6-4A20-9BBC-F499FAFA18D8}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{7C52B60B-D5C6-4A20-9BBC-F499FAFA18D8}.Debug|x64.Build.0 = Debug|Any CPU
+		{7C52B60B-D5C6-4A20-9BBC-F499FAFA18D8}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{7C52B60B-D5C6-4A20-9BBC-F499FAFA18D8}.Debug|x86.Build.0 = Debug|Any CPU
+		{7C52B60B-D5C6-4A20-9BBC-F499FAFA18D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C52B60B-D5C6-4A20-9BBC-F499FAFA18D8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C52B60B-D5C6-4A20-9BBC-F499FAFA18D8}.Release|ARM.ActiveCfg = Release|Any CPU
+		{7C52B60B-D5C6-4A20-9BBC-F499FAFA18D8}.Release|ARM.Build.0 = Release|Any CPU
+		{7C52B60B-D5C6-4A20-9BBC-F499FAFA18D8}.Release|x64.ActiveCfg = Release|Any CPU
+		{7C52B60B-D5C6-4A20-9BBC-F499FAFA18D8}.Release|x64.Build.0 = Release|Any CPU
+		{7C52B60B-D5C6-4A20-9BBC-F499FAFA18D8}.Release|x86.ActiveCfg = Release|Any CPU
+		{7C52B60B-D5C6-4A20-9BBC-F499FAFA18D8}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {212564A4-FE40-45A2-8AE6-A466B277810C}
-	EndGlobalSection
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
-	EndGlobalSection
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
-	EndGlobalSection
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
-	EndGlobalSection
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
-	EndGlobalSection
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
 	EndGlobalSection
 	GlobalSection(Performance) = preSolution
 		HasPerformanceSessions = true
