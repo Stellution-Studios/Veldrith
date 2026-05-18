@@ -2,10 +2,11 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Runtime.InteropServices;
+using System.Collections.Generic;
+using SharpGen.Runtime;
 using Vortice.Direct3D;
 using Vortice.Direct3D12;
 using Vortice.DXGI;
-using Vortice.Mathematics;
 using D3D12Feature = Vortice.Direct3D12.Feature;
 using VorticeD3D12 = Vortice.Direct3D12.D3D12;
 using VorticeDXGI = Vortice.DXGI.DXGI;
@@ -41,6 +42,13 @@ namespace Veldrid.D3D12
         private readonly IDXGIFactory4 dxgiFactory;
         private readonly ID3D12Device device;
         private readonly ID3D12CommandQueue commandQueue;
+        private readonly ID3D12Fence submissionFence;
+        private readonly AutoResetEvent submissionFenceEvent;
+        private ulong nextSubmissionFenceValue = 1;
+        private readonly Dictionary<string, ID3D12RootSignature> rootSignatureCache = new Dictionary<string, ID3D12RootSignature>(StringComparer.Ordinal);
+        private readonly object rootSignatureCacheLock = new object();
+        private readonly Dictionary<Format, CachedFormatSupport> formatSupportCache = new Dictionary<Format, CachedFormatSupport>();
+        private readonly object formatSupportCacheLock = new object();
         private readonly string deviceName;
         private readonly string vendorName;
         private ulong immediateFenceValue = 1;
@@ -86,6 +94,9 @@ namespace Veldrid.D3D12
             }
 
             commandQueue = device.CreateCommandQueue(new CommandQueueDescription(CommandListType.Direct));
+            submissionFence = device.CreateFence(0, FenceFlags.None);
+            submissionFenceEvent = new AutoResetEvent(false);
+            resourceFactory = new D3D12ResourceFactory(this, Features);
 
             if (swapchainDescription != null)
             {
@@ -93,7 +104,6 @@ namespace Veldrid.D3D12
                 mainSwapchain = new D3D12Swapchain(this, ref scDesc);
             }
 
-            resourceFactory = new D3D12ResourceFactory(this, Features);
             d3d12Info = new BackendInfoD3D12(device.NativePointer);
             if (mainSwapchain != null)
             {
@@ -121,9 +131,45 @@ namespace Veldrid.D3D12
         public override Swapchain MainSwapchain => mainSwapchain;
 
         public override GraphicsDeviceFeatures Features => d3d12Features;
+        public override bool AllowTearing
+        {
+            get => mainSwapchain is D3D12Swapchain d3d12Swapchain && d3d12Swapchain.AllowTearing;
+            set
+            {
+                if (mainSwapchain is D3D12Swapchain d3d12Swapchain)
+                {
+                    d3d12Swapchain.AllowTearing = value;
+                }
+            }
+        }
         internal ID3D12Device Device => device;
         internal ID3D12CommandQueue CommandQueue => commandQueue;
         internal IDXGIFactory4 DxgiFactory => dxgiFactory;
+        internal bool IsSubmissionFenceComplete(ulong value) => submissionFence.CompletedValue >= value;
+        internal void WaitForSubmissionFence(ulong value)
+        {
+            if (submissionFence.CompletedValue >= value)
+            {
+                return;
+            }
+
+            submissionFence.SetEventOnCompletion(value, submissionFenceEvent.SafeWaitHandle.DangerousGetHandle()).CheckError();
+            submissionFenceEvent.WaitOne();
+        }
+        internal ID3D12RootSignature GetOrCreateRootSignature(string cacheKey, in RootSignatureDescription description)
+        {
+            lock (rootSignatureCacheLock)
+            {
+                if (rootSignatureCache.TryGetValue(cacheKey, out ID3D12RootSignature cached))
+                {
+                    return cached;
+                }
+
+                ID3D12RootSignature created = device.CreateRootSignature(in description, RootSignatureVersion.Version1);
+                rootSignatureCache.Add(cacheKey, created);
+                return created;
+            }
+        }
 
         public override bool WaitForFence(Fence fence, ulong nanosecondTimeout)
         {
@@ -268,6 +314,17 @@ namespace Veldrid.D3D12
 
         protected override void PlatformDispose()
         {
+            lock (rootSignatureCacheLock)
+            {
+                foreach (ID3D12RootSignature rootSignature in rootSignatureCache.Values)
+                {
+                    rootSignature?.Dispose();
+                }
+                rootSignatureCache.Clear();
+            }
+
+            submissionFenceEvent?.Dispose();
+            submissionFence?.Dispose();
             mainSwapchain?.Dispose();
             commandQueue?.Dispose();
             device?.Dispose();
@@ -278,7 +335,10 @@ namespace Veldrid.D3D12
         {
             if (commandList is D3D12CommandList d3d12CommandList)
             {
-                d3d12CommandList.Execute();
+                d3d12CommandList.ExecuteNoSignal();
+                ulong signalValue = nextSubmissionFenceValue++;
+                commandQueue.Signal(submissionFence, signalValue).CheckError();
+                d3d12CommandList.MarkSubmitted(signalValue);
                 d3d12CommandList.ClearCachedState();
             }
 
@@ -306,7 +366,8 @@ namespace Veldrid.D3D12
 
         private protected override void WaitForNextFrameReadyCore()
         {
-            waitForQueueIdle();
+            // Do not globally stall the GPU every frame on D3D12.
+            // Frame pacing should be handled by swapchain present / fences.
         }
 
         private protected override void UpdateTextureCore(
@@ -393,12 +454,22 @@ namespace Veldrid.D3D12
             }
 
             bool depthUsage = (usage & TextureUsage.DepthStencil) != 0;
-            Format dxgiFormat;
+            Format resourceFormat;
+            Format depthStencilFormat = Format.Unknown;
+            Format sampledViewFormat = Format.Unknown;
             try
             {
-                dxgiFormat = depthUsage
-                    ? D3D12Formats.ToDepthFormat(format)
-                    : D3D12Formats.ToDxgiFormat(format);
+                if (depthUsage)
+                {
+                    resourceFormat = D3D12Formats.ToDxgiFormat(format, depthFormat: true);
+                    depthStencilFormat = D3D12Formats.ToDepthFormat(format);
+                    sampledViewFormat = D3D12Formats.GetViewFormat(resourceFormat);
+                }
+                else
+                {
+                    resourceFormat = D3D12Formats.ToDxgiFormat(format);
+                    sampledViewFormat = resourceFormat;
+                }
             }
             catch (VeldridException)
             {
@@ -406,7 +477,7 @@ namespace Veldrid.D3D12
                 return false;
             }
 
-            if (!tryGetFormatSupport(dxgiFormat, out FeatureDataFormatSupport formatSupport))
+            if (!tryGetFormatSupport(resourceFormat, out FeatureDataFormatSupport formatSupport))
             {
                 properties = default;
                 return false;
@@ -430,7 +501,14 @@ namespace Veldrid.D3D12
             {
                 if (depthUsage)
                 {
-                    if ((support1 & (FormatSupport1.ShaderSample | FormatSupport1.ShaderSampleComparison)) == 0)
+                    if (!tryGetFormatSupport(sampledViewFormat, out FeatureDataFormatSupport sampledSupport))
+                    {
+                        properties = default;
+                        return false;
+                    }
+
+                    FormatSupport1 sampledSupport1 = sampledSupport.Support1;
+                    if ((sampledSupport1 & (FormatSupport1.ShaderSample | FormatSupport1.ShaderSampleComparison)) == 0)
                     {
                         properties = default;
                         return false;
@@ -451,8 +529,12 @@ namespace Veldrid.D3D12
 
             if (depthUsage && (support1 & FormatSupport1.DepthStencil) == 0)
             {
-                properties = default;
-                return false;
+                if (!tryGetFormatSupport(depthStencilFormat, out FeatureDataFormatSupport depthSupport)
+                    || (depthSupport.Support1 & FormatSupport1.DepthStencil) == 0)
+                {
+                    properties = default;
+                    return false;
+                }
             }
 
             if ((usage & TextureUsage.Storage) != 0
@@ -489,7 +571,8 @@ namespace Veldrid.D3D12
                 return false;
             }
 
-            uint sampleFlags = getSupportedSampleFlags(dxgiFormat);
+            Format sampleCountFormat = depthUsage ? depthStencilFormat : resourceFormat;
+            uint sampleFlags = getSupportedSampleFlags(sampleCountFormat);
             if (sampleFlags == 0)
             {
                 sampleFlags = 1u << (int)TextureSampleCount.Count1;
@@ -528,6 +611,32 @@ namespace Veldrid.D3D12
 
         private static IDXGIAdapter1 selectAdapter(IDXGIFactory4 factory)
         {
+            // Prefer the high-performance adapter when DXGI 1.6 is available.
+            using (var factory6 = factory.QueryInterfaceOrNull<IDXGIFactory6>())
+            {
+                if (factory6 != null)
+                {
+                    uint hpIndex = 0;
+                    while (factory6.EnumAdapterByGpuPreference(hpIndex, GpuPreference.HighPerformance, out IDXGIAdapter1 hpAdapter).Success)
+                    {
+                        AdapterDescription1 hpDescription = hpAdapter.Description1;
+                        bool softwareHp = (hpDescription.Flags & AdapterFlags.Software) != 0;
+                        if (!softwareHp
+                            && VorticeD3D12.D3D12CreateDevice(hpAdapter, FeatureLevel.Level_11_0, out ID3D12Device hpProbeDevice).Success)
+                        {
+                            hpProbeDevice.Dispose();
+                            return hpAdapter;
+                        }
+
+                        hpAdapter.Dispose();
+                        hpIndex++;
+                    }
+                }
+            }
+
+            // Fallback: choose the supported hardware adapter with the largest dedicated VRAM.
+            IDXGIAdapter1 bestAdapter = null;
+            long bestDedicatedMemory = -1;
             uint index = 0;
             while (factory.EnumAdapters1(index, out IDXGIAdapter1 adapter).Success)
             {
@@ -537,14 +646,27 @@ namespace Veldrid.D3D12
                     && VorticeD3D12.D3D12CreateDevice(adapter, FeatureLevel.Level_11_0, out ID3D12Device probeDevice).Success)
                 {
                     probeDevice.Dispose();
-                    return adapter;
+                    long dedicatedMemory = (long)description.DedicatedVideoMemory;
+                    if (dedicatedMemory > bestDedicatedMemory)
+                    {
+                        bestAdapter?.Dispose();
+                        bestAdapter = adapter;
+                        bestDedicatedMemory = dedicatedMemory;
+                    }
+                    else
+                    {
+                        adapter.Dispose();
+                    }
+                }
+                else
+                {
+                    adapter.Dispose();
                 }
 
-                adapter.Dispose();
                 index++;
             }
 
-            return null;
+            return bestAdapter;
         }
 
         private uint getSupportedSampleFlags(Format format)
@@ -661,12 +783,23 @@ namespace Veldrid.D3D12
 
         private bool tryGetFormatSupport(Format format, out FeatureDataFormatSupport formatSupport)
         {
-            formatSupport = new FeatureDataFormatSupport
+            lock (formatSupportCacheLock)
             {
-                Format = format
-            };
+                if (formatSupportCache.TryGetValue(format, out CachedFormatSupport cached))
+                {
+                    formatSupport = cached.Support;
+                    return cached.IsSupported;
+                }
 
-            return tryCheckFeatureSupport(D3D12Feature.FormatSupport, ref formatSupport);
+                formatSupport = new FeatureDataFormatSupport
+                {
+                    Format = format
+                };
+
+                bool isSupported = tryCheckFeatureSupport(D3D12Feature.FormatSupport, ref formatSupport);
+                formatSupportCache[format] = new CachedFormatSupport(isSupported, formatSupport);
+                return isSupported;
+            }
         }
 
         private static bool isTypeSupported(TextureType type, FormatSupport1 support)
@@ -690,6 +823,18 @@ namespace Veldrid.D3D12
             return device.CheckFeatureSupport(feature, ref data);
         }
 
+        private readonly struct CachedFormatSupport
+        {
+            public readonly bool IsSupported;
+            public readonly FeatureDataFormatSupport Support;
+
+            public CachedFormatSupport(bool isSupported, FeatureDataFormatSupport support)
+            {
+                IsSupported = isSupported;
+                Support = support;
+            }
+        }
+
 
         private unsafe void updateNativeTexture(
             D3D12Texture texture,
@@ -704,135 +849,19 @@ namespace Veldrid.D3D12
             uint mipLevel,
             uint arrayLayer)
         {
-            Util.GetMipDimensions(texture, mipLevel, out uint mipWidth, out uint mipHeight, out uint mipDepth);
-            if (x + width > mipWidth || y + height > mipHeight || z + depth > mipDepth)
-            {
-                throw new VeldridException("Texture update region exceeds texture bounds.");
-            }
-
-            uint subresource = texture.CalculateSubresource(mipLevel, arrayLayer);
-            ResourceDescription textureDescription = texture.NativeTexture.Description;
-
-            var layouts = new PlacedSubresourceFootPrint[1];
-            var rowCounts = new uint[1];
-            var rowSizesInBytes = new ulong[1];
-            ulong totalBytes;
-            device.GetCopyableFootprints(textureDescription, subresource, 1, 0, layouts, rowCounts, rowSizesInBytes, out totalBytes);
-
-            ID3D12Resource uploadBuffer = device.CreateCommittedResource(
-                HeapType.Upload,
-                HeapFlags.None,
-                ResourceDescription.Buffer(totalBytes),
-                ResourceStates.GenericRead,
-                null);
-
-            try
-            {
-                void* mappedPtr = null;
-                uploadBuffer.Map(0, &mappedPtr).CheckError();
-                try
-                {
-                    copyTextureDataToUploadBuffer(
-                        source,
-                        sizeInBytes,
-                        texture.Format,
-                        width,
-                        height,
-                        depth,
-                        mappedPtr,
-                        layouts[0],
-                        rowCounts[0],
-                        rowSizesInBytes[0]);
-                }
-                finally
-                {
-                    uploadBuffer.Unmap(0, null);
-                }
-
-                ID3D12CommandAllocator allocator = device.CreateCommandAllocator(CommandListType.Direct);
-                ID3D12GraphicsCommandList commandList = device.CreateCommandList<ID3D12GraphicsCommandList>(0, CommandListType.Direct, allocator, null);
-                try
-                {
-                    uint subresourceCount = texture.SubresourceCount;
-                    var previousStates = new ResourceStates[subresourceCount];
-                    for (uint trackedSubresource = 0; trackedSubresource < subresourceCount; trackedSubresource++)
-                    {
-                        previousStates[trackedSubresource] = texture.GetSubresourceState(trackedSubresource);
-                    }
-
-                    if (texture.TryGetCommonState(out ResourceStates commonState))
-                    {
-                        if (commonState != ResourceStates.CopyDest)
-                        {
-                            ResourceBarrier toCopy = ResourceBarrier.BarrierTransition(
-                                texture.NativeTexture,
-                                commonState,
-                                ResourceStates.CopyDest,
-                                VorticeD3D12.ResourceBarrierAllSubResources,
-                                ResourceBarrierFlags.None);
-                            commandList.ResourceBarrier(new[] { toCopy });
-                            texture.SetAllSubresourceStates(ResourceStates.CopyDest);
-                        }
-                    }
-                    else
-                    {
-                        for (uint trackedSubresource = 0; trackedSubresource < subresourceCount; trackedSubresource++)
-                        {
-                            ResourceStates fromState = texture.GetSubresourceState(trackedSubresource);
-                            if (fromState == ResourceStates.CopyDest)
-                            {
-                                continue;
-                            }
-
-                            ResourceBarrier toCopy = ResourceBarrier.BarrierTransition(
-                                texture.NativeTexture,
-                                fromState,
-                                ResourceStates.CopyDest,
-                                trackedSubresource,
-                                ResourceBarrierFlags.None);
-                            commandList.ResourceBarrier(new[] { toCopy });
-                            texture.SetSubresourceState(trackedSubresource, ResourceStates.CopyDest);
-                        }
-                    }
-
-                    var destination = new TextureCopyLocation(texture.NativeTexture, subresource);
-                    var sourceLocation = new TextureCopyLocation(uploadBuffer, layouts[0]);
-                    var sourceBox = new Box(0, 0, 0, (int)width, (int)height, (int)depth);
-                    commandList.CopyTextureRegion(destination, x, y, z, sourceLocation, sourceBox);
-
-                    for (uint trackedSubresource = 0; trackedSubresource < subresourceCount; trackedSubresource++)
-                    {
-                        ResourceStates previousState = previousStates[trackedSubresource];
-                        ResourceStates currentState = texture.GetSubresourceState(trackedSubresource);
-                        if (currentState == previousState)
-                        {
-                            continue;
-                        }
-
-                        ResourceBarrier fromCopy = ResourceBarrier.BarrierTransition(
-                            texture.NativeTexture,
-                            currentState,
-                            previousState,
-                            trackedSubresource,
-                            ResourceBarrierFlags.None);
-                        commandList.ResourceBarrier(new[] { fromCopy });
-                        texture.SetSubresourceState(trackedSubresource, previousState);
-                    }
-
-                    commandList.Close();
-                    commandQueue.ExecuteCommandList(commandList);
-                    waitForQueueIdle();
-                }
-                finally
-                {
-                    commandList.Dispose();
-                    allocator.Dispose();
-                }
-            }
-            finally
-            {
-                uploadBuffer.Dispose();
-            }
+            // Use the validated staging->native upload path in D3D12Texture to avoid
+            // partial CopyTextureRegion edge-cases that can trigger device removal.
+            texture.UpdateNativeSubresource(
+                source,
+                sizeInBytes,
+                x,
+                y,
+                z,
+                width,
+                height,
+                depth,
+                mipLevel,
+                arrayLayer);
         }
 
         private unsafe void copyTextureDataToUploadBuffer(
@@ -885,10 +914,11 @@ namespace Veldrid.D3D12
 
         private void waitForQueueIdle()
         {
-            ID3D12Fence fence = device.CreateFence(0, FenceFlags.None);
+            ID3D12Fence fence = null;
             using var waitEvent = new AutoResetEvent(false);
             try
             {
+                fence = device.CreateFence(0, FenceFlags.None);
                 ulong signalValue = immediateFenceValue++;
                 commandQueue.Signal(fence, signalValue);
                 if (fence.CompletedValue < signalValue)
@@ -897,9 +927,14 @@ namespace Veldrid.D3D12
                     waitEvent.WaitOne();
                 }
             }
+            catch (SharpGenException ex) when (ex.ResultCode.Code == unchecked((int)0x887A0005))
+            {
+                // Device already lost. During shutdown this should not escalate into a second crash.
+                return;
+            }
             finally
             {
-                fence.Dispose();
+                fence?.Dispose();
             }
         }
     }

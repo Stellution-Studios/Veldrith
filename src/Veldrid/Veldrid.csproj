@@ -16,6 +16,10 @@
     <LangVersion>12.0</LangVersion>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="ppy.Vk" Version="1.0.26" Condition="'$(ExcludeVulkan)' != 'true'"/>
     <PackageReference Include="Vortice.Direct3D12" Version="$(VorticeWindowsVersion)"/>

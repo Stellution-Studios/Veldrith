@@ -9,15 +9,21 @@ namespace Veldrid.D3D12
         private readonly bool isDynamic;
         private readonly bool isStaging;
         private readonly bool isDefault;
+        private readonly bool dynamicSnapshotEnabled;
+        private readonly uint dynamicSnapshotCapacity;
         private readonly uint sizeInBytes;
-        private readonly ID3D12Resource nativeBuffer;
+        private ID3D12Resource nativeBuffer;
         private readonly ID3D12Resource stagingWriteBuffer;
         private readonly ID3D12Resource stagingReadBuffer;
-        private readonly IntPtr dynamicMappedPointer;
+        private IntPtr dynamicMappedPointer;
         private readonly IntPtr stagingWriteMappedPointer;
         private readonly IntPtr stagingReadMappedPointer;
         private bool stagingReadBufferDirtyFromWriteBuffer;
         private bool stagingWriteBufferDirtyFromReadBuffer;
+        private uint dynamicSnapshotWriteHead;
+        private uint dynamicSnapshotBaseOffset;
+        private bool dynamicSnapshotInitialized;
+        private ulong dynamicBindVersion;
         private MapMode? activeMapMode;
         private bool disposed;
         private string name;
@@ -31,8 +37,16 @@ namespace Veldrid.D3D12
             isDynamic = (description.Usage & BufferUsage.Dynamic) == BufferUsage.Dynamic;
             isStaging = (description.Usage & BufferUsage.Staging) == BufferUsage.Staging;
             isDefault = !isDynamic && !isStaging;
+            dynamicSnapshotEnabled = isDynamic
+                && ((description.Usage & BufferUsage.VertexBuffer) == BufferUsage.VertexBuffer
+                    || (description.Usage & BufferUsage.IndexBuffer) == BufferUsage.IndexBuffer);
+            dynamicSnapshotCapacity = dynamicSnapshotEnabled
+                ? calculateDynamicSnapshotCapacity(description.SizeInBytes)
+                : description.SizeInBytes;
 
-            ResourceDescription resourceDescription = ResourceDescription.Buffer(description.SizeInBytes, getResourceFlags(description.Usage));
+            ResourceDescription resourceDescription = ResourceDescription.Buffer(
+                dynamicSnapshotEnabled ? dynamicSnapshotCapacity : description.SizeInBytes,
+                getResourceFlags(description.Usage));
             if (isStaging)
             {
                 stagingWriteBuffer = gd.Device.CreateCommittedResource(
@@ -91,8 +105,13 @@ namespace Veldrid.D3D12
         public override BufferUsage Usage { get; }
         internal ID3D12Resource NativeBuffer => nativeBuffer;
         internal ulong GpuVirtualAddress => nativeBuffer.GPUVirtualAddress;
+        internal uint CurrentNativeSizeInBytes => (uint)Math.Min(uint.MaxValue, nativeBuffer.Description.Width);
+        internal ulong GetGpuVirtualAddress(uint offset) => nativeBuffer.GPUVirtualAddress + ResolveNativeOffset(offset);
+        internal uint GetBindableSize(uint offset) => offset < SizeInBytes ? SizeInBytes - offset : 0;
+        internal uint ResolveNativeOffset(uint offset) => dynamicSnapshotEnabled ? dynamicSnapshotBaseOffset + offset : offset;
         internal ResourceStates CurrentState { get; set; }
         internal bool CanTransitionState => isDefault;
+        internal ulong BindVersion => dynamicSnapshotEnabled ? dynamicBindVersion : 0UL;
         public override bool IsDisposed => disposed;
 
         public override string Name
@@ -140,6 +159,12 @@ namespace Veldrid.D3D12
 
             if (!isDefault)
             {
+                if (dynamicSnapshotEnabled)
+                {
+                    updateDynamicSnapshot(source, destinationOffset, sizeInBytes);
+                    return null;
+                }
+
                 writeCpuData(source, destinationOffset, sizeInBytes);
                 return null;
             }
@@ -151,6 +176,58 @@ namespace Veldrid.D3D12
             transition(commandList, ResourceStates.CopyDest, previousState);
             CurrentState = previousState;
             return uploadBuffer;
+        }
+
+        private unsafe void updateDynamicSnapshot(IntPtr source, uint destinationOffset, uint copySize)
+        {
+            if (copySize == 0)
+            {
+                return;
+            }
+
+            uint snapshotSize = destinationOffset + copySize;
+            if (snapshotSize == 0)
+            {
+                snapshotSize = 1;
+            }
+
+            if (snapshotSize > dynamicSnapshotCapacity)
+            {
+                throw new VeldridException("Dynamic snapshot update exceeds snapshot buffer capacity.");
+            }
+
+            if (dynamicSnapshotWriteHead + snapshotSize > dynamicSnapshotCapacity)
+            {
+                dynamicSnapshotWriteHead = 0;
+            }
+
+            uint newBaseOffset = dynamicSnapshotWriteHead;
+            byte* mappedPointer = (byte*)dynamicMappedPointer.ToPointer();
+            if (dynamicSnapshotInitialized && newBaseOffset != dynamicSnapshotBaseOffset)
+            {
+                // Preserve only the unchanged prefix when callers update a subrange.
+                // Most high-frequency VB/IB updates write from offset 0, so this avoids
+                // copying the full logical buffer every flush.
+                if (destinationOffset > 0)
+                {
+                    uint prefixSize = destinationOffset;
+                    byte* src = mappedPointer + dynamicSnapshotBaseOffset;
+                    byte* dst = mappedPointer + newBaseOffset;
+                    Buffer.MemoryCopy(src, dst, snapshotSize, prefixSize);
+                }
+            }
+
+            byte* destination = mappedPointer + newBaseOffset + destinationOffset;
+            Buffer.MemoryCopy(source.ToPointer(), destination, snapshotSize - destinationOffset, copySize);
+
+            uint previousBaseOffset = dynamicSnapshotBaseOffset;
+            dynamicSnapshotBaseOffset = newBaseOffset;
+            dynamicSnapshotWriteHead = alignUp(newBaseOffset + snapshotSize, 16);
+            dynamicSnapshotInitialized = true;
+            if (newBaseOffset != previousBaseOffset)
+            {
+                dynamicBindVersion++;
+            }
         }
 
         internal void CopyTo(ID3D12GraphicsCommandList commandList, D3D12DeviceBuffer destination, uint sourceOffset, uint destinationOffset, uint sizeInBytes)
@@ -536,6 +613,33 @@ namespace Veldrid.D3D12
                 Vortice.Direct3D12.D3D12.ResourceBarrierAllSubResources,
                 ResourceBarrierFlags.None);
             commandList.ResourceBarrier(new[] { barrier });
+        }
+
+        private static uint calculateDynamicSnapshotCapacity(uint logicalSize)
+        {
+            const ulong maxSnapshotBytes = 256UL * 1024UL * 1024UL;
+            ulong doubled = (ulong)logicalSize * 2UL;
+            ulong timesThirtyTwo = (ulong)logicalSize * 32UL;
+            ulong desired = Math.Max(doubled, timesThirtyTwo);
+            ulong capped = Math.Min(desired, maxSnapshotBytes);
+            ulong finalSize = Math.Max((ulong)logicalSize, capped);
+            if (finalSize > uint.MaxValue)
+            {
+                return uint.MaxValue;
+            }
+
+            return (uint)finalSize;
+        }
+
+        private static uint alignUp(uint value, uint alignment)
+        {
+            if (alignment == 0)
+            {
+                return value;
+            }
+
+            uint remainder = value % alignment;
+            return remainder == 0 ? value : value + (alignment - remainder);
         }
 
         private static ResourceFlags getResourceFlags(BufferUsage usage)

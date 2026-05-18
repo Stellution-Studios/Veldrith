@@ -11,7 +11,10 @@ namespace Veldrid.D3D12
         private readonly D3D12GraphicsDevice gd;
         private readonly byte[] data;
         private readonly bool ownsNativeTexture;
+        private readonly uint effectiveArrayLayers;
         private readonly ResourceStates[] subresourceStates;
+        private bool hasCachedCommonState;
+        private ResourceStates cachedCommonState;
         private GCHandle pinnedData;
         private MapMode? activeMapMode;
         private uint activeMapSubresource;
@@ -31,8 +34,9 @@ namespace Veldrid.D3D12
             Usage = description.Usage;
             Type = description.Type;
             SampleCount = description.SampleCount;
+            effectiveArrayLayers = getEffectiveArrayLayers(Usage, ArrayLayers);
             data = new byte[computeTotalSize(ref description)];
-            subresourceStates = new ResourceStates[MipLevels * ArrayLayers];
+            subresourceStates = new ResourceStates[MipLevels * effectiveArrayLayers];
 
             if (nativeHandle == null)
             {
@@ -74,6 +78,7 @@ namespace Veldrid.D3D12
             set => SetAllSubresourceStates(value);
         }
         internal uint SubresourceCount => (uint)(subresourceStates?.Length ?? 0);
+        internal uint EffectiveArrayLayers => effectiveArrayLayers;
 
         public override string Name
         {
@@ -135,9 +140,32 @@ namespace Veldrid.D3D12
             }
         }
 
+        internal void UpdateNativeSubresource(
+            IntPtr source,
+            uint sizeInBytes,
+            uint x,
+            uint y,
+            uint z,
+            uint width,
+            uint height,
+            uint depth,
+            uint mipLevel,
+            uint arrayLayer)
+        {
+            Update(source, sizeInBytes, x, y, z, width, height, depth, mipLevel, arrayLayer);
+
+            if (NativeTexture == null)
+            {
+                return;
+            }
+
+            uint subresource = CalculateSubresource(mipLevel, arrayLayer);
+            syncSubresourceToNative(subresource);
+        }
+
         internal MappedResource Map(MapMode mode, uint subresource)
         {
-            if (subresource >= MipLevels * ArrayLayers)
+            if (subresource >= SubresourceCount)
             {
                 throw new VeldridException("Subresource index is out of bounds.");
             }
@@ -248,7 +276,7 @@ namespace Veldrid.D3D12
                 return false;
             }
 
-            for (uint layer = 0; layer < ArrayLayers; layer++)
+            for (uint layer = 0; layer < effectiveArrayLayers; layer++)
             {
                 for (uint mipLevel = 1; mipLevel < MipLevels; mipLevel++)
                 {
@@ -320,7 +348,7 @@ namespace Veldrid.D3D12
 
             fixed (byte* dataPtr = data)
             {
-                for (uint layer = 0; layer < ArrayLayers; layer++)
+                for (uint layer = 0; layer < effectiveArrayLayers; layer++)
                 {
                     for (uint mipLevel = 1; mipLevel < MipLevels; mipLevel++)
                     {
@@ -361,6 +389,7 @@ namespace Veldrid.D3D12
         private ID3D12Resource createNativeTexture(D3D12GraphicsDevice gd, ref TextureDescription description)
         {
             bool isDepth = (description.Usage & TextureUsage.DepthStencil) == TextureUsage.DepthStencil;
+            uint effectiveDescriptionArrayLayers = getEffectiveArrayLayers(description.Usage, description.ArrayLayers);
             Format dxgiFormat = D3D12Formats.ToDxgiFormat(description.Format, isDepth);
             ResourceFlags resourceFlags = D3D12Formats.ToResourceFlags(description.Usage);
             ResourceDescription resourceDescription;
@@ -371,7 +400,7 @@ namespace Veldrid.D3D12
                     resourceDescription = ResourceDescription.Texture1D(
                         dxgiFormat,
                         description.Width,
-                        (ushort)description.ArrayLayers,
+                        (ushort)effectiveDescriptionArrayLayers,
                         (ushort)description.MipLevels,
                         resourceFlags,
                         TextureLayout.Unknown,
@@ -382,9 +411,9 @@ namespace Veldrid.D3D12
                         dxgiFormat,
                         description.Width,
                         description.Height,
-                        (ushort)description.ArrayLayers,
+                        (ushort)effectiveDescriptionArrayLayers,
                         (ushort)description.MipLevels,
-                        (uint)description.SampleCount,
+                        FormatHelpers.GetSampleCountUInt32(description.SampleCount),
                         0,
                         resourceFlags,
                         TextureLayout.Unknown,
@@ -456,9 +485,13 @@ namespace Veldrid.D3D12
                     throw new VeldridException("Wrapped native D3D12 texture depth does not match TextureDescription.");
                 }
             }
-            else if (nativeDescription.DepthOrArraySize != description.ArrayLayers)
+            else
             {
-                throw new VeldridException("Wrapped native D3D12 texture array layers do not match TextureDescription.");
+                uint expectedArrayLayers = getEffectiveArrayLayers(description.Usage, description.ArrayLayers);
+                if (nativeDescription.DepthOrArraySize != expectedArrayLayers)
+                {
+                    throw new VeldridException("Wrapped native D3D12 texture array layers do not match TextureDescription.");
+                }
             }
 
             if (nativeDescription.MipLevels != description.MipLevels)
@@ -548,12 +581,15 @@ namespace Veldrid.D3D12
             {
                 subresourceStates[i] = initialState;
             }
+
+            hasCachedCommonState = true;
+            cachedCommonState = initialState;
         }
 
         private void getSubresourceLayout(uint subresource, out uint offset, out uint size, out uint rowPitch, out uint depthPitch)
         {
             uint totalOffset = 0;
-            for (uint arrayLayer = 0; arrayLayer < ArrayLayers; arrayLayer++)
+            for (uint arrayLayer = 0; arrayLayer < effectiveArrayLayers; arrayLayer++)
             {
                 uint mipWidth = Width;
                 uint mipHeight = Height;
@@ -586,19 +622,30 @@ namespace Veldrid.D3D12
         private static int computeTotalSize(ref TextureDescription description)
         {
             uint total = 0;
+            uint effectiveDescriptionArrayLayers = getEffectiveArrayLayers(description.Usage, description.ArrayLayers);
             uint width = description.Width;
             uint height = description.Height;
             uint depth = description.Depth;
 
             for (uint mip = 0; mip < description.MipLevels; mip++)
             {
-                total += FormatHelpers.GetRegionSize(width, height, depth, description.Format) * description.ArrayLayers;
+                total += FormatHelpers.GetRegionSize(width, height, depth, description.Format) * effectiveDescriptionArrayLayers;
                 width = Math.Max(1, width / 2);
                 height = Math.Max(1, height / 2);
                 depth = Math.Max(1, depth / 2);
             }
 
             return (int)total;
+        }
+
+        private static uint getEffectiveArrayLayers(TextureUsage usage, uint arrayLayers)
+        {
+            if ((usage & TextureUsage.Cubemap) != 0)
+            {
+                return arrayLayers * 6;
+            }
+
+            return arrayLayers;
         }
 
         private bool isStagingTexture() => (Usage & TextureUsage.Staging) == TextureUsage.Staging;
@@ -664,8 +711,7 @@ namespace Veldrid.D3D12
                     {
                         var destination = new TextureCopyLocation(NativeTexture, subresource);
                         var sourceLocation = new TextureCopyLocation(uploadBuffer, layouts[0]);
-                        var sourceBox = new Box(0, 0, 0, (int)mipWidth, (int)mipHeight, (int)mipDepth);
-                        return (destination, sourceLocation, sourceBox, previousState);
+                        return (destination, sourceLocation, sourceBox: (Box?)null, previousState);
                     },
                     copyToTexture: true);
             }
@@ -750,7 +796,7 @@ namespace Veldrid.D3D12
         private unsafe void executeTextureBufferCopy(
             uint subresource,
             ResourceStates copyState,
-            Func<ResourceStates, (TextureCopyLocation destination, TextureCopyLocation source, Box sourceBox, ResourceStates previousState)> buildCopy,
+            Func<ResourceStates, (TextureCopyLocation destination, TextureCopyLocation source, Box? sourceBox, ResourceStates previousState)> buildCopy,
             bool copyToTexture)
         {
             ID3D12CommandAllocator allocator = gd.Device.CreateCommandAllocator(CommandListType.Direct);
@@ -773,11 +819,25 @@ namespace Veldrid.D3D12
                 var copyInfo = buildCopy(previousState);
                 if (copyToTexture)
                 {
-                    commandList.CopyTextureRegion(copyInfo.destination, 0, 0, 0, copyInfo.source, copyInfo.sourceBox);
+                    if (copyInfo.sourceBox.HasValue)
+                    {
+                        commandList.CopyTextureRegion(copyInfo.destination, 0, 0, 0, copyInfo.source, copyInfo.sourceBox.Value);
+                    }
+                    else
+                    {
+                        commandList.CopyTextureRegion(copyInfo.destination, 0, 0, 0, copyInfo.source, null);
+                    }
                 }
                 else
                 {
-                    commandList.CopyTextureRegion(copyInfo.destination, 0, 0, 0, copyInfo.source, copyInfo.sourceBox);
+                    if (copyInfo.sourceBox.HasValue)
+                    {
+                        commandList.CopyTextureRegion(copyInfo.destination, 0, 0, 0, copyInfo.source, copyInfo.sourceBox.Value);
+                    }
+                    else
+                    {
+                        commandList.CopyTextureRegion(copyInfo.destination, 0, 0, 0, copyInfo.source, null);
+                    }
                 }
 
                 if (copyInfo.previousState != copyState)
@@ -835,7 +895,17 @@ namespace Veldrid.D3D12
                 return;
             }
 
+            ResourceStates previous = subresourceStates[subresource];
+            if (previous == state)
+            {
+                return;
+            }
+
             subresourceStates[subresource] = state;
+            if (hasCachedCommonState && state != cachedCommonState)
+            {
+                hasCachedCommonState = false;
+            }
         }
 
         internal void SetAllSubresourceStates(ResourceStates state)
@@ -849,6 +919,9 @@ namespace Veldrid.D3D12
             {
                 subresourceStates[i] = state;
             }
+
+            hasCachedCommonState = true;
+            cachedCommonState = state;
         }
 
         internal bool TryGetCommonState(out ResourceStates state)
@@ -856,6 +929,12 @@ namespace Veldrid.D3D12
             if (subresourceStates == null || subresourceStates.Length == 0)
             {
                 state = ResourceStates.Common;
+                return true;
+            }
+
+            if (hasCachedCommonState)
+            {
+                state = cachedCommonState;
                 return true;
             }
 
@@ -868,6 +947,8 @@ namespace Veldrid.D3D12
                 }
             }
 
+            hasCachedCommonState = true;
+            cachedCommonState = state;
             return true;
         }
     }

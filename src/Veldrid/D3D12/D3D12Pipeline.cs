@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using Vortice.Direct3D12;
 using Vortice.DXGI;
 
@@ -22,9 +23,12 @@ namespace Veldrid.D3D12
         }
 
         private readonly D3D12GraphicsDevice gd;
-        private readonly Dictionary<(uint Set, uint Element), RootBindingInfo> rootBindings = new();
+        private RootBindingInfo[][] rootBindings = Array.Empty<RootBindingInfo[]>();
+        private bool[][] rootBindingValid = Array.Empty<bool[]>();
+        private readonly ResourceLayout[] pipelineResourceLayouts;
         private bool disposed;
         private string name;
+        private bool usingSetRegisterSpaces;
 
         public D3D12Pipeline(D3D12GraphicsDevice gd, ref GraphicsPipelineDescription description)
             : base(ref description)
@@ -38,9 +42,18 @@ namespace Veldrid.D3D12
             {
                 VertexStrides[i] = description.ShaderSet.VertexLayouts[i].Stride;
             }
+            pipelineResourceLayouts = description.ResourceLayouts;
 
-            createRootSignature(description.ResourceLayouts);
-            createGraphicsPipelineState(ref description);
+            createRootSignature(description.ResourceLayouts, useSetRegisterSpaces: true);
+            try
+            {
+                createGraphicsPipelineState(ref description);
+            }
+            catch (VeldridException)
+            {
+                recreateRootSignatureWithoutSetSpaces();
+                createGraphicsPipelineState(ref description);
+            }
         }
 
         public D3D12Pipeline(D3D12GraphicsDevice gd, ref ComputePipelineDescription description)
@@ -48,8 +61,17 @@ namespace Veldrid.D3D12
         {
             this.gd = gd;
             IsComputePipeline = true;
-            createRootSignature(description.ResourceLayouts);
-            createComputePipelineState(ref description);
+            pipelineResourceLayouts = description.ResourceLayouts;
+            createRootSignature(description.ResourceLayouts, useSetRegisterSpaces: true);
+            try
+            {
+                createComputePipelineState(ref description);
+            }
+            catch (Exception)
+            {
+                recreateRootSignatureWithoutSetSpaces();
+                createComputePipelineState(ref description);
+            }
         }
 
         public override bool IsComputePipeline { get; }
@@ -77,20 +99,24 @@ namespace Veldrid.D3D12
             }
 
             PipelineState?.Dispose();
-            RootSignature?.Dispose();
             disposed = true;
         }
 
         internal bool TryGetGraphicsRootBinding(uint set, uint element, out RootBindingInfo bindingInfo)
-            => rootBindings.TryGetValue((set, element), out bindingInfo);
+            => tryGetRootBinding(set, element, out bindingInfo);
 
         internal bool TryGetComputeRootBinding(uint set, uint element, out RootBindingInfo bindingInfo)
-            => rootBindings.TryGetValue((set, element), out bindingInfo);
+            => tryGetRootBinding(set, element, out bindingInfo);
 
-        private void createRootSignature(ResourceLayout[] resourceLayouts)
+        private void createRootSignature(ResourceLayout[] resourceLayouts, bool useSetRegisterSpaces)
         {
+            usingSetRegisterSpaces = useSetRegisterSpaces;
             var rootParameters = new List<RootParameter>();
-            rootBindings.Clear();
+            initializeRootBindingTables(resourceLayouts);
+            uint globalCbvRegister = 0;
+            uint globalSrvRegister = 0;
+            uint globalUavRegister = 0;
+            uint globalSamplerRegister = 0;
 
             if (resourceLayouts != null)
             {
@@ -101,25 +127,38 @@ namespace Veldrid.D3D12
                     for (uint elementIndex = 0; elementIndex < elements.Length; elementIndex++)
                     {
                         ResourceLayoutElementDescription element = elements[elementIndex];
+                        uint shaderRegister;
+                        // SPIR-V -> HLSL remapping in Veldrid.SPIRV assigns binding indices
+                        // globally per resource-kind (CBV/SRV/UAV/Sampler), not per set.
+                        // Keep register numbering global here for both space modes.
+                        shaderRegister = allocateShaderRegister(
+                            element.Kind,
+                            ref globalCbvRegister,
+                            ref globalSrvRegister,
+                            ref globalUavRegister,
+                            ref globalSamplerRegister);
+
+                        uint registerSpace = useSetRegisterSpaces ? setIndex : 0u;
                         bool descriptorTable = usesDescriptorTable(element.Kind);
                         RootParameter rootParameter;
                         if (descriptorTable)
                         {
                             DescriptorRangeType rangeType = getDescriptorRangeType(element.Kind);
-                            var descriptorRange = new DescriptorRange(rangeType, 1, elementIndex, setIndex, 0);
+                            var descriptorRange = new DescriptorRange(rangeType, 1, shaderRegister, registerSpace, 0);
                             var descriptorTableInfo = new RootDescriptorTable(new[] { descriptorRange });
                             rootParameter = new RootParameter(descriptorTableInfo, toShaderVisibility(element.Stages));
                         }
                         else
                         {
                             RootParameterType parameterType = getRootParameterType(element.Kind);
-                            var rootDescriptor = new RootDescriptor(elementIndex, setIndex);
+                            var rootDescriptor = new RootDescriptor(shaderRegister, registerSpace);
                             rootParameter = new RootParameter(parameterType, rootDescriptor, toShaderVisibility(element.Stages));
                         }
 
                         uint rootParameterIndex = (uint)rootParameters.Count;
                         rootParameters.Add(rootParameter);
-                        rootBindings[(setIndex, elementIndex)] = new RootBindingInfo(rootParameterIndex, element.Kind, descriptorTable);
+                        rootBindings[setIndex][elementIndex] = new RootBindingInfo(rootParameterIndex, element.Kind, descriptorTable);
+                        rootBindingValid[setIndex][elementIndex] = true;
                     }
                 }
             }
@@ -132,7 +171,110 @@ namespace Veldrid.D3D12
                 rootSignatureFlags,
                 rootParameters.ToArray(),
                 Array.Empty<StaticSamplerDescription>());
-            RootSignature = gd.Device.CreateRootSignature(in rootSignatureDescription, RootSignatureVersion.Version1);
+            string cacheKey = buildRootSignatureCacheKey(resourceLayouts, useSetRegisterSpaces, IsComputePipeline);
+            RootSignature = gd.GetOrCreateRootSignature(cacheKey, in rootSignatureDescription);
+        }
+
+        private void recreateRootSignatureWithoutSetSpaces()
+        {
+            if (!usingSetRegisterSpaces)
+            {
+                return;
+            }
+
+            createRootSignature(pipelineResourceLayouts, useSetRegisterSpaces: false);
+        }
+
+        private static uint allocateShaderRegister(
+            ResourceKind resourceKind,
+            ref uint nextCbvRegister,
+            ref uint nextSrvRegister,
+            ref uint nextUavRegister,
+            ref uint nextSamplerRegister)
+        {
+            switch (resourceKind)
+            {
+                case ResourceKind.UniformBuffer:
+                    return nextCbvRegister++;
+                case ResourceKind.StructuredBufferReadOnly:
+                case ResourceKind.TextureReadOnly:
+                    return nextSrvRegister++;
+                case ResourceKind.StructuredBufferReadWrite:
+                case ResourceKind.TextureReadWrite:
+                    return nextUavRegister++;
+                case ResourceKind.Sampler:
+                    return nextSamplerRegister++;
+                default:
+                    throw Illegal.Value<ResourceKind>();
+            }
+        }
+
+        private bool tryGetRootBinding(uint set, uint element, out RootBindingInfo bindingInfo)
+        {
+            if (set < (uint)rootBindings.Length
+                && element < (uint)rootBindings[set].Length
+                && rootBindingValid[set][element])
+            {
+                bindingInfo = rootBindings[set][element];
+                return true;
+            }
+
+            bindingInfo = default;
+            return false;
+        }
+
+        private void initializeRootBindingTables(ResourceLayout[] resourceLayouts)
+        {
+            if (resourceLayouts == null || resourceLayouts.Length == 0)
+            {
+                rootBindings = Array.Empty<RootBindingInfo[]>();
+                rootBindingValid = Array.Empty<bool[]>();
+                return;
+            }
+
+            rootBindings = new RootBindingInfo[resourceLayouts.Length][];
+            rootBindingValid = new bool[resourceLayouts.Length][];
+            for (int setIndex = 0; setIndex < resourceLayouts.Length; setIndex++)
+            {
+                var resourceLayout = Util.AssertSubtype<ResourceLayout, D3D12ResourceLayout>(resourceLayouts[setIndex]);
+                int elementCount = resourceLayout.Elements.Length;
+                rootBindings[setIndex] = new RootBindingInfo[elementCount];
+                rootBindingValid[setIndex] = new bool[elementCount];
+            }
+        }
+
+        private static string buildRootSignatureCacheKey(ResourceLayout[] resourceLayouts, bool useSetRegisterSpaces, bool isComputePipeline)
+        {
+            var sb = new StringBuilder(256);
+            sb.Append(isComputePipeline ? 'C' : 'G');
+            sb.Append(useSetRegisterSpaces ? 'S' : 'N');
+            sb.Append('|');
+            if (resourceLayouts == null || resourceLayouts.Length == 0)
+            {
+                sb.Append("0");
+                return sb.ToString();
+            }
+
+            sb.Append(resourceLayouts.Length);
+            for (int setIndex = 0; setIndex < resourceLayouts.Length; setIndex++)
+            {
+                sb.Append(';');
+                var layout = Util.AssertSubtype<ResourceLayout, D3D12ResourceLayout>(resourceLayouts[setIndex]);
+                ResourceLayoutElementDescription[] elements = layout.Elements;
+                sb.Append(elements.Length);
+                for (int elementIndex = 0; elementIndex < elements.Length; elementIndex++)
+                {
+                    ResourceLayoutElementDescription element = elements[elementIndex];
+                    sb.Append(',');
+                    sb.Append((int)element.Kind);
+                    sb.Append(':');
+                    sb.Append((int)element.Stages);
+                    sb.Append(':');
+                    sb.Append((int)element.Options);
+                }
+            }
+
+            return sb.ToString();
         }
 
         private void createComputePipelineState(ref ComputePipelineDescription description)
@@ -264,7 +406,7 @@ namespace Veldrid.D3D12
                 SampleMask = uint.MaxValue,
                 PrimitiveTopologyType = PrimitiveTopologyType,
                 InputLayout = new InputLayoutDescription(inputElements),
-                SampleDescription = new SampleDescription((uint)description.Outputs.SampleCount, 0)
+                SampleDescription = new SampleDescription(FormatHelpers.GetSampleCountUInt32(description.Outputs.SampleCount), 0)
             };
 
             int colorCount = Math.Min(description.Outputs.ColorAttachments.Length, 8);
@@ -281,7 +423,27 @@ namespace Veldrid.D3D12
                 psoDescription.DepthStencilFormat = D3D12Formats.ToDepthFormat(depthAttachment.Format);
             }
 
-            PipelineState = gd.Device.CreateGraphicsPipelineState(psoDescription);
+            try
+            {
+                PipelineState = gd.Device.CreateGraphicsPipelineState(psoDescription);
+            }
+            catch (Exception ex)
+            {
+                throw new VeldridException(
+                    $"D3D12 graphics PSO creation failed. " +
+                    $"VS={(vertexShader.IsEmpty ? "missing" : vertexShader.Length.ToString())}, " +
+                    $"PS={(pixelShader.IsEmpty ? "missing" : pixelShader.Length.ToString())}, " +
+                    $"GS={(geometryShader.IsEmpty ? "none" : geometryShader.Length.ToString())}, " +
+                    $"HS={(hullShader.IsEmpty ? "none" : hullShader.Length.ToString())}, " +
+                    $"DS={(domainShader.IsEmpty ? "none" : domainShader.Length.ToString())}, " +
+                    $"InputElements={inputElements.Length}, " +
+                    $"ColorTargets={colorCount}, " +
+                    $"DepthFormat={psoDescription.DepthStencilFormat}, " +
+                    $"SampleCount={FormatHelpers.GetSampleCountUInt32(description.Outputs.SampleCount)}, " +
+                    $"PrimitiveTopology={description.PrimitiveTopology}, " +
+                    $"UseSetRegisterSpaces={usingSetRegisterSpaces}.",
+                    ex);
+            }
         }
 
         private static BlendDescription buildBlendState(ref BlendStateDescription description)
@@ -358,6 +520,7 @@ namespace Veldrid.D3D12
             }
 
             var elements = new List<InputElementDescription>();
+            uint semanticIndex = 0;
             for (uint slot = 0; slot < vertexLayouts.Length; slot++)
             {
                 VertexLayoutDescription layout = vertexLayouts[slot];
@@ -366,18 +529,18 @@ namespace Veldrid.D3D12
                 {
                     VertexElementDescription element = layout.Elements[i];
                     uint offset = element.Offset != 0 ? element.Offset : currentOffset;
-                    string semantic = string.IsNullOrEmpty(element.Name) ? "TEXCOORD" : element.Name;
                     var slotClass = layout.InstanceStepRate == 0 ? InputClassification.PerVertexData : InputClassification.PerInstanceData;
 
                     elements.Add(new InputElementDescription(
-                        semantic,
-                        0,
+                        "TEXCOORD",
+                        semanticIndex,
                         D3D12Formats.ToDxgiFormat(element.Format),
                         offset,
                         slot,
                         slotClass,
                         layout.InstanceStepRate));
 
+                    semanticIndex++;
                     currentOffset += FormatSizeHelpers.GetSizeInBytes(element.Format);
                 }
             }

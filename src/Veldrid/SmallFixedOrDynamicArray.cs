@@ -20,7 +20,13 @@ namespace Veldrid
         public SmallFixedOrDynamicArray(uint count, ref uint data)
         {
             if (count > max_fixed_values)
+            {
                 Data = ArrayPool<uint>.Shared.Rent((int)count);
+                for (int i = 0; i < count; i++)
+                {
+                    Data[i] = Unsafe.Add(ref data, i);
+                }
+            }
             else
             {
                 for (int i = 0; i < count; i++) fixedData[i] = Unsafe.Add(ref data, i);

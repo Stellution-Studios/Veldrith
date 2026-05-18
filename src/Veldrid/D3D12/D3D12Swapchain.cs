@@ -8,7 +8,8 @@ namespace Veldrid.D3D12
         private readonly D3D12GraphicsDevice gd;
         private readonly bool hasNativeSwapchain;
         private readonly Format nativeColorFormat;
-        private readonly int bufferCount = 2;
+        private readonly bool canTear;
+        private readonly int bufferCount = 3;
         private Texture colorTexture;
         private Texture depthTexture;
         private Framebuffer framebuffer;
@@ -18,6 +19,7 @@ namespace Veldrid.D3D12
         private CpuDescriptorHandle[] backBufferRtvs;
         private ResourceStates[] backBufferStates;
         private int rtvDescriptorSize;
+        private bool allowTearing;
         private bool disposed;
         private string name;
 
@@ -26,6 +28,10 @@ namespace Veldrid.D3D12
             this.gd = gd;
             SyncToVerticalBlank = description.SyncToVerticalBlank;
             nativeColorFormat = description.ColorSrgb ? Format.B8G8R8A8_UNorm_SRgb : Format.B8G8R8A8_UNorm;
+            using (var factory5 = gd.DxgiFactory.QueryInterfaceOrNull<IDXGIFactory5>())
+            {
+                canTear = factory5?.PresentAllowTearing == true;
+            }
             hasNativeSwapchain = tryCreateNativeSwapchain(ref description);
             createAttachments(description.Width, description.Height, description.DepthFormat, description.ColorSrgb);
         }
@@ -33,6 +39,27 @@ namespace Veldrid.D3D12
         public override Framebuffer Framebuffer => framebuffer;
         public override bool IsDisposed => disposed;
         public override bool SyncToVerticalBlank { get; set; }
+        internal bool AllowTearing
+        {
+            get => allowTearing;
+            set
+            {
+                if (allowTearing == value)
+                {
+                    return;
+                }
+
+                allowTearing = value;
+                if (!hasNativeSwapchain || dxgiSwapChain == null)
+                {
+                    return;
+                }
+
+                uint width = colorTexture?.Width ?? 1u;
+                uint height = colorTexture?.Height ?? 1u;
+                recreateNativeSwapchain(width, height);
+            }
+        }
 
         public override string Name
         {
@@ -83,7 +110,13 @@ namespace Veldrid.D3D12
         {
             if (hasNativeSwapchain)
             {
-                dxgiSwapChain.Present(SyncToVerticalBlank ? 1u : 0u, PresentFlags.None);
+                PresentFlags presentFlags = PresentFlags.None;
+                if (allowTearing && canTear && !SyncToVerticalBlank)
+                {
+                    presentFlags = PresentFlags.AllowTearing;
+                }
+
+                dxgiSwapChain.Present(SyncToVerticalBlank ? 1u : 0u, presentFlags);
             }
         }
 
@@ -121,6 +154,7 @@ namespace Veldrid.D3D12
                 return false;
             }
 
+            SwapChainFlags flags = getSwapChainFlags();
             var swapChainDesc = new SwapChainDescription1
             {
                 Width = description.Width,
@@ -133,7 +167,7 @@ namespace Veldrid.D3D12
                 Scaling = Scaling.Stretch,
                 Stereo = false,
                 AlphaMode = AlphaMode.Ignore,
-                Flags = SwapChainFlags.None
+                Flags = flags
             };
 
             IDXGISwapChain1 swapChain1 = gd.DxgiFactory.CreateSwapChainForHwnd(gd.CommandQueue, win32Source.Hwnd, swapChainDesc, null, null);
@@ -183,6 +217,28 @@ namespace Veldrid.D3D12
                 backBufferStates[i] = ResourceStates.Present;
                 gd.Device.CreateRenderTargetView(buffer, null, backBufferRtvs[i]);
             }
+        }
+
+        private void recreateNativeSwapchain(uint width, uint height)
+        {
+            if (!hasNativeSwapchain || dxgiSwapChain == null)
+            {
+                return;
+            }
+
+            disposeNativeResources();
+            dxgiSwapChain.ResizeBuffers((uint)bufferCount, width, height, nativeColorFormat, getSwapChainFlags());
+            createNativeRenderTargets();
+        }
+
+        private SwapChainFlags getSwapChainFlags()
+        {
+            if (allowTearing && canTear)
+            {
+                return SwapChainFlags.AllowTearing;
+            }
+
+            return SwapChainFlags.None;
         }
 
         private void disposeNativeResources()

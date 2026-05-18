@@ -33,11 +33,11 @@ namespace Veldrid.D3D12
 
         protected override Texture CreateTextureCore(ref TextureDescription description) => new D3D12Texture(gd, ref description, null);
 
-        protected override TextureView CreateTextureViewCore(ref TextureViewDescription description) => new D3D12TextureView(ref description);
+        protected override TextureView CreateTextureViewCore(ref TextureViewDescription description) => new D3D12TextureView(gd, ref description);
 
         protected override DeviceBuffer CreateBufferCore(ref BufferDescription description) => new D3D12DeviceBuffer(gd, ref description);
 
-        protected override Sampler CreateSamplerCore(ref SamplerDescription description) => new D3D12Sampler(ref description);
+        protected override Sampler CreateSamplerCore(ref SamplerDescription description) => new D3D12Sampler(gd, ref description);
 
         protected override Shader CreateShaderCore(ref ShaderDescription description) => new D3D12Shader(ref description);
     }

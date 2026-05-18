@@ -5,13 +5,17 @@ namespace Veldrid.D3D12
 {
     internal sealed class D3D12TextureView : TextureView
     {
+        private readonly D3D12GraphicsDevice gd;
         private readonly D3D12Texture targetTexture;
+        private ID3D12DescriptorHeap srvDescriptorHeap;
+        private ID3D12DescriptorHeap uavDescriptorHeap;
         private bool disposed;
         private string name;
 
-        public D3D12TextureView(ref TextureViewDescription description)
+        public D3D12TextureView(D3D12GraphicsDevice gd, ref TextureViewDescription description)
             : base(ref description)
         {
+            this.gd = gd;
             targetTexture = Util.AssertSubtype<Texture, D3D12Texture>(description.Target);
         }
 
@@ -23,6 +27,40 @@ namespace Veldrid.D3D12
         {
             get => name;
             set => name = value;
+        }
+
+        internal CpuDescriptorHandle GetOrCreateShaderResourceViewDescriptor()
+        {
+            if (srvDescriptorHeap == null)
+            {
+                srvDescriptorHeap = gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(
+                    DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView,
+                    1,
+                    DescriptorHeapFlags.None));
+                ID3D12Resource nativeTexture = targetTexture.NativeTexture
+                    ?? throw new PlatformNotSupportedException("Texture has no native D3D12 resource.");
+                ShaderResourceViewDescription srvDescription = GetShaderResourceViewDescription();
+                gd.Device.CreateShaderResourceView(nativeTexture, srvDescription, srvDescriptorHeap.GetCPUDescriptorHandleForHeapStart());
+            }
+
+            return srvDescriptorHeap.GetCPUDescriptorHandleForHeapStart();
+        }
+
+        internal CpuDescriptorHandle GetOrCreateUnorderedAccessViewDescriptor()
+        {
+            if (uavDescriptorHeap == null)
+            {
+                uavDescriptorHeap = gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(
+                    DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView,
+                    1,
+                    DescriptorHeapFlags.None));
+                ID3D12Resource nativeTexture = targetTexture.NativeTexture
+                    ?? throw new PlatformNotSupportedException("Texture has no native D3D12 resource.");
+                UnorderedAccessViewDescription uavDescription = GetUnorderedAccessViewDescription();
+                gd.Device.CreateUnorderedAccessView(nativeTexture, null, uavDescription, uavDescriptorHeap.GetCPUDescriptorHandleForHeapStart());
+            }
+
+            return uavDescriptorHeap.GetCPUDescriptorHandleForHeapStart();
         }
 
         internal ShaderResourceViewDescription GetShaderResourceViewDescription()
@@ -50,15 +88,15 @@ namespace Veldrid.D3D12
 
             if (isCube)
             {
-                if (ArrayLayers > 6)
+                if (ArrayLayers > 1)
                 {
                     description.ViewDimension = ShaderResourceViewDimension.TextureCubeArray;
                     description.TextureCubeArray = new TextureCubeArrayShaderResourceView
                     {
                         MostDetailedMip = BaseMipLevel,
                         MipLevels = MipLevels,
-                        First2DArrayFace = BaseArrayLayer,
-                        NumCubes = ArrayLayers / 6,
+                        First2DArrayFace = BaseArrayLayer * 6,
+                        NumCubes = ArrayLayers,
                         ResourceMinLODClamp = 0f
                     };
                 }
@@ -176,6 +214,8 @@ namespace Veldrid.D3D12
 
         public override void Dispose()
         {
+            srvDescriptorHeap?.Dispose();
+            uavDescriptorHeap?.Dispose();
             disposed = true;
         }
     }
