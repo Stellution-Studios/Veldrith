@@ -26,8 +26,9 @@ public class GraphicsDeviceFeatures {
     /// <param name="subsetTextureView">The subset texture view value used by this operation.</param>
     /// <param name="commandListDebugMarkers">The command list debug markers value used by this operation.</param>
     /// <param name="bufferRangeBinding">The buffer range binding value used by this operation.</param>
+    /// <param name="pushConstants">Indicates whether command lists support setting push constants directly.</param>
     /// <param name="shaderFloat64">The shader float64 value used by this operation.</param>
-    internal GraphicsDeviceFeatures(bool computeShader, bool geometryShader, bool tessellationShaders, bool multipleViewports, bool samplerLodBias, bool drawBaseVertex, bool drawBaseInstance, bool drawIndirect, bool drawIndirectBaseInstance, bool fillModeWireframe, bool samplerAnisotropy, bool depthClipDisable, bool texture1D, bool independentBlend, bool structuredBuffer, bool subsetTextureView, bool commandListDebugMarkers, bool bufferRangeBinding, bool shaderFloat64) {
+    internal GraphicsDeviceFeatures(bool computeShader, bool geometryShader, bool tessellationShaders, bool multipleViewports, bool samplerLodBias, bool drawBaseVertex, bool drawBaseInstance, bool drawIndirect, bool drawIndirectBaseInstance, bool fillModeWireframe, bool samplerAnisotropy, bool depthClipDisable, bool texture1D, bool independentBlend, bool structuredBuffer, bool subsetTextureView, bool commandListDebugMarkers, bool bufferRangeBinding, bool pushConstants, bool shaderFloat64) {
         this.ComputeShader = computeShader;
         this.GeometryShader = geometryShader;
         this.TessellationShaders = tessellationShaders;
@@ -46,6 +47,7 @@ public class GraphicsDeviceFeatures {
         this.SubsetTextureView = subsetTextureView;
         this.CommandListDebugMarkers = commandListDebugMarkers;
         this.BufferRangeBinding = bufferRangeBinding;
+        this.PushConstants = pushConstants;
         this.ShaderFloat64 = shaderFloat64;
     }
 
@@ -138,6 +140,11 @@ public class GraphicsDeviceFeatures {
     /// Indicates whether uniform and structured buffers can be bound with an offset and a size. If false, buffer resources
     /// </summary>
     public bool BufferRangeBinding { get; }
+
+    /// <summary>
+    /// Indicates whether command lists can upload push constants directly to the active pipeline.
+    /// </summary>
+    public bool PushConstants { get; }
 
     /// <summary>
     /// Indicates whether 64-bit floating point integers can be used in shaders.

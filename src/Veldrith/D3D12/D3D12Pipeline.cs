@@ -12,6 +12,16 @@ namespace Veldrith.D3D12;
 internal sealed class D3D12Pipeline : Pipeline {
 
     /// <summary>
+    /// Stores the size, in bytes, reserved for push constants in the root signature.
+    /// </summary>
+    private const uint PushConstantSizeInBytes = 64;
+
+    /// <summary>
+    /// Stores the number of 32-bit constants reserved for push constants.
+    /// </summary>
+    private const uint PushConstantDwordCount = PushConstantSizeInBytes / 4;
+
+    /// <summary>
     /// Stores the pipeline resource layouts state used by this instance.
     /// </summary>
     private readonly ResourceLayout[] _pipelineResourceLayouts;
@@ -40,6 +50,11 @@ internal sealed class D3D12Pipeline : Pipeline {
     /// Stores the using set register spaces state used by this instance.
     /// </summary>
     private bool _usingSetRegisterSpaces;
+
+    /// <summary>
+    /// Stores the root-parameter index used for push constants.
+    /// </summary>
+    private uint _pushConstantRootParameterIndex;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="D3D12Pipeline" /> class.
@@ -118,6 +133,16 @@ internal sealed class D3D12Pipeline : Pipeline {
     public uint[] VertexStrides { get; } = Array.Empty<uint>();
 
     /// <summary>
+    /// Gets the root-parameter index that receives push constants.
+    /// </summary>
+    public uint PushConstantRootParameterIndex => this._pushConstantRootParameterIndex;
+
+    /// <summary>
+    /// Gets the maximum push-constant payload size supported by this pipeline.
+    /// </summary>
+    public uint MaxPushConstantSizeInBytes => PushConstantSizeInBytes;
+
+    /// <summary>
     /// Gets or sets IsDisposed.
     /// </summary>
     public override bool IsDisposed => this._disposed;
@@ -170,7 +195,7 @@ internal sealed class D3D12Pipeline : Pipeline {
         this._usingSetRegisterSpaces = useSetRegisterSpaces;
         List<RootParameter> rootParameters = new();
         this.InitializeRootBindingTables(resourceLayouts);
-        uint globalCbvRegister = 0;
+        uint globalCbvRegister = 1;
         uint globalSrvRegister = 0;
         uint globalUavRegister = 0;
         uint globalSamplerRegister = 0;
@@ -209,6 +234,10 @@ internal sealed class D3D12Pipeline : Pipeline {
                 }
             }
         }
+
+        RootConstants rootConstants = new(0, 0, PushConstantDwordCount);
+        this._pushConstantRootParameterIndex = (uint)rootParameters.Count;
+        rootParameters.Add(new RootParameter(rootConstants, ShaderVisibility.All));
 
         RootSignatureFlags rootSignatureFlags = this.IsComputePipeline
             ? RootSignatureFlags.None

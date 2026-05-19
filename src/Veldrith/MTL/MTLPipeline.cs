@@ -11,6 +11,11 @@ namespace Veldrith.MTL;
 internal class MtlPipeline : Pipeline {
 
     /// <summary>
+    /// Stores the maximum inline-byte payload size supported for push constants.
+    /// </summary>
+    private const uint MaxPushConstantSizeInBytesValue = 4096;
+
+    /// <summary>
     /// Stores the disposed state used by this instance.
     /// </summary>
     private bool _disposed;
@@ -104,6 +109,8 @@ internal class MtlPipeline : Pipeline {
         }
 
         this.VertexBufferCount = (uint)vdVertexLayouts.Length;
+        this.VertexPushConstantSlot = this.NonVertexBufferCount + this.VertexBufferCount;
+        this.FragmentPushConstantSlot = this.NonVertexBufferCount;
 
         // Outputs
         OutputDescription outputs = description.Outputs;
@@ -247,6 +254,8 @@ internal class MtlPipeline : Pipeline {
             }
         }
 
+        this.ComputePushConstantSlot = bufferIndex;
+
         this.ComputePipelineState = gd.Device.newComputePipelineStateWithDescriptor(mtlDesc);
         ObjectiveCRuntime.release(mtlDesc.NativePtr);
     }
@@ -285,6 +294,26 @@ internal class MtlPipeline : Pipeline {
     /// Gets or sets NonVertexBufferCount.
     /// </summary>
     public uint NonVertexBufferCount { get; }
+
+    /// <summary>
+    /// Gets the vertex-stage buffer slot reserved for push constants.
+    /// </summary>
+    public uint VertexPushConstantSlot { get; }
+
+    /// <summary>
+    /// Gets the fragment-stage buffer slot reserved for push constants.
+    /// </summary>
+    public uint FragmentPushConstantSlot { get; }
+
+    /// <summary>
+    /// Gets the compute-stage buffer slot reserved for push constants.
+    /// </summary>
+    public uint ComputePushConstantSlot { get; }
+
+    /// <summary>
+    /// Gets the maximum push-constant payload size, in bytes, supported by this backend.
+    /// </summary>
+    public uint MaxPushConstantSizeInBytes => MaxPushConstantSizeInBytesValue;
 
     /// <summary>
     /// Gets or sets CullMode.

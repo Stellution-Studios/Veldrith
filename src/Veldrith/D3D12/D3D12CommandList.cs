@@ -1386,6 +1386,36 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
+    /// Uploads backend-specific push-constant data to the active pipeline.
+    /// </summary>
+    /// <param name="offset">The byte offset inside the push-constant range.</param>
+    /// <param name="data">A pointer to source data.</param>
+    /// <param name="sizeInBytes">The number of bytes to upload.</param>
+    private protected override unsafe void PushConstantsCore(uint offset, IntPtr data, uint sizeInBytes) {
+        D3D12Pipeline pipeline = this._currentComputePipeline ?? this._currentGraphicsPipeline;
+        if (pipeline == null) {
+            throw new VeldridException("A Direct3D12 pipeline must be bound before push constants can be set.");
+        }
+
+        if ((offset % 4) != 0 || (sizeInBytes % 4) != 0) {
+            throw new VeldridException("Direct3D12 push constants require 4-byte aligned offsets and sizes.");
+        }
+
+        if (offset + sizeInBytes > pipeline.MaxPushConstantSizeInBytes) {
+            throw new VeldridException($"Push constants exceed the backend limit of {pipeline.MaxPushConstantSizeInBytes} bytes.");
+        }
+
+        uint dwordOffset = offset / 4;
+        uint dwordCount = sizeInBytes / 4;
+        if (this._currentComputePipeline != null) {
+            this.NativeCommandList.SetComputeRoot32BitConstants(pipeline.PushConstantRootParameterIndex, dwordCount, (void*)data, dwordOffset);
+        }
+        else {
+            this.NativeCommandList.SetGraphicsRoot32BitConstants(pipeline.PushConstantRootParameterIndex, dwordCount, (void*)data, dwordOffset);
+        }
+    }
+
+    /// <summary>
     /// Executes the transition logic for this backend.
     /// </summary>
     /// <param name="resource">The resource involved in this operation.</param>

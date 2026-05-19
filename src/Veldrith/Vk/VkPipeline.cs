@@ -26,6 +26,11 @@ internal unsafe class VkPipeline : Pipeline {
     private readonly VkRenderPass _renderPass;
 
     /// <summary>
+    /// Stores the shader stages that are allowed to read push constants from this pipeline.
+    /// </summary>
+    private readonly VkShaderStageFlags _pushConstantStages;
+
+    /// <summary>
     /// Stores the gd state used by this instance.
     /// </summary>
     private readonly VkGraphicsDevice gd;
@@ -231,17 +236,20 @@ internal unsafe class VkPipeline : Pipeline {
 
         Shader[] shaders = description.ShaderSet.Shaders;
         StackList<VkPipelineShaderStageCreateInfo> stages = new();
+        VkShaderStageFlags pushConstantStages = 0;
 
         foreach (Shader shader in shaders) {
             VkShader vkShader = Util.AssertSubtype<Shader, VkShader>(shader);
             VkPipelineShaderStageCreateInfo stageCi = VkPipelineShaderStageCreateInfo.New();
             stageCi.module = vkShader.ShaderModule;
             stageCi.stage = VkFormats.VdToVkShaderStages(shader.Stage);
+            pushConstantStages |= stageCi.stage;
             // stageCI.pName = CommonStrings.main; // Meh
             stageCi.pName = new FixedUtf8String(shader.EntryPoint); // TODO: DONT ALLOCATE HERE
             stageCi.pSpecializationInfo = &specializationInfo;
             stages.Add(stageCi);
         }
+        this._pushConstantStages = pushConstantStages;
 
         pipelineCi.stageCount = stages.Count;
         pipelineCi.pStages = (VkPipelineShaderStageCreateInfo*)stages.Data;
@@ -263,6 +271,13 @@ internal unsafe class VkPipeline : Pipeline {
         }
 
         pipelineLayoutCi.pSetLayouts = dsls;
+        VkPushConstantRange pushConstantRange = new() {
+            stageFlags = this._pushConstantStages,
+            offset = 0,
+            size = this.gd.MaxPushConstantsSize
+        };
+        pipelineLayoutCi.pushConstantRangeCount = 1;
+        pipelineLayoutCi.pPushConstantRanges = &pushConstantRange;
 
         vkCreatePipelineLayout(this.gd.Device, ref pipelineLayoutCi, null, out this._pipelineLayout);
         pipelineCi.layout = this._pipelineLayout;
@@ -377,6 +392,13 @@ internal unsafe class VkPipeline : Pipeline {
         }
 
         pipelineLayoutCi.pSetLayouts = dsls;
+        VkPushConstantRange pushConstantRange = new() {
+            stageFlags = VkShaderStageFlags.Compute,
+            offset = 0,
+            size = this.gd.MaxPushConstantsSize
+        };
+        pipelineLayoutCi.pushConstantRangeCount = 1;
+        pipelineLayoutCi.pPushConstantRanges = &pushConstantRange;
 
         vkCreatePipelineLayout(this.gd.Device, ref pipelineLayoutCi, null, out this._pipelineLayout);
         pipelineCi.layout = this._pipelineLayout;
@@ -419,6 +441,7 @@ internal unsafe class VkPipeline : Pipeline {
         VkPipelineShaderStageCreateInfo stageCi = VkPipelineShaderStageCreateInfo.New();
         stageCi.module = vkShader.ShaderModule;
         stageCi.stage = VkFormats.VdToVkShaderStages(shader.Stage);
+        this._pushConstantStages = stageCi.stage;
         stageCi.pName = CommonStrings.Main; // Meh
         stageCi.pSpecializationInfo = &specializationInfo;
         pipelineCi.stage = stageCi;
@@ -452,6 +475,11 @@ internal unsafe class VkPipeline : Pipeline {
     /// Gets or sets DynamicOffsetsCount.
     /// </summary>
     public uint DynamicOffsetsCount { get; }
+
+    /// <summary>
+    /// Gets the shader stages that can consume push constants for this pipeline.
+    /// </summary>
+    public VkShaderStageFlags PushConstantStages => this._pushConstantStages;
 
     /// <summary>
     /// Gets or sets ScissorTestEnabled.

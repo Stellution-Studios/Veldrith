@@ -52,6 +52,9 @@ internal static unsafe class SpirvCrossCompiler {
             SortedDictionary<BindingKey, ResourceInfo> allResources = new();
             bool hasVsStorage = CollectResources(cross, vsCompiler, allResources, 0, options.NormalizeResourceNames);
             bool hasFsStorage = CollectResources(cross, fsCompiler, allResources, 1, options.NormalizeResourceNames);
+            uint vsPushConstantId = GetPushConstantId(cross, vsCompiler);
+            uint fsPushConstantId = GetPushConstantId(cross, fsCompiler);
+            bool hasPushConstants = vsPushConstantId != 0 || fsPushConstantId != 0;
 
             // Set compiler options (GLSL version depends on whether storage resources are present)
             bool hasStorageResources = hasVsStorage || hasFsStorage;
@@ -62,7 +65,7 @@ internal static unsafe class SpirvCrossCompiler {
             SetSpecializations(cross, fsCompiler, options);
 
             if (target == CrossCompileTarget.HLSL || target == CrossCompileTarget.MSL) {
-                RemapBindingsHlslMsl(cross, allResources, vsCompiler, fsCompiler, target);
+                RemapBindingsHlslMsl(cross, allResources, vsCompiler, fsCompiler, target, hasPushConstants, vsPushConstantId, fsPushConstantId);
             }
 
             if (target == CrossCompileTarget.GLSL) {
@@ -118,12 +121,14 @@ internal static unsafe class SpirvCrossCompiler {
 
             SortedDictionary<BindingKey, ResourceInfo> allResources = new();
             bool hasStorage = CollectResources(cross, csCompiler, allResources, 0, options.NormalizeResourceNames);
+            uint csPushConstantId = GetPushConstantId(cross, csCompiler);
+            bool hasPushConstants = csPushConstantId != 0;
 
             SetCompilerOptions(cross, csCompiler, target, options, true, hasStorage);
             SetSpecializations(cross, csCompiler, options);
 
             if (target == CrossCompileTarget.HLSL || target == CrossCompileTarget.MSL) {
-                RemapBindingsHlslMsl(cross, allResources, csCompiler, null, target);
+                RemapBindingsHlslMsl(cross, allResources, csCompiler, null, target, hasPushConstants, csPushConstantId, 0);
             }
 
             if (target == CrossCompileTarget.GLSL) {
@@ -273,7 +278,9 @@ internal static unsafe class SpirvCrossCompiler {
                     break;
                 }
 
-            case CrossCompileTarget.MSL: break;
+            case CrossCompileTarget.MSL:
+                cross.CompilerOptionsSetBool(opts, CompilerOption.MslEnableDecorationBinding, 1);
+                break;
         }
 
         Check(cross, null, cross.CompilerInstallCompilerOptions(compiler, opts));
@@ -506,8 +513,11 @@ internal static unsafe class SpirvCrossCompiler {
     /// <param name="compiler0">The compiler0 value used by this operation.</param>
     /// <param name="compiler1">The compiler1 value used by this operation.</param>
     /// <param name="target">The target value used by this operation.</param>
-    private static void RemapBindingsHlslMsl(Cross cross, SortedDictionary<BindingKey, ResourceInfo> allResources, SpvcCompiler* compiler0, SpvcCompiler* compiler1, CrossCompileTarget target) {
-        uint bufferIndex = 0, textureIndex = 0, uavIndex = 0, samplerIndex = 0;
+    private static void RemapBindingsHlslMsl(Cross cross, SortedDictionary<BindingKey, ResourceInfo> allResources, SpvcCompiler* compiler0, SpvcCompiler* compiler1, CrossCompileTarget target, bool hasPushConstants, uint pushConstantId0, uint pushConstantId1) {
+        uint bufferIndex = target == CrossCompileTarget.HLSL && hasPushConstants ? 1u : 0u;
+        uint textureIndex = 0;
+        uint uavIndex = 0;
+        uint samplerIndex = 0;
 
         foreach (KeyValuePair<BindingKey, ResourceInfo> kvp in allResources) {
             uint index = GetResourceIndex(target, kvp.Value.Kind, ref bufferIndex, ref textureIndex, ref uavIndex, ref samplerIndex);
@@ -522,6 +532,16 @@ internal static unsafe class SpirvCrossCompiler {
                 if (id1 != 0) {
                     cross.CompilerSetDecoration(compiler1, id1, Decoration.Binding, index);
                 }
+            }
+        }
+
+        if (target == CrossCompileTarget.MSL && hasPushConstants) {
+            if (pushConstantId0 != 0) {
+                cross.CompilerSetDecoration(compiler0, pushConstantId0, Decoration.Binding, bufferIndex);
+            }
+
+            if (compiler1 != null && pushConstantId1 != 0) {
+                cross.CompilerSetDecoration(compiler1, pushConstantId1, Decoration.Binding, bufferIndex);
             }
         }
     }
@@ -762,6 +782,30 @@ internal static unsafe class SpirvCrossCompiler {
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Gets the push-constant resource identifier for a compiler, if present.
+    /// </summary>
+    /// <param name="cross">The SPIRV-Cross API instance.</param>
+    /// <param name="compiler">The compiler handle.</param>
+    /// <returns>The reflected push-constant resource id, or <c>0</c> when none exists.</returns>
+    private static uint GetPushConstantId(Cross cross, SpvcCompiler* compiler) {
+        SpvcResources* resources = null;
+        Check(cross, null, cross.CompilerCreateShaderResources(compiler, &resources));
+
+        ReflectedResource* pushConstants = null;
+        nuint pushConstantCount = 0;
+        cross.ResourcesGetResourceListForType(resources, ResourceType.PushConstant, &pushConstants, &pushConstantCount);
+        if (pushConstantCount == 0) {
+            return 0;
+        }
+
+        if (pushConstantCount > 1) {
+            throw new SpirvCompilationException("Multiple push-constant blocks are not supported.");
+        }
+
+        return pushConstants[0].Id;
     }
 
     #endregion

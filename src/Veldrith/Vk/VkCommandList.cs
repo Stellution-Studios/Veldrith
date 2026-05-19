@@ -129,6 +129,11 @@ internal unsafe class VkCommandList : CommandList {
     private StagingResourceInfo _currentStagingInfo;
 
     /// <summary>
+    /// Stores the most recently bound pipeline bind point for push-constant updates.
+    /// </summary>
+    private VkPipelineBindPoint _currentPushConstantBindPoint;
+
+    /// <summary>
     /// Stores the depth clear value value used during command execution.
     /// </summary>
     private VkClearValue? _depthClearValue;
@@ -1285,6 +1290,28 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
+    /// Uploads backend-specific push-constant data to the active pipeline.
+    /// </summary>
+    /// <param name="offset">The byte offset inside the push-constant range.</param>
+    /// <param name="data">A pointer to source data.</param>
+    /// <param name="sizeInBytes">The number of bytes to upload.</param>
+    private protected override void PushConstantsCore(uint offset, IntPtr data, uint sizeInBytes) {
+        VkPipeline activePipeline = this._currentPushConstantBindPoint == VkPipelineBindPoint.Compute
+            ? this._currentComputePipeline
+            : this._currentGraphicsPipeline;
+
+        if (activePipeline == null) {
+            throw new VeldridException("A Vulkan pipeline must be bound before push constants can be set.");
+        }
+
+        if (offset + sizeInBytes > this.gd.MaxPushConstantsSize) {
+            throw new VeldridException($"Push constants exceed the backend limit of {this.gd.MaxPushConstantsSize} bytes.");
+        }
+
+        vkCmdPushConstants(this.CommandBuffer, activePipeline.PipelineLayout, activePipeline.PushConstantStages, offset, sizeInBytes, (void*)data);
+    }
+
+    /// <summary>
     /// Sets the vertex buffer core value.
     /// </summary>
     /// <param name="index">The zero-based index of the target item.</param>
@@ -1323,6 +1350,7 @@ internal unsafe class VkCommandList : CommandList {
             Util.EnsureArrayMinimumSize(ref this._graphicsResourceSetsChanged, vkPipeline.ResourceSetCount);
             vkCmdBindPipeline(this.CommandBuffer, VkPipelineBindPoint.Graphics, vkPipeline.DevicePipeline);
             this._currentGraphicsPipeline = vkPipeline;
+            this._currentPushConstantBindPoint = VkPipelineBindPoint.Graphics;
         }
         else if (pipeline.IsComputePipeline && this._currentComputePipeline != pipeline) {
             Util.EnsureArrayMinimumSize(ref this._currentComputeResourceSets, vkPipeline.ResourceSetCount);
@@ -1330,6 +1358,7 @@ internal unsafe class VkCommandList : CommandList {
             Util.EnsureArrayMinimumSize(ref this._computeResourceSetsChanged, vkPipeline.ResourceSetCount);
             vkCmdBindPipeline(this.CommandBuffer, VkPipelineBindPoint.Compute, vkPipeline.DevicePipeline);
             this._currentComputePipeline = vkPipeline;
+            this._currentPushConstantBindPoint = VkPipelineBindPoint.Compute;
         }
 
         this._currentStagingInfo.Resources.Add(vkPipeline.RefCount);

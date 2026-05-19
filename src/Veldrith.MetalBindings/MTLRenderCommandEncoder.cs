@@ -76,6 +76,26 @@ public struct MTLRenderCommandEncoder {
     }
 
     /// <summary>
+    /// Sets inline bytes for the vertex stage.
+    /// </summary>
+    /// <param name="bytes">The pointer to source bytes.</param>
+    /// <param name="length">The number of bytes to bind.</param>
+    /// <param name="index">The zero-based binding index.</param>
+    public unsafe void setVertexBytes(void* bytes, UIntPtr length, UIntPtr index) {
+        objc_msgSend(this.NativePtr, sel_setVertexBytes, bytes, length, index);
+    }
+
+    /// <summary>
+    /// Sets inline bytes for the fragment stage.
+    /// </summary>
+    /// <param name="bytes">The pointer to source bytes.</param>
+    /// <param name="length">The number of bytes to bind.</param>
+    /// <param name="index">The zero-based binding index.</param>
+    public unsafe void setFragmentBytes(void* bytes, UIntPtr length, UIntPtr index) {
+        objc_msgSend(this.NativePtr, sel_setFragmentBytes, bytes, length, index);
+    }
+
+    /// <summary>
     /// Sets the vertex texture value.
     /// </summary>
     /// <param name="texture">The texture resource involved in this operation.</param>
@@ -332,6 +352,16 @@ public struct MTLRenderCommandEncoder {
     /// Stores the sel set fragment buffer offset value used during command execution.
     /// </summary>
     private static readonly Selector sel_setFragmentBufferOffset = "setFragmentBufferOffset:atIndex:";
+
+    /// <summary>
+    /// Stores the selector used to bind inline vertex-stage bytes.
+    /// </summary>
+    private static readonly Selector sel_setVertexBytes = "setVertexBytes:length:atIndex:";
+
+    /// <summary>
+    /// Stores the selector used to bind inline fragment-stage bytes.
+    /// </summary>
+    private static readonly Selector sel_setFragmentBytes = "setFragmentBytes:length:atIndex:";
 
     /// <summary>
     /// Stores the sel set vertex texture state used by this instance.

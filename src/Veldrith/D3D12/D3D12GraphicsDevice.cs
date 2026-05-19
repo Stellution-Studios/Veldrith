@@ -40,7 +40,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
 
 
 
-    private static readonly GraphicsDeviceFeatures _d3d12Features = new(true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, false);
+    private static readonly GraphicsDeviceFeatures _d3d12Features = new(true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, false);
 
     /// <summary>
     /// Stores the d3d12 info state used by this instance.

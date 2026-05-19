@@ -177,7 +177,7 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
         this.ApiVersion = new GraphicsApiVersion(major, minor, 0, 0);
 
         // TODO: Should be macOS 10.11+ and iOS 11.0+.
-        this.Features = new GraphicsDeviceFeatures(true, false, false, this.MetalFeatures.IsSupported(MTLFeatureSet.macOS_GPUFamily1_v3), false, this.MetalFeatures.IsDrawBaseVertexInstanceSupported(), this.MetalFeatures.IsDrawBaseVertexInstanceSupported(), true, true, true, true, true, true, true, true, true, true, true, false);
+        this.Features = new GraphicsDeviceFeatures(true, false, false, this.MetalFeatures.IsSupported(MTLFeatureSet.macOS_GPUFamily1_v3), false, this.MetalFeatures.IsDrawBaseVertexInstanceSupported(), this.MetalFeatures.IsDrawBaseVertexInstanceSupported(), true, true, true, true, true, true, true, true, true, true, true, true, false);
         this.ResourceBindingModel = options.ResourceBindingModel;
         this.PreferMemorylessDepthTargets = metalOptions.PreferMemorylessDepthTargets;
 

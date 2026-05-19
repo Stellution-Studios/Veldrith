@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Veldrith.MetalBindings;
 
 namespace Veldrith.MTL;
@@ -141,6 +142,11 @@ internal unsafe class MtlCommandList : CommandList {
     /// Stores the graphics pipeline state used by this instance.
     /// </summary>
     private MtlPipeline _graphicsPipeline;
+
+    /// <summary>
+    /// Stores whether push constants target the compute pipeline for the current state.
+    /// </summary>
+    private bool _pushConstantsUseComputePipeline;
 
     /// <summary>
     /// Stores the graphics resource set count collection used by this instance.
@@ -1431,6 +1437,7 @@ internal unsafe class MtlCommandList : CommandList {
             Util.EnsureArrayMinimumSize(ref this._computeResourceSets, this._computeResourceSetCount);
             Util.EnsureArrayMinimumSize(ref this._computeResourceSetsActive, this._computeResourceSetCount);
             Util.ClearArray(this._computeResourceSetsActive);
+            this._pushConstantsUseComputePipeline = true;
         }
         else if (!pipeline.IsComputePipeline && this._graphicsPipeline != pipeline) {
             this._graphicsPipeline = Util.AssertSubtype<Pipeline, MtlPipeline>(pipeline);
@@ -1448,6 +1455,7 @@ internal unsafe class MtlCommandList : CommandList {
             Util.EnsureArrayMinimumSize(ref this._vbOffsetsActive, this._vertexBufferCount);
             Util.ClearArray(this._vertexBuffersActive);
             Util.ClearArray(this._vbOffsetsActive);
+            this._pushConstantsUseComputePipeline = false;
         }
     }
 
@@ -1580,5 +1588,40 @@ internal unsafe class MtlCommandList : CommandList {
         }
 
         ObjectiveCRuntime.release(nsName);
+    }
+
+    /// <summary>
+    /// Uploads backend-specific push-constant data to the active pipeline.
+    /// </summary>
+    /// <param name="offset">The byte offset inside the push-constant range.</param>
+    /// <param name="data">A pointer to source data.</param>
+    /// <param name="sizeInBytes">The number of bytes to upload.</param>
+    private protected override unsafe void PushConstantsCore(uint offset, IntPtr data, uint sizeInBytes) {
+        MtlPipeline pipeline = this._pushConstantsUseComputePipeline ? this._computePipeline : this._graphicsPipeline;
+        if (pipeline == null) {
+            throw new VeldridException("A Metal pipeline must be bound before push constants can be set.");
+        }
+
+        if (offset + sizeInBytes > pipeline.MaxPushConstantSizeInBytes) {
+            throw new VeldridException($"Push constants exceed the backend limit of {pipeline.MaxPushConstantSizeInBytes} bytes.");
+        }
+
+        uint totalSize = offset + sizeInBytes;
+        byte* pushConstantData = stackalloc byte[(int)totalSize];
+        Unsafe.InitBlock(pushConstantData, 0, totalSize);
+        Unsafe.CopyBlock(pushConstantData + offset, (void*)data, sizeInBytes);
+
+        if (this._pushConstantsUseComputePipeline) {
+            this.EnsureComputeEncoder();
+            this._cce.setBytes(pushConstantData, (UIntPtr)totalSize, pipeline.ComputePushConstantSlot);
+        }
+        else {
+            if (!this.EnsureRenderPass()) {
+                throw new VeldridException("A render pass must be active before graphics push constants can be set on Metal.");
+            }
+
+            this._rce.setVertexBytes(pushConstantData, (UIntPtr)totalSize, pipeline.VertexPushConstantSlot);
+            this._rce.setFragmentBytes(pushConstantData, (UIntPtr)totalSize, pipeline.FragmentPushConstantSlot);
+        }
     }
 }

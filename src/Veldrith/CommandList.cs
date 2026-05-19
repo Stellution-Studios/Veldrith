@@ -98,6 +98,42 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
+    /// Uploads raw push-constant data to the currently active pipeline.
+    /// </summary>
+    /// <param name="offset">The byte offset inside the pipeline's push-constant range.</param>
+    /// <param name="data">A pointer to the source data to copy.</param>
+    /// <param name="sizeInBytes">The number of bytes to upload.</param>
+    public void PushConstants(uint offset, IntPtr data, uint sizeInBytes) {
+        if (!this.features.PushConstants) {
+            throw new VeldridException("Push constants are not supported by this GraphicsDevice.");
+        }
+
+        if (sizeInBytes == 0) {
+            return;
+        }
+
+#if VALIDATE_USAGE
+        if (this.GraphicsPipeline == null && this.ComputePipeline == null) {
+            throw new VeldridException("A Pipeline must be active before push constants can be set.");
+        }
+#endif
+
+        this.PushConstantsCore(offset, data, sizeInBytes);
+    }
+
+    /// <summary>
+    /// Uploads a blittable value as push constants to the currently active pipeline.
+    /// </summary>
+    /// <typeparam name="T">The unmanaged value type to upload.</typeparam>
+    /// <param name="offset">The byte offset inside the pipeline's push-constant range.</param>
+    /// <param name="value">The value to copy into push constants.</param>
+    public unsafe void PushConstants<T>(uint offset, in T value) where T : unmanaged {
+        fixed (T* valuePtr = &value) {
+            this.PushConstants(offset, (IntPtr)valuePtr, Util.USizeOf<T>());
+        }
+    }
+
+    /// <summary>
     /// Sets the vertex buffer value.
     /// </summary>
     /// <param name="index">The zero-based index of the target item.</param>
@@ -1088,6 +1124,14 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     /// </summary>
     /// <param name="name">The name used by this operation.</param>
     private protected abstract void InsertDebugMarkerCore(string name);
+
+    /// <summary>
+    /// Uploads backend-specific push-constant data to the active pipeline.
+    /// </summary>
+    /// <param name="offset">The byte offset inside the push-constant range.</param>
+    /// <param name="data">A pointer to source data.</param>
+    /// <param name="sizeInBytes">The number of bytes to upload.</param>
+    private protected abstract void PushConstantsCore(uint offset, IntPtr data, uint sizeInBytes);
 
 #if VALIDATE_USAGE
 

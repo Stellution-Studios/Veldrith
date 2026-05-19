@@ -247,7 +247,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
 
         this.MemoryManager = new VkDeviceMemoryManager(this.device, this._physicalDeviceProperties.limits.bufferImageGranularity, this.GetBufferMemoryRequirements2, this.GetImageMemoryRequirements2);
 
-        this.Features = new GraphicsDeviceFeatures(true, this._physicalDeviceFeatures.geometryShader, this._physicalDeviceFeatures.tessellationShader, this._physicalDeviceFeatures.multiViewport, true, true, true, true, this._physicalDeviceFeatures.drawIndirectFirstInstance, this._physicalDeviceFeatures.fillModeNonSolid, this._physicalDeviceFeatures.samplerAnisotropy, this._physicalDeviceFeatures.depthClamp, true, this._physicalDeviceFeatures.independentBlend, true, true, this._debugMarkerEnabled, true, this._physicalDeviceFeatures.shaderFloat64);
+        this.Features = new GraphicsDeviceFeatures(true, this._physicalDeviceFeatures.geometryShader, this._physicalDeviceFeatures.tessellationShader, this._physicalDeviceFeatures.multiViewport, true, true, true, true, this._physicalDeviceFeatures.drawIndirectFirstInstance, this._physicalDeviceFeatures.fillModeNonSolid, this._physicalDeviceFeatures.samplerAnisotropy, this._physicalDeviceFeatures.depthClamp, true, this._physicalDeviceFeatures.independentBlend, true, true, this._debugMarkerEnabled, true, true, this._physicalDeviceFeatures.shaderFloat64);
 
         this.ResourceFactory = new VkResourceFactory(this);
 
@@ -339,6 +339,11 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// Stores the physical device mem properties state used by this instance.
     /// </summary>
     public VkPhysicalDeviceMemoryProperties PhysicalDeviceMemProperties => this._physicalDeviceMemProperties;
+
+    /// <summary>
+    /// Gets the maximum push-constant payload size, in bytes, supported by the physical device.
+    /// </summary>
+    internal uint MaxPushConstantsSize => this._physicalDeviceProperties.limits.maxPushConstantsSize;
 
     /// <summary>
     /// Stores the graphics queue state used by this instance.
