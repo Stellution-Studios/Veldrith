@@ -102,7 +102,10 @@ internal sealed class D3D12Swapchain : Swapchain {
         }
 
         this._hasNativeSwapchain = this.TryCreateNativeSwapchain(ref description);
-        this.CreateAttachments(description.Width, description.Height, description.DepthFormat, description.ColorSrgb);
+        uint attachmentWidth = description.Width;
+        uint attachmentHeight = description.Height;
+        this.TryResolveAttachmentSize(ref attachmentWidth, ref attachmentHeight);
+        this.CreateAttachments(attachmentWidth, attachmentHeight, description.DepthFormat, description.ColorSrgb);
     }
 
     /// <summary>
@@ -181,10 +184,11 @@ internal sealed class D3D12Swapchain : Swapchain {
         this._depthTexture?.Dispose();
         if (this._hasNativeSwapchain) {
             this.DisposeNativeResources();
-            this._dxgiSwapChain.ResizeBuffers((uint)this._bufferCount, width, height, this._nativeColorFormat, SwapChainFlags.None);
+            this._dxgiSwapChain.ResizeBuffers((uint)this._bufferCount, width, height, this._nativeColorFormat, this.GetSwapChainFlags());
             this.CreateNativeRenderTargets();
         }
 
+        this.TryResolveAttachmentSize(ref width, ref height);
         this.CreateAttachments(width, height, depthFormat, srgb);
     }
 
@@ -329,6 +333,53 @@ internal sealed class D3D12Swapchain : Swapchain {
         this.DisposeNativeResources();
         this._dxgiSwapChain.ResizeBuffers((uint)this._bufferCount, width, height, this._nativeColorFormat, this.GetSwapChainFlags());
         this.CreateNativeRenderTargets();
+    }
+
+    /// <summary>
+    /// Resolves the attachment size to the native swapchain back-buffer size when available.
+    /// </summary>
+    /// <param name="width">The width value.</param>
+    /// <param name="height">The height value.</param>
+    private void TryResolveAttachmentSize(ref uint width, ref uint height) {
+        if (!this._hasNativeSwapchain) {
+            return;
+        }
+
+        if (!this.TryGetNativeBackBufferSize(out uint nativeWidth, out uint nativeHeight)) {
+            return;
+        }
+
+        width = nativeWidth;
+        height = nativeHeight;
+    }
+
+    /// <summary>
+    /// Attempts to get native back-buffer size and reports whether it succeeded.
+    /// </summary>
+    /// <param name="width">The width value.</param>
+    /// <param name="height">The height value.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
+    private bool TryGetNativeBackBufferSize(out uint width, out uint height) {
+        width = 0;
+        height = 0;
+
+        if (!this._hasNativeSwapchain || this._backBufferResources == null || this._backBufferResources.Length == 0) {
+            return false;
+        }
+
+        ID3D12Resource backBuffer = this._backBufferResources[0];
+        if (backBuffer == null) {
+            return false;
+        }
+
+        ResourceDescription description = backBuffer.Description;
+        if (description.Width == 0 || description.Height == 0) {
+            return false;
+        }
+
+        width = (uint)description.Width;
+        height = description.Height;
+        return true;
     }
 
     /// <summary>

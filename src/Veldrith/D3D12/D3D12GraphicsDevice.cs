@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
 using SharpGen.Runtime;
 using Vortice.Direct3D;
@@ -275,6 +276,34 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
+    /// Gets a detailed device-removed diagnostic string for Direct3D 12.
+    /// </summary>
+    /// <returns>The value produced by this operation.</returns>
+    internal string GetDeviceRemovedReasonDescription() {
+        if (this._device == null) {
+            return "Device unavailable.";
+        }
+
+        Result reason = this._device.DeviceRemovedReason;
+        if (reason.Success) {
+            return "S_OK";
+        }
+
+        StringBuilder sb = new(96);
+        sb.Append("HRESULT=0x");
+        sb.Append(reason.Code.ToString("X8"));
+
+        string text = reason.Description;
+        if (!string.IsNullOrWhiteSpace(text)) {
+            sb.Append(" (");
+            sb.Append(text.Trim());
+            sb.Append(')');
+        }
+
+        return sb.ToString();
+    }
+
+    /// <summary>
     /// Executes the wait for fence logic for this backend.
     /// </summary>
     /// <param name="fence">The synchronization fence used by this operation.</param>
@@ -476,16 +505,22 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// <param name="commandList">The command list used by this operation.</param>
     /// <param name="fence">The synchronization fence used by this operation.</param>
     private protected override void SubmitCommandsCore(CommandList commandList, Fence fence) {
-        if (commandList is D3D12CommandList d3d12CommandList) {
-            d3d12CommandList.ExecuteNoSignal();
-            ulong signalValue = this._nextSubmissionFenceValue++;
-            this.CommandQueue.Signal(this._submissionFence, signalValue).CheckError();
-            d3d12CommandList.MarkSubmitted(signalValue);
-            d3d12CommandList.ClearCachedState();
-        }
+        try {
+            if (commandList is D3D12CommandList d3d12CommandList) {
+                d3d12CommandList.ExecuteNoSignal();
+                ulong signalValue = this._nextSubmissionFenceValue++;
+                this.CommandQueue.Signal(this._submissionFence, signalValue).CheckError();
+                d3d12CommandList.MarkSubmitted(signalValue);
+                d3d12CommandList.ClearCachedState();
+            }
 
-        if (fence is D3D12Fence d3d12Fence) {
-            d3d12Fence.Signal(this.CommandQueue);
+            if (fence is D3D12Fence d3d12Fence) {
+                d3d12Fence.Signal(this.CommandQueue);
+            }
+        }
+        catch (SharpGenException ex) {
+            string reason = this.GetDeviceRemovedReasonDescription();
+            throw new VeldridException($"D3D12 command submission failed. DeviceRemovedReason={reason}.", ex);
         }
     }
 

@@ -1282,7 +1282,12 @@ internal sealed class D3D12CommandList : CommandList {
 
         this.TransitionTexture(d3D12Framebuffer.DepthTargetTexture, ResourceStates.DepthWrite);
         if (d3D12Framebuffer.TryGetDepthStencilView(out CpuDescriptorHandle dsv)) {
-            this.NativeCommandList.ClearDepthStencilView(dsv, ClearFlags.Depth | ClearFlags.Stencil, depth, stencil, 0, null!);
+            ClearFlags clearFlags = ClearFlags.Depth;
+            if (FormatHelpers.IsStencilFormat(d3D12Framebuffer.DepthTargetTexture.Format)) {
+                clearFlags |= ClearFlags.Stencil;
+            }
+
+            this.NativeCommandList.ClearDepthStencilView(dsv, clearFlags, depth, stencil, 0, null!);
         }
     }
 
