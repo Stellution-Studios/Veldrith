@@ -514,7 +514,9 @@ internal static unsafe class SpirvCrossCompiler {
     /// <param name="compiler1">The compiler1 value used by this operation.</param>
     /// <param name="target">The target value used by this operation.</param>
     private static void RemapBindingsHlslMsl(Cross cross, SortedDictionary<BindingKey, ResourceInfo> allResources, SpvcCompiler* compiler0, SpvcCompiler* compiler1, CrossCompileTarget target, bool hasPushConstants, uint pushConstantId0, uint pushConstantId1) {
-        uint bufferIndex = target == CrossCompileTarget.HLSL && hasPushConstants ? 1u : 0u;
+        // D3D12 root signatures reserve b0 for root constants (push constants),
+        // so SPIR-V resources targeting HLSL must always start CBV-style bindings at b1.
+        uint bufferIndex = target == CrossCompileTarget.HLSL ? 1u : 0u;
         uint textureIndex = 0;
         uint uavIndex = 0;
         uint samplerIndex = 0;
