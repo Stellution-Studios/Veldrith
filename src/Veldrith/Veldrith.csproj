@@ -49,6 +49,7 @@
         <RepositoryUrl>https://github.com/Stellution-Studios/Veldrith</RepositoryUrl>
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <PackageIcon>icon.png</PackageIcon>
         <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
     </PropertyGroup>
 
@@ -60,6 +61,11 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Veldrith.MetalBindings\Veldrith.MetalBindings.csproj" />
+    </ItemGroup>
+
+    <!-- Icon -->
+    <ItemGroup>
+        <None Include="..\..\docs\icon.png" Pack="true" PackagePath="" />
     </ItemGroup>
 
     <!-- Embedded shaders -->

@@ -34,8 +34,14 @@
         <RepositoryUrl>https://github.com/Stellution-Studios/Veldrith</RepositoryUrl>
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <PackageIcon>icon.png</PackageIcon>
         <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
     </PropertyGroup>
+
+    <!-- Icon -->
+    <ItemGroup>
+        <None Include="..\..\docs\icon.png" Pack="true" PackagePath="" />
+    </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\Veldrith\Veldrith.csproj" />
