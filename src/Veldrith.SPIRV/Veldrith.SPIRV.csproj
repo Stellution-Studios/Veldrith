@@ -1,5 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+    <!-- Build -->
+    <PropertyGroup>
+        <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+        <RepositoryRootDirectory>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..\\'))</RepositoryRootDirectory>
+        <BinDir>$(RepositoryRootDirectory)bin</BinDir>
+        <OutputPath>$([System.IO.Path]::GetFullPath('$(RepositoryRootDirectory)bin\$(Configuration)'))\$(MSBuildProjectName)</OutputPath>
+        <PackageOutputPath>$(BinDir)\Packages\$(Configuration)</PackageOutputPath>
+    </PropertyGroup>
+
+    <!-- Project -->
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
@@ -12,14 +22,32 @@
         <LangVersion>14</LangVersion>
     </PropertyGroup>
 
-    <ItemGroup>
-        <ProjectReference Include="..\Veldrith\Veldrith.csproj"/>
-    </ItemGroup>
+    <!-- Versions -->
+    <PropertyGroup>
+        <NerdbankGitVersioningVersion>3.10.44-alpha</NerdbankGitVersioningVersion>
+    </PropertyGroup>
+
+    <!-- NuGet -->
+    <PropertyGroup>
+        <PackageLicenseUrl>https://raw.githubusercontent.com/ppy/veldrid/master/LICENSE</PackageLicenseUrl>
+        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+        <Copyright>Copyright 2024 (c) Eric Mellino and Veldrid contributors. All rights reserved.</Copyright>
+        <Authors>Eric Mellino, ppy Pty Ltd</Authors>
+        <RepositoryUrl>https://github.com/ppy/veldrid</RepositoryUrl>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+    </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Silk.NET.SPIRV.Cross" Version="2.23.0"/>
-        <PackageReference Include="Silk.NET.Shaderc" Version="2.23.0"/>
-        <PackageReference Update="Nerdbank.GitVersioning" Version="3.10.44-alpha">
+        <ProjectReference Include="..\Veldrith\Veldrith.csproj" />
+    </ItemGroup>
+
+    <!-- Libraries -->
+    <ItemGroup>
+        <PackageReference Include="Silk.NET.SPIRV.Cross" Version="2.23.0" />
+        <PackageReference Include="Silk.NET.Shaderc" Version="2.23.0" />
+        <PackageReference Include="Nerdbank.GitVersioning" Version="$(NerdbankGitVersioningVersion)">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
         </PackageReference>
