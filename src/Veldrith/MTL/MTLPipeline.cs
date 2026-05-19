@@ -79,9 +79,7 @@ internal class MtlPipeline : Pipeline {
         MTLVertexDescriptor vertexDescriptor = mtlDesc.vertexDescriptor;
 
         for (uint i = 0; i < vdVertexLayouts.Length; i++) {
-            uint layoutIndex = this.ResourceBindingModel == ResourceBindingModel.Improved
-                ? this.NonVertexBufferCount + i
-                : i;
+            uint layoutIndex = this.ResourceBindingModel == ResourceBindingModel.Improved ? this.NonVertexBufferCount + i : i;
             MTLVertexBufferLayoutDescriptor mtlLayout = vertexDescriptor.layouts[layoutIndex];
             mtlLayout.stride = vdVertexLayouts[i].Stride;
             uint stepRate = vdVertexLayouts[i].InstanceStepRate;
