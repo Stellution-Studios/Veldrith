@@ -1,5 +1,5 @@
 <p align="center" style="margin-bottom: 0px !important;">
-  <img width="512" src="https://github.com/user-attachments/assets/75cb80ab-7d64-41d1-a5ea-e4b25d4a0056" alt="Logo" align="center">
+  <img width="512" src="https://github.com/Stellution-Studios/Veldrith/blob/master/docs/icon_big.png?raw=true" alt="Logo" align="center">
 </p>
 
 # Veldrith 🚀
