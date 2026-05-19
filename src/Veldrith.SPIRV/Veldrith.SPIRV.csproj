@@ -12,28 +12,26 @@
     <!-- Project -->
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
+        <AssemblyName>Veldrith.SPIRV</AssemblyName>
+        <PackageId>Veldrith.SPIRV</PackageId>
+        <Version>1.0.0</Version>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <NoWarn>$(NoWarn);8600;8603;8604;8618;8625</NoWarn>
         <IsPackable>true</IsPackable>
-        <Description>SPIR-V cross-compilation for Veldrid using Silk.NET. Compiles GLSL to SPIR-V and cross-compiles SPIR-V to HLSL, GLSL, and ESSL.</Description>
-        <PackageTags>3D Graphics Direct3D DirectX Vulkan Core Game SPIRV Shader</PackageTags>
+        <Description>SPIR-V shader compilation and cross-compilation support for the Veldrith backend abstraction layer.</Description>
+        <PackageTags>Graphics Backend Abstraction SPIRV Shader Compiler Vulkan Direct3D Metal GLSL</PackageTags>
         <LangVersion>14</LangVersion>
-    </PropertyGroup>
-
-    <!-- Versions -->
-    <PropertyGroup>
-        <NerdbankGitVersioningVersion>3.10.44-alpha</NerdbankGitVersioningVersion>
     </PropertyGroup>
 
     <!-- NuGet -->
     <PropertyGroup>
-        <PackageLicenseUrl>https://raw.githubusercontent.com/ppy/veldrid/master/LICENSE</PackageLicenseUrl>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-        <Copyright>Copyright 2024 (c) Eric Mellino and Veldrid contributors. All rights reserved.</Copyright>
-        <Authors>Eric Mellino, ppy Pty Ltd</Authors>
-        <RepositoryUrl>https://github.com/ppy/veldrid</RepositoryUrl>
+        <Copyright>Copyright (c) MrScautHD and Veldrith contributors.</Copyright>
+        <Authors>MrScautHD, Eric Mellino, ppy Pty Ltd</Authors>
+        <RepositoryUrl>https://github.com/Stellution-Studios/Veldrith</RepositoryUrl>
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
         <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
@@ -47,10 +45,6 @@
     <ItemGroup>
         <PackageReference Include="Silk.NET.SPIRV.Cross" Version="2.23.0" />
         <PackageReference Include="Silk.NET.Shaderc" Version="2.23.0" />
-        <PackageReference Include="Nerdbank.GitVersioning" Version="$(NerdbankGitVersioningVersion)">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-        </PackageReference>
     </ItemGroup>
 
 </Project>

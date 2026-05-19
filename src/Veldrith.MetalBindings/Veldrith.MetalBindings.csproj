@@ -17,29 +17,16 @@
         <LangVersion>14</LangVersion>
     </PropertyGroup>
 
-    <!-- Versions -->
-    <PropertyGroup>
-        <NerdbankGitVersioningVersion>3.10.44-alpha</NerdbankGitVersioningVersion>
-    </PropertyGroup>
-
     <!-- NuGet -->
     <PropertyGroup>
-        <PackageLicenseUrl>https://raw.githubusercontent.com/ppy/veldrid/master/LICENSE</PackageLicenseUrl>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-        <Copyright>Copyright 2024 (c) Eric Mellino and Veldrid contributors. All rights reserved.</Copyright>
-        <Authors>Eric Mellino, ppy Pty Ltd</Authors>
-        <RepositoryUrl>https://github.com/ppy/veldrid</RepositoryUrl>
+        <Copyright>Copyright (c) MrScautHD and Veldrith contributors.</Copyright>
+        <Authors>MrScautHD, Eric Mellino, ppy Pty Ltd</Authors>
+        <RepositoryUrl>https://github.com/Stellution-Studios/Veldrith</RepositoryUrl>
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
         <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
     </PropertyGroup>
-
-    <!-- Libraries -->
-    <ItemGroup>
-        <PackageReference Include="Nerdbank.GitVersioning" Version="$(NerdbankGitVersioningVersion)">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-        </PackageReference>
-    </ItemGroup>
 
 </Project>

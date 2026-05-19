@@ -1,36 +1,58 @@
-name: Veldrid CI build
+name: Build & Publish Veldrith
 
 on:
-  create: # when tags are created
+  release:
+    types: [ published ]
   push:
     branches: [ master ]
   pull_request:
     branches: [ master ]
 
 jobs:
-  build_windows:
-    runs-on: windows-latest
+  build:
+    runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 8.0.x
-    - name: Restore dependencies
-      run: dotnet restore src
-    - name: Build
-      run: dotnet build --no-restore src -c Release
-    - name: Build Packages
-      run: dotnet pack src -c Release
-    - name: Publish tagged release to nuget.org
-      if: startsWith(github.ref, 'refs/tags/')
-      run: dotnet nuget push bin\Packages\Release\ppy.*.nupkg -s https://api.nuget.org/v3/index.json --api-key ${{secrets.NUGET_API_KEY}}
-    - name: Generate GitHub Release
-      if: startsWith(github.ref, 'refs/tags/')
-      uses: softprops/action-gh-release@v2
-      with:
-        files: |
-          bin\Packages\Release\ppy.*.nupkg
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore src/Veldrith.slnx
+
+      - name: Build
+        run: dotnet build src/Veldrith.slnx --no-restore --configuration Release
+
+  publish-nuget:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore src/Veldrith.slnx
+
+      - name: Resolve package version
+        shell: bash
+        run: echo "PACKAGE_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+
+      - name: Pack Veldrith
+        run: dotnet pack src/Veldrith/Veldrith.csproj --configuration Release --no-restore -p:PackageVersion=${{ env.PACKAGE_VERSION }} --output artifacts/nuget
+
+      - name: Pack Veldrith.SPIRV
+        run: dotnet pack src/Veldrith.SPIRV/Veldrith.SPIRV.csproj --configuration Release --no-restore -p:PackageVersion=${{ env.PACKAGE_VERSION }} --output artifacts/nuget
+
+      - name: Publish NuGet packages
+        run: dotnet nuget push "artifacts/nuget/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate

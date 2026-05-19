@@ -12,7 +12,7 @@
     <!-- Project -->
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <AssemblyName>ppy.Veldrid</AssemblyName>
+        <AssemblyName>Veldrith</AssemblyName>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <LangVersion>14</LangVersion>
         <DefineConstants>$(DefineConstants);VALIDATE_USAGE</DefineConstants>
@@ -33,21 +33,20 @@
     <PropertyGroup>
         <VeldridSpirvVersion>1.0.14</VeldridSpirvVersion>
         <VorticeWindowsVersion>3.8.3</VorticeWindowsVersion>
-        <NerdbankGitVersioningVersion>3.10.44-alpha</NerdbankGitVersioningVersion>
     </PropertyGroup>
 
     <!-- NuGet -->
     <PropertyGroup Label="Nuget">
-        <PackageId>ppy.Veldrid</PackageId>
-        <Version>0.0.0</Version>
+        <PackageId>Veldrith</PackageId>
+        <Version>1.0.0</Version>
         <IsPackable>true</IsPackable>
-        <Description>A low-level, hardware-accelerated graphics and compute library for .NET, with backends for Vulkan, Metal, and Direct3D 12. Veldrid can be used to create high-performance 2D and 3D games, simulations, tools, and other graphical applications.</Description>
-        <PackageTags>3D Graphics Direct3D DirectX DX12 Vulkan Metal Core Standard Game</PackageTags>
-        <PackageLicenseUrl>https://raw.githubusercontent.com/ppy/veldrid/master/LICENSE</PackageLicenseUrl>
+        <Description>A low-level graphics and compute backend abstraction layer for .NET with Vulkan, Metal, and Direct3D 12 implementations.</Description>
+        <PackageTags>Graphics Backend Abstraction Direct3D DirectX DX12 Vulkan Metal Rendering Compute</PackageTags>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-        <Copyright>Copyright 2024 (c) Eric Mellino and Veldrid contributors. All rights reserved.</Copyright>
-        <Authors>Eric Mellino, ppy Pty Ltd</Authors>
-        <RepositoryUrl>https://github.com/ppy/veldrid</RepositoryUrl>
+        <Copyright>Copyright (c) MrScautHD and Veldrith contributors.</Copyright>
+        <Authors>MrScautHD, Eric Mellino, ppy Pty Ltd</Authors>
+        <RepositoryUrl>https://github.com/Stellution-Studios/Veldrith</RepositoryUrl>
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
         <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
@@ -57,10 +56,6 @@
     <ItemGroup>
         <PackageReference Include="ppy.Vk" Version="1.0.26" Condition="'$(ExcludeVulkan)' != 'true'" />
         <PackageReference Include="Vortice.Direct3D12" Version="$(VorticeWindowsVersion)" />
-        <PackageReference Include="Nerdbank.GitVersioning" Version="$(NerdbankGitVersioningVersion)">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-        </PackageReference>
     </ItemGroup>
 
     <ItemGroup>
