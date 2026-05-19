@@ -145,12 +145,12 @@ internal sealed class D3D12CommandList : CommandList {
     /// <summary>
     /// Stores the number of sampler descriptors retained by the persistent shader-visible heap.
     /// </summary>
-    private readonly uint _maxSamplerDescriptors = 1024;
+    private readonly uint _maxSamplerDescriptors = 1536;
 
     /// <summary>
     /// Stores the number of SRV/UAV descriptors retained by the persistent shader-visible heap.
     /// </summary>
-    private readonly uint _maxSrvUavDescriptors = 32768;
+    private readonly uint _maxSrvUavDescriptors = 49152;
 
     /// <summary>
     /// Executes the start new logic for this backend.
@@ -418,9 +418,19 @@ internal sealed class D3D12CommandList : CommandList {
     private uint _nextSamplerDescriptor;
 
     /// <summary>
+    /// Stores the exclusive sampler descriptor limit for the active frame slot.
+    /// </summary>
+    private uint _samplerDescriptorLimit;
+
+    /// <summary>
     /// Stores the next srv uav descriptor state used by this instance.
     /// </summary>
     private uint _nextSrvUavDescriptor;
+
+    /// <summary>
+    /// Stores the exclusive SRV/UAV descriptor limit for the active frame slot.
+    /// </summary>
+    private uint _srvUavDescriptorLimit;
 
     /// <summary>
     /// Stores the accumulated CPU time spent recording resource barriers during the current reporting window.
@@ -983,12 +993,11 @@ internal sealed class D3D12CommandList : CommandList {
         this.WaitForFrameSlot(this._currentFrameSlot);
         this._commandAllocators[this._currentFrameSlot].Reset();
         this.NativeCommandList.Reset(this._commandAllocators[this._currentFrameSlot]);
+        this.ResetDescriptorAllocatorsForFrameSlot(this._currentFrameSlot);
         this._begun = true;
         this._ended = false;
         this._transitionedBackBufferIndex = -1;
         this._descriptorHeapsBound = false;
-        this._nextSrvUavDescriptor = 0;
-        this._nextSamplerDescriptor = 0;
         this._descriptorTableCache.Clear();
         this._activeViewportCount = 0;
         this._activeScissorRectCount = 0;
@@ -2139,6 +2148,21 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
+    /// Resets shader-visible descriptor allocation to the range owned by the active frame slot.
+    /// </summary>
+    /// <param name="frameSlot">The frame slot that has been waited before reuse.</param>
+    private void ResetDescriptorAllocatorsForFrameSlot(int frameSlot) {
+        uint srvUavDescriptorsPerSlot = this._maxSrvUavDescriptors / FramesInFlight;
+        uint samplerDescriptorsPerSlot = this._maxSamplerDescriptors / FramesInFlight;
+
+        this._nextSrvUavDescriptor = (uint)frameSlot * srvUavDescriptorsPerSlot;
+        this._srvUavDescriptorLimit = this._nextSrvUavDescriptor + srvUavDescriptorsPerSlot;
+
+        this._nextSamplerDescriptor = (uint)frameSlot * samplerDescriptorsPerSlot;
+        this._samplerDescriptorLimit = this._nextSamplerDescriptor + samplerDescriptorsPerSlot;
+    }
+
+    /// <summary>
     /// Executes the execute indirect logic for this backend.
     /// </summary>
     /// <param name="argumentBuffer">The argument buffer value used by this operation.</param>
@@ -3036,8 +3060,8 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="cpuHandle">The cpu handle value used by this operation.</param>
     /// <param name="gpuHandle">The gpu handle value used by this operation.</param>
     private void AllocateSrvUavDescriptors(uint count, out CpuDescriptorHandle cpuHandle, out GpuDescriptorHandle gpuHandle) {
-        if (this._nextSrvUavDescriptor + count > this._maxSrvUavDescriptors) {
-            throw new VeldridException("D3D12 SRV/UAV descriptor heap exhausted for this CommandList recording.");
+        if (this._nextSrvUavDescriptor + count > this._srvUavDescriptorLimit) {
+            throw new VeldridException("D3D12 SRV/UAV descriptor heap exhausted for this CommandList frame slot.");
         }
 
         CpuDescriptorHandle cpuStart = this._shaderVisibleSrvUavHeap.GetCPUDescriptorHandleForHeapStart();
@@ -3053,8 +3077,8 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="cpuHandle">The cpu handle value used by this operation.</param>
     /// <param name="gpuHandle">The gpu handle value used by this operation.</param>
     private void AllocateSamplerDescriptors(uint count, out CpuDescriptorHandle cpuHandle, out GpuDescriptorHandle gpuHandle) {
-        if (this._nextSamplerDescriptor + count > this._maxSamplerDescriptors) {
-            throw new VeldridException("D3D12 sampler descriptor heap exhausted for this CommandList recording.");
+        if (this._nextSamplerDescriptor + count > this._samplerDescriptorLimit) {
+            throw new VeldridException("D3D12 sampler descriptor heap exhausted for this CommandList frame slot.");
         }
 
         CpuDescriptorHandle cpuStart = this._shaderVisibleSamplerHeap.GetCPUDescriptorHandleForHeapStart();
