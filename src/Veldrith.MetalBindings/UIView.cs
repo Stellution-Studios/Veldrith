@@ -31,6 +31,10 @@ public struct UIView {
     /// </summary>
     public CGRect frame =>
         RuntimeInformation.ProcessArchitecture == Architecture.Arm64
+
+            /// <summary>
+            /// Executes CGRect_objc_msgSend.
+            /// </summary>
             ? CGRect_objc_msgSend(this.NativePtr, sel_frame)
             : objc_msgSend_stret<CGRect>(this.NativePtr, sel_frame);
 

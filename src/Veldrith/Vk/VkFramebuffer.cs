@@ -6,6 +6,9 @@ using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
+/// <summary>
+/// Represents the VkFramebuffer class.
+/// </summary>
 internal unsafe class VkFramebuffer : VkFramebufferBase {
 
     /// <summary>
@@ -52,6 +55,10 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
     /// Initializes a new instance of the <see cref="VkFramebuffer" /> class.
     /// </summary>
     public VkFramebuffer(VkGraphicsDevice gd, ref FramebufferDescription description, bool isPresented)
+
+        /// <summary>
+        /// Executes base.
+        /// </summary>
         : base(description.DepthTarget, description.ColorTargets) {
         this.gd = gd;
 

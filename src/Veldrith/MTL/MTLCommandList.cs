@@ -5,6 +5,9 @@ using Veldrith.MetalBindings;
 
 namespace Veldrith.MTL;
 
+/// <summary>
+/// Represents the MtlCommandList class.
+/// </summary>
 internal unsafe class MtlCommandList : CommandList {
 
     /// <summary>
@@ -246,6 +249,10 @@ internal unsafe class MtlCommandList : CommandList {
     /// Initializes a new instance of the <see cref="MtlCommandList" /> class.
     /// </summary>
     public MtlCommandList(ref CommandListDescription description, MtlGraphicsDevice gd)
+
+        /// <summary>
+        /// Executes base.
+        /// </summary>
         : base(ref description, gd.Features, gd.UniformBufferMinOffsetAlignment, gd.StructuredBufferMinOffsetAlignment) {
         this.gd = gd;
     }

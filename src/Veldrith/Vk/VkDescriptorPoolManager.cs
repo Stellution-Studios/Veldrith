@@ -5,6 +5,9 @@ using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
+/// <summary>
+/// Represents the VkDescriptorPoolManager class.
+/// </summary>
 internal class VkDescriptorPoolManager {
 
     /// <summary>
@@ -123,6 +126,9 @@ internal class VkDescriptorPoolManager {
         return new PoolInfo(descriptorPool, total_sets, descriptor_count);
     }
 
+    /// <summary>
+    /// Represents the PoolInfo class.
+    /// </summary>
     private class PoolInfo {
 
         /// <summary>

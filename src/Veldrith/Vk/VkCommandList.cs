@@ -9,6 +9,9 @@ using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
+/// <summary>
+/// Represents the VkCommandList class.
+/// </summary>
 internal unsafe class VkCommandList : CommandList {
 
     /// <summary>
@@ -164,6 +167,10 @@ internal unsafe class VkCommandList : CommandList {
     /// Initializes a new instance of the <see cref="VkCommandList" /> class.
     /// </summary>
     public VkCommandList(VkGraphicsDevice gd, ref CommandListDescription description)
+
+        /// <summary>
+        /// Executes base.
+        /// </summary>
         : base(ref description, gd.Features, gd.UniformBufferMinOffsetAlignment, gd.StructuredBufferMinOffsetAlignment) {
         this.gd = gd;
         VkCommandPoolCreateInfo poolCi = VkCommandPoolCreateInfo.New();
@@ -1337,6 +1344,9 @@ internal unsafe class VkCommandList : CommandList {
         func(this.CommandBuffer, &markerInfo);
     }
 
+    /// <summary>
+    /// Represents the StagingResourceInfo class.
+    /// </summary>
     private class StagingResourceInfo {
 
         /// <summary>

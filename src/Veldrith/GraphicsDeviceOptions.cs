@@ -235,3 +235,4 @@ public struct GraphicsDeviceOptions {
         this.SwapchainSrgbFormat = swapchainSrgbFormat;
     }
 }
+

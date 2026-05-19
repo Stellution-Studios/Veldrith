@@ -2,6 +2,9 @@ using System;
 
 namespace Veldrith;
 
+/// <summary>
+/// Represents the BackendInfoD3D12 class.
+/// </summary>
 public sealed class BackendInfoD3D12 {
 
     /// <summary>

@@ -1,5 +1,8 @@
 namespace Veldrith;
 
+/// <summary>
+/// Represents the GraphicsDeviceFeatures class.
+/// </summary>
 public class GraphicsDeviceFeatures {
 
     /// <summary>

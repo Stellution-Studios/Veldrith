@@ -3,6 +3,9 @@ using System.Runtime.InteropServices;
 
 namespace Veldrith.Android;
 
+/// <summary>
+/// Represents the AndroidRuntime class.
+/// </summary>
 internal static class AndroidRuntime {
 
     /// <summary>

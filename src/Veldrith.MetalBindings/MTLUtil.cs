@@ -2,6 +2,9 @@ using System.Text;
 
 namespace Veldrith.MetalBindings;
 
+/// <summary>
+/// Represents the MTLUtil class.
+/// </summary>
 public static class MTLUtil {
 
     /// <summary>

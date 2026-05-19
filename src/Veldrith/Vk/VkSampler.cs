@@ -3,6 +3,9 @@ using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
+/// <summary>
+/// Represents the VkSampler class.
+/// </summary>
 internal unsafe class VkSampler : Sampler {
 
     /// <summary>

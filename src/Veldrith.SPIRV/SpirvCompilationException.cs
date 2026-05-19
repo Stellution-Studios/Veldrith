@@ -1,5 +1,8 @@
 namespace Veldrith.SPIRV;
 
+/// <summary>
+/// Represents the SpirvCompilationException class.
+/// </summary>
 public class SpirvCompilationException : Exception {
 
     /// <summary>

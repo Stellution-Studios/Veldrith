@@ -2,6 +2,9 @@ using System;
 
 namespace Veldrith;
 
+/// <summary>
+/// Represents the ResourceLayout class.
+/// </summary>
 public abstract class ResourceLayout : IDeviceResource, IDisposable {
 
     /// <summary>

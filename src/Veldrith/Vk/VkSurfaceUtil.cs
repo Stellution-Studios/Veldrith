@@ -10,6 +10,9 @@ using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
+/// <summary>
+/// Represents the VkSurfaceUtil class.
+/// </summary>
 internal static unsafe class VkSurfaceUtil {
 
     /// <summary>

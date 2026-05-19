@@ -10,6 +10,9 @@ using SpvcResult = Silk.NET.SPIRV.Cross.Result;
 
 namespace Veldrith.SPIRV;
 
+/// <summary>
+/// Represents the SpirvCrossCompiler class.
+/// </summary>
 internal static unsafe class SpirvCrossCompiler {
 
     /// <summary>
@@ -162,6 +165,9 @@ internal static unsafe class SpirvCrossCompiler {
         }
     }
 
+    /// <summary>
+    /// Represents the ResourceInfo class.
+    /// </summary>
     private class ResourceInfo {
 
         /// <summary>
@@ -659,3 +665,4 @@ internal static unsafe class SpirvCrossCompiler {
 
     #endregion
 }
+

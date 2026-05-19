@@ -1,5 +1,8 @@
 namespace Veldrith;
 
+/// <summary>
+/// Represents the BlendHelper class.
+/// </summary>
 internal static class BlendHelper {
 
     /// <summary>

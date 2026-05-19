@@ -1,5 +1,8 @@
 namespace Veldrith.D3D12;
 
+/// <summary>
+/// Represents the D3D12ResourceSet class.
+/// </summary>
 internal sealed class D3D12ResourceSet : ResourceSet {
 
     /// <summary>
@@ -11,6 +14,10 @@ internal sealed class D3D12ResourceSet : ResourceSet {
     /// Initializes a new instance of the <see cref="D3D12ResourceSet" /> class.
     /// </summary>
     public D3D12ResourceSet(ref ResourceSetDescription description)
+
+        /// <summary>
+        /// Executes base.
+        /// </summary>
         : base(ref description) {
         this.ResourceLayoutInfo = Util.AssertSubtype<ResourceLayout, D3D12ResourceLayout>(description.Layout);
         this.BoundResources = Util.ShallowClone(description.BoundResources);

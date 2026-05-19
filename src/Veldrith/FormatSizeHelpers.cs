@@ -2,6 +2,9 @@ using System.Diagnostics;
 
 namespace Veldrith;
 
+/// <summary>
+/// Represents the FormatSizeHelpers class.
+/// </summary>
 public static class FormatSizeHelpers {
 
     /// <summary>

@@ -6,6 +6,9 @@ using Veldrith.MetalBindings;
 
 namespace Veldrith.MTL;
 
+/// <summary>
+/// Represents the CommandBufferUsageList class.
+/// </summary>
 internal class CommandBufferUsageList<T> {
 
     /// <summary>
@@ -102,6 +105,9 @@ internal class CommandBufferUsageList<T> {
         /// </summary>
         public T Current { get; private set; }
 
+        /// <summary>
+        /// Gets or sets IEnumerator.Current.
+        /// </summary>
         object IEnumerator.Current => this.Current;
 
         /// <summary>
@@ -116,6 +122,9 @@ internal class CommandBufferUsageList<T> {
             return this;
         }
 
+        /// <summary>
+        /// Executes IEnumerable.GetEnumerator.
+        /// </summary>
         IEnumerator IEnumerable.GetEnumerator() {
             return this.GetEnumerator();
         }
@@ -196,6 +205,9 @@ internal class CommandBufferUsageList<T> {
         /// </summary>
         public T Current { get; private set; }
 
+        /// <summary>
+        /// Gets or sets IEnumerator.Current.
+        /// </summary>
         object IEnumerator.Current => this.Current;
 
         /// <summary>
@@ -220,6 +232,9 @@ internal class CommandBufferUsageList<T> {
             return this;
         }
 
+        /// <summary>
+        /// Executes IEnumerable.GetEnumerator.
+        /// </summary>
         IEnumerator IEnumerable.GetEnumerator() {
             return this.GetEnumerator();
         }

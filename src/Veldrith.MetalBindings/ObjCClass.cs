@@ -63,6 +63,9 @@ public unsafe struct ObjCClass {
         return Unsafe.AsRef<T>(&value);
     }
 
+    /// <summary>
+    /// Executes class_copyMethodList.
+    /// </summary>
     public ObjectiveCMethod* class_copyMethodList(out uint count) {
         return ObjectiveCRuntime.class_copyMethodList(this, out count);
     }

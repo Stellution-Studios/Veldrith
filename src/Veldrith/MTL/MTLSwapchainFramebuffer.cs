@@ -4,6 +4,9 @@ using Veldrith.MetalBindings;
 
 namespace Veldrith.MTL;
 
+/// <summary>
+/// Represents the MtlSwapchainFramebuffer class.
+/// </summary>
 internal class MtlSwapchainFramebuffer : MtlFramebuffer {
 
     /// <summary>

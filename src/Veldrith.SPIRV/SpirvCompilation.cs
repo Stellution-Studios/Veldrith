@@ -4,6 +4,9 @@ using Silk.NET.Shaderc;
 
 namespace Veldrith.SPIRV;
 
+/// <summary>
+/// Represents the SpirvCompilation class.
+/// </summary>
 public static unsafe class SpirvCompilation {
 
     /// <summary>
@@ -191,3 +194,4 @@ public static unsafe class SpirvCompilation {
         };
     }
 }
+

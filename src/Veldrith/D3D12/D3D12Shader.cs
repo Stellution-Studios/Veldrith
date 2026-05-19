@@ -4,6 +4,9 @@ using System.Text;
 
 namespace Veldrith.D3D12;
 
+/// <summary>
+/// Represents the D3D12Shader class.
+/// </summary>
 internal sealed class D3D12Shader : Shader {
 
     /// <summary>
@@ -15,6 +18,10 @@ internal sealed class D3D12Shader : Shader {
     /// Initializes a new instance of the <see cref="D3D12Shader" /> class.
     /// </summary>
     public D3D12Shader(ref ShaderDescription description)
+
+        /// <summary>
+        /// Executes base.
+        /// </summary>
         : base(description.Stage, description.EntryPoint) {
         this.ShaderBytes = EnsureDxbcBytecode(description);
         this.Debug = description.Debug;
@@ -131,11 +138,23 @@ internal sealed class D3D12Shader : Shader {
     [ComImport]
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     [Guid("8BA5FB08-5195-40E2-AC58-0D989C3A0102")]
+
+    /// <summary>
+    /// Defines the ID3DBlob interface.
+    /// </summary>
     private interface ID3DBlob {
         [PreserveSig]
+
+        /// <summary>
+        /// Executes GetBufferPointer.
+        /// </summary>
         IntPtr GetBufferPointer();
 
         [PreserveSig]
+
+        /// <summary>
+        /// Executes GetBufferSize.
+        /// </summary>
         nuint GetBufferSize();
     }
 }

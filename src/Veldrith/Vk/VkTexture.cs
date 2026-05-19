@@ -5,6 +5,9 @@ using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
+/// <summary>
+/// Represents the VkTexture class.
+/// </summary>
 internal unsafe class VkTexture : Texture {
 
     /// <summary>
@@ -510,3 +513,4 @@ internal unsafe class VkTexture : Texture {
         this.RefCount.Decrement();
     }
 }
+

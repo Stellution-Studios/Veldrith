@@ -2,6 +2,9 @@ using Veldrith.MetalBindings;
 
 namespace Veldrith.MTL;
 
+/// <summary>
+/// Represents the MtlSwapchainTexture class.
+/// </summary>
 internal class MtlSwapchainTexture : MtlTexture {
 
     /// <summary>

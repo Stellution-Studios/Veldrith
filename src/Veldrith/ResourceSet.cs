@@ -2,6 +2,9 @@ using System;
 
 namespace Veldrith;
 
+/// <summary>
+/// Represents the ResourceSet class.
+/// </summary>
 public abstract class ResourceSet : IDeviceResource, IDisposable {
 
     /// <summary>

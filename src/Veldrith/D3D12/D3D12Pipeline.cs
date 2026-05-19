@@ -6,6 +6,9 @@ using Vortice.DXGI;
 
 namespace Veldrith.D3D12;
 
+/// <summary>
+/// Represents the D3D12Pipeline class.
+/// </summary>
 internal sealed class D3D12Pipeline : Pipeline {
 
     /// <summary>
@@ -42,6 +45,10 @@ internal sealed class D3D12Pipeline : Pipeline {
     /// Initializes a new instance of the <see cref="D3D12Pipeline" /> class.
     /// </summary>
     public D3D12Pipeline(D3D12GraphicsDevice gd, ref GraphicsPipelineDescription description)
+
+        /// <summary>
+        /// Executes base.
+        /// </summary>
         : base(ref description) {
         this.gd = gd;
         this.IsComputePipeline = false;
@@ -68,6 +75,10 @@ internal sealed class D3D12Pipeline : Pipeline {
     /// Initializes a new instance of the <see cref="D3D12Pipeline" /> class.
     /// </summary>
     public D3D12Pipeline(D3D12GraphicsDevice gd, ref ComputePipelineDescription description)
+
+        /// <summary>
+        /// Executes base.
+        /// </summary>
         : base(ref description) {
         this.gd = gd;
         this.IsComputePipeline = true;

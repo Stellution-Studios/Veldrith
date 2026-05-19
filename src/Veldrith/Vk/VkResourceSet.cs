@@ -4,6 +4,9 @@ using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
+/// <summary>
+/// Represents the VkResourceSet class.
+/// </summary>
 internal unsafe class VkResourceSet : ResourceSet {
 
     /// <summary>
@@ -35,6 +38,10 @@ internal unsafe class VkResourceSet : ResourceSet {
     /// Initializes a new instance of the <see cref="VkResourceSet" /> class.
     /// </summary>
     public VkResourceSet(VkGraphicsDevice gd, ref ResourceSetDescription description)
+
+        /// <summary>
+        /// Executes base.
+        /// </summary>
         : base(ref description) {
         this.gd = gd;
         this.RefCount = new ResourceRefCount(this.DisposeCore);

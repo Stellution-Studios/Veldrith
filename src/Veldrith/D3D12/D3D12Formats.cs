@@ -4,6 +4,9 @@ using Vortice.Mathematics;
 
 namespace Veldrith.D3D12;
 
+/// <summary>
+/// Represents the D3D12Formats class.
+/// </summary>
 internal static class D3D12Formats {
 
     /// <summary>

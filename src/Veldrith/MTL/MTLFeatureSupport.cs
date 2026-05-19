@@ -5,6 +5,9 @@ using Veldrith.MetalBindings;
 
 namespace Veldrith.MTL;
 
+/// <summary>
+/// Represents the MtlFeatureSupport class.
+/// </summary>
 internal class MtlFeatureSupport : IReadOnlyCollection<MTLFeatureSet> {
 
     /// <summary>
@@ -50,6 +53,9 @@ internal class MtlFeatureSupport : IReadOnlyCollection<MTLFeatureSet> {
         return this._supportedFeatureSets.GetEnumerator();
     }
 
+    /// <summary>
+    /// Executes IEnumerable.GetEnumerator.
+    /// </summary>
     IEnumerator IEnumerable.GetEnumerator() {
         return this.GetEnumerator();
     }

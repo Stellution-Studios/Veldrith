@@ -4,6 +4,9 @@ using System.Runtime.InteropServices;
 
 namespace Veldrith.MetalBindings;
 
+/// <summary>
+/// Represents the ObjectiveCRuntime class.
+/// </summary>
 public static unsafe class ObjectiveCRuntime {
 
     /// <summary>
@@ -251,6 +254,10 @@ public static unsafe class ObjectiveCRuntime {
     public static extern void objc_msgSend(IntPtr receiver, Selector selector, MTLTexture sourceTexture, UIntPtr sourceSlice, UIntPtr sourceLevel, MTLOrigin sourceOrigin, MTLSize sourceSize, MTLTexture destinationTexture, UIntPtr destinationSlice, UIntPtr destinationLevel, MTLOrigin destinationOrigin);
 
     [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+
+    /// <summary>
+    /// Executes bytePtr_objc_msgSend.
+    /// </summary>
     public static extern byte* bytePtr_objc_msgSend(IntPtr receiver, Selector selector);
 
     [DllImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
@@ -515,6 +522,10 @@ public static unsafe class ObjectiveCRuntime {
     public static extern IntPtr sel_registerName(byte* namePtr);
 
     [DllImport(ObjCLibrary)]
+
+    /// <summary>
+    /// Executes sel_getName.
+    /// </summary>
     public static extern byte* sel_getName(IntPtr selector);
 
     [DllImport(ObjCLibrary)]
@@ -539,9 +550,17 @@ public static unsafe class ObjectiveCRuntime {
     public static extern IntPtr class_getProperty(ObjCClass cls, byte* namePtr);
 
     [DllImport(ObjCLibrary)]
+
+    /// <summary>
+    /// Executes class_getName.
+    /// </summary>
     public static extern byte* class_getName(ObjCClass cls);
 
     [DllImport(ObjCLibrary)]
+
+    /// <summary>
+    /// Executes property_copyAttributeValue.
+    /// </summary>
     public static extern byte* property_copyAttributeValue(IntPtr property, byte* attributeNamePtr);
 
     [DllImport(ObjCLibrary)]
@@ -552,6 +571,10 @@ public static unsafe class ObjectiveCRuntime {
     public static extern Selector method_getName(ObjectiveCMethod method);
 
     [DllImport(ObjCLibrary)]
+
+    /// <summary>
+    /// Executes class_copyMethodList.
+    /// </summary>
     public static extern ObjectiveCMethod* class_copyMethodList(ObjCClass cls, out uint outCount);
 
     [DllImport(ObjCLibrary)]

@@ -2,6 +2,9 @@ using System;
 
 namespace Veldrith;
 
+/// <summary>
+/// Represents the Swapchain class.
+/// </summary>
 public abstract class Swapchain : IDeviceResource, IDisposable {
 
     /// <summary>

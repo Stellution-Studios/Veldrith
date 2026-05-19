@@ -3,6 +3,9 @@ using System.Threading;
 
 namespace Veldrith.MTL;
 
+/// <summary>
+/// Represents the MtlFence class.
+/// </summary>
 internal class MtlFence : Fence {
 
     /// <summary>

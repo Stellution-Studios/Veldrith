@@ -1,5 +1,8 @@
 namespace Veldrith.SPIRV;
 
+/// <summary>
+/// Represents the MacroDefinition class.
+/// </summary>
 public class MacroDefinition {
 
     /// <summary>

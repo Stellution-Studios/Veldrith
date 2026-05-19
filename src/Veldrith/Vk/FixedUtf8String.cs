@@ -5,6 +5,9 @@ using System.Text;
 
 namespace Veldrith.Vk;
 
+/// <summary>
+/// Represents the FixedUtf8String class.
+/// </summary>
 internal unsafe class FixedUtf8String : IDisposable {
 
     /// <summary>

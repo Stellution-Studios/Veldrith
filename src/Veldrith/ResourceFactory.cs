@@ -1,5 +1,8 @@
 namespace Veldrith;
 
+/// <summary>
+/// Represents the ResourceFactory class.
+/// </summary>
 public abstract class ResourceFactory {
     /// <summary></summary>
     /// <param name="features"></param>
@@ -504,3 +507,4 @@ public abstract class ResourceFactory {
     /// </summary>
     protected abstract Shader CreateShaderCore(ref ShaderDescription description);
 }
+

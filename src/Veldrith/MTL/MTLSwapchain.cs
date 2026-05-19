@@ -3,6 +3,9 @@ using Veldrith.MetalBindings;
 
 namespace Veldrith.MTL;
 
+/// <summary>
+/// Represents the MtlSwapchain class.
+/// </summary>
 internal class MtlSwapchain : Swapchain {
 
     /// <summary>

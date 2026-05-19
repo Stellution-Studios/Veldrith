@@ -5,6 +5,9 @@ using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
+/// <summary>
+/// Represents the VkShader class.
+/// </summary>
 internal unsafe class VkShader : Shader {
 
     /// <summary>
@@ -31,6 +34,10 @@ internal unsafe class VkShader : Shader {
     /// Initializes a new instance of the <see cref="VkShader" /> class.
     /// </summary>
     public VkShader(VkGraphicsDevice gd, ref ShaderDescription description)
+
+        /// <summary>
+        /// Executes base.
+        /// </summary>
         : base(description.Stage, description.EntryPoint) {
         this.gd = gd;
 

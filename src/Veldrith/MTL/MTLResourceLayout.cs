@@ -1,5 +1,8 @@
 namespace Veldrith.MTL;
 
+/// <summary>
+/// Represents the MtlResourceLayout class.
+/// </summary>
 internal class MtlResourceLayout : ResourceLayout {
 
     /// <summary>
@@ -53,6 +56,10 @@ internal class MtlResourceLayout : ResourceLayout {
     /// Initializes a new instance of the <see cref="MtlResourceLayout" /> class.
     /// </summary>
     public MtlResourceLayout(ref ResourceLayoutDescription description, MtlGraphicsDevice gd)
+
+        /// <summary>
+        /// Executes base.
+        /// </summary>
         : base(ref description) {
 #if !VALIDATE_USAGE
             Description = description;

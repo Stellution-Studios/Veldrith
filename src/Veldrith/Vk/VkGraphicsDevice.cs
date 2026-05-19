@@ -11,6 +11,9 @@ using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
+/// <summary>
+/// Represents the VkGraphicsDevice class.
+/// </summary>
 internal unsafe class VkGraphicsDevice : GraphicsDevice {
 
     /// <summary>
@@ -1660,6 +1663,9 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
         }
     }
 
+    /// <summary>
+    /// Represents the SharedCommandPool class.
+    /// </summary>
     private class SharedCommandPool {
 
         /// <summary>
@@ -1879,6 +1885,9 @@ internal unsafe struct VkPhysicalDeviceDriverProperties {
     }
 }
 
+/// <summary>
+/// Represents the VkDriverId enum.
+/// </summary>
 internal enum VkDriverId { }
 
 /// <summary>
@@ -1907,3 +1916,4 @@ internal struct VkConformanceVersion {
     public byte Patch;
 }
 #pragma warning restore CS0649 // Field is never assigned to, and will always have its default value
+

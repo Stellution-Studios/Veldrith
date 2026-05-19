@@ -2,6 +2,9 @@ using System.Diagnostics;
 
 namespace Veldrith;
 
+/// <summary>
+/// Represents the ValidationHelpers class.
+/// </summary>
 internal static class ValidationHelpers {
     [Conditional("VALIDATE_USAGE")]
 

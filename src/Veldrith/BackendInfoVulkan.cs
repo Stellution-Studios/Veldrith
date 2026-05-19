@@ -6,6 +6,9 @@ using Vulkan;
 
 namespace Veldrith;
 
+/// <summary>
+/// Represents the BackendInfoVulkan class.
+/// </summary>
 public class BackendInfoVulkan {
 
     /// <summary>

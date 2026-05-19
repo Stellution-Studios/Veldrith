@@ -3,6 +3,9 @@ using System.Text.Json.Serialization;
 
 namespace Veldrith.SPIRV;
 
+/// <summary>
+/// Represents the SpirvReflection class.
+/// </summary>
 public class SpirvReflection {
 
     /// <summary>

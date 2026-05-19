@@ -1,5 +1,8 @@
 namespace Veldrith.SPIRV;
 
+/// <summary>
+/// Represents the GlslCompileOptions class.
+/// </summary>
 public class GlslCompileOptions {
 
     /// <summary>
@@ -33,3 +36,4 @@ public class GlslCompileOptions {
     /// </summary>
     public static GlslCompileOptions Default { get; } = new();
 }
+

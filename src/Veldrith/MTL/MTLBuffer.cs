@@ -2,6 +2,9 @@ using Veldrith.MetalBindings;
 
 namespace Veldrith.MTL;
 
+/// <summary>
+/// Represents the MtlBuffer class.
+/// </summary>
 internal class MtlBuffer : DeviceBuffer {
 
     /// <summary>

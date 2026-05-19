@@ -2,12 +2,19 @@ using System;
 
 namespace Veldrith;
 
+/// <summary>
+/// Represents the Pipeline class.
+/// </summary>
 public abstract class Pipeline : IDeviceResource, IDisposable {
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Pipeline" /> class.
     /// </summary>
     internal Pipeline(ref GraphicsPipelineDescription graphicsDescription)
+
+        /// <summary>
+        /// Executes this.
+        /// </summary>
         : this(graphicsDescription.ResourceLayouts) {
 #if VALIDATE_USAGE
         this.GraphicsOutputDescription = graphicsDescription.Outputs;

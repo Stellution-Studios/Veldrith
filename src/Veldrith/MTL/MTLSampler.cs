@@ -3,6 +3,9 @@ using Veldrith.MetalBindings;
 
 namespace Veldrith.MTL;
 
+/// <summary>
+/// Represents the MtlSampler class.
+/// </summary>
 internal class MtlSampler : Sampler {
 
     /// <summary>

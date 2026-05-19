@@ -2,6 +2,9 @@ using System;
 
 namespace Veldrith;
 
+/// <summary>
+/// Represents the Shader class.
+/// </summary>
 public abstract class Shader : IDeviceResource, IDisposable {
 
     /// <summary>

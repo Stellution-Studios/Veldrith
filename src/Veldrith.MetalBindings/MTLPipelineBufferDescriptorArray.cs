@@ -13,6 +13,9 @@ public struct MTLPipelineBufferDescriptorArray {
     /// </summary>
     public readonly IntPtr NativePtr;
 
+    /// <summary>
+    /// Gets or sets this[uint index].
+    /// </summary>
     public MTLPipelineBufferDescriptor this[uint index] {
         get {
             IntPtr value = IntPtr_objc_msgSend(this.NativePtr, Selectors.objectAtIndexedSubscript, (UIntPtr)index);

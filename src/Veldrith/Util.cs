@@ -5,6 +5,9 @@ using System.Text;
 
 namespace Veldrith;
 
+/// <summary>
+/// Represents the Util class.
+/// </summary>
 internal static class Util {
 
     /// <summary>
@@ -182,6 +185,10 @@ internal static class Util {
     }
 
     internal static void
+
+        /// <summary>
+        /// Executes GetMipLevelAndArrayLayer.
+        /// </summary>
         GetMipLevelAndArrayLayer(Texture tex, uint subresource, out uint mipLevel, out uint arrayLayer) {
         arrayLayer = subresource / tex.MipLevels;
         mipLevel = subresource - arrayLayer * tex.MipLevels;

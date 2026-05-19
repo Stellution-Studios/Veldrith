@@ -3,6 +3,9 @@ using System.Threading;
 
 namespace Veldrith.Vk;
 
+/// <summary>
+/// Represents the ResourceRefCount class.
+/// </summary>
 internal class ResourceRefCount {
 
     /// <summary>

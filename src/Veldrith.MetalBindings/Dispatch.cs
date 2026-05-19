@@ -3,6 +3,9 @@ using System.Runtime.InteropServices;
 
 namespace Veldrith.MetalBindings;
 
+/// <summary>
+/// Represents the Dispatch class.
+/// </summary>
 public static unsafe class Dispatch {
 
     /// <summary>
@@ -32,7 +35,14 @@ public static unsafe class Dispatch {
     public static extern void dispatch_release(IntPtr nativePtr);
 }
 
+/// <summary>
+/// Represents the QualityOfServiceLevel enum.
+/// </summary>
 public enum QualityOfServiceLevel : long {
+
+    /// <summary>
+    /// Represents the QOS_CLASS_USER_INTERACTIVE field.
+    /// </summary>
     QOS_CLASS_USER_INTERACTIVE = 0x21, QOS_CLASS_USER_INITIATED = 0x19, QOS_CLASS_DEFAULT = 0x15, QOS_CLASS_UTILITY = 0x11, QOS_CLASS_BACKGROUND = 0x9, QOS_CLASS_UNSPECIFIED = 0
 }
 

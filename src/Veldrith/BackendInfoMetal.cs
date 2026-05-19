@@ -6,6 +6,9 @@ using Veldrith.MTL;
 
 namespace Veldrith;
 
+/// <summary>
+/// Represents the BackendInfoMetal class.
+/// </summary>
 public class BackendInfoMetal {
 
     /// <summary>

@@ -3,6 +3,9 @@ using Vortice.Direct3D12;
 
 namespace Veldrith.D3D12;
 
+/// <summary>
+/// Represents the D3D12DeviceBuffer class.
+/// </summary>
 internal sealed class D3D12DeviceBuffer : DeviceBuffer {
 
     /// <summary>

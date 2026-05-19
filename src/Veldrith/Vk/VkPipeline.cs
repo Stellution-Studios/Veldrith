@@ -5,6 +5,9 @@ using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
+/// <summary>
+/// Represents the VkPipeline class.
+/// </summary>
 internal unsafe class VkPipeline : Pipeline {
 
     /// <summary>
@@ -41,6 +44,10 @@ internal unsafe class VkPipeline : Pipeline {
     /// Initializes a new instance of the <see cref="VkPipeline" /> class.
     /// </summary>
     public VkPipeline(VkGraphicsDevice gd, ref GraphicsPipelineDescription description)
+
+        /// <summary>
+        /// Executes base.
+        /// </summary>
         : base(ref description) {
         this.gd = gd;
         this.IsComputePipeline = false;
@@ -355,6 +362,10 @@ internal unsafe class VkPipeline : Pipeline {
     /// Initializes a new instance of the <see cref="VkPipeline" /> class.
     /// </summary>
     public VkPipeline(VkGraphicsDevice gd, ref ComputePipelineDescription description)
+
+        /// <summary>
+        /// Executes base.
+        /// </summary>
         : base(ref description) {
         this.gd = gd;
         this.IsComputePipeline = true;

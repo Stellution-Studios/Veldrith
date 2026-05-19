@@ -3,6 +3,9 @@ using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
+/// <summary>
+/// Represents the VkTextureView class.
+/// </summary>
 internal unsafe class VkTextureView : TextureView {
 
     /// <summary>
@@ -29,6 +32,10 @@ internal unsafe class VkTextureView : TextureView {
     /// Initializes a new instance of the <see cref="VkTextureView" /> class.
     /// </summary>
     public VkTextureView(VkGraphicsDevice gd, ref TextureViewDescription description)
+
+        /// <summary>
+        /// Executes base.
+        /// </summary>
         : base(ref description) {
         this.gd = gd;
         VkImageViewCreateInfo imageViewCi = VkImageViewCreateInfo.New();

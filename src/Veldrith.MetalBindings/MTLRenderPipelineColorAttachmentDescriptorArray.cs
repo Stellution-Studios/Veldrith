@@ -16,6 +16,9 @@ public struct MTLRenderPipelineColorAttachmentDescriptorArray {
     /// </summary>
     public readonly IntPtr NativePtr;
 
+    /// <summary>
+    /// Gets or sets this[uint index].
+    /// </summary>
     public MTLRenderPipelineColorAttachmentDescriptor this[uint index] {
         get {
             IntPtr ptr = IntPtr_objc_msgSend(this.NativePtr, Selectors.objectAtIndexedSubscript, index);

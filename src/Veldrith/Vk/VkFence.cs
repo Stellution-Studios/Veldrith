@@ -3,6 +3,9 @@ using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
+/// <summary>
+/// Represents the VkFence class.
+/// </summary>
 internal unsafe class VkFence : Fence {
 
     /// <summary>

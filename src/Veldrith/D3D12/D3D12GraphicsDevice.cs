@@ -13,6 +13,9 @@ using VorticeDXGI = Vortice.DXGI.DXGI;
 
 namespace Veldrith.D3D12;
 
+/// <summary>
+/// Represents the D3D12GraphicsDevice class.
+/// </summary>
 internal sealed class D3D12GraphicsDevice : GraphicsDevice {
 
     /// <summary>

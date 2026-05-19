@@ -7,6 +7,9 @@ using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
+/// <summary>
+/// Represents the VkDeviceMemoryManager class.
+/// </summary>
 internal unsafe class VkDeviceMemoryManager : IDisposable {
 
     /// <summary>
@@ -210,6 +213,9 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
         return ret;
     }
 
+    /// <summary>
+    /// Represents the ChunkAllocatorSet class.
+    /// </summary>
     private class ChunkAllocatorSet : IDisposable {
 
         /// <summary>
@@ -281,6 +287,9 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
         }
     }
 
+    /// <summary>
+    /// Represents the ChunkAllocator class.
+    /// </summary>
     private class ChunkAllocator : IDisposable {
 
         /// <summary>
@@ -566,3 +575,4 @@ internal unsafe struct VkMemoryBlock : IEquatable<VkMemoryBlock> {
                && this.Size.Equals(other.Size);
     }
 }
+

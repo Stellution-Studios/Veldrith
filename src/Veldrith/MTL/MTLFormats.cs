@@ -2,6 +2,9 @@ using Veldrith.MetalBindings;
 
 namespace Veldrith.MTL;
 
+/// <summary>
+/// Represents the MtlFormats class.
+/// </summary>
 internal static class MtlFormats {
 
     /// <summary>

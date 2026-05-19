@@ -2,6 +2,9 @@ using System.Text;
 
 namespace Veldrith.SPIRV;
 
+/// <summary>
+/// Represents the ResourceFactoryExtensions class.
+/// </summary>
 public static class ResourceFactoryExtensions {
 
     /// <summary>

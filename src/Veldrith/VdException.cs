@@ -2,6 +2,9 @@ using System;
 
 namespace Veldrith;
 
+/// <summary>
+/// Represents the VeldridException class.
+/// </summary>
 public class VeldridException : Exception {
 
     /// <summary>

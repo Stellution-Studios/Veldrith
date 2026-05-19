@@ -1,5 +1,8 @@
 namespace Veldrith.SPIRV;
 
+/// <summary>
+/// Represents the CrossCompileOptions class.
+/// </summary>
 public class CrossCompileOptions {
 
     /// <summary>

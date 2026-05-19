@@ -3,6 +3,9 @@ using Vortice.Direct3D12;
 
 namespace Veldrith.D3D12;
 
+/// <summary>
+/// Represents the D3D12TextureView class.
+/// </summary>
 internal sealed class D3D12TextureView : TextureView {
 
     /// <summary>
@@ -29,6 +32,10 @@ internal sealed class D3D12TextureView : TextureView {
     /// Initializes a new instance of the <see cref="D3D12TextureView" /> class.
     /// </summary>
     public D3D12TextureView(D3D12GraphicsDevice gd, ref TextureViewDescription description)
+
+        /// <summary>
+        /// Executes base.
+        /// </summary>
         : base(ref description) {
         this.gd = gd;
         this.TargetTexture = Util.AssertSubtype<Texture, D3D12Texture>(description.Target);

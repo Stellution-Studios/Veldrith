@@ -2,6 +2,9 @@ using Veldrith.MetalBindings;
 
 namespace Veldrith.MTL;
 
+/// <summary>
+/// Represents the MtlFramebuffer class.
+/// </summary>
 internal class MtlFramebuffer : Framebuffer {
 
     /// <summary>

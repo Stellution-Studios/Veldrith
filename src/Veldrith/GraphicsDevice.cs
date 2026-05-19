@@ -8,6 +8,9 @@ using Veldrith.Vk;
 
 namespace Veldrith;
 
+/// <summary>
+/// Represents the GraphicsDevice class.
+/// </summary>
 public abstract class GraphicsDevice : IDisposable {
 
     /// <summary>
@@ -1068,6 +1071,10 @@ public abstract class GraphicsDevice : IDisposable {
     /// <param name="swapchainDescription">A description of the main Swapchain to create.</param>
     /// <returns>A new <see cref="GraphicsDevice" /> using the Vulkan API.</returns>
     public static GraphicsDevice
+
+        /// <summary>
+        /// Executes CreateVulkan.
+        /// </summary>
         CreateVulkan(GraphicsDeviceOptions options, SwapchainDescription swapchainDescription) {
         return new VkGraphicsDevice(options, swapchainDescription);
     }

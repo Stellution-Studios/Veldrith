@@ -4,6 +4,9 @@ using Vortice.Direct3D12;
 
 namespace Veldrith.D3D12;
 
+/// <summary>
+/// Represents the D3D12Fence class.
+/// </summary>
 internal sealed class D3D12Fence : Fence {
 
     /// <summary>

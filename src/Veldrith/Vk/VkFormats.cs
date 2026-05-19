@@ -2,6 +2,9 @@ using Vulkan;
 
 namespace Veldrith.Vk;
 
+/// <summary>
+/// Represents the VkFormats class.
+/// </summary>
 internal static partial class VkFormats {
 
     /// <summary>

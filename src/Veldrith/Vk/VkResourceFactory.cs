@@ -1,5 +1,8 @@
 namespace Veldrith.Vk;
 
+/// <summary>
+/// Represents the VkResourceFactory class.
+/// </summary>
 internal class VkResourceFactory : ResourceFactory {
 
     /// <summary>
@@ -11,6 +14,10 @@ internal class VkResourceFactory : ResourceFactory {
     /// Initializes a new instance of the <see cref="VkResourceFactory" /> class.
     /// </summary>
     public VkResourceFactory(VkGraphicsDevice vkGraphicsDevice)
+
+        /// <summary>
+        /// Executes base.
+        /// </summary>
         : base(vkGraphicsDevice.Features) {
         this._gd = vkGraphicsDevice;
     }

@@ -10,6 +10,9 @@ using Veldrith.MetalBindings;
 
 namespace Veldrith.MTL;
 
+/// <summary>
+/// Represents the MtlGraphicsDevice class.
+/// </summary>
 internal unsafe class MtlGraphicsDevice : GraphicsDevice {
 
     /// <summary>
@@ -775,6 +778,9 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
     }
 }
 
+/// <summary>
+/// Represents the MonoPInvokeCallbackAttribute class.
+/// </summary>
 internal sealed class MonoPInvokeCallbackAttribute : Attribute {
 
     /// <summary>
@@ -782,3 +788,4 @@ internal sealed class MonoPInvokeCallbackAttribute : Attribute {
     /// </summary>
     public MonoPInvokeCallbackAttribute(Type t) { }
 }
+

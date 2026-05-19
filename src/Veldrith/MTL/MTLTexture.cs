@@ -3,6 +3,9 @@ using Veldrith.MetalBindings;
 
 namespace Veldrith.MTL;
 
+/// <summary>
+/// Represents the MtlTexture class.
+/// </summary>
 internal class MtlTexture : Texture {
 
     /// <summary>

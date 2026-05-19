@@ -4,6 +4,9 @@ using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
+/// <summary>
+/// Represents the VkBuffer class.
+/// </summary>
 internal unsafe class VkBuffer : DeviceBuffer {
 
     /// <summary>

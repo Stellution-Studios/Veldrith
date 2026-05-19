@@ -4,6 +4,9 @@ using System.Diagnostics;
 
 namespace Veldrith;
 
+/// <summary>
+/// Represents the Framebuffer class.
+/// </summary>
 public abstract class Framebuffer : IDeviceResource, IDisposable {
 
     /// <summary>

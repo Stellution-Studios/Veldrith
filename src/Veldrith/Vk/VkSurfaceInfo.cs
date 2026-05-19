@@ -4,6 +4,9 @@ using Vulkan.Xlib;
 
 namespace Veldrith.Vk;
 
+/// <summary>
+/// Represents the VkSurfaceSource class.
+/// </summary>
 public abstract class VkSurfaceSource {
 
     /// <summary>
@@ -44,6 +47,9 @@ public abstract class VkSurfaceSource {
     internal abstract SwapchainSource GetSurfaceSource();
 }
 
+/// <summary>
+/// Represents the Win32VkSurfaceInfo class.
+/// </summary>
 internal class Win32VkSurfaceInfo : VkSurfaceSource {
 
     /// <summary>
@@ -79,6 +85,9 @@ internal class Win32VkSurfaceInfo : VkSurfaceSource {
     }
 }
 
+/// <summary>
+/// Represents the XlibVkSurfaceInfo class.
+/// </summary>
 internal class XlibVkSurfaceInfo : VkSurfaceSource {
 
     /// <summary>

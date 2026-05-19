@@ -1,5 +1,8 @@
 namespace Veldrith.D3D12;
 
+/// <summary>
+/// Represents the D3D12ResourceLayout class.
+/// </summary>
 internal sealed class D3D12ResourceLayout : ResourceLayout {
 
     /// <summary>
@@ -11,6 +14,10 @@ internal sealed class D3D12ResourceLayout : ResourceLayout {
     /// Initializes a new instance of the <see cref="D3D12ResourceLayout" /> class.
     /// </summary>
     public D3D12ResourceLayout(ref ResourceLayoutDescription description)
+
+        /// <summary>
+        /// Executes base.
+        /// </summary>
         : base(ref description) {
         this.Elements = Util.ShallowClone(description.Elements);
     }

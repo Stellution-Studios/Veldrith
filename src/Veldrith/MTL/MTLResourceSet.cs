@@ -1,5 +1,8 @@
 namespace Veldrith.MTL;
 
+/// <summary>
+/// Represents the MtlResourceSet class.
+/// </summary>
 internal class MtlResourceSet : ResourceSet {
 
     /// <summary>
@@ -11,6 +14,10 @@ internal class MtlResourceSet : ResourceSet {
     /// Initializes a new instance of the <see cref="MtlResourceSet" /> class.
     /// </summary>
     public MtlResourceSet(ref ResourceSetDescription description, MtlGraphicsDevice gd)
+
+        /// <summary>
+        /// Executes base.
+        /// </summary>
         : base(ref description) {
         this.Resources = Util.ShallowClone(description.BoundResources);
         this.Layout = Util.AssertSubtype<ResourceLayout, MtlResourceLayout>(description.Layout);

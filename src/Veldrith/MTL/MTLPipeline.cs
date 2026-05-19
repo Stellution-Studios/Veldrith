@@ -5,6 +5,9 @@ using Veldrith.MetalBindings;
 
 namespace Veldrith.MTL;
 
+/// <summary>
+/// Represents the MtlPipeline class.
+/// </summary>
 internal class MtlPipeline : Pipeline {
 
     /// <summary>
@@ -21,6 +24,10 @@ internal class MtlPipeline : Pipeline {
     /// Initializes a new instance of the <see cref="MtlPipeline" /> class.
     /// </summary>
     public MtlPipeline(ref GraphicsPipelineDescription description, MtlGraphicsDevice gd)
+
+        /// <summary>
+        /// Executes base.
+        /// </summary>
         : base(ref description) {
         this.PrimitiveType = MtlFormats.VdToMtlPrimitiveTopology(description.PrimitiveTopology);
         this.ResourceLayouts = new MtlResourceLayout[description.ResourceLayouts.Length];
@@ -193,6 +200,10 @@ internal class MtlPipeline : Pipeline {
     /// Initializes a new instance of the <see cref="MtlPipeline" /> class.
     /// </summary>
     public MtlPipeline(ref ComputePipelineDescription description, MtlGraphicsDevice gd)
+
+        /// <summary>
+        /// Executes base.
+        /// </summary>
         : base(ref description) {
         this.IsComputePipeline = true;
         this.ResourceLayouts = new MtlResourceLayout[description.ResourceLayouts.Length];

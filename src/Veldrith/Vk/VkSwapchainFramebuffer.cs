@@ -6,6 +6,9 @@ using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
+/// <summary>
+/// Represents the VkSwapchainFramebuffer class.
+/// </summary>
 internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
 
     /// <summary>

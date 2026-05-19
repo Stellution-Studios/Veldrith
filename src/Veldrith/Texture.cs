@@ -2,6 +2,9 @@ using System;
 
 namespace Veldrith;
 
+/// <summary>
+/// Represents the Texture class.
+/// </summary>
 public abstract class Texture : IDeviceResource, IMappableResource, IDisposable, IBindableResource {
 
     /// <summary>

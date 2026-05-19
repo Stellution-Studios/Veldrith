@@ -1,5 +1,8 @@
 namespace Veldrith.MetalBindings;
 
+/// <summary>
+/// Represents the Selectors class.
+/// </summary>
 internal static class Selectors {
 
     /// <summary>

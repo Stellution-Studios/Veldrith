@@ -3,6 +3,9 @@ using Vortice.DXGI;
 
 namespace Veldrith.D3D12;
 
+/// <summary>
+/// Represents the D3D12Swapchain class.
+/// </summary>
 internal sealed class D3D12Swapchain : Swapchain {
 
     /// <summary>

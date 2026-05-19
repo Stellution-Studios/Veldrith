@@ -4,6 +4,9 @@ using Veldrith.MetalBindings;
 
 namespace Veldrith.MTL;
 
+/// <summary>
+/// Represents the MtlShader class.
+/// </summary>
 internal class MtlShader : Shader {
 
     /// <summary>
@@ -15,6 +18,10 @@ internal class MtlShader : Shader {
     /// Initializes a new instance of the <see cref="MtlShader" /> class.
     /// </summary>
     public unsafe MtlShader(ref ShaderDescription description, MtlGraphicsDevice gd)
+
+        /// <summary>
+        /// Executes base.
+        /// </summary>
         : base(description.Stage, description.EntryPoint) {
         if (description.ShaderBytes.Length > 4
             && description.ShaderBytes[0] == 0x4d

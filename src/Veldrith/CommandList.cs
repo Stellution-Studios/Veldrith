@@ -5,6 +5,9 @@ using System.Runtime.InteropServices;
 
 namespace Veldrith;
 
+/// <summary>
+/// Represents the CommandList class.
+/// </summary>
 public abstract class CommandList : IDeviceResource, IDisposable {
 
     /// <summary>

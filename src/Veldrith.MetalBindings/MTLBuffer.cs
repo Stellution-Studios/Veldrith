@@ -27,6 +27,9 @@ public unsafe struct MTLBuffer {
     /// </summary>
     public bool IsNull => this.NativePtr == IntPtr.Zero;
 
+    /// <summary>
+    /// Executes contents.
+    /// </summary>
     public void* contents() {
         return ObjectiveCRuntime.IntPtr_objc_msgSend(this.NativePtr, sel_contents).ToPointer();
     }

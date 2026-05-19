@@ -13,6 +13,9 @@ using Vortice.Mathematics;
 
 namespace Veldrith.D3D12;
 
+/// <summary>
+/// Represents the D3D12CommandList class.
+/// </summary>
 internal sealed class D3D12CommandList : CommandList {
 
     /// <summary>
@@ -29,10 +32,22 @@ internal sealed class D3D12CommandList : CommandList {
     /// Represents the _mipmapComputeShaderCode field.
     /// </summary>
     private const string _mipmapComputeShaderCode = @"Texture2D<float4> SourceTexture : register(t0);
+
+                                                      /// <summary>
+                                                      /// Executes register.
+                                                      /// </summary>
                                                       RWTexture2D<float4> DestinationTexture : register(u0);
+
+                                                      /// <summary>
+                                                      /// Executes register.
+                                                      /// </summary>
                                                       SamplerState LinearSampler : register(s0);
                                                       
                                                       [numthreads(8, 8, 1)]
+
+                                                      /// <summary>
+                                                      /// Executes cs_main.
+                                                      /// </summary>
                                                       void cs_main(uint3 dispatchThreadID : SV_DispatchThreadID) {
                                                           uint width;
                                                           uint height;
@@ -2331,11 +2346,23 @@ internal sealed class D3D12CommandList : CommandList {
     [ComImport]
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     [Guid("8BA5FB08-5195-40E2-AC58-0D989C3A0102")]
+
+    /// <summary>
+    /// Defines the ID3DBlob interface.
+    /// </summary>
     private interface ID3DBlob {
         [PreserveSig]
+
+        /// <summary>
+        /// Executes GetBufferPointer.
+        /// </summary>
         IntPtr GetBufferPointer();
 
         [PreserveSig]
+
+        /// <summary>
+        /// Executes GetBufferSize.
+        /// </summary>
         nuint GetBufferSize();
     }
 
@@ -2423,6 +2450,9 @@ internal sealed class D3D12CommandList : CommandList {
         public bool IsDynamicBinding { get; }
     }
 
+    /// <summary>
+    /// Represents the DescriptorCacheKeyComparer class.
+    /// </summary>
     private sealed class DescriptorCacheKeyComparer : IEqualityComparer<DescriptorCacheKey> {
 
         /// <summary>
@@ -2445,6 +2475,9 @@ internal sealed class D3D12CommandList : CommandList {
         }
     }
 
+    /// <summary>
+    /// Represents the ResourceSetBindingPlanKeyComparer class.
+    /// </summary>
     private sealed class ResourceSetBindingPlanKeyComparer : IEqualityComparer<ResourceSetBindingPlanKey> {
 
         /// <summary>

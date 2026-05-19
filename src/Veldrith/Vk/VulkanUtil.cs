@@ -5,6 +5,9 @@ using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
+/// <summary>
+/// Represents the VulkanUtil class.
+/// </summary>
 internal static unsafe class VulkanUtil {
 
     /// <summary>
@@ -297,6 +300,9 @@ internal static unsafe class VulkanUtil {
     }
 }
 
+/// <summary>
+/// Represents the VkPhysicalDeviceMemoryPropertiesEx class.
+/// </summary>
 internal static unsafe class VkPhysicalDeviceMemoryPropertiesEx {
 
     /// <summary>

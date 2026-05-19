@@ -1,5 +1,8 @@
 namespace Veldrith;
 
+/// <summary>
+/// Represents the HashHelper class.
+/// </summary>
 internal static class HashHelper {
 
     /// <summary>

@@ -2,6 +2,9 @@ using System;
 
 namespace Veldrith;
 
+/// <summary>
+/// Represents the SwapchainSource class.
+/// </summary>
 public abstract class SwapchainSource {
 
     /// <summary>
@@ -108,6 +111,9 @@ public abstract class SwapchainSource {
     }
 }
 
+/// <summary>
+/// Represents the Win32SwapchainSource class.
+/// </summary>
 internal class Win32SwapchainSource : SwapchainSource {
 
     /// <summary>
@@ -129,6 +135,9 @@ internal class Win32SwapchainSource : SwapchainSource {
     public IntPtr Hinstance { get; }
 }
 
+/// <summary>
+/// Represents the UwpSwapchainSource class.
+/// </summary>
 internal class UwpSwapchainSource : SwapchainSource {
 
     /// <summary>
@@ -150,6 +159,9 @@ internal class UwpSwapchainSource : SwapchainSource {
     public float LogicalDpi { get; }
 }
 
+/// <summary>
+/// Represents the XlibSwapchainSource class.
+/// </summary>
 internal class XlibSwapchainSource : SwapchainSource {
 
     /// <summary>
@@ -171,6 +183,9 @@ internal class XlibSwapchainSource : SwapchainSource {
     public IntPtr Window { get; }
 }
 
+/// <summary>
+/// Represents the WaylandSwapchainSource class.
+/// </summary>
 internal class WaylandSwapchainSource : SwapchainSource {
 
     /// <summary>
@@ -192,6 +207,9 @@ internal class WaylandSwapchainSource : SwapchainSource {
     public IntPtr Surface { get; }
 }
 
+/// <summary>
+/// Represents the NSWindowSwapchainSource class.
+/// </summary>
 internal class NSWindowSwapchainSource : SwapchainSource {
 
     /// <summary>
@@ -207,6 +225,9 @@ internal class NSWindowSwapchainSource : SwapchainSource {
     public IntPtr NSWindow { get; }
 }
 
+/// <summary>
+/// Represents the UIViewSwapchainSource class.
+/// </summary>
 internal class UIViewSwapchainSource : SwapchainSource {
 
     /// <summary>
@@ -222,6 +243,9 @@ internal class UIViewSwapchainSource : SwapchainSource {
     public IntPtr UIView { get; }
 }
 
+/// <summary>
+/// Represents the AndroidSurfaceSwapchainSource class.
+/// </summary>
 internal class AndroidSurfaceSwapchainSource : SwapchainSource {
 
     /// <summary>
@@ -243,6 +267,9 @@ internal class AndroidSurfaceSwapchainSource : SwapchainSource {
     public IntPtr JniEnv { get; }
 }
 
+/// <summary>
+/// Represents the NSViewSwapchainSource class.
+/// </summary>
 internal class NSViewSwapchainSource : SwapchainSource {
 
     /// <summary>
@@ -257,3 +284,4 @@ internal class NSViewSwapchainSource : SwapchainSource {
     /// </summary>
     public IntPtr NSView { get; }
 }
+

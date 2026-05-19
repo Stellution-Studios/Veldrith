@@ -3,6 +3,9 @@ using Veldrith.MetalBindings;
 
 namespace Veldrith.MTL;
 
+/// <summary>
+/// Represents the MtlcvDisplayLink class.
+/// </summary>
 internal unsafe class MtlcvDisplayLink : IMtlDisplayLink {
     // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
 

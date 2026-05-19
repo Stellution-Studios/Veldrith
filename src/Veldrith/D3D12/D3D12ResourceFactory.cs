@@ -1,5 +1,8 @@
 namespace Veldrith.D3D12;
 
+/// <summary>
+/// Represents the D3D12ResourceFactory class.
+/// </summary>
 internal sealed class D3D12ResourceFactory : ResourceFactory {
 
     /// <summary>
@@ -11,6 +14,10 @@ internal sealed class D3D12ResourceFactory : ResourceFactory {
     /// Initializes a new instance of the <see cref="D3D12ResourceFactory" /> class.
     /// </summary>
     public D3D12ResourceFactory(D3D12GraphicsDevice gd, GraphicsDeviceFeatures features)
+
+        /// <summary>
+        /// Executes base.
+        /// </summary>
         : base(features) {
         this.gd = gd;
     }

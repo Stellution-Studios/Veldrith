@@ -2,6 +2,9 @@ using Veldrith.MetalBindings;
 
 namespace Veldrith.MTL;
 
+/// <summary>
+/// Represents the MtlTextureView class.
+/// </summary>
 internal class MtlTextureView : TextureView {
 
     /// <summary>
@@ -18,6 +21,10 @@ internal class MtlTextureView : TextureView {
     /// Initializes a new instance of the <see cref="MtlTextureView" /> class.
     /// </summary>
     public MtlTextureView(ref TextureViewDescription description, MtlGraphicsDevice gd)
+
+        /// <summary>
+        /// Executes base.
+        /// </summary>
         : base(ref description) {
         MtlTexture targetMtlTexture = Util.AssertSubtype<Texture, MtlTexture>(description.Target);
 

@@ -1,5 +1,8 @@
 namespace Veldrith.SPIRV;
 
+/// <summary>
+/// Represents the ComputeCompilationResult class.
+/// </summary>
 public class ComputeCompilationResult {
 
     /// <summary>

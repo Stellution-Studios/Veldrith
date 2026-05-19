@@ -98,3 +98,4 @@ public struct BufferDescription : IEquatable<BufferDescription> {
         return HashHelper.Combine(this.SizeInBytes.GetHashCode(), (int)this.Usage, this.StructureByteStride.GetHashCode(), this.RawBuffer.GetHashCode());
     }
 }
+

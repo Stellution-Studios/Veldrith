@@ -49,6 +49,9 @@ internal unsafe struct StackList<T> where T : struct {
         this.Count += 1;
     }
 
+    /// <summary>
+    /// Gets or sets this[uint index].
+    /// </summary>
     public ref T this[uint index] {
         get {
             byte* basePtr = (byte*)Unsafe.AsPointer(ref this);
@@ -57,6 +60,9 @@ internal unsafe struct StackList<T> where T : struct {
         }
     }
 
+    /// <summary>
+    /// Gets or sets this[int index].
+    /// </summary>
     public ref T this[int index] {
         get {
             byte* basePtr = (byte*)Unsafe.AsPointer(ref this);
@@ -240,3 +246,4 @@ internal struct Size6IntPtr {
     public IntPtr Sixth;
 }
 #pragma warning restore 0649
+

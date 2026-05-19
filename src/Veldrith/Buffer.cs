@@ -2,6 +2,9 @@ using System;
 
 namespace Veldrith;
 
+/// <summary>
+/// Represents the DeviceBuffer class.
+/// </summary>
 public abstract class DeviceBuffer : IDeviceResource, IBindableResource, IMappableResource, IDisposable {
 
     /// <summary>

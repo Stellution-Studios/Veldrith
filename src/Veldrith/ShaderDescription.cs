@@ -84,3 +84,4 @@ public struct ShaderDescription : IEquatable<ShaderDescription> {
         return HashHelper.Combine((int)this.Stage, this.ShaderBytes.GetHashCode(), this.EntryPoint.GetHashCode(), this.Debug.GetHashCode());
     }
 }
+

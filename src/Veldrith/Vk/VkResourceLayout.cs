@@ -4,6 +4,9 @@ using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
+/// <summary>
+/// Represents the VkResourceLayout class.
+/// </summary>
 internal unsafe class VkResourceLayout : ResourceLayout {
 
     /// <summary>
@@ -30,6 +33,10 @@ internal unsafe class VkResourceLayout : ResourceLayout {
     /// Initializes a new instance of the <see cref="VkResourceLayout" /> class.
     /// </summary>
     public VkResourceLayout(VkGraphicsDevice gd, ref ResourceLayoutDescription description)
+
+        /// <summary>
+        /// Executes base.
+        /// </summary>
         : base(ref description) {
         this.gd = gd;
         VkDescriptorSetLayoutCreateInfo dslCi = VkDescriptorSetLayoutCreateInfo.New();

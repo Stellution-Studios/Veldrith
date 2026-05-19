@@ -3,12 +3,19 @@ using Vulkan;
 
 namespace Veldrith.Vk;
 
+/// <summary>
+/// Represents the VkFramebufferBase class.
+/// </summary>
 internal abstract class VkFramebufferBase : Framebuffer {
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VkFramebufferBase" /> class.
     /// </summary>
     protected VkFramebufferBase(FramebufferAttachmentDescription? depthTexture, IReadOnlyList<FramebufferAttachmentDescription> colorTextures)
+
+        /// <summary>
+        /// Executes base.
+        /// </summary>
         : base(depthTexture, colorTextures) {
         this.RefCount = new ResourceRefCount(this.DisposeCore);
     }

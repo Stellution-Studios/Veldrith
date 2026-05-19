@@ -1,5 +1,8 @@
 namespace Veldrith.MTL;
 
+/// <summary>
+/// Represents the MtlResourceFactory class.
+/// </summary>
 internal class MtlResourceFactory : ResourceFactory {
 
     /// <summary>
@@ -11,6 +14,10 @@ internal class MtlResourceFactory : ResourceFactory {
     /// Initializes a new instance of the <see cref="MtlResourceFactory" /> class.
     /// </summary>
     public MtlResourceFactory(MtlGraphicsDevice gd)
+
+        /// <summary>
+        /// Executes base.
+        /// </summary>
         : base(gd.Features) {
         this.gd = gd;
     }

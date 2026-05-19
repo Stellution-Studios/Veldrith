@@ -2,6 +2,9 @@ using System;
 
 namespace Veldrith;
 
+/// <summary>
+/// Represents the Sampler class.
+/// </summary>
 public abstract class Sampler : IDeviceResource, IBindableResource, IDisposable {
 
     /// <summary>

@@ -6,6 +6,9 @@ using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
+/// <summary>
+/// Represents the VkSwapchain class.
+/// </summary>
 internal unsafe class VkSwapchain : Swapchain {
 
     /// <summary>

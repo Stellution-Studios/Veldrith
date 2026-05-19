@@ -1,5 +1,8 @@
 namespace Veldrith.SPIRV;
 
+/// <summary>
+/// Represents the VertexFragmentCompilationResult class.
+/// </summary>
 public class VertexFragmentCompilationResult {
 
     /// <summary>
