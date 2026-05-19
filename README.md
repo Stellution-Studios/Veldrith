@@ -21,6 +21,11 @@ Veldrith is built on top of [ppy/Veldrid](https://github.com/ppy/veldrid) and [N
 
 ---
 
+# 🪙 Installation - [Nuget](https://www.nuget.org/packages/Veldrith)
+```
+dotnet add package Veldrith --version [VERSION]
+```
+
 # 📖 Build from Source
 
 > 1. Clone this repository.
