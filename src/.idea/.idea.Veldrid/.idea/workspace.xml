@@ -15,20 +15,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d55e20cf-040f-4582-8d5c-7192e5f99de4" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.Veldrid/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Veldrid/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Veldrith.MetalBindings/MTLRenderCommandEncoder.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Veldrith.MetalBindings/MTLRenderCommandEncoder.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Veldrith.SPIRV/SpirvCrossCompiler.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Veldrith.SPIRV/SpirvCrossCompiler.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Veldrith/CommandList.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Veldrith/CommandList.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Veldrith/D3D12/D3D12CommandList.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Veldrith/D3D12/D3D12CommandList.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Veldrith/D3D12/D3D12GraphicsDevice.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Veldrith/D3D12/D3D12GraphicsDevice.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Veldrith/D3D12/D3D12Pipeline.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Veldrith/D3D12/D3D12Pipeline.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Veldrith/GraphicsDeviceFeatures.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Veldrith/GraphicsDeviceFeatures.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Veldrith/MTL/MTLCommandList.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Veldrith/MTL/MTLCommandList.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Veldrith/MTL/MTLGraphicsDevice.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Veldrith/MTL/MTLGraphicsDevice.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Veldrith/MTL/MTLPipeline.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Veldrith/MTL/MTLPipeline.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Veldrith/Vk/VkCommandList.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Veldrith/Vk/VkCommandList.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Veldrith/Vk/VkGraphicsDevice.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Veldrith/Vk/VkGraphicsDevice.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Veldrith/Vk/VkPipeline.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Veldrith/Vk/VkPipeline.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Veldrith.sln" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

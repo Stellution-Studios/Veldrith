@@ -1,0 +1,14 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="ARM" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="Veldrith.MetalBindings/Veldrith.MetalBindings.csproj" />
+  <Project Path="Veldrith.SPIRV/Veldrith.SPIRV.csproj" />
+  <Project Path="Veldrith/Veldrith.csproj" />
+  <Properties Name="Performance">
+    <Property Name="HasPerformanceSessions" Value="true" />
+  </Properties>
+</Solution>
