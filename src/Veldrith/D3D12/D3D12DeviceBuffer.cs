@@ -160,24 +160,13 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
             this._stagingReadBuffer = this._stagingReadAllocation.Resource;
             this.NativeBuffer = this._stagingWriteBuffer;
 
-            unsafe {
-                void* writePtr = null;
-                this._stagingWriteBuffer.Map(0, &writePtr).CheckError();
-                this._stagingWriteMappedPointer = (IntPtr)writePtr;
-
-                void* readPtr = null;
-                this._stagingReadBuffer.Map(0, &readPtr).CheckError();
-                this._stagingReadMappedPointer = (IntPtr)readPtr;
-            }
+            this._stagingWriteMappedPointer = this._stagingWriteAllocation.MappedPointer;
+            this._stagingReadMappedPointer = this._stagingReadAllocation.MappedPointer;
         }
         else if (this._isDynamic) {
             this._allocation = gd.MemoryManager.CreateResource(ref resourceDescription, ResourceStates.GenericRead, HeapType.Upload, HeapFlags.AllowOnlyBuffers);
             this.NativeBuffer = this._allocation.Resource;
-            unsafe {
-                void* dataPointer = null;
-                this.NativeBuffer.Map(0, &dataPointer).CheckError();
-                this._dynamicMappedPointer = (IntPtr)dataPointer;
-            }
+            this._dynamicMappedPointer = this._allocation.MappedPointer;
         }
         else {
             this._allocation = gd.MemoryManager.CreateResource(ref resourceDescription, ResourceStates.Common, HeapType.Default, HeapFlags.AllowOnlyBuffers);
@@ -273,13 +262,10 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         }
 
         if (this._isStaging) {
-            this._stagingWriteBuffer.Unmap(0);
-            this._stagingReadBuffer.Unmap(0);
             this.gd.ReleaseAfterLastSubmission(this._stagingWriteAllocation);
             this.gd.ReleaseAfterLastSubmission(this._stagingReadAllocation);
         }
         else if (this._isDynamic) {
-            this.NativeBuffer.Unmap(0);
             this.gd.ReleaseAfterLastSubmission(this._allocation);
         }
         else {
@@ -540,14 +526,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         D3D12ResourceAllocation uploadBuffer = this.gd.RentUploadBuffer(copySize);
         try {
             unsafe {
-                void* mapped = null;
-                uploadBuffer.Resource.Map(0, &mapped).CheckError();
-                try {
-                    Buffer.MemoryCopy(source.ToPointer(), mapped, copySize, copySize);
-                }
-                finally {
-                    uploadBuffer.Resource.Unmap(0);
-                }
+                Buffer.MemoryCopy(source.ToPointer(), uploadBuffer.MappedPointer.ToPointer(), copySize, copySize);
             }
 
             return uploadBuffer;
@@ -635,16 +614,9 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
                 }
             }, waitForCompletion: true);
 
-            void* mapped = null;
-            readbackBuffer.Map(0, &mapped).CheckError();
-            try {
-                byte* src = (byte*)mapped;
-                byte* dst = (byte*)destinationPtr + destinationOffset;
-                Buffer.MemoryCopy(src, dst, destination.SizeInBytes - destinationOffset, copySize);
-            }
-            finally {
-                readbackBuffer.Unmap(0);
-            }
+            byte* src = (byte*)readbackAllocation.MappedPointer.ToPointer();
+            byte* dst = (byte*)destinationPtr + destinationOffset;
+            Buffer.MemoryCopy(src, dst, destination.SizeInBytes - destinationOffset, copySize);
         }
         finally {
             readbackAllocation.Dispose();

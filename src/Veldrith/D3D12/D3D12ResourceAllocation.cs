@@ -23,9 +23,11 @@ internal sealed class D3D12ResourceAllocation : IDisposable {
     /// </summary>
     /// <param name="resource">The native resource.</param>
     /// <param name="memoryBlock">The memory block backing the resource.</param>
-    public D3D12ResourceAllocation(ID3D12Resource resource, D3D12MemoryBlock memoryBlock) {
+    /// <param name="mappedPointer">The persistently mapped pointer, or <see cref="IntPtr.Zero" /> when unmapped.</param>
+    public D3D12ResourceAllocation(ID3D12Resource resource, D3D12MemoryBlock memoryBlock, IntPtr mappedPointer = default) {
         this.resource = resource;
         this.memoryBlock = memoryBlock;
+        this.MappedPointer = mappedPointer;
     }
 
     /// <summary>
@@ -39,13 +41,24 @@ internal sealed class D3D12ResourceAllocation : IDisposable {
     internal D3D12MemoryBlock MemoryBlock => this.memoryBlock;
 
     /// <summary>
+    /// Gets the persistently mapped pointer for CPU-visible resources.
+    /// </summary>
+    internal IntPtr MappedPointer { get; private set; }
+
+    /// <summary>
     /// Releases the native resource and returns its memory to the manager.
     /// </summary>
     public void Dispose() {
         ID3D12Resource resourceToDispose = this.resource;
         D3D12MemoryBlock memoryBlockToDispose = this.memoryBlock;
+        IntPtr mappedPointer = this.MappedPointer;
         this.resource = null;
         this.memoryBlock = null;
+        this.MappedPointer = IntPtr.Zero;
+        if (mappedPointer != IntPtr.Zero) {
+            resourceToDispose?.Unmap(0);
+        }
+
         resourceToDispose?.Dispose();
         memoryBlockToDispose?.Dispose();
     }

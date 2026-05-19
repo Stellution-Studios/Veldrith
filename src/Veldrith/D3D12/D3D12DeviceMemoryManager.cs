@@ -59,12 +59,19 @@ internal sealed class D3D12DeviceMemoryManager : IDisposable {
         ResourceAllocationInfo allocationInfo = this.device.GetResourceAllocationInfo(0, description);
         if (allocationInfo.SizeInBytes >= DedicatedThreshold) {
             ID3D12Resource dedicatedResource = this.device.CreateCommittedResource(heapType, HeapFlags.None, description, initialState);
-            return new D3D12ResourceAllocation(dedicatedResource, null);
+            return new D3D12ResourceAllocation(dedicatedResource, null, MapCpuVisibleResource(dedicatedResource, heapType));
         }
 
         D3D12MemoryBlock allocation = this.Allocate(allocationInfo.SizeInBytes, allocationInfo.Alignment, heapType, heapFlags);
         ID3D12Resource resource = this.device.CreatePlacedResource<ID3D12Resource>(allocation.Heap, allocation.Offset, description, initialState);
-        return new D3D12ResourceAllocation(resource, allocation);
+        try {
+            return new D3D12ResourceAllocation(resource, allocation, MapCpuVisibleResource(resource, heapType));
+        }
+        catch {
+            resource.Dispose();
+            allocation.Dispose();
+            throw;
+        }
     }
 
     /// <summary>
@@ -89,6 +96,51 @@ internal sealed class D3D12DeviceMemoryManager : IDisposable {
     internal void Free(D3D12MemoryBlock block) {
         lock (this.@lock) {
             block.Chunk.Free(block.Offset, block.Size);
+        }
+    }
+
+    /// <summary>
+    /// Gets a compact allocator statistics string for performance logging.
+    /// </summary>
+    /// <returns>A compact allocator statistics string.</returns>
+    internal string GetStatsString() {
+        lock (this.@lock) {
+            ulong defaultBytes = 0;
+            ulong defaultFreeBytes = 0;
+            int defaultChunks = 0;
+            ulong uploadBytes = 0;
+            ulong uploadFreeBytes = 0;
+            int uploadChunks = 0;
+            ulong readbackBytes = 0;
+            ulong readbackFreeBytes = 0;
+            int readbackChunks = 0;
+
+            foreach (KeyValuePair<ChunkKey, List<Chunk>> pair in this.chunksByKey) {
+                for (int i = 0; i < pair.Value.Count; i++) {
+                    Chunk chunk = pair.Value[i];
+                    switch (pair.Key.HeapType) {
+                        case HeapType.Default:
+                            defaultChunks++;
+                            defaultBytes += chunk.Size;
+                            defaultFreeBytes += chunk.GetFreeBytes();
+                            break;
+                        case HeapType.Upload:
+                            uploadChunks++;
+                            uploadBytes += chunk.Size;
+                            uploadFreeBytes += chunk.GetFreeBytes();
+                            break;
+                        case HeapType.Readback:
+                            readbackChunks++;
+                            readbackBytes += chunk.Size;
+                            readbackFreeBytes += chunk.GetFreeBytes();
+                            break;
+                    }
+                }
+            }
+
+            return $"memChunks={defaultChunks}/{uploadChunks}/{readbackChunks}, "
+                   + $"memUsedMB={BytesToMiB(defaultBytes - defaultFreeBytes):F1}/{BytesToMiB(uploadBytes - uploadFreeBytes):F1}/{BytesToMiB(readbackBytes - readbackFreeBytes):F1}, "
+                   + $"memFreeMB={BytesToMiB(defaultFreeBytes):F1}/{BytesToMiB(uploadFreeBytes):F1}/{BytesToMiB(readbackFreeBytes):F1}";
         }
     }
 
@@ -138,6 +190,15 @@ internal sealed class D3D12DeviceMemoryManager : IDisposable {
     }
 
     /// <summary>
+    /// Converts bytes to mebibytes.
+    /// </summary>
+    /// <param name="bytes">The byte count.</param>
+    /// <returns>The mebibyte count.</returns>
+    private static double BytesToMiB(ulong bytes) {
+        return bytes / (1024.0 * 1024.0);
+    }
+
+    /// <summary>
     /// Gets the heap alignment class required for a resource allocation.
     /// </summary>
     /// <param name="resourceAlignment">The resource placement alignment.</param>
@@ -146,6 +207,22 @@ internal sealed class D3D12DeviceMemoryManager : IDisposable {
         const ulong defaultAlignment = 65536UL;
         const ulong msaaAlignment = 4194304UL;
         return resourceAlignment > defaultAlignment ? msaaAlignment : defaultAlignment;
+    }
+
+    /// <summary>
+    /// Persistently maps CPU-visible D3D12 resources.
+    /// </summary>
+    /// <param name="resource">The resource to map.</param>
+    /// <param name="heapType">The resource heap type.</param>
+    /// <returns>The mapped pointer, or <see cref="IntPtr.Zero" /> for GPU-only resources.</returns>
+    private static unsafe IntPtr MapCpuVisibleResource(ID3D12Resource resource, HeapType heapType) {
+        if (heapType != HeapType.Upload && heapType != HeapType.Readback) {
+            return IntPtr.Zero;
+        }
+
+        void* pointer = null;
+        resource.Map(0, &pointer).CheckError();
+        return (IntPtr)pointer;
     }
 
     /// <summary>
@@ -167,7 +244,7 @@ internal sealed class D3D12DeviceMemoryManager : IDisposable {
         /// <summary>
         /// Gets the heap type.
         /// </summary>
-        private HeapType HeapType { get; }
+        internal HeapType HeapType { get; }
 
         /// <summary>
         /// Gets the heap flags.
@@ -216,6 +293,13 @@ internal sealed class D3D12DeviceMemoryManager : IDisposable {
         /// </summary>
         private readonly List<FreeBlock> freeBlocks = new();
 
+#if DEBUG
+        /// <summary>
+        /// Stores allocated blocks for overlap validation in debug builds.
+        /// </summary>
+        private readonly List<FreeBlock> allocatedBlocks = new();
+#endif
+
         /// <summary>
         /// Initializes a new instance of the <see cref="Chunk" /> type.
         /// </summary>
@@ -233,6 +317,7 @@ internal sealed class D3D12DeviceMemoryManager : IDisposable {
             };
 
             this.Heap = device.CreateHeap<ID3D12Heap>(description);
+            this.Size = size;
             this.freeBlocks.Add(new FreeBlock(0, size));
         }
 
@@ -240,6 +325,11 @@ internal sealed class D3D12DeviceMemoryManager : IDisposable {
         /// Gets the native heap.
         /// </summary>
         internal ID3D12Heap Heap { get; }
+
+        /// <summary>
+        /// Gets the chunk size.
+        /// </summary>
+        internal ulong Size { get; }
 
         /// <summary>
         /// Attempts to allocate from this chunk.
@@ -270,6 +360,9 @@ internal sealed class D3D12DeviceMemoryManager : IDisposable {
                     this.freeBlocks.Insert(i, new FreeBlock(suffixOffset, suffixSize));
                 }
 
+#if DEBUG
+                this.CheckAllocatedBlock(new FreeBlock(offset, size));
+#endif
                 return true;
             }
 
@@ -290,6 +383,22 @@ internal sealed class D3D12DeviceMemoryManager : IDisposable {
 
             this.freeBlocks.Insert(insertIndex, new FreeBlock(offset, size));
             this.Coalesce();
+#if DEBUG
+            this.RemoveAllocatedBlock(new FreeBlock(offset, size));
+#endif
+        }
+
+        /// <summary>
+        /// Gets the total free bytes inside this chunk.
+        /// </summary>
+        /// <returns>The free byte count.</returns>
+        public ulong GetFreeBytes() {
+            ulong freeBytes = 0;
+            for (int i = 0; i < this.freeBlocks.Count; i++) {
+                freeBytes += this.freeBlocks[i].Size;
+            }
+
+            return freeBytes;
         }
 
         /// <summary>
@@ -315,6 +424,50 @@ internal sealed class D3D12DeviceMemoryManager : IDisposable {
                 i++;
             }
         }
+
+#if DEBUG
+        /// <summary>
+        /// Verifies that a new allocation does not overlap an existing allocation.
+        /// </summary>
+        /// <param name="block">The allocated block.</param>
+        private void CheckAllocatedBlock(FreeBlock block) {
+            for (int i = 0; i < this.allocatedBlocks.Count; i++) {
+                if (BlocksOverlap(block, this.allocatedBlocks[i])) {
+                    throw new VeldridException("D3D12 memory allocation blocks overlap.");
+                }
+            }
+
+            this.allocatedBlocks.Add(block);
+        }
+
+        /// <summary>
+        /// Removes a block from debug allocation tracking.
+        /// </summary>
+        /// <param name="block">The block to remove.</param>
+        private void RemoveAllocatedBlock(FreeBlock block) {
+            for (int i = 0; i < this.allocatedBlocks.Count; i++) {
+                FreeBlock allocated = this.allocatedBlocks[i];
+                if (allocated.Offset == block.Offset && allocated.Size == block.Size) {
+                    this.allocatedBlocks.RemoveAt(i);
+                    return;
+                }
+            }
+
+            throw new VeldridException("D3D12 memory allocation block was freed twice or was not allocated.");
+        }
+
+        /// <summary>
+        /// Determines whether two blocks overlap.
+        /// </summary>
+        /// <param name="first">The first block.</param>
+        /// <param name="second">The second block.</param>
+        /// <returns><see langword="true" /> when the blocks overlap.</returns>
+        private static bool BlocksOverlap(FreeBlock first, FreeBlock second) {
+            ulong firstEnd = first.Offset + first.Size;
+            ulong secondEnd = second.Offset + second.Size;
+            return first.Offset < secondEnd && second.Offset < firstEnd;
+        }
+#endif
     }
 
     /// <summary>

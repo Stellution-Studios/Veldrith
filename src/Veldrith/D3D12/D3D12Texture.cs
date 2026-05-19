@@ -798,21 +798,14 @@ internal sealed class D3D12Texture : Texture {
 
         try {
             unsafe {
-                void* mappedUpload = null;
-                uploadBuffer.Resource.Map(0, &mappedUpload).CheckError();
-                try {
-                    byte* srcBase = (byte*)source.ToPointer();
-                    byte* dstBase = (byte*)mappedUpload;
-                    for (uint slice = 0; slice < depth; slice++) {
-                        for (uint row = 0; row < sourceRowCount; row++) {
-                            byte* srcRow = srcBase + slice * sourceDepthPitch + row * sourceRowPitch;
-                            byte* dstRow = dstBase + slice * uploadDepthPitch + row * uploadRowPitch;
-                            Buffer.MemoryCopy(srcRow, dstRow, uploadRowPitch, sourceRowPitch);
-                        }
+                byte* srcBase = (byte*)source.ToPointer();
+                byte* dstBase = (byte*)uploadBuffer.MappedPointer.ToPointer();
+                for (uint slice = 0; slice < depth; slice++) {
+                    for (uint row = 0; row < sourceRowCount; row++) {
+                        byte* srcRow = srcBase + slice * sourceDepthPitch + row * sourceRowPitch;
+                        byte* dstRow = dstBase + slice * uploadDepthPitch + row * uploadRowPitch;
+                        Buffer.MemoryCopy(srcRow, dstRow, uploadRowPitch, sourceRowPitch);
                     }
-                }
-                finally {
-                    uploadBuffer.Resource.Unmap(0);
                 }
             }
 
@@ -865,19 +858,12 @@ internal sealed class D3D12Texture : Texture {
             Util.GetMipDimensions(this, mipLevel, out uint mipWidth, out uint mipHeight, out uint mipDepth);
 
             unsafe {
-                void* mappedUpload = null;
-                uploadBuffer.Resource.Map(0, &mappedUpload).CheckError();
-                try {
-                    fixed (byte* srcBase = data) {
-                        byte* srcSubresource = srcBase + srcOffset;
-                        byte* dstUpload = (byte*)mappedUpload + layouts[0].Offset;
-                        uint dstRowPitch = layouts[0].Footprint.RowPitch;
-                        uint dstDepthPitch = dstRowPitch * rowCounts[0];
-                        Util.CopyTextureRegion(srcSubresource, 0, 0, 0, srcRowPitch, srcDepthPitch, dstUpload, 0, 0, 0, dstRowPitch, dstDepthPitch, mipWidth, mipHeight, mipDepth, this.Format);
-                    }
-                }
-                finally {
-                    uploadBuffer.Resource.Unmap(0);
+                fixed (byte* srcBase = data) {
+                    byte* srcSubresource = srcBase + srcOffset;
+                    byte* dstUpload = (byte*)uploadBuffer.MappedPointer.ToPointer() + layouts[0].Offset;
+                    uint dstRowPitch = layouts[0].Footprint.RowPitch;
+                    uint dstDepthPitch = dstRowPitch * rowCounts[0];
+                    Util.CopyTextureRegion(srcSubresource, 0, 0, 0, srcRowPitch, srcDepthPitch, dstUpload, 0, 0, 0, dstRowPitch, dstDepthPitch, mipWidth, mipHeight, mipDepth, this.Format);
                 }
             }
 
@@ -932,19 +918,12 @@ internal sealed class D3D12Texture : Texture {
             }, false);
 
             unsafe {
-                void* mappedReadback = null;
-                readbackBuffer.Map(0, &mappedReadback).CheckError();
-                try {
-                    fixed (byte* dstBase = data) {
-                        byte* srcReadback = (byte*)mappedReadback + layouts[0].Offset;
-                        byte* dstSubresource = dstBase + dstOffset;
-                        uint srcRowPitch = layouts[0].Footprint.RowPitch;
-                        uint srcDepthPitch = srcRowPitch * rowCounts[0];
-                        Util.CopyTextureRegion(srcReadback, 0, 0, 0, srcRowPitch, srcDepthPitch, dstSubresource, 0, 0, 0, dstRowPitch, dstDepthPitch, mipWidth, mipHeight, mipDepth, this.Format);
-                    }
-                }
-                finally {
-                    readbackBuffer.Unmap(0);
+                fixed (byte* dstBase = data) {
+                    byte* srcReadback = (byte*)readbackAllocation.MappedPointer.ToPointer() + layouts[0].Offset;
+                    byte* dstSubresource = dstBase + dstOffset;
+                    uint srcRowPitch = layouts[0].Footprint.RowPitch;
+                    uint srcDepthPitch = srcRowPitch * rowCounts[0];
+                    Util.CopyTextureRegion(srcReadback, 0, 0, 0, srcRowPitch, srcDepthPitch, dstSubresource, 0, 0, 0, dstRowPitch, dstDepthPitch, mipWidth, mipHeight, mipDepth, this.Format);
                 }
             }
         }
