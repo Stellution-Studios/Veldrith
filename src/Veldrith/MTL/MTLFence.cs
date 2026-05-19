@@ -8,10 +8,10 @@ namespace Veldrith.MTL
         public ManualResetEvent ResetEvent { get; }
 
         public override bool Signaled => ResetEvent.WaitOne(0);
-        public override bool IsDisposed => disposed;
+        public override bool IsDisposed => _disposed;
 
         public override string Name { get; set; }
-        private bool disposed;
+        private bool _disposed;
 
         public MtlFence(bool signaled)
         {
@@ -22,10 +22,10 @@ namespace Veldrith.MTL
 
         public override void Dispose()
         {
-            if (!disposed)
+            if (!_disposed)
             {
                 ResetEvent.Dispose();
-                disposed = true;
+                _disposed = true;
             }
         }
 

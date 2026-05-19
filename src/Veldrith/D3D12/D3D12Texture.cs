@@ -9,18 +9,18 @@ namespace Veldrith.D3D12
     internal sealed class D3D12Texture : Texture
     {
         private readonly D3D12GraphicsDevice gd;
-        private readonly byte[] data;
-        private readonly bool ownsNativeTexture;
-        private readonly uint effectiveArrayLayers;
-        private readonly ResourceStates[] subresourceStates;
-        private bool hasCachedCommonState;
-        private ResourceStates cachedCommonState;
-        private GCHandle pinnedData;
-        private MapMode? activeMapMode;
-        private uint activeMapSubresource;
-        private bool mapped;
-        private bool disposed;
-        private string name;
+        private readonly byte[] _data;
+        private readonly bool _ownsNativeTexture;
+        private readonly uint _effectiveArrayLayers;
+        private readonly ResourceStates[] _subresourceStates;
+        private bool _hasCachedCommonState;
+        private ResourceStates _cachedCommonState;
+        private GCHandle _pinnedData;
+        private MapMode? _activeMapMode;
+        private uint _activeMapSubresource;
+        private bool _mapped;
+        private bool _disposed;
+        private string _name;
 
         public D3D12Texture(D3D12GraphicsDevice gd, ref TextureDescription description, ulong? nativeHandle)
         {
@@ -34,20 +34,20 @@ namespace Veldrith.D3D12
             Usage = description.Usage;
             Type = description.Type;
             SampleCount = description.SampleCount;
-            effectiveArrayLayers = getEffectiveArrayLayers(Usage, ArrayLayers);
-            data = new byte[computeTotalSize(ref description)];
-            subresourceStates = new ResourceStates[MipLevels * effectiveArrayLayers];
+            _effectiveArrayLayers = getEffectiveArrayLayers(Usage, ArrayLayers);
+            _data = new byte[computeTotalSize(ref description)];
+            _subresourceStates = new ResourceStates[MipLevels * _effectiveArrayLayers];
 
             if (nativeHandle == null)
             {
                 NativeTexture = createNativeTexture(gd, ref description);
-                ownsNativeTexture = true;
+                _ownsNativeTexture = true;
                 initializeSubresourceStates(getCreatedTextureInitialState(description.Usage));
             }
             else
             {
                 NativeTexture = createWrappedNativeTexture(nativeHandle.Value);
-                ownsNativeTexture = false;
+                _ownsNativeTexture = false;
                 validateWrappedTextureDescription(NativeTexture.Description, ref description);
                 initializeSubresourceStates(ResourceStates.Common);
             }
@@ -62,28 +62,28 @@ namespace Veldrith.D3D12
         public override TextureUsage Usage { get; }
         public override TextureType Type { get; }
         public override TextureSampleCount SampleCount { get; }
-        public override bool IsDisposed => disposed;
+        public override bool IsDisposed => _disposed;
         internal ID3D12Resource NativeTexture { get; }
         internal ResourceStates CurrentState
         {
             get
             {
-                if (subresourceStates == null || subresourceStates.Length == 0)
+                if (_subresourceStates == null || _subresourceStates.Length == 0)
                 {
                     return ResourceStates.Common;
                 }
 
-                return subresourceStates[0];
+                return _subresourceStates[0];
             }
             set => SetAllSubresourceStates(value);
         }
-        internal uint SubresourceCount => (uint)(subresourceStates?.Length ?? 0);
-        internal uint EffectiveArrayLayers => effectiveArrayLayers;
+        internal uint SubresourceCount => (uint)(_subresourceStates?.Length ?? 0);
+        internal uint EffectiveArrayLayers => _effectiveArrayLayers;
 
         public override string Name
         {
-            get => name;
-            set => name = value;
+            get => _name;
+            set => _name = value;
         }
 
         internal void Update(
@@ -112,7 +112,7 @@ namespace Veldrith.D3D12
             }
 
             getSubresourceLayout(subresource, out uint dstOffset, out uint dstSize, out uint dstRowPitch, out uint dstDepthPitch);
-            if (dstOffset + dstSize > (uint)data.Length)
+            if (dstOffset + dstSize > (uint)_data.Length)
             {
                 throw new VeldridException("Texture update destination region exceeds texture storage.");
             }
@@ -121,7 +121,7 @@ namespace Veldrith.D3D12
             uint srcDepthPitch = FormatHelpers.GetDepthPitch(srcRowPitch, height, Format);
             unsafe
             {
-                fixed (byte* dstBase = data)
+                fixed (byte* dstBase = _data)
                 {
                     Util.CopyTextureRegion(
                         source.ToPointer(),
@@ -175,35 +175,35 @@ namespace Veldrith.D3D12
                 syncSubresourceFromNative(subresource);
             }
 
-            if (!mapped)
+            if (!_mapped)
             {
-                pinnedData = GCHandle.Alloc(data, GCHandleType.Pinned);
-                mapped = true;
+                _pinnedData = GCHandle.Alloc(_data, GCHandleType.Pinned);
+                _mapped = true;
             }
 
-            activeMapMode = mode;
-            activeMapSubresource = subresource;
+            _activeMapMode = mode;
+            _activeMapSubresource = subresource;
             getSubresourceLayout(subresource, out uint offset, out uint size, out uint rowPitch, out uint depthPitch);
-            IntPtr dataPtr = IntPtr.Add(pinnedData.AddrOfPinnedObject(), (int)offset);
+            IntPtr dataPtr = IntPtr.Add(_pinnedData.AddrOfPinnedObject(), (int)offset);
             return new MappedResource(this, mode, dataPtr, size, subresource, rowPitch, depthPitch);
         }
 
         internal void Unmap()
         {
-            if (mapped
+            if (_mapped
                 && isStagingTexture()
                 && NativeTexture != null
-                && activeMapMode.HasValue
-                && (activeMapMode.Value == MapMode.Write || activeMapMode.Value == MapMode.ReadWrite))
+                && _activeMapMode.HasValue
+                && (_activeMapMode.Value == MapMode.Write || _activeMapMode.Value == MapMode.ReadWrite))
             {
-                syncSubresourceToNative(activeMapSubresource);
+                syncSubresourceToNative(_activeMapSubresource);
             }
 
-            activeMapMode = null;
-            if (mapped)
+            _activeMapMode = null;
+            if (_mapped)
             {
-                pinnedData.Free();
-                mapped = false;
+                _pinnedData.Free();
+                _mapped = false;
             }
         }
 
@@ -238,9 +238,9 @@ namespace Veldrith.D3D12
 
                 unsafe
                 {
-                    fixed (byte* srcBase = data)
+                    fixed (byte* srcBase = _data)
                     {
-                        fixed (byte* dstBase = destination.data)
+                        fixed (byte* dstBase = destination._data)
                         {
                             byte* srcSubresourcePtr = srcBase + srcBaseOffset;
                             byte* dstSubresourcePtr = dstBase + dstBaseOffset;
@@ -276,7 +276,7 @@ namespace Veldrith.D3D12
                 return false;
             }
 
-            for (uint layer = 0; layer < effectiveArrayLayers; layer++)
+            for (uint layer = 0; layer < _effectiveArrayLayers; layer++)
             {
                 for (uint mipLevel = 1; mipLevel < MipLevels; mipLevel++)
                 {
@@ -328,7 +328,7 @@ namespace Veldrith.D3D12
                                         sum += getSourceByte(srcBaseOffset, srcRowPitch, srcDepthPitch, srcX1, srcY1, srcZ1, bytesPerPixel, component); sampleCount++;
                                     }
 
-                                    data[dstPixelOffset + component] = (byte)(sum / sampleCount);
+                                    _data[dstPixelOffset + component] = (byte)(sum / sampleCount);
                                 }
                             }
                         }
@@ -346,9 +346,9 @@ namespace Veldrith.D3D12
                 return;
             }
 
-            fixed (byte* dataPtr = data)
+            fixed (byte* dataPtr = _data)
             {
-                for (uint layer = 0; layer < effectiveArrayLayers; layer++)
+                for (uint layer = 0; layer < _effectiveArrayLayers; layer++)
                 {
                     for (uint mipLevel = 1; mipLevel < MipLevels; mipLevel++)
                     {
@@ -383,7 +383,7 @@ namespace Veldrith.D3D12
                 + srcY * srcRowPitch
                 + srcX * bytesPerPixel
                 + component);
-            return data[srcPixelOffset];
+            return _data[srcPixelOffset];
         }
 
         private ID3D12Resource createNativeTexture(D3D12GraphicsDevice gd, ref TextureDescription description)
@@ -577,19 +577,19 @@ namespace Veldrith.D3D12
 
         private void initializeSubresourceStates(ResourceStates initialState)
         {
-            for (int i = 0; i < subresourceStates.Length; i++)
+            for (int i = 0; i < _subresourceStates.Length; i++)
             {
-                subresourceStates[i] = initialState;
+                _subresourceStates[i] = initialState;
             }
 
-            hasCachedCommonState = true;
-            cachedCommonState = initialState;
+            _hasCachedCommonState = true;
+            _cachedCommonState = initialState;
         }
 
         private void getSubresourceLayout(uint subresource, out uint offset, out uint size, out uint rowPitch, out uint depthPitch)
         {
             uint totalOffset = 0;
-            for (uint arrayLayer = 0; arrayLayer < effectiveArrayLayers; arrayLayer++)
+            for (uint arrayLayer = 0; arrayLayer < _effectiveArrayLayers; arrayLayer++)
             {
                 uint mipWidth = Width;
                 uint mipHeight = Height;
@@ -677,7 +677,7 @@ namespace Veldrith.D3D12
                     uploadBuffer.Map(0, &mappedUpload).CheckError();
                     try
                     {
-                        fixed (byte* srcBase = data)
+                        fixed (byte* srcBase = _data)
                         {
                             byte* srcSubresource = srcBase + srcOffset;
                             byte* dstUpload = (byte*)mappedUpload + layouts[0].Offset;
@@ -760,7 +760,7 @@ namespace Veldrith.D3D12
                     readbackBuffer.Map(0, &mappedReadback).CheckError();
                     try
                     {
-                        fixed (byte* dstBase = data)
+                        fixed (byte* dstBase = _data)
                         {
                             byte* srcReadback = (byte*)mappedReadback + layouts[0].Offset;
                             byte* dstSubresource = dstBase + dstOffset;
@@ -865,90 +865,90 @@ namespace Veldrith.D3D12
 
         private protected override void DisposeCore()
         {
-            if (mapped)
+            if (_mapped)
             {
-                pinnedData.Free();
-                mapped = false;
+                _pinnedData.Free();
+                _mapped = false;
             }
 
-            if (ownsNativeTexture)
+            if (_ownsNativeTexture)
             {
                 NativeTexture?.Dispose();
             }
-            disposed = true;
+            _disposed = true;
         }
 
         internal ResourceStates GetSubresourceState(uint subresource)
         {
-            if (subresourceStates == null || subresource >= subresourceStates.Length)
+            if (_subresourceStates == null || subresource >= _subresourceStates.Length)
             {
                 return ResourceStates.Common;
             }
 
-            return subresourceStates[subresource];
+            return _subresourceStates[subresource];
         }
 
         internal void SetSubresourceState(uint subresource, ResourceStates state)
         {
-            if (subresourceStates == null || subresource >= subresourceStates.Length)
+            if (_subresourceStates == null || subresource >= _subresourceStates.Length)
             {
                 return;
             }
 
-            ResourceStates previous = subresourceStates[subresource];
+            ResourceStates previous = _subresourceStates[subresource];
             if (previous == state)
             {
                 return;
             }
 
-            subresourceStates[subresource] = state;
-            if (hasCachedCommonState && state != cachedCommonState)
+            _subresourceStates[subresource] = state;
+            if (_hasCachedCommonState && state != _cachedCommonState)
             {
-                hasCachedCommonState = false;
+                _hasCachedCommonState = false;
             }
         }
 
         internal void SetAllSubresourceStates(ResourceStates state)
         {
-            if (subresourceStates == null)
+            if (_subresourceStates == null)
             {
                 return;
             }
 
-            for (int i = 0; i < subresourceStates.Length; i++)
+            for (int i = 0; i < _subresourceStates.Length; i++)
             {
-                subresourceStates[i] = state;
+                _subresourceStates[i] = state;
             }
 
-            hasCachedCommonState = true;
-            cachedCommonState = state;
+            _hasCachedCommonState = true;
+            _cachedCommonState = state;
         }
 
         internal bool TryGetCommonState(out ResourceStates state)
         {
-            if (subresourceStates == null || subresourceStates.Length == 0)
+            if (_subresourceStates == null || _subresourceStates.Length == 0)
             {
                 state = ResourceStates.Common;
                 return true;
             }
 
-            if (hasCachedCommonState)
+            if (_hasCachedCommonState)
             {
-                state = cachedCommonState;
+                state = _cachedCommonState;
                 return true;
             }
 
-            state = subresourceStates[0];
-            for (int i = 1; i < subresourceStates.Length; i++)
+            state = _subresourceStates[0];
+            for (int i = 1; i < _subresourceStates.Length; i++)
             {
-                if (subresourceStates[i] != state)
+                if (_subresourceStates[i] != state)
                 {
                     return false;
                 }
             }
 
-            hasCachedCommonState = true;
-            cachedCommonState = state;
+            _hasCachedCommonState = true;
+            _cachedCommonState = state;
             return true;
         }
     }

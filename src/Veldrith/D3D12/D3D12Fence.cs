@@ -6,54 +6,54 @@ namespace Veldrith.D3D12
 {
     internal sealed class D3D12Fence : Fence
     {
-        private readonly ID3D12Fence nativeFence;
-        private readonly AutoResetEvent waitEvent;
-        private ulong fenceValue;
-        private bool disposed;
-        private string name;
+        private readonly ID3D12Fence _nativeFence;
+        private readonly AutoResetEvent _waitEvent;
+        private ulong _fenceValue;
+        private bool _disposed;
+        private string _name;
 
         public D3D12Fence(D3D12GraphicsDevice gd, bool signaled)
         {
             ulong initialValue = signaled ? 1UL : 0UL;
-            nativeFence = gd.Device.CreateFence(initialValue, FenceFlags.None);
-            waitEvent = new AutoResetEvent(false);
-            fenceValue = initialValue;
+            _nativeFence = gd.Device.CreateFence(initialValue, FenceFlags.None);
+            _waitEvent = new AutoResetEvent(false);
+            _fenceValue = initialValue;
         }
 
-        public override bool Signaled => nativeFence.CompletedValue >= fenceValue;
-        public override bool IsDisposed => disposed;
+        public override bool Signaled => _nativeFence.CompletedValue >= _fenceValue;
+        public override bool IsDisposed => _disposed;
 
         public override string Name
         {
-            get => name;
-            set => name = value;
+            get => _name;
+            set => _name = value;
         }
 
         public override void Dispose()
         {
-            if (disposed)
+            if (_disposed)
             {
                 return;
             }
 
-            disposed = true;
-            waitEvent.Dispose();
-            nativeFence.Dispose();
+            _disposed = true;
+            _waitEvent.Dispose();
+            _nativeFence.Dispose();
         }
 
         public override void Reset()
         {
-            fenceValue = nativeFence.CompletedValue + 1;
+            _fenceValue = _nativeFence.CompletedValue + 1;
         }
 
         internal void Signal(ID3D12CommandQueue commandQueue)
         {
-            if (fenceValue <= nativeFence.CompletedValue)
+            if (_fenceValue <= _nativeFence.CompletedValue)
             {
-                fenceValue = nativeFence.CompletedValue + 1;
+                _fenceValue = _nativeFence.CompletedValue + 1;
             }
 
-            commandQueue.Signal(nativeFence, fenceValue).CheckError();
+            commandQueue.Signal(_nativeFence, _fenceValue).CheckError();
         }
 
         internal bool Wait(ulong nanosecondTimeout)
@@ -63,18 +63,18 @@ namespace Veldrith.D3D12
                 return true;
             }
 
-            nativeFence.SetEventOnCompletion(fenceValue, waitEvent.SafeWaitHandle.DangerousGetHandle()).CheckError();
+            _nativeFence.SetEventOnCompletion(_fenceValue, _waitEvent.SafeWaitHandle.DangerousGetHandle()).CheckError();
 
             if (nanosecondTimeout == ulong.MaxValue)
             {
-                waitEvent.WaitOne();
+                _waitEvent.WaitOne();
                 return true;
             }
 
             int milliseconds = nanosecondTimeout > 0
                 ? (int)Math.Min(int.MaxValue, nanosecondTimeout / 1_000_000)
                 : 0;
-            return waitEvent.WaitOne(milliseconds);
+            return _waitEvent.WaitOne(milliseconds);
         }
     }
 }

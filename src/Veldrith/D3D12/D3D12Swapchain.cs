@@ -6,80 +6,80 @@ namespace Veldrith.D3D12
     internal sealed class D3D12Swapchain : Swapchain
     {
         private readonly D3D12GraphicsDevice gd;
-        private readonly bool hasNativeSwapchain;
-        private readonly Format nativeColorFormat;
-        private readonly bool canTear;
-        private readonly int bufferCount = 3;
-        private Texture colorTexture;
-        private Texture depthTexture;
-        private Framebuffer framebuffer;
-        private IDXGISwapChain3 dxgiSwapChain;
-        private ID3D12DescriptorHeap rtvHeap;
-        private ID3D12Resource[] backBufferResources;
-        private CpuDescriptorHandle[] backBufferRtvs;
-        private ResourceStates[] backBufferStates;
-        private int rtvDescriptorSize;
-        private bool allowTearing;
-        private bool disposed;
-        private string name;
+        private readonly bool _hasNativeSwapchain;
+        private readonly Format _nativeColorFormat;
+        private readonly bool _canTear;
+        private readonly int _bufferCount = 3;
+        private Texture _colorTexture;
+        private Texture _depthTexture;
+        private Framebuffer _framebuffer;
+        private IDXGISwapChain3 _dxgiSwapChain;
+        private ID3D12DescriptorHeap _rtvHeap;
+        private ID3D12Resource[] _backBufferResources;
+        private CpuDescriptorHandle[] _backBufferRtvs;
+        private ResourceStates[] _backBufferStates;
+        private int _rtvDescriptorSize;
+        private bool _allowTearing;
+        private bool _disposed;
+        private string _name;
 
         public D3D12Swapchain(D3D12GraphicsDevice gd, ref SwapchainDescription description)
         {
             this.gd = gd;
             SyncToVerticalBlank = description.SyncToVerticalBlank;
-            nativeColorFormat = description.ColorSrgb ? Format.B8G8R8A8_UNorm_SRgb : Format.B8G8R8A8_UNorm;
+            _nativeColorFormat = description.ColorSrgb ? Format.B8G8R8A8_UNorm_SRgb : Format.B8G8R8A8_UNorm;
             using (var factory5 = gd.DxgiFactory.QueryInterfaceOrNull<IDXGIFactory5>())
             {
-                canTear = factory5?.PresentAllowTearing == true;
+                _canTear = factory5?.PresentAllowTearing == true;
             }
-            hasNativeSwapchain = tryCreateNativeSwapchain(ref description);
+            _hasNativeSwapchain = tryCreateNativeSwapchain(ref description);
             createAttachments(description.Width, description.Height, description.DepthFormat, description.ColorSrgb);
         }
 
-        public override Framebuffer Framebuffer => framebuffer;
-        public override bool IsDisposed => disposed;
+        public override Framebuffer Framebuffer => _framebuffer;
+        public override bool IsDisposed => _disposed;
         public override bool SyncToVerticalBlank { get; set; }
         internal bool AllowTearing
         {
-            get => allowTearing;
+            get => _allowTearing;
             set
             {
-                if (allowTearing == value)
+                if (_allowTearing == value)
                 {
                     return;
                 }
 
-                allowTearing = value;
-                if (!hasNativeSwapchain || dxgiSwapChain == null)
+                _allowTearing = value;
+                if (!_hasNativeSwapchain || _dxgiSwapChain == null)
                 {
                     return;
                 }
 
-                uint width = colorTexture?.Width ?? 1u;
-                uint height = colorTexture?.Height ?? 1u;
+                uint width = _colorTexture?.Width ?? 1u;
+                uint height = _colorTexture?.Height ?? 1u;
                 recreateNativeSwapchain(width, height);
             }
         }
 
         public override string Name
         {
-            get => name;
-            set => name = value;
+            get => _name;
+            set => _name = value;
         }
 
         public override void Dispose()
         {
-            if (disposed)
+            if (_disposed)
             {
                 return;
             }
 
-            disposed = true;
+            _disposed = true;
             disposeNativeResources();
-            dxgiSwapChain?.Dispose();
-            framebuffer.Dispose();
-            colorTexture.Dispose();
-            depthTexture?.Dispose();
+            _dxgiSwapChain?.Dispose();
+            _framebuffer.Dispose();
+            _colorTexture.Dispose();
+            _depthTexture?.Dispose();
         }
 
         public override void Resize(uint width, uint height)
@@ -89,17 +89,17 @@ namespace Veldrith.D3D12
                 return;
             }
 
-            bool useDepth = depthTexture != null;
-            PixelFormat? depthFormat = useDepth ? depthTexture.Format : null;
-            bool srgb = colorTexture.Format == PixelFormat.B8G8R8A8UNormSRgb || colorTexture.Format == PixelFormat.R8G8B8A8UNormSRgb;
+            bool useDepth = _depthTexture != null;
+            PixelFormat? depthFormat = useDepth ? _depthTexture.Format : null;
+            bool srgb = _colorTexture.Format == PixelFormat.B8G8R8A8UNormSRgb || _colorTexture.Format == PixelFormat.R8G8B8A8UNormSRgb;
 
-            framebuffer.Dispose();
-            colorTexture.Dispose();
-            depthTexture?.Dispose();
-            if (hasNativeSwapchain)
+            _framebuffer.Dispose();
+            _colorTexture.Dispose();
+            _depthTexture?.Dispose();
+            if (_hasNativeSwapchain)
             {
                 disposeNativeResources();
-                dxgiSwapChain.ResizeBuffers((uint)bufferCount, width, height, nativeColorFormat, SwapChainFlags.None);
+                _dxgiSwapChain.ResizeBuffers((uint)_bufferCount, width, height, _nativeColorFormat, SwapChainFlags.None);
                 createNativeRenderTargets();
             }
 
@@ -108,15 +108,15 @@ namespace Veldrith.D3D12
 
         internal void Present()
         {
-            if (hasNativeSwapchain)
+            if (_hasNativeSwapchain)
             {
                 PresentFlags presentFlags = PresentFlags.None;
-                if (allowTearing && canTear && !SyncToVerticalBlank)
+                if (_allowTearing && _canTear && !SyncToVerticalBlank)
                 {
                     presentFlags = PresentFlags.AllowTearing;
                 }
 
-                dxgiSwapChain.Present(SyncToVerticalBlank ? 1u : 0u, presentFlags);
+                _dxgiSwapChain.Present(SyncToVerticalBlank ? 1u : 0u, presentFlags);
             }
         }
 
@@ -124,26 +124,26 @@ namespace Veldrith.D3D12
         {
             var colorFormat = srgb ? PixelFormat.B8G8R8A8UNormSRgb : PixelFormat.B8G8R8A8UNorm;
             var colorDesc = TextureDescription.Texture2D(width, height, 1, 1, colorFormat, TextureUsage.RenderTarget | TextureUsage.Sampled);
-            colorTexture = gd.ResourceFactory.CreateTexture(colorDesc);
+            _colorTexture = gd.ResourceFactory.CreateTexture(colorDesc);
 
             if (depthFormat != null)
             {
                 var depthDesc = TextureDescription.Texture2D(width, height, 1, 1, depthFormat.Value, TextureUsage.DepthStencil);
-                depthTexture = gd.ResourceFactory.CreateTexture(depthDesc);
+                _depthTexture = gd.ResourceFactory.CreateTexture(depthDesc);
             }
             else
             {
-                depthTexture = null;
+                _depthTexture = null;
             }
 
-            var fbDesc = new FramebufferDescription(depthTexture, colorTexture);
-            if (hasNativeSwapchain)
+            var fbDesc = new FramebufferDescription(_depthTexture, _colorTexture);
+            if (_hasNativeSwapchain)
             {
-                framebuffer = new D3D12SwapchainFramebuffer(gd, this, ref fbDesc);
+                _framebuffer = new D3D12SwapchainFramebuffer(gd, this, ref fbDesc);
             }
             else
             {
-                framebuffer = gd.ResourceFactory.CreateFramebuffer(fbDesc);
+                _framebuffer = gd.ResourceFactory.CreateFramebuffer(fbDesc);
             }
         }
 
@@ -159,8 +159,8 @@ namespace Veldrith.D3D12
             {
                 Width = description.Width,
                 Height = description.Height,
-                Format = nativeColorFormat,
-                BufferCount = (uint)bufferCount,
+                Format = _nativeColorFormat,
+                BufferCount = (uint)_bufferCount,
                 BufferUsage = Usage.RenderTargetOutput,
                 SampleDescription = new SampleDescription(1, 0),
                 SwapEffect = SwapEffect.FlipDiscard,
@@ -171,7 +171,7 @@ namespace Veldrith.D3D12
             };
 
             IDXGISwapChain1 swapChain1 = gd.DxgiFactory.CreateSwapChainForHwnd(gd.CommandQueue, win32Source.Hwnd, swapChainDesc, null, null);
-            dxgiSwapChain = swapChain1.QueryInterface<IDXGISwapChain3>();
+            _dxgiSwapChain = swapChain1.QueryInterface<IDXGISwapChain3>();
             swapChain1.Dispose();
             createNativeRenderTargets();
             return true;
@@ -179,7 +179,7 @@ namespace Veldrith.D3D12
 
         internal bool TryGetCurrentBackBuffer(out ID3D12Resource resource, out CpuDescriptorHandle rtv, out int index, out ResourceStates state)
         {
-            if (!hasNativeSwapchain || dxgiSwapChain == null)
+            if (!_hasNativeSwapchain || _dxgiSwapChain == null)
             {
                 resource = null;
                 rtv = default;
@@ -188,52 +188,52 @@ namespace Veldrith.D3D12
                 return false;
             }
 
-            index = (int)dxgiSwapChain.CurrentBackBufferIndex;
-            resource = backBufferResources[index];
-            rtv = backBufferRtvs[index];
-            state = backBufferStates[index];
+            index = (int)_dxgiSwapChain.CurrentBackBufferIndex;
+            resource = _backBufferResources[index];
+            rtv = _backBufferRtvs[index];
+            state = _backBufferStates[index];
             return true;
         }
 
         internal void SetBackBufferState(int index, ResourceStates state)
         {
-            backBufferStates[index] = state;
+            _backBufferStates[index] = state;
         }
 
         private void createNativeRenderTargets()
         {
-            rtvDescriptorSize = (int)gd.Device.GetDescriptorHandleIncrementSize(DescriptorHeapType.RenderTargetView);
-            rtvHeap = gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(DescriptorHeapType.RenderTargetView, (uint)bufferCount));
-            backBufferResources = new ID3D12Resource[bufferCount];
-            backBufferRtvs = new CpuDescriptorHandle[bufferCount];
-            backBufferStates = new ResourceStates[bufferCount];
+            _rtvDescriptorSize = (int)gd.Device.GetDescriptorHandleIncrementSize(DescriptorHeapType.RenderTargetView);
+            _rtvHeap = gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(DescriptorHeapType.RenderTargetView, (uint)_bufferCount));
+            _backBufferResources = new ID3D12Resource[_bufferCount];
+            _backBufferRtvs = new CpuDescriptorHandle[_bufferCount];
+            _backBufferStates = new ResourceStates[_bufferCount];
 
-            CpuDescriptorHandle handle = rtvHeap.GetCPUDescriptorHandleForHeapStart();
-            for (int i = 0; i < bufferCount; i++)
+            CpuDescriptorHandle handle = _rtvHeap.GetCPUDescriptorHandleForHeapStart();
+            for (int i = 0; i < _bufferCount; i++)
             {
-                ID3D12Resource buffer = dxgiSwapChain.GetBuffer<ID3D12Resource>((uint)i);
-                backBufferResources[i] = buffer;
-                backBufferRtvs[i] = handle + (i * rtvDescriptorSize);
-                backBufferStates[i] = ResourceStates.Present;
-                gd.Device.CreateRenderTargetView(buffer, null, backBufferRtvs[i]);
+                ID3D12Resource buffer = _dxgiSwapChain.GetBuffer<ID3D12Resource>((uint)i);
+                _backBufferResources[i] = buffer;
+                _backBufferRtvs[i] = handle + (i * _rtvDescriptorSize);
+                _backBufferStates[i] = ResourceStates.Present;
+                gd.Device.CreateRenderTargetView(buffer, null, _backBufferRtvs[i]);
             }
         }
 
         private void recreateNativeSwapchain(uint width, uint height)
         {
-            if (!hasNativeSwapchain || dxgiSwapChain == null)
+            if (!_hasNativeSwapchain || _dxgiSwapChain == null)
             {
                 return;
             }
 
             disposeNativeResources();
-            dxgiSwapChain.ResizeBuffers((uint)bufferCount, width, height, nativeColorFormat, getSwapChainFlags());
+            _dxgiSwapChain.ResizeBuffers((uint)_bufferCount, width, height, _nativeColorFormat, getSwapChainFlags());
             createNativeRenderTargets();
         }
 
         private SwapChainFlags getSwapChainFlags()
         {
-            if (allowTearing && canTear)
+            if (_allowTearing && _canTear)
             {
                 return SwapChainFlags.AllowTearing;
             }
@@ -243,18 +243,18 @@ namespace Veldrith.D3D12
 
         private void disposeNativeResources()
         {
-            if (backBufferResources != null)
+            if (_backBufferResources != null)
             {
-                foreach (var resource in backBufferResources)
+                foreach (var resource in _backBufferResources)
                 {
                     resource?.Dispose();
                 }
             }
 
-            rtvHeap?.Dispose();
-            backBufferResources = null;
-            backBufferRtvs = null;
-            backBufferStates = null;
+            _rtvHeap?.Dispose();
+            _backBufferResources = null;
+            _backBufferRtvs = null;
+            _backBufferStates = null;
         }
     }
 }

@@ -2,8 +2,8 @@ namespace Veldrith.MTL
 {
     internal class MtlResourceLayout : ResourceLayout
     {
-        private readonly ResourceBindingInfo[] bindingInfosByVdIndex;
-        private bool disposed;
+        private readonly ResourceBindingInfo[] _bindingInfosByVdIndex;
+        private bool _disposed;
         public uint BufferCount { get; }
         public uint TextureCount { get; }
         public uint SamplerCount { get; }
@@ -12,7 +12,7 @@ namespace Veldrith.MTL
 #endif
         public ResourceBindingInfo GetBindingInfo(int index)
         {
-            return bindingInfosByVdIndex[index];
+            return _bindingInfosByVdIndex[index];
         }
 
 #if !VALIDATE_USAGE
@@ -35,13 +35,13 @@ namespace Veldrith.MTL
             }
 #endif
 
-            bindingInfosByVdIndex = new ResourceBindingInfo[elements.Length];
+            _bindingInfosByVdIndex = new ResourceBindingInfo[elements.Length];
 
             uint bufferIndex = 0;
             uint texIndex = 0;
             uint samplerIndex = 0;
 
-            for (int i = 0; i < bindingInfosByVdIndex.Length; i++)
+            for (int i = 0; i < _bindingInfosByVdIndex.Length; i++)
             {
                 uint slot;
 
@@ -74,7 +74,7 @@ namespace Veldrith.MTL
                     default: throw Illegal.Value<ResourceKind>();
                 }
 
-                bindingInfosByVdIndex[i] = new ResourceBindingInfo(
+                _bindingInfosByVdIndex[i] = new ResourceBindingInfo(
                     slot,
                     elements[i].Stages,
                     elements[i].Kind,
@@ -88,11 +88,11 @@ namespace Veldrith.MTL
 
         public override string Name { get; set; }
 
-        public override bool IsDisposed => disposed;
+        public override bool IsDisposed => _disposed;
 
         public override void Dispose()
         {
-            disposed = true;
+            _disposed = true;
         }
 
         internal struct ResourceBindingInfo

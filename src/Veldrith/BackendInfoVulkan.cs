@@ -1,4 +1,4 @@
-﻿#if !EXCLUDE_VULKAN_BACKEND
+#if !EXCLUDE_VULKAN_BACKEND
 using System;
 using System.Collections.ObjectModel;
 using Veldrith.Vk;
@@ -48,11 +48,11 @@ namespace Veldrith
         /// </summary>
         public string DriverInfo => gd.DriverInfo;
 
-        public ReadOnlyCollection<string> AvailableInstanceLayers => instanceLayers.Value;
+        public ReadOnlyCollection<string> AvailableInstanceLayers => _instanceLayers.Value;
 
         public ReadOnlyCollection<string> AvailableInstanceExtensions { get; }
 
-        public ReadOnlyCollection<ExtensionProperties> AvailableDeviceExtensions => deviceExtensions.Value;
+        public ReadOnlyCollection<ExtensionProperties> AvailableDeviceExtensions => _deviceExtensions.Value;
 
         public readonly struct ExtensionProperties
         {
@@ -72,15 +72,15 @@ namespace Veldrith
         }
 
         private readonly VkGraphicsDevice gd;
-        private readonly Lazy<ReadOnlyCollection<string>> instanceLayers;
-        private readonly Lazy<ReadOnlyCollection<ExtensionProperties>> deviceExtensions;
+        private readonly Lazy<ReadOnlyCollection<string>> _instanceLayers;
+        private readonly Lazy<ReadOnlyCollection<ExtensionProperties>> _deviceExtensions;
 
         internal BackendInfoVulkan(VkGraphicsDevice gd)
         {
             this.gd = gd;
-            instanceLayers = new Lazy<ReadOnlyCollection<string>>(() => new ReadOnlyCollection<string>(VulkanUtil.EnumerateInstanceLayers()));
+            _instanceLayers = new Lazy<ReadOnlyCollection<string>>(() => new ReadOnlyCollection<string>(VulkanUtil.EnumerateInstanceLayers()));
             AvailableInstanceExtensions = new ReadOnlyCollection<string>(VulkanUtil.GetInstanceExtensions());
-            deviceExtensions = new Lazy<ReadOnlyCollection<ExtensionProperties>>(enumerateDeviceExtensions);
+            _deviceExtensions = new Lazy<ReadOnlyCollection<ExtensionProperties>>(enumerateDeviceExtensions);
         }
 
         /// <summary>

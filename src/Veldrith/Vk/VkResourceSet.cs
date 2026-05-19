@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Vulkan;
 using static Vulkan.VulkanNative;
 
@@ -6,7 +6,7 @@ namespace Veldrith.Vk
 {
     internal unsafe class VkResourceSet : ResourceSet
     {
-        public VkDescriptorSet DescriptorSet => descriptorAllocationToken.Set;
+        public VkDescriptorSet DescriptorSet => _descriptorAllocationToken.Set;
         public List<VkTexture> SampledTextures { get; } = new List<VkTexture>();
 
         public List<VkTexture> StorageTextures { get; } = new List<VkTexture>();
@@ -14,24 +14,24 @@ namespace Veldrith.Vk
         public ResourceRefCount RefCount { get; }
         public List<ResourceRefCount> RefCounts { get; } = new List<ResourceRefCount>();
 
-        public override bool IsDisposed => destroyed;
+        public override bool IsDisposed => _destroyed;
 
         public override string Name
         {
-            get => name;
+            get => _name;
             set
             {
-                name = value;
+                _name = value;
                 gd.SetResourceName(this, value);
             }
         }
 
         private readonly VkGraphicsDevice gd;
-        private readonly DescriptorResourceCounts descriptorCounts;
-        private readonly DescriptorAllocationToken descriptorAllocationToken;
+        private readonly DescriptorResourceCounts _descriptorCounts;
+        private readonly DescriptorAllocationToken _descriptorAllocationToken;
 
-        private bool destroyed;
-        private string name;
+        private bool _destroyed;
+        private string _name;
 
         public VkResourceSet(VkGraphicsDevice gd, ref ResourceSetDescription description)
             : base(ref description)
@@ -41,8 +41,8 @@ namespace Veldrith.Vk
             var vkLayout = Util.AssertSubtype<ResourceLayout, VkResourceLayout>(description.Layout);
 
             var dsl = vkLayout.DescriptorSetLayout;
-            descriptorCounts = vkLayout.DescriptorResourceCounts;
-            descriptorAllocationToken = this.gd.DescriptorPoolManager.Allocate(descriptorCounts, dsl);
+            _descriptorCounts = vkLayout.DescriptorResourceCounts;
+            _descriptorAllocationToken = this.gd.DescriptorPoolManager.Allocate(_descriptorCounts, dsl);
 
             var boundResources = description.BoundResources;
             uint descriptorWriteCount = (uint)boundResources.Length;
@@ -58,7 +58,7 @@ namespace Veldrith.Vk
                 descriptorWrites[i].descriptorCount = 1;
                 descriptorWrites[i].descriptorType = type;
                 descriptorWrites[i].dstBinding = (uint)i;
-                descriptorWrites[i].dstSet = descriptorAllocationToken.Set;
+                descriptorWrites[i].dstSet = _descriptorAllocationToken.Set;
 
                 if (type == VkDescriptorType.UniformBuffer || type == VkDescriptorType.UniformBufferDynamic
                                                            || type == VkDescriptorType.StorageBuffer || type == VkDescriptorType.StorageBufferDynamic)
@@ -114,10 +114,10 @@ namespace Veldrith.Vk
 
         private void disposeCore()
         {
-            if (!destroyed)
+            if (!_destroyed)
             {
-                destroyed = true;
-                gd.DescriptorPoolManager.Free(descriptorAllocationToken, descriptorCounts);
+                _destroyed = true;
+                gd.DescriptorPoolManager.Free(_descriptorAllocationToken, _descriptorCounts);
             }
         }
     }

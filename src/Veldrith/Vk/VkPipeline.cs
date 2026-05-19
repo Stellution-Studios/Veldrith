@@ -7,9 +7,9 @@ namespace Veldrith.Vk
 {
     internal unsafe class VkPipeline : Pipeline
     {
-        public Vulkan.VkPipeline DevicePipeline => devicePipeline;
+        public Vulkan.VkPipeline DevicePipeline => _devicePipeline;
 
-        public VkPipelineLayout PipelineLayout => pipelineLayout;
+        public VkPipelineLayout PipelineLayout => _pipelineLayout;
 
         public uint ResourceSetCount { get; }
         public uint DynamicOffsetsCount { get; }
@@ -19,24 +19,24 @@ namespace Veldrith.Vk
 
         public ResourceRefCount RefCount { get; }
 
-        public override bool IsDisposed => destroyed;
+        public override bool IsDisposed => _destroyed;
 
         public override string Name
         {
-            get => name;
+            get => _name;
             set
             {
-                name = value;
+                _name = value;
                 gd.SetResourceName(this, value);
             }
         }
 
         private readonly VkGraphicsDevice gd;
-        private readonly Vulkan.VkPipeline devicePipeline;
-        private readonly VkPipelineLayout pipelineLayout;
-        private readonly VkRenderPass renderPass;
-        private bool destroyed;
-        private string name;
+        private readonly Vulkan.VkPipeline _devicePipeline;
+        private readonly VkPipelineLayout _pipelineLayout;
+        private readonly VkRenderPass _renderPass;
+        private bool _destroyed;
+        private string _name;
 
         public VkPipeline(VkGraphicsDevice gd, ref GraphicsPipelineDescription description)
             : base(ref description)
@@ -259,8 +259,8 @@ namespace Veldrith.Vk
             for (int i = 0; i < resourceLayouts.Length; i++) dsls[i] = Util.AssertSubtype<ResourceLayout, VkResourceLayout>(resourceLayouts[i]).DescriptorSetLayout;
             pipelineLayoutCi.pSetLayouts = dsls;
 
-            vkCreatePipelineLayout(this.gd.Device, ref pipelineLayoutCi, null, out pipelineLayout);
-            pipelineCi.layout = pipelineLayout;
+            vkCreatePipelineLayout(this.gd.Device, ref pipelineLayoutCi, null, out _pipelineLayout);
+            pipelineCi.layout = _pipelineLayout;
 
             // Create fake RenderPass for compatibility.
 
@@ -338,12 +338,12 @@ namespace Veldrith.Vk
             renderPassCi.dependencyCount = 1;
             renderPassCi.pDependencies = &subpassDependency;
 
-            var creationResult = vkCreateRenderPass(this.gd.Device, ref renderPassCi, null, out renderPass);
+            var creationResult = vkCreateRenderPass(this.gd.Device, ref renderPassCi, null, out _renderPass);
             CheckResult(creationResult);
 
-            pipelineCi.renderPass = renderPass;
+            pipelineCi.renderPass = _renderPass;
 
-            var result = vkCreateGraphicsPipelines(this.gd.Device, VkPipelineCache.Null, 1, ref pipelineCi, null, out devicePipeline);
+            var result = vkCreateGraphicsPipelines(this.gd.Device, VkPipelineCache.Null, 1, ref pipelineCi, null, out _devicePipeline);
             CheckResult(result);
 
             ResourceSetCount = (uint)description.ResourceLayouts.Length;
@@ -369,8 +369,8 @@ namespace Veldrith.Vk
             for (int i = 0; i < resourceLayouts.Length; i++) dsls[i] = Util.AssertSubtype<ResourceLayout, VkResourceLayout>(resourceLayouts[i]).DescriptorSetLayout;
             pipelineLayoutCi.pSetLayouts = dsls;
 
-            vkCreatePipelineLayout(this.gd.Device, ref pipelineLayoutCi, null, out pipelineLayout);
-            pipelineCi.layout = pipelineLayout;
+            vkCreatePipelineLayout(this.gd.Device, ref pipelineLayoutCi, null, out _pipelineLayout);
+            pipelineCi.layout = _pipelineLayout;
 
             // Shader Stage
 
@@ -419,7 +419,7 @@ namespace Veldrith.Vk
                 1,
                 ref pipelineCi,
                 null,
-                out devicePipeline);
+                out _devicePipeline);
             CheckResult(result);
 
             ResourceSetCount = (uint)description.ResourceLayouts.Length;
@@ -439,12 +439,12 @@ namespace Veldrith.Vk
 
         private void disposeCore()
         {
-            if (!destroyed)
+            if (!_destroyed)
             {
-                destroyed = true;
-                vkDestroyPipelineLayout(gd.Device, pipelineLayout, null);
-                vkDestroyPipeline(gd.Device, devicePipeline, null);
-                if (!IsComputePipeline) vkDestroyRenderPass(gd.Device, renderPass, null);
+                _destroyed = true;
+                vkDestroyPipelineLayout(gd.Device, _pipelineLayout, null);
+                vkDestroyPipeline(gd.Device, _devicePipeline, null);
+                if (!IsComputePipeline) vkDestroyRenderPass(gd.Device, _renderPass, null);
             }
         }
     }

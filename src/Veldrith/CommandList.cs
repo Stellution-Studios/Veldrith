@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -35,8 +35,8 @@ namespace Veldrith
         public abstract string Name { get; set; }
 
         private readonly GraphicsDeviceFeatures features;
-        private readonly uint uniformBufferAlignment;
-        private readonly uint structuredBufferAlignment;
+        private readonly uint _uniformBufferAlignment;
+        private readonly uint _structuredBufferAlignment;
 
         internal CommandList(
             ref CommandListDescription description,
@@ -45,8 +45,8 @@ namespace Veldrith
             uint structuredAlignment)
         {
             this.features = features;
-            uniformBufferAlignment = uniformAlignment;
-            structuredBufferAlignment = structuredAlignment;
+            _uniformBufferAlignment = uniformAlignment;
+            _structuredBufferAlignment = structuredAlignment;
         }
 
         #region Disposal
@@ -266,8 +266,8 @@ namespace Veldrith
                 if ((layoutDesc.Elements[i].Options & ResourceLayoutElementOptions.DynamicBinding) != 0)
                 {
                     uint requiredAlignment = layoutDesc.Elements[i].Kind == ResourceKind.UniformBuffer
-                        ? uniformBufferAlignment
-                        : structuredBufferAlignment;
+                        ? _uniformBufferAlignment
+                        : _structuredBufferAlignment;
                     uint desiredOffset = Unsafe.Add(ref dynamicOffsets, (int)dynamicOffsetIndex);
                     dynamicOffsetIndex += 1;
                     var range = Util.GetBufferRange(rs.Resources[i], desiredOffset);

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Vulkan;
 using static Vulkan.VulkanNative;
 using static Veldrith.Vk.VulkanUtil;
@@ -7,24 +7,24 @@ namespace Veldrith.Vk
 {
     internal unsafe class VkShader : Shader
     {
-        public VkShaderModule ShaderModule => shaderModule;
+        public VkShaderModule ShaderModule => _shaderModule;
 
-        public override bool IsDisposed => disposed;
+        public override bool IsDisposed => _disposed;
 
         public override string Name
         {
-            get => name;
+            get => _name;
             set
             {
-                name = value;
+                _name = value;
                 gd.SetResourceName(this, value);
             }
         }
 
         private readonly VkGraphicsDevice gd;
-        private readonly VkShaderModule shaderModule;
-        private bool disposed;
-        private string name;
+        private readonly VkShaderModule _shaderModule;
+        private bool _disposed;
+        private string _name;
 
         public VkShader(VkGraphicsDevice gd, ref ShaderDescription description)
             : base(description.Stage, description.EntryPoint)
@@ -37,7 +37,7 @@ namespace Veldrith.Vk
             {
                 shaderModuleCi.codeSize = (UIntPtr)description.ShaderBytes.Length;
                 shaderModuleCi.pCode = (uint*)codePtr;
-                var result = vkCreateShaderModule(gd.Device, ref shaderModuleCi, null, out shaderModule);
+                var result = vkCreateShaderModule(gd.Device, ref shaderModuleCi, null, out _shaderModule);
                 CheckResult(result);
             }
         }
@@ -46,9 +46,9 @@ namespace Veldrith.Vk
 
         public override void Dispose()
         {
-            if (!disposed)
+            if (!_disposed)
             {
-                disposed = true;
+                _disposed = true;
                 vkDestroyShaderModule(gd.Device, ShaderModule, null);
             }
         }

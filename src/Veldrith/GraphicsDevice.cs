@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -104,8 +104,8 @@ namespace Veldrith
                         "GraphicsDevice.Aniso4xSampler cannot be used unless GraphicsDeviceFeatures.SamplerAnisotropy is supported.");
                 }
 
-                Debug.Assert(aniso4XSampler != null);
-                return aniso4XSampler;
+                Debug.Assert(_aniso4XSampler != null);
+                return _aniso4XSampler;
             }
         }
 
@@ -146,9 +146,9 @@ namespace Veldrith
         /// </summary>
         public Sampler LinearSampler { get; private set; }
 
-        private readonly object deferredDisposalLock = new object();
-        private readonly List<IDisposable> disposables = new List<IDisposable>();
-        private Sampler aniso4XSampler;
+        private readonly object _deferredDisposalLock = new object();
+        private readonly List<IDisposable> _disposables = new List<IDisposable>();
+        private Sampler _aniso4XSampler;
 
         internal GraphicsDevice() { }
 
@@ -163,7 +163,7 @@ namespace Veldrith
             WaitForIdle();
             PointSampler.Dispose();
             LinearSampler.Dispose();
-            aniso4XSampler?.Dispose();
+            _aniso4XSampler?.Dispose();
             PlatformDispose();
         }
 
@@ -832,7 +832,7 @@ namespace Veldrith
         /// <param name="disposable">An object to dispose when this instance becomes idle.</param>
         public void DisposeWhenIdle(IDisposable disposable)
         {
-            lock (deferredDisposalLock) disposables.Add(disposable);
+            lock (_deferredDisposalLock) _disposables.Add(disposable);
         }
 
         internal abstract uint GetUniformBufferMinOffsetAlignmentCore();
@@ -864,7 +864,7 @@ namespace Veldrith
         {
             PointSampler = ResourceFactory.CreateSampler(SamplerDescription.POINT);
             LinearSampler = ResourceFactory.CreateSampler(SamplerDescription.LINEAR);
-            if (Features.SamplerAnisotropy) aniso4XSampler = ResourceFactory.CreateSampler(SamplerDescription.ANISO4_X);
+            if (Features.SamplerAnisotropy) _aniso4XSampler = ResourceFactory.CreateSampler(SamplerDescription.ANISO4_X);
         }
 
         [Conditional("VALIDATE_USAGE")]
@@ -927,10 +927,10 @@ namespace Veldrith
 
         private void flushDeferredDisposals()
         {
-            lock (deferredDisposalLock)
+            lock (_deferredDisposalLock)
             {
-                foreach (var disposable in disposables) disposable.Dispose();
-                disposables.Clear();
+                foreach (var disposable in _disposables) disposable.Dispose();
+                _disposables.Clear();
             }
         }
 

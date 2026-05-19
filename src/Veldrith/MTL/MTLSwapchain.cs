@@ -1,39 +1,39 @@
-﻿using System;
+using System;
 using Veldrith.MetalBindings;
 
 namespace Veldrith.MTL
 {
     internal class MtlSwapchain : Swapchain
     {
-        public override Framebuffer Framebuffer => framebuffer;
+        public override Framebuffer Framebuffer => _framebuffer;
 
-        public override bool IsDisposed => disposed;
+        public override bool IsDisposed => _disposed;
 
-        public CAMetalDrawable CurrentDrawable => drawable;
+        public CAMetalDrawable CurrentDrawable => _drawable;
 
         public override bool SyncToVerticalBlank
         {
-            get => syncToVerticalBlank;
+            get => _syncToVerticalBlank;
             set
             {
-                if (syncToVerticalBlank != value) setSyncToVerticalBlank(value);
+                if (_syncToVerticalBlank != value) setSyncToVerticalBlank(value);
             }
         }
 
         public override string Name { get; set; }
-        private readonly MtlSwapchainFramebuffer framebuffer;
+        private readonly MtlSwapchainFramebuffer _framebuffer;
         private readonly MtlGraphicsDevice gd;
-        private CAMetalLayer metalLayer;
-        private UIView uiView; // Valid only when a UIViewSwapchainSource is used.
-        private bool syncToVerticalBlank;
-        private bool disposed;
+        private CAMetalLayer _metalLayer;
+        private UIView _uiView; // Valid only when a UIViewSwapchainSource is used.
+        private bool _syncToVerticalBlank;
+        private bool _disposed;
 
-        private CAMetalDrawable drawable;
+        private CAMetalDrawable _drawable;
 
         public MtlSwapchain(MtlGraphicsDevice gd, ref SwapchainDescription description)
         {
             this.gd = gd;
-            syncToVerticalBlank = description.SyncToVerticalBlank;
+            _syncToVerticalBlank = description.SyncToVerticalBlank;
 
             uint width;
             uint height;
@@ -48,11 +48,11 @@ namespace Veldrith.MTL
                 width = (uint)windowContentSize.width;
                 height = (uint)windowContentSize.height;
 
-                if (!CAMetalLayer.TryCast(contentView.layer, out metalLayer))
+                if (!CAMetalLayer.TryCast(contentView.layer, out _metalLayer))
                 {
-                    metalLayer = CAMetalLayer.New();
+                    _metalLayer = CAMetalLayer.New();
                     contentView.wantsLayer = true;
-                    contentView.layer = metalLayer.NativePtr;
+                    contentView.layer = _metalLayer.NativePtr;
                 }
             }
             else if (source is NSViewSwapchainSource nsViewSource)
@@ -62,26 +62,26 @@ namespace Veldrith.MTL
                 width = (uint)windowContentSize.width;
                 height = (uint)windowContentSize.height;
 
-                if (!CAMetalLayer.TryCast(contentView.layer, out metalLayer))
+                if (!CAMetalLayer.TryCast(contentView.layer, out _metalLayer))
                 {
-                    metalLayer = CAMetalLayer.New();
+                    _metalLayer = CAMetalLayer.New();
                     contentView.wantsLayer = true;
-                    contentView.layer = metalLayer.NativePtr;
+                    contentView.layer = _metalLayer.NativePtr;
                 }
             }
             else if (source is UIViewSwapchainSource uiViewSource)
             {
-                uiView = new UIView(uiViewSource.UIView);
-                var viewSize = uiView.frame.size;
+                _uiView = new UIView(uiViewSource.UIView);
+                var viewSize = _uiView.frame.size;
                 width = (uint)viewSize.width;
                 height = (uint)viewSize.height;
 
-                if (!CAMetalLayer.TryCast(uiView.layer, out metalLayer))
+                if (!CAMetalLayer.TryCast(_uiView.layer, out _metalLayer))
                 {
-                    metalLayer = CAMetalLayer.New();
-                    metalLayer.frame = uiView.frame;
-                    metalLayer.opaque = true;
-                    uiView.layer.addSublayer(metalLayer.NativePtr);
+                    _metalLayer = CAMetalLayer.New();
+                    _metalLayer.frame = _uiView.frame;
+                    _metalLayer.opaque = true;
+                    _uiView.layer.addSublayer(_metalLayer.NativePtr);
                 }
             }
             else
@@ -91,14 +91,14 @@ namespace Veldrith.MTL
                 ? PixelFormat.B8G8R8A8UNormSRgb
                 : PixelFormat.B8G8R8A8UNorm;
 
-            metalLayer.device = this.gd.Device;
-            metalLayer.pixelFormat = MtlFormats.VdToMtlPixelFormat(format, false);
-            metalLayer.framebufferOnly = true;
-            metalLayer.drawableSize = new CGSize(width, height);
+            _metalLayer.device = this.gd.Device;
+            _metalLayer.pixelFormat = MtlFormats.VdToMtlPixelFormat(format, false);
+            _metalLayer.framebufferOnly = true;
+            _metalLayer.drawableSize = new CGSize(width, height);
 
-            setSyncToVerticalBlank(syncToVerticalBlank);
+            setSyncToVerticalBlank(_syncToVerticalBlank);
 
-            framebuffer = new MtlSwapchainFramebuffer(
+            _framebuffer = new MtlSwapchainFramebuffer(
                 gd,
                 this,
                 description.DepthFormat,
@@ -111,48 +111,48 @@ namespace Veldrith.MTL
 
         public override void Dispose()
         {
-            if (drawable.NativePtr != IntPtr.Zero) ObjectiveCRuntime.release(drawable.NativePtr);
-            framebuffer.Dispose();
-            ObjectiveCRuntime.release(metalLayer.NativePtr);
+            if (_drawable.NativePtr != IntPtr.Zero) ObjectiveCRuntime.release(_drawable.NativePtr);
+            _framebuffer.Dispose();
+            ObjectiveCRuntime.release(_metalLayer.NativePtr);
 
-            disposed = true;
+            _disposed = true;
         }
 
         #endregion
 
         public override void Resize(uint width, uint height)
         {
-            if (uiView.NativePtr != IntPtr.Zero)
-                metalLayer.frame = uiView.frame;
+            if (_uiView.NativePtr != IntPtr.Zero)
+                _metalLayer.frame = _uiView.frame;
 
-            metalLayer.drawableSize = new CGSize(width, height);
+            _metalLayer.drawableSize = new CGSize(width, height);
 
             getNextDrawable();
         }
 
         public bool EnsureDrawableAvailable()
         {
-            return !drawable.IsNull || getNextDrawable();
+            return !_drawable.IsNull || getNextDrawable();
         }
 
         public void InvalidateDrawable()
         {
-            ObjectiveCRuntime.release(drawable.NativePtr);
-            drawable = default;
+            ObjectiveCRuntime.release(_drawable.NativePtr);
+            _drawable = default;
         }
 
         private bool getNextDrawable()
         {
-            if (!drawable.IsNull) ObjectiveCRuntime.release(drawable.NativePtr);
+            if (!_drawable.IsNull) ObjectiveCRuntime.release(_drawable.NativePtr);
 
             using (NSAutoreleasePool.Begin())
             {
-                drawable = metalLayer.nextDrawable();
+                _drawable = _metalLayer.nextDrawable();
 
-                if (!drawable.IsNull)
+                if (!_drawable.IsNull)
                 {
-                    ObjectiveCRuntime.retain(drawable.NativePtr);
-                    framebuffer.UpdateTextures(drawable, metalLayer.drawableSize);
+                    ObjectiveCRuntime.retain(_drawable.NativePtr);
+                    _framebuffer.UpdateTextures(_drawable, _metalLayer.drawableSize);
                     return true;
                 }
 
@@ -162,12 +162,12 @@ namespace Veldrith.MTL
 
         private void setSyncToVerticalBlank(bool value)
         {
-            syncToVerticalBlank = value;
+            _syncToVerticalBlank = value;
 
             if (gd.MetalFeatures.MaxFeatureSet == MTLFeatureSet.macOS_GPUFamily1_v3
                 || gd.MetalFeatures.MaxFeatureSet == MTLFeatureSet.macOS_GPUFamily1_v4
                 || gd.MetalFeatures.MaxFeatureSet == MTLFeatureSet.macOS_GPUFamily2_v1)
-                metalLayer.displaySyncEnabled = value;
+                _metalLayer.displaySyncEnabled = value;
         }
     }
 }

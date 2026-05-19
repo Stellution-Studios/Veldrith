@@ -18,134 +18,134 @@ namespace Veldrith.D3D12
     {
         private const int FramesInFlight = 8;
         private const int PerfReportIntervalFrames = 240;
-        private static readonly bool perfLogEnabled = string.Equals(Environment.GetEnvironmentVariable("VELDRID_D3D12_PERF"), "1", StringComparison.Ordinal);
+        private static readonly bool _perfLogEnabled = string.Equals(Environment.GetEnvironmentVariable("VELDRID_D3D12_PERF"), "1", StringComparison.Ordinal);
         private readonly D3D12GraphicsDevice gd;
-        private readonly ID3D12CommandAllocator[] commandAllocators = new ID3D12CommandAllocator[FramesInFlight];
-        private readonly ID3D12GraphicsCommandList nativeCommandList;
-        private readonly ID3D12DescriptorHeap[] shaderVisibleSrvUavHeaps = new ID3D12DescriptorHeap[FramesInFlight];
-        private readonly ID3D12DescriptorHeap[] shaderVisibleSamplerHeaps = new ID3D12DescriptorHeap[FramesInFlight];
-        private readonly ID3D12DescriptorHeap[] boundDescriptorHeaps = new ID3D12DescriptorHeap[2];
-        private readonly ResourceBarrier[] singleBarrier = new ResourceBarrier[1];
-        private readonly int srvUavDescriptorSize;
-        private readonly int samplerDescriptorSize;
-        private readonly uint maxSrvUavDescriptors = 4096;
-        private readonly uint maxSamplerDescriptors = 1024;
-        private bool begun;
-        private bool ended;
-        private bool disposed;
+        private readonly ID3D12CommandAllocator[] _commandAllocators = new ID3D12CommandAllocator[FramesInFlight];
+        private readonly ID3D12GraphicsCommandList _nativeCommandList;
+        private readonly ID3D12DescriptorHeap[] _shaderVisibleSrvUavHeaps = new ID3D12DescriptorHeap[FramesInFlight];
+        private readonly ID3D12DescriptorHeap[] _shaderVisibleSamplerHeaps = new ID3D12DescriptorHeap[FramesInFlight];
+        private readonly ID3D12DescriptorHeap[] _boundDescriptorHeaps = new ID3D12DescriptorHeap[2];
+        private readonly ResourceBarrier[] _singleBarrier = new ResourceBarrier[1];
+        private readonly int _srvUavDescriptorSize;
+        private readonly int _samplerDescriptorSize;
+        private readonly uint _maxSrvUavDescriptors = 4096;
+        private readonly uint _maxSamplerDescriptors = 1024;
+        private bool _begun;
+        private bool _ended;
+        private bool _disposed;
         private string name;
-        private int transitionedBackBufferIndex = -1;
-        private D3D12Pipeline currentGraphicsPipeline;
-        private D3D12Pipeline currentComputePipeline;
-        private uint nextSrvUavDescriptor;
-        private uint nextSamplerDescriptor;
-        private bool descriptorHeapsBound;
-        private bool gpuMipResourcesInitialized;
-        private bool gpuMipResourcesAvailable;
-        private D3D12Pipeline gpuMipPipeline;
-        private ResourceLayout gpuMipResourceLayout;
-        private Sampler gpuMipSampler;
-        private bool indirectSignaturesInitialized;
-        private bool indirectSignaturesAvailable;
-        private ID3D12CommandSignature drawIndirectSignature;
-        private ID3D12CommandSignature drawIndexedIndirectSignature;
-        private ID3D12CommandSignature dispatchIndirectSignature;
-        private readonly Vortice.Mathematics.Viewport[] activeViewports = new Vortice.Mathematics.Viewport[16];
-        private readonly RawRect[] activeScissorRects = new RawRect[16];
-        private uint activeViewportCount;
-        private uint activeScissorRectCount;
-        private readonly MethodInfo beginEventMethod;
-        private readonly MethodInfo setMarkerMethod;
-        private readonly MethodInfo endEventMethod;
-        private bool uavBarrierPending;
-        private readonly D3D12DeviceBuffer[] boundVertexBuffers = new D3D12DeviceBuffer[16];
-        private readonly uint[] boundVertexBufferOffsets = new uint[16];
-        private readonly ulong[] boundVertexBufferVersions = new ulong[16];
-        private D3D12DeviceBuffer boundIndexBuffer;
-        private uint boundIndexBufferOffset;
-        private ulong boundIndexBufferVersion;
-        private IndexFormat boundIndexFormat;
-        private bool hasBoundIndexBuffer;
-        private BoundResourceSetInfo[] boundGraphicsResourceSets = Array.Empty<BoundResourceSetInfo>();
-        private BoundResourceSetInfo[] boundComputeResourceSets = Array.Empty<BoundResourceSetInfo>();
-        private readonly Dictionary<DescriptorCacheKey, GpuDescriptorHandle>[] descriptorTableCaches = new Dictionary<DescriptorCacheKey, GpuDescriptorHandle>[FramesInFlight];
-        private readonly Dictionary<ResourceSetBindingPlanKey, ResourceSetBindingPlanEntry[]> graphicsResourceSetBindingPlans = new Dictionary<ResourceSetBindingPlanKey, ResourceSetBindingPlanEntry[]>(ResourceSetBindingPlanKeyComparer.Instance);
-        private readonly Dictionary<ResourceSetBindingPlanKey, ResourceSetBindingPlanEntry[]> computeResourceSetBindingPlans = new Dictionary<ResourceSetBindingPlanKey, ResourceSetBindingPlanEntry[]>(ResourceSetBindingPlanKeyComparer.Instance);
-        private readonly uint[] nextSrvUavDescriptorsPerFrameSlot = new uint[FramesInFlight];
-        private readonly uint[] nextSamplerDescriptorsPerFrameSlot = new uint[FramesInFlight];
-        private uint maxBoundVertexBufferSlot;
-        private readonly ulong[] frameSlotFenceValues = new ulong[FramesInFlight];
-        private int currentFrameSlot = -1;
-        private ulong[] graphicsRootBufferAddresses = Array.Empty<ulong>();
-        private bool[] graphicsRootBufferAddressValid = Array.Empty<bool>();
-        private ulong[] computeRootBufferAddresses = Array.Empty<ulong>();
-        private bool[] computeRootBufferAddressValid = Array.Empty<bool>();
-        private ulong[] graphicsRootTablePointers = Array.Empty<ulong>();
-        private bool[] graphicsRootTablePointerValid = Array.Empty<bool>();
-        private ulong[] computeRootTablePointers = Array.Empty<ulong>();
-        private bool[] computeRootTablePointerValid = Array.Empty<bool>();
-        private readonly Stopwatch perfStopwatch = Stopwatch.StartNew();
-        private ulong perfFrames;
-        private ulong perfBeginWaitCount;
-        private double perfBeginWaitMs;
-        private ulong perfTransitions;
-        private ulong perfSubresourceTransitions;
-        private ulong perfUavBarriers;
-        private ulong perfPipelineChanges;
-        private ulong perfResourceSetChanges;
-        private ulong perfDescriptorCopies;
-        private ulong perfRootTableSets;
-        private ulong perfVertexBufferBinds;
-        private ulong perfIndexBufferBinds;
-        private ulong perfDrawCalls;
-        private ulong perfDispatchCalls;
-        private ulong perfAccumBeginWaitCount;
-        private double perfAccumBeginWaitMs;
-        private ulong perfAccumTransitions;
-        private ulong perfAccumSubresourceTransitions;
-        private ulong perfAccumUavBarriers;
-        private ulong perfAccumPipelineChanges;
-        private ulong perfAccumResourceSetChanges;
-        private ulong perfAccumDescriptorCopies;
-        private ulong perfAccumRootTableSets;
-        private ulong perfAccumVertexBufferBinds;
-        private ulong perfAccumIndexBufferBinds;
-        private ulong perfAccumDrawCalls;
-        private ulong perfAccumDispatchCalls;
-        private double perfLastReportMs;
+        private int _transitionedBackBufferIndex = -1;
+        private D3D12Pipeline _currentGraphicsPipeline;
+        private D3D12Pipeline _currentComputePipeline;
+        private uint _nextSrvUavDescriptor;
+        private uint _nextSamplerDescriptor;
+        private bool _descriptorHeapsBound;
+        private bool _gpuMipResourcesInitialized;
+        private bool _gpuMipResourcesAvailable;
+        private D3D12Pipeline _gpuMipPipeline;
+        private ResourceLayout _gpuMipResourceLayout;
+        private Sampler _gpuMipSampler;
+        private bool _indirectSignaturesInitialized;
+        private bool _indirectSignaturesAvailable;
+        private ID3D12CommandSignature _drawIndirectSignature;
+        private ID3D12CommandSignature _drawIndexedIndirectSignature;
+        private ID3D12CommandSignature _dispatchIndirectSignature;
+        private readonly Vortice.Mathematics.Viewport[] _activeViewports = new Vortice.Mathematics.Viewport[16];
+        private readonly RawRect[] _activeScissorRects = new RawRect[16];
+        private uint _activeViewportCount;
+        private uint _activeScissorRectCount;
+        private readonly MethodInfo _beginEventMethod;
+        private readonly MethodInfo _setMarkerMethod;
+        private readonly MethodInfo _endEventMethod;
+        private bool _uavBarrierPending;
+        private readonly D3D12DeviceBuffer[] _boundVertexBuffers = new D3D12DeviceBuffer[16];
+        private readonly uint[] _boundVertexBufferOffsets = new uint[16];
+        private readonly ulong[] _boundVertexBufferVersions = new ulong[16];
+        private D3D12DeviceBuffer _boundIndexBuffer;
+        private uint _boundIndexBufferOffset;
+        private ulong _boundIndexBufferVersion;
+        private IndexFormat _boundIndexFormat;
+        private bool _hasBoundIndexBuffer;
+        private BoundResourceSetInfo[] _boundGraphicsResourceSets = Array.Empty<BoundResourceSetInfo>();
+        private BoundResourceSetInfo[] _boundComputeResourceSets = Array.Empty<BoundResourceSetInfo>();
+        private readonly Dictionary<DescriptorCacheKey, GpuDescriptorHandle>[] _descriptorTableCaches = new Dictionary<DescriptorCacheKey, GpuDescriptorHandle>[FramesInFlight];
+        private readonly Dictionary<ResourceSetBindingPlanKey, ResourceSetBindingPlanEntry[]> _graphicsResourceSetBindingPlans = new Dictionary<ResourceSetBindingPlanKey, ResourceSetBindingPlanEntry[]>(ResourceSetBindingPlanKeyComparer.Instance);
+        private readonly Dictionary<ResourceSetBindingPlanKey, ResourceSetBindingPlanEntry[]> _computeResourceSetBindingPlans = new Dictionary<ResourceSetBindingPlanKey, ResourceSetBindingPlanEntry[]>(ResourceSetBindingPlanKeyComparer.Instance);
+        private readonly uint[] _nextSrvUavDescriptorsPerFrameSlot = new uint[FramesInFlight];
+        private readonly uint[] _nextSamplerDescriptorsPerFrameSlot = new uint[FramesInFlight];
+        private uint _maxBoundVertexBufferSlot;
+        private readonly ulong[] _frameSlotFenceValues = new ulong[FramesInFlight];
+        private int _currentFrameSlot = -1;
+        private ulong[] _graphicsRootBufferAddresses = Array.Empty<ulong>();
+        private bool[] _graphicsRootBufferAddressValid = Array.Empty<bool>();
+        private ulong[] _computeRootBufferAddresses = Array.Empty<ulong>();
+        private bool[] _computeRootBufferAddressValid = Array.Empty<bool>();
+        private ulong[] _graphicsRootTablePointers = Array.Empty<ulong>();
+        private bool[] _graphicsRootTablePointerValid = Array.Empty<bool>();
+        private ulong[] _computeRootTablePointers = Array.Empty<ulong>();
+        private bool[] _computeRootTablePointerValid = Array.Empty<bool>();
+        private readonly Stopwatch _perfStopwatch = Stopwatch.StartNew();
+        private ulong _perfFrames;
+        private ulong _perfBeginWaitCount;
+        private double _perfBeginWaitMs;
+        private ulong _perfTransitions;
+        private ulong _perfSubresourceTransitions;
+        private ulong _perfUavBarriers;
+        private ulong _perfPipelineChanges;
+        private ulong _perfResourceSetChanges;
+        private ulong _perfDescriptorCopies;
+        private ulong _perfRootTableSets;
+        private ulong _perfVertexBufferBinds;
+        private ulong _perfIndexBufferBinds;
+        private ulong _perfDrawCalls;
+        private ulong _perfDispatchCalls;
+        private ulong _perfAccumBeginWaitCount;
+        private double _perfAccumBeginWaitMs;
+        private ulong _perfAccumTransitions;
+        private ulong _perfAccumSubresourceTransitions;
+        private ulong _perfAccumUavBarriers;
+        private ulong _perfAccumPipelineChanges;
+        private ulong _perfAccumResourceSetChanges;
+        private ulong _perfAccumDescriptorCopies;
+        private ulong _perfAccumRootTableSets;
+        private ulong _perfAccumVertexBufferBinds;
+        private ulong _perfAccumIndexBufferBinds;
+        private ulong _perfAccumDrawCalls;
+        private ulong _perfAccumDispatchCalls;
+        private double _perfLastReportMs;
 
-        public ID3D12GraphicsCommandList NativeCommandList => nativeCommandList;
+        public ID3D12GraphicsCommandList NativeCommandList => _nativeCommandList;
 
         public D3D12CommandList(D3D12GraphicsDevice gd, ref CommandListDescription description, GraphicsDeviceFeatures features, uint uniformAlignment, uint structuredAlignment) : base(ref description, features, uniformAlignment, structuredAlignment) {
             this.gd = gd;
 
             for (int i = 0; i < FramesInFlight; i++)
             {
-                commandAllocators[i] = gd.Device.CreateCommandAllocator(CommandListType.Direct);
+                _commandAllocators[i] = gd.Device.CreateCommandAllocator(CommandListType.Direct);
 
-                shaderVisibleSrvUavHeaps[i] = gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(
+                _shaderVisibleSrvUavHeaps[i] = gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(
                     DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView,
-                    maxSrvUavDescriptors,
+                    _maxSrvUavDescriptors,
                     DescriptorHeapFlags.ShaderVisible));
 
-                shaderVisibleSamplerHeaps[i] = gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(
+                _shaderVisibleSamplerHeaps[i] = gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(
                     DescriptorHeapType.Sampler,
-                    maxSamplerDescriptors,
+                    _maxSamplerDescriptors,
                     DescriptorHeapFlags.ShaderVisible));
 
-                descriptorTableCaches[i] = new Dictionary<DescriptorCacheKey, GpuDescriptorHandle>(DescriptorCacheKeyComparer.Instance);
+                _descriptorTableCaches[i] = new Dictionary<DescriptorCacheKey, GpuDescriptorHandle>(DescriptorCacheKeyComparer.Instance);
             }
 
-            nativeCommandList = gd.Device.CreateCommandList<ID3D12GraphicsCommandList>(0, CommandListType.Direct, commandAllocators[0], null);
-            srvUavDescriptorSize = (int)gd.Device.GetDescriptorHandleIncrementSize(DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView);
-            samplerDescriptorSize = (int)gd.Device.GetDescriptorHandleIncrementSize(DescriptorHeapType.Sampler);
-            beginEventMethod = getDebugMarkerMethod("BeginEvent");
-            setMarkerMethod = getDebugMarkerMethod("SetMarker");
-            endEventMethod = nativeCommandList.GetType().GetMethod("EndEvent", Type.EmptyTypes);
-            nativeCommandList.Close();
+            _nativeCommandList = gd.Device.CreateCommandList<ID3D12GraphicsCommandList>(0, CommandListType.Direct, _commandAllocators[0], null);
+            _srvUavDescriptorSize = (int)gd.Device.GetDescriptorHandleIncrementSize(DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView);
+            _samplerDescriptorSize = (int)gd.Device.GetDescriptorHandleIncrementSize(DescriptorHeapType.Sampler);
+            _beginEventMethod = getDebugMarkerMethod("BeginEvent");
+            _setMarkerMethod = getDebugMarkerMethod("SetMarker");
+            _endEventMethod = _nativeCommandList.GetType().GetMethod("EndEvent", Type.EmptyTypes);
+            _nativeCommandList.Close();
         }
 
-        public override bool IsDisposed => disposed;
+        public override bool IsDisposed => _disposed;
 
         public override string Name
         {
@@ -155,143 +155,143 @@ namespace Veldrith.D3D12
 
         public override void Dispose()
         {
-            gpuMipPipeline?.Dispose();
-            gpuMipResourceLayout?.Dispose();
-            gpuMipSampler?.Dispose();
-            drawIndirectSignature?.Dispose();
-            drawIndexedIndirectSignature?.Dispose();
-            dispatchIndirectSignature?.Dispose();
-            clearBoundResourceSets(boundGraphicsResourceSets);
-            clearBoundResourceSets(boundComputeResourceSets);
-            nativeCommandList.Dispose();
+            _gpuMipPipeline?.Dispose();
+            _gpuMipResourceLayout?.Dispose();
+            _gpuMipSampler?.Dispose();
+            _drawIndirectSignature?.Dispose();
+            _drawIndexedIndirectSignature?.Dispose();
+            _dispatchIndirectSignature?.Dispose();
+            clearBoundResourceSets(_boundGraphicsResourceSets);
+            clearBoundResourceSets(_boundComputeResourceSets);
+            _nativeCommandList.Dispose();
             for (int i = 0; i < FramesInFlight; i++)
             {
-                commandAllocators[i]?.Dispose();
-                shaderVisibleSrvUavHeaps[i]?.Dispose();
-                shaderVisibleSamplerHeaps[i]?.Dispose();
+                _commandAllocators[i]?.Dispose();
+                _shaderVisibleSrvUavHeaps[i]?.Dispose();
+                _shaderVisibleSamplerHeaps[i]?.Dispose();
             }
-            disposed = true;
+            _disposed = true;
         }
 
         public override void Begin()
         {
-            if (perfLogEnabled)
+            if (_perfLogEnabled)
             {
-                perfBeginWaitCount = 0;
-                perfBeginWaitMs = 0;
-                perfTransitions = 0;
-                perfSubresourceTransitions = 0;
-                perfUavBarriers = 0;
-                perfPipelineChanges = 0;
-                perfResourceSetChanges = 0;
-                perfDescriptorCopies = 0;
-                perfRootTableSets = 0;
-                perfVertexBufferBinds = 0;
-                perfIndexBufferBinds = 0;
-                perfDrawCalls = 0;
-                perfDispatchCalls = 0;
+                _perfBeginWaitCount = 0;
+                _perfBeginWaitMs = 0;
+                _perfTransitions = 0;
+                _perfSubresourceTransitions = 0;
+                _perfUavBarriers = 0;
+                _perfPipelineChanges = 0;
+                _perfResourceSetChanges = 0;
+                _perfDescriptorCopies = 0;
+                _perfRootTableSets = 0;
+                _perfVertexBufferBinds = 0;
+                _perfIndexBufferBinds = 0;
+                _perfDrawCalls = 0;
+                _perfDispatchCalls = 0;
             }
 
-            currentFrameSlot = (currentFrameSlot + 1) % FramesInFlight;
-            waitForFrameSlot(currentFrameSlot);
-            commandAllocators[currentFrameSlot].Reset();
-            nativeCommandList.Reset(commandAllocators[currentFrameSlot]);
-            begun = true;
-            ended = false;
-            transitionedBackBufferIndex = -1;
-            nextSrvUavDescriptor = nextSrvUavDescriptorsPerFrameSlot[currentFrameSlot];
-            nextSamplerDescriptor = nextSamplerDescriptorsPerFrameSlot[currentFrameSlot];
-            descriptorHeapsBound = false;
-            activeViewportCount = 0;
-            activeScissorRectCount = 0;
-            uavBarrierPending = false;
-            Array.Clear(boundVertexBuffers, 0, boundVertexBuffers.Length);
-            Array.Clear(boundVertexBufferOffsets, 0, boundVertexBufferOffsets.Length);
-            Array.Clear(boundVertexBufferVersions, 0, boundVertexBufferVersions.Length);
-            boundIndexBuffer = null;
-            boundIndexBufferOffset = 0;
-            boundIndexBufferVersion = 0;
-            boundIndexFormat = IndexFormat.UInt16;
-            hasBoundIndexBuffer = false;
-            clearBoundResourceSets(boundGraphicsResourceSets);
-            clearBoundResourceSets(boundComputeResourceSets);
+            _currentFrameSlot = (_currentFrameSlot + 1) % FramesInFlight;
+            waitForFrameSlot(_currentFrameSlot);
+            _commandAllocators[_currentFrameSlot].Reset();
+            _nativeCommandList.Reset(_commandAllocators[_currentFrameSlot]);
+            _begun = true;
+            _ended = false;
+            _transitionedBackBufferIndex = -1;
+            _nextSrvUavDescriptor = _nextSrvUavDescriptorsPerFrameSlot[_currentFrameSlot];
+            _nextSamplerDescriptor = _nextSamplerDescriptorsPerFrameSlot[_currentFrameSlot];
+            _descriptorHeapsBound = false;
+            _activeViewportCount = 0;
+            _activeScissorRectCount = 0;
+            _uavBarrierPending = false;
+            Array.Clear(_boundVertexBuffers, 0, _boundVertexBuffers.Length);
+            Array.Clear(_boundVertexBufferOffsets, 0, _boundVertexBufferOffsets.Length);
+            Array.Clear(_boundVertexBufferVersions, 0, _boundVertexBufferVersions.Length);
+            _boundIndexBuffer = null;
+            _boundIndexBufferOffset = 0;
+            _boundIndexBufferVersion = 0;
+            _boundIndexFormat = IndexFormat.UInt16;
+            _hasBoundIndexBuffer = false;
+            clearBoundResourceSets(_boundGraphicsResourceSets);
+            clearBoundResourceSets(_boundComputeResourceSets);
             invalidateGraphicsRootCaches();
             invalidateComputeRootCaches();
-            maxBoundVertexBufferSlot = 0;
+            _maxBoundVertexBufferSlot = 0;
             ClearCachedState();
-            currentGraphicsPipeline = null;
-            currentComputePipeline = null;
+            _currentGraphicsPipeline = null;
+            _currentComputePipeline = null;
         }
 
         public override void End()
         {
-            if (!begun)
+            if (!_begun)
             {
                 throw new VeldridException("CommandList.End cannot be called before Begin.");
             }
 
             flushPendingUavBarrier();
             transitionSwapchainBackBuffersToPresent();
-            nativeCommandList.Close();
-            ended = true;
+            _nativeCommandList.Close();
+            _ended = true;
 
-            if (perfLogEnabled)
+            if (_perfLogEnabled)
             {
-                perfFrames++;
-                perfAccumBeginWaitCount += perfBeginWaitCount;
-                perfAccumBeginWaitMs += perfBeginWaitMs;
-                perfAccumTransitions += perfTransitions;
-                perfAccumSubresourceTransitions += perfSubresourceTransitions;
-                perfAccumUavBarriers += perfUavBarriers;
-                perfAccumPipelineChanges += perfPipelineChanges;
-                perfAccumResourceSetChanges += perfResourceSetChanges;
-                perfAccumDescriptorCopies += perfDescriptorCopies;
-                perfAccumRootTableSets += perfRootTableSets;
-                perfAccumVertexBufferBinds += perfVertexBufferBinds;
-                perfAccumIndexBufferBinds += perfIndexBufferBinds;
-                perfAccumDrawCalls += perfDrawCalls;
-                perfAccumDispatchCalls += perfDispatchCalls;
+                _perfFrames++;
+                _perfAccumBeginWaitCount += _perfBeginWaitCount;
+                _perfAccumBeginWaitMs += _perfBeginWaitMs;
+                _perfAccumTransitions += _perfTransitions;
+                _perfAccumSubresourceTransitions += _perfSubresourceTransitions;
+                _perfAccumUavBarriers += _perfUavBarriers;
+                _perfAccumPipelineChanges += _perfPipelineChanges;
+                _perfAccumResourceSetChanges += _perfResourceSetChanges;
+                _perfAccumDescriptorCopies += _perfDescriptorCopies;
+                _perfAccumRootTableSets += _perfRootTableSets;
+                _perfAccumVertexBufferBinds += _perfVertexBufferBinds;
+                _perfAccumIndexBufferBinds += _perfIndexBufferBinds;
+                _perfAccumDrawCalls += _perfDrawCalls;
+                _perfAccumDispatchCalls += _perfDispatchCalls;
 
-                if ((perfFrames % PerfReportIntervalFrames) == 0)
+                if ((_perfFrames % PerfReportIntervalFrames) == 0)
                 {
-                    double elapsedMs = perfStopwatch.Elapsed.TotalMilliseconds;
-                    double reportWindowMs = elapsedMs - perfLastReportMs;
-                    perfLastReportMs = elapsedMs;
+                    double elapsedMs = _perfStopwatch.Elapsed.TotalMilliseconds;
+                    double reportWindowMs = elapsedMs - _perfLastReportMs;
+                    _perfLastReportMs = elapsedMs;
                     double invFrames = 1.0 / PerfReportIntervalFrames;
                     Console.WriteLine(
                         $"[D3D12 PERF] {PerfReportIntervalFrames}f/{reportWindowMs:F0}ms avg: " +
-                        $"wait={perfAccumBeginWaitMs * invFrames:F3}ms ({perfAccumBeginWaitCount * invFrames:F2}x), " +
-                        $"trans={perfAccumTransitions * invFrames:F1}, subTrans={perfAccumSubresourceTransitions * invFrames:F1}, uavB={perfAccumUavBarriers * invFrames:F1}, " +
-                        $"pso={perfAccumPipelineChanges * invFrames:F1}, rs={perfAccumResourceSetChanges * invFrames:F1}, " +
-                        $"descCopy={perfAccumDescriptorCopies * invFrames:F1}, rootTbl={perfAccumRootTableSets * invFrames:F1}, " +
-                        $"vb={perfAccumVertexBufferBinds * invFrames:F1}, ib={perfAccumIndexBufferBinds * invFrames:F1}, " +
-                        $"draw={perfAccumDrawCalls * invFrames:F1}, dispatch={perfAccumDispatchCalls * invFrames:F1}");
+                        $"wait={_perfAccumBeginWaitMs * invFrames:F3}ms ({_perfAccumBeginWaitCount * invFrames:F2}x), " +
+                        $"trans={_perfAccumTransitions * invFrames:F1}, subTrans={_perfAccumSubresourceTransitions * invFrames:F1}, uavB={_perfAccumUavBarriers * invFrames:F1}, " +
+                        $"pso={_perfAccumPipelineChanges * invFrames:F1}, rs={_perfAccumResourceSetChanges * invFrames:F1}, " +
+                        $"descCopy={_perfAccumDescriptorCopies * invFrames:F1}, rootTbl={_perfAccumRootTableSets * invFrames:F1}, " +
+                        $"vb={_perfAccumVertexBufferBinds * invFrames:F1}, ib={_perfAccumIndexBufferBinds * invFrames:F1}, " +
+                        $"draw={_perfAccumDrawCalls * invFrames:F1}, dispatch={_perfAccumDispatchCalls * invFrames:F1}");
 
-                    perfAccumBeginWaitCount = 0;
-                    perfAccumBeginWaitMs = 0;
-                    perfAccumTransitions = 0;
-                    perfAccumSubresourceTransitions = 0;
-                    perfAccumUavBarriers = 0;
-                    perfAccumPipelineChanges = 0;
-                    perfAccumResourceSetChanges = 0;
-                    perfAccumDescriptorCopies = 0;
-                    perfAccumRootTableSets = 0;
-                    perfAccumVertexBufferBinds = 0;
-                    perfAccumIndexBufferBinds = 0;
-                    perfAccumDrawCalls = 0;
-                    perfAccumDispatchCalls = 0;
+                    _perfAccumBeginWaitCount = 0;
+                    _perfAccumBeginWaitMs = 0;
+                    _perfAccumTransitions = 0;
+                    _perfAccumSubresourceTransitions = 0;
+                    _perfAccumUavBarriers = 0;
+                    _perfAccumPipelineChanges = 0;
+                    _perfAccumResourceSetChanges = 0;
+                    _perfAccumDescriptorCopies = 0;
+                    _perfAccumRootTableSets = 0;
+                    _perfAccumVertexBufferBinds = 0;
+                    _perfAccumIndexBufferBinds = 0;
+                    _perfAccumDrawCalls = 0;
+                    _perfAccumDispatchCalls = 0;
                 }
             }
         }
 
         public override void SetViewport(uint index, ref Viewport viewport)
         {
-            if (index >= activeViewports.Length)
+            if (index >= _activeViewports.Length)
             {
                 return;
             }
 
-            activeViewports[index] = new Vortice.Mathematics.Viewport(
+            _activeViewports[index] = new Vortice.Mathematics.Viewport(
                 viewport.X,
                 viewport.Y,
                 viewport.Width,
@@ -299,83 +299,83 @@ namespace Veldrith.D3D12
                 viewport.MinDepth,
                 viewport.MaxDepth);
 
-            if (index + 1 > activeViewportCount)
+            if (index + 1 > _activeViewportCount)
             {
-                activeViewportCount = index + 1;
+                _activeViewportCount = index + 1;
             }
 
-            nativeCommandList.RSSetViewports(activeViewportCount, activeViewports);
+            _nativeCommandList.RSSetViewports(_activeViewportCount, _activeViewports);
         }
 
         public override void SetScissorRect(uint index, uint x, uint y, uint width, uint height)
         {
-            if (index >= activeScissorRects.Length)
+            if (index >= _activeScissorRects.Length)
             {
                 return;
             }
 
-            activeScissorRects[index] = new RawRect((int)x, (int)y, (int)(x + width), (int)(y + height));
+            _activeScissorRects[index] = new RawRect((int)x, (int)y, (int)(x + width), (int)(y + height));
 
-            if (index + 1 > activeScissorRectCount)
+            if (index + 1 > _activeScissorRectCount)
             {
-                activeScissorRectCount = index + 1;
+                _activeScissorRectCount = index + 1;
             }
 
-            nativeCommandList.RSSetScissorRects(activeScissorRectCount, activeScissorRects);
+            _nativeCommandList.RSSetScissorRects(_activeScissorRectCount, _activeScissorRects);
         }
 
         public override void Dispatch(uint groupCountX, uint groupCountY, uint groupCountZ)
         {
             flushPendingUavBarrier();
-            nativeCommandList.Dispatch(groupCountX, groupCountY, groupCountZ);
-            if (perfLogEnabled)
+            _nativeCommandList.Dispatch(groupCountX, groupCountY, groupCountZ);
+            if (_perfLogEnabled)
             {
-                perfDispatchCalls++;
+                _perfDispatchCalls++;
             }
-            uavBarrierPending = true;
+            _uavBarrierPending = true;
         }
 
         internal void ExecuteNoSignal()
         {
-            if (!ended)
+            if (!_ended)
             {
                 throw new VeldridException("CommandList must be ended before submit.");
             }
 
-            gd.CommandQueue.ExecuteCommandList(nativeCommandList);
+            gd.CommandQueue.ExecuteCommandList(_nativeCommandList);
         }
 
         internal void MarkSubmitted(ulong signalValue)
         {
-            if (currentFrameSlot >= 0)
+            if (_currentFrameSlot >= 0)
             {
-                frameSlotFenceValues[currentFrameSlot] = signalValue;
+                _frameSlotFenceValues[_currentFrameSlot] = signalValue;
             }
         }
 
         protected override void SetGraphicsResourceSetCore(uint slot, ResourceSet rs, uint dynamicOffsetsCount, ref uint dynamicOffsets)
         {
-            if (currentGraphicsPipeline == null)
+            if (_currentGraphicsPipeline == null)
             {
                 return;
             }
 
-            Util.EnsureArrayMinimumSize(ref boundGraphicsResourceSets, slot + 1);
-            BoundResourceSetInfo previousBinding = boundGraphicsResourceSets[slot];
+            Util.EnsureArrayMinimumSize(ref _boundGraphicsResourceSets, slot + 1);
+            BoundResourceSetInfo previousBinding = _boundGraphicsResourceSets[slot];
             if (previousBinding.Equals(rs, dynamicOffsetsCount, ref dynamicOffsets))
             {
                 return;
             }
-            boundGraphicsResourceSets[slot].Offsets.Dispose();
-            boundGraphicsResourceSets[slot] = new BoundResourceSetInfo(rs, dynamicOffsetsCount, ref dynamicOffsets);
-            if (perfLogEnabled)
+            _boundGraphicsResourceSets[slot].Offsets.Dispose();
+            _boundGraphicsResourceSets[slot] = new BoundResourceSetInfo(rs, dynamicOffsetsCount, ref dynamicOffsets);
+            if (_perfLogEnabled)
             {
-                perfResourceSetChanges++;
+                _perfResourceSetChanges++;
             }
 
             var d3d12Set = Util.AssertSubtype<ResourceSet, D3D12ResourceSet>(rs);
             IBindableResource[] resources = d3d12Set.BoundResources;
-            ResourceSetBindingPlanEntry[] bindingPlan = getGraphicsResourceSetBindingPlan(currentGraphicsPipeline, slot, d3d12Set.ResourceLayoutInfo);
+            ResourceSetBindingPlanEntry[] bindingPlan = getGraphicsResourceSetBindingPlan(_currentGraphicsPipeline, slot, d3d12Set.ResourceLayoutInfo);
             uint dynamicOffsetIndex = 0;
             bool bindOnlyDynamicResources = ReferenceEquals(previousBinding.Set, rs);
 
@@ -407,27 +407,27 @@ namespace Veldrith.D3D12
 
         protected override void SetComputeResourceSetCore(uint slot, ResourceSet set, uint dynamicOffsetsCount, ref uint dynamicOffsets)
         {
-            if (currentComputePipeline == null)
+            if (_currentComputePipeline == null)
             {
                 return;
             }
 
-            Util.EnsureArrayMinimumSize(ref boundComputeResourceSets, slot + 1);
-            BoundResourceSetInfo previousBinding = boundComputeResourceSets[slot];
+            Util.EnsureArrayMinimumSize(ref _boundComputeResourceSets, slot + 1);
+            BoundResourceSetInfo previousBinding = _boundComputeResourceSets[slot];
             if (previousBinding.Equals(set, dynamicOffsetsCount, ref dynamicOffsets))
             {
                 return;
             }
-            boundComputeResourceSets[slot].Offsets.Dispose();
-            boundComputeResourceSets[slot] = new BoundResourceSetInfo(set, dynamicOffsetsCount, ref dynamicOffsets);
-            if (perfLogEnabled)
+            _boundComputeResourceSets[slot].Offsets.Dispose();
+            _boundComputeResourceSets[slot] = new BoundResourceSetInfo(set, dynamicOffsetsCount, ref dynamicOffsets);
+            if (_perfLogEnabled)
             {
-                perfResourceSetChanges++;
+                _perfResourceSetChanges++;
             }
 
             var d3d12Set = Util.AssertSubtype<ResourceSet, D3D12ResourceSet>(set);
             IBindableResource[] resources = d3d12Set.BoundResources;
-            ResourceSetBindingPlanEntry[] bindingPlan = getComputeResourceSetBindingPlan(currentComputePipeline, slot, d3d12Set.ResourceLayoutInfo);
+            ResourceSetBindingPlanEntry[] bindingPlan = getComputeResourceSetBindingPlan(_currentComputePipeline, slot, d3d12Set.ResourceLayoutInfo);
             uint dynamicOffsetIndex = 0;
             bool bindOnlyDynamicResources = ReferenceEquals(previousBinding.Set, set);
 
@@ -464,7 +464,7 @@ namespace Veldrith.D3D12
             {
                 transition(backBuffer, currentState, ResourceStates.RenderTarget);
                 swapchainFramebuffer.Swapchain.SetBackBufferState(backBufferIndex, ResourceStates.RenderTarget);
-                transitionedBackBufferIndex = backBufferIndex;
+                _transitionedBackBufferIndex = backBufferIndex;
                 if (swapchainFramebuffer.DepthTargetTexture != null)
                 {
                     transitionTexture(swapchainFramebuffer.DepthTargetTexture, ResourceStates.DepthWrite);
@@ -472,11 +472,11 @@ namespace Veldrith.D3D12
 
                 if (swapchainFramebuffer.TryGetDepthStencilView(out CpuDescriptorHandle swapchainDsv))
                 {
-                    nativeCommandList.OMSetRenderTargets(rtv, swapchainDsv);
+                    _nativeCommandList.OMSetRenderTargets(rtv, swapchainDsv);
                 }
                 else
                 {
-                    nativeCommandList.OMSetRenderTargets(rtv, null);
+                    _nativeCommandList.OMSetRenderTargets(rtv, null);
                 }
                 return;
             }
@@ -499,18 +499,18 @@ namespace Veldrith.D3D12
             {
                 if (d3d12Framebuffer.TryGetDepthStencilView(out CpuDescriptorHandle depthOnlyDsv))
                 {
-                    nativeCommandList.OMSetRenderTargets(Array.Empty<CpuDescriptorHandle>(), depthOnlyDsv);
+                    _nativeCommandList.OMSetRenderTargets(Array.Empty<CpuDescriptorHandle>(), depthOnlyDsv);
                 }
                 return;
             }
 
             if (d3d12Framebuffer.TryGetDepthStencilView(out CpuDescriptorHandle dsv))
             {
-                nativeCommandList.OMSetRenderTargets(rtvs, dsv);
+                _nativeCommandList.OMSetRenderTargets(rtvs, dsv);
             }
             else
             {
-                nativeCommandList.OMSetRenderTargets(rtvs, null);
+                _nativeCommandList.OMSetRenderTargets(rtvs, null);
             }
         }
 
@@ -529,7 +529,7 @@ namespace Veldrith.D3D12
 
             if (ensureIndirectCommandSignatures())
             {
-                executeIndirect(d3d12Buffer, offset, drawCount, stride, argumentSize, drawIndirectSignature);
+                executeIndirect(d3d12Buffer, offset, drawCount, stride, argumentSize, _drawIndirectSignature);
                 return;
             }
 
@@ -545,7 +545,7 @@ namespace Veldrith.D3D12
                 for (uint i = 0; i < drawCount; i++)
                 {
                     IndirectDrawArguments arguments = *(IndirectDrawArguments*)(basePtr + (i * stride));
-                    nativeCommandList.DrawInstanced(arguments.VertexCount, arguments.InstanceCount, arguments.FirstVertex, arguments.FirstInstance);
+                    _nativeCommandList.DrawInstanced(arguments.VertexCount, arguments.InstanceCount, arguments.FirstVertex, arguments.FirstInstance);
                 }
             }
         }
@@ -565,7 +565,7 @@ namespace Veldrith.D3D12
 
             if (ensureIndirectCommandSignatures())
             {
-                executeIndirect(d3d12Buffer, offset, drawCount, stride, argumentSize, drawIndexedIndirectSignature);
+                executeIndirect(d3d12Buffer, offset, drawCount, stride, argumentSize, _drawIndexedIndirectSignature);
                 return;
             }
 
@@ -581,7 +581,7 @@ namespace Veldrith.D3D12
                 for (uint i = 0; i < drawCount; i++)
                 {
                     IndirectDrawIndexedArguments arguments = *(IndirectDrawIndexedArguments*)(basePtr + (i * stride));
-                    nativeCommandList.DrawIndexedInstanced(arguments.IndexCount, arguments.InstanceCount, arguments.FirstIndex, arguments.VertexOffset, arguments.FirstInstance);
+                    _nativeCommandList.DrawIndexedInstanced(arguments.IndexCount, arguments.InstanceCount, arguments.FirstIndex, arguments.VertexOffset, arguments.FirstInstance);
                 }
             }
         }
@@ -598,7 +598,7 @@ namespace Veldrith.D3D12
 
             if (ensureIndirectCommandSignatures())
             {
-                executeIndirect(d3d12Buffer, offset, 1, argumentSize, argumentSize, dispatchIndirectSignature);
+                executeIndirect(d3d12Buffer, offset, 1, argumentSize, argumentSize, _dispatchIndirectSignature);
                 return;
             }
 
@@ -611,7 +611,7 @@ namespace Veldrith.D3D12
                 }
 
                 IndirectDispatchArguments arguments = *(IndirectDispatchArguments*)((byte*)mappedPointer + offset);
-                nativeCommandList.Dispatch(arguments.GroupCountX, arguments.GroupCountY, arguments.GroupCountZ);
+                _nativeCommandList.Dispatch(arguments.GroupCountX, arguments.GroupCountY, arguments.GroupCountZ);
             }
         }
 
@@ -650,7 +650,7 @@ namespace Veldrith.D3D12
                 {
                     uint srcSubresource = source.CalculateSubresource(mipLevel, arrayLayer);
                     uint dstSubresource = destination.CalculateSubresource(mipLevel, arrayLayer);
-                    nativeCommandList.ResolveSubresource(dst.NativeTexture, dstSubresource, src.NativeTexture, srcSubresource, resolveFormat);
+                    _nativeCommandList.ResolveSubresource(dst.NativeTexture, dstSubresource, src.NativeTexture, srcSubresource, resolveFormat);
                 }
             }
 
@@ -663,7 +663,7 @@ namespace Veldrith.D3D12
             flushPendingUavBarrier();
             var src = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(source);
             var dst = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(destination);
-            src.CopyTo(nativeCommandList, dst, sourceOffset, destinationOffset, sizeInBytes);
+            src.CopyTo(_nativeCommandList, dst, sourceOffset, destinationOffset, sizeInBytes);
         }
 
         protected override void CopyTextureCore(
@@ -708,7 +708,7 @@ namespace Veldrith.D3D12
                         (int)(srcX + width),
                         (int)(srcY + height),
                         (int)(srcZ + depth));
-                    nativeCommandList.CopyTextureRegion(dstLocation, dstX, dstY, dstZ, srcLocation, srcBox);
+                    _nativeCommandList.CopyTextureRegion(dstLocation, dstX, dstY, dstZ, srcLocation, srcBox);
                 }
 
                 restoreTextureStates(src, srcPreviousStates);
@@ -739,55 +739,55 @@ namespace Veldrith.D3D12
             if (pipeline.IsComputePipeline)
             {
                 var d3d12ComputePipeline = Util.AssertSubtype<Pipeline, D3D12Pipeline>(pipeline);
-                if (ReferenceEquals(currentComputePipeline, d3d12ComputePipeline))
+                if (ReferenceEquals(_currentComputePipeline, d3d12ComputePipeline))
                 {
                     return;
                 }
 
-                bool computeRootSignatureChanged = !ReferenceEquals(currentComputePipeline?.RootSignature, d3d12ComputePipeline.RootSignature);
-                currentComputePipeline = d3d12ComputePipeline;
-                currentGraphicsPipeline = null;
-                if (perfLogEnabled)
+                bool computeRootSignatureChanged = !ReferenceEquals(_currentComputePipeline?.RootSignature, d3d12ComputePipeline.RootSignature);
+                _currentComputePipeline = d3d12ComputePipeline;
+                _currentGraphicsPipeline = null;
+                if (_perfLogEnabled)
                 {
-                    perfPipelineChanges++;
+                    _perfPipelineChanges++;
                 }
-                nativeCommandList.SetPipelineState(d3d12ComputePipeline.PipelineState);
+                _nativeCommandList.SetPipelineState(d3d12ComputePipeline.PipelineState);
                 if (computeRootSignatureChanged)
                 {
-                    clearBoundResourceSets(boundComputeResourceSets);
+                    clearBoundResourceSets(_boundComputeResourceSets);
                     invalidateComputeRootCaches();
-                    nativeCommandList.SetComputeRootSignature(d3d12ComputePipeline.RootSignature);
+                    _nativeCommandList.SetComputeRootSignature(d3d12ComputePipeline.RootSignature);
                 }
                 return;
             }
 
             var d3d12Pipeline = Util.AssertSubtype<Pipeline, D3D12Pipeline>(pipeline);
-            if (ReferenceEquals(currentGraphicsPipeline, d3d12Pipeline))
+            if (ReferenceEquals(_currentGraphicsPipeline, d3d12Pipeline))
             {
                 return;
             }
 
-            bool rootSignatureChanged = !ReferenceEquals(currentGraphicsPipeline?.RootSignature, d3d12Pipeline.RootSignature);
-            currentGraphicsPipeline = d3d12Pipeline;
-            currentComputePipeline = null;
-            if (perfLogEnabled)
+            bool rootSignatureChanged = !ReferenceEquals(_currentGraphicsPipeline?.RootSignature, d3d12Pipeline.RootSignature);
+            _currentGraphicsPipeline = d3d12Pipeline;
+            _currentComputePipeline = null;
+            if (_perfLogEnabled)
             {
-                perfPipelineChanges++;
+                _perfPipelineChanges++;
             }
-            nativeCommandList.SetPipelineState(d3d12Pipeline.PipelineState);
+            _nativeCommandList.SetPipelineState(d3d12Pipeline.PipelineState);
             if (rootSignatureChanged)
             {
-                clearBoundResourceSets(boundGraphicsResourceSets);
+                clearBoundResourceSets(_boundGraphicsResourceSets);
                 invalidateGraphicsRootCaches();
-                nativeCommandList.SetGraphicsRootSignature(d3d12Pipeline.RootSignature);
+                _nativeCommandList.SetGraphicsRootSignature(d3d12Pipeline.RootSignature);
             }
-            nativeCommandList.IASetPrimitiveTopology(d3d12Pipeline.PrimitiveTopology);
+            _nativeCommandList.IASetPrimitiveTopology(d3d12Pipeline.PrimitiveTopology);
             rebindVertexBuffersForCurrentPipeline();
         }
 
         private protected override void SetVertexBufferCore(uint index, DeviceBuffer buffer, uint offset)
         {
-            if (index >= boundVertexBuffers.Length)
+            if (index >= _boundVertexBuffers.Length)
             {
                 return;
             }
@@ -795,25 +795,25 @@ namespace Veldrith.D3D12
             var d3d12Buffer = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(buffer);
             bool isDynamicBuffer = (d3d12Buffer.Usage & BufferUsage.Dynamic) == BufferUsage.Dynamic;
             ulong bindVersion = d3d12Buffer.BindVersion;
-            if (ReferenceEquals(boundVertexBuffers[index], d3d12Buffer)
-                && boundVertexBufferOffsets[index] == offset
-                && (!isDynamicBuffer || boundVertexBufferVersions[index] == bindVersion))
+            if (ReferenceEquals(_boundVertexBuffers[index], d3d12Buffer)
+                && _boundVertexBufferOffsets[index] == offset
+                && (!isDynamicBuffer || _boundVertexBufferVersions[index] == bindVersion))
             {
                 return;
             }
 
-            boundVertexBuffers[index] = d3d12Buffer;
-            boundVertexBufferOffsets[index] = offset;
-            boundVertexBufferVersions[index] = bindVersion;
-            if (index + 1 > maxBoundVertexBufferSlot)
+            _boundVertexBuffers[index] = d3d12Buffer;
+            _boundVertexBufferOffsets[index] = offset;
+            _boundVertexBufferVersions[index] = bindVersion;
+            if (index + 1 > _maxBoundVertexBufferSlot)
             {
-                maxBoundVertexBufferSlot = index + 1;
+                _maxBoundVertexBufferSlot = index + 1;
             }
 
             bindVertexBuffer(index, d3d12Buffer, offset);
-            if (perfLogEnabled)
+            if (_perfLogEnabled)
             {
-                perfVertexBufferBinds++;
+                _perfVertexBufferBinds++;
             }
         }
 
@@ -822,11 +822,11 @@ namespace Veldrith.D3D12
             var d3d12Buffer = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(buffer);
             bool isDynamicBuffer = (d3d12Buffer.Usage & BufferUsage.Dynamic) == BufferUsage.Dynamic;
             ulong bindVersion = d3d12Buffer.BindVersion;
-            if (hasBoundIndexBuffer
-                && ReferenceEquals(boundIndexBuffer, d3d12Buffer)
-                && boundIndexBufferOffset == offset
-                && boundIndexFormat == format
-                && (!isDynamicBuffer || boundIndexBufferVersion == bindVersion))
+            if (_hasBoundIndexBuffer
+                && ReferenceEquals(_boundIndexBuffer, d3d12Buffer)
+                && _boundIndexBufferOffset == offset
+                && _boundIndexFormat == format
+                && (!isDynamicBuffer || _boundIndexBufferVersion == bindVersion))
             {
                 return;
             }
@@ -837,15 +837,15 @@ namespace Veldrith.D3D12
                 d3d12Buffer.GetGpuVirtualAddress(offset),
                 viewSize,
                 D3D12Formats.ToDxgiFormat(format));
-            nativeCommandList.IASetIndexBuffer(indexView);
-            boundIndexBuffer = d3d12Buffer;
-            boundIndexBufferOffset = offset;
-            boundIndexBufferVersion = bindVersion;
-            boundIndexFormat = format;
-            hasBoundIndexBuffer = true;
-            if (perfLogEnabled)
+            _nativeCommandList.IASetIndexBuffer(indexView);
+            _boundIndexBuffer = d3d12Buffer;
+            _boundIndexBufferOffset = offset;
+            _boundIndexBufferVersion = bindVersion;
+            _boundIndexFormat = format;
+            _hasBoundIndexBuffer = true;
+            if (_perfLogEnabled)
             {
-                perfIndexBufferBinds++;
+                _perfIndexBufferBinds++;
             }
         }
 
@@ -857,16 +857,16 @@ namespace Veldrith.D3D12
             {
                 transition(backBuffer, currentState, ResourceStates.RenderTarget);
                 swapchainFramebuffer.Swapchain.SetBackBufferState(backBufferIndex, ResourceStates.RenderTarget);
-                transitionedBackBufferIndex = backBufferIndex;
+                _transitionedBackBufferIndex = backBufferIndex;
                 if (swapchainFramebuffer.TryGetDepthStencilView(out CpuDescriptorHandle swapchainDsv))
                 {
-                    nativeCommandList.OMSetRenderTargets(rtv, swapchainDsv);
+                    _nativeCommandList.OMSetRenderTargets(rtv, swapchainDsv);
                 }
                 else
                 {
-                    nativeCommandList.OMSetRenderTargets(rtv, null);
+                    _nativeCommandList.OMSetRenderTargets(rtv, null);
                 }
-                nativeCommandList.ClearRenderTargetView(rtv, new Color4(clearColor.R, clearColor.G, clearColor.B, clearColor.A), 0, null);
+                _nativeCommandList.ClearRenderTargetView(rtv, new Color4(clearColor.R, clearColor.G, clearColor.B, clearColor.A), 0, null);
                 return;
             }
 
@@ -882,7 +882,7 @@ namespace Veldrith.D3D12
                     }
                 }
 
-                nativeCommandList.ClearRenderTargetView(offscreenRtv, new Color4(clearColor.R, clearColor.G, clearColor.B, clearColor.A), 0, null);
+                _nativeCommandList.ClearRenderTargetView(offscreenRtv, new Color4(clearColor.R, clearColor.G, clearColor.B, clearColor.A), 0, null);
             }
         }
 
@@ -902,27 +902,27 @@ namespace Veldrith.D3D12
             transitionTexture(d3d12Framebuffer.DepthTargetTexture, ResourceStates.DepthWrite);
             if (d3d12Framebuffer.TryGetDepthStencilView(out CpuDescriptorHandle dsv))
             {
-                nativeCommandList.ClearDepthStencilView(dsv, ClearFlags.Depth | ClearFlags.Stencil, depth, stencil, 0, null);
+                _nativeCommandList.ClearDepthStencilView(dsv, ClearFlags.Depth | ClearFlags.Stencil, depth, stencil, 0, null);
             }
         }
 
         private protected override void DrawCore(uint vertexCount, uint instanceCount, uint vertexStart, uint instanceStart)
         {
             flushPendingUavBarrier();
-            nativeCommandList.DrawInstanced(vertexCount, instanceCount, vertexStart, instanceStart);
-            if (perfLogEnabled)
+            _nativeCommandList.DrawInstanced(vertexCount, instanceCount, vertexStart, instanceStart);
+            if (_perfLogEnabled)
             {
-                perfDrawCalls++;
+                _perfDrawCalls++;
             }
         }
 
         private protected override void DrawIndexedCore(uint indexCount, uint instanceCount, uint indexStart, int vertexOffset, uint instanceStart)
         {
             flushPendingUavBarrier();
-            nativeCommandList.DrawIndexedInstanced(indexCount, instanceCount, indexStart, vertexOffset, instanceStart);
-            if (perfLogEnabled)
+            _nativeCommandList.DrawIndexedInstanced(indexCount, instanceCount, indexStart, vertexOffset, instanceStart);
+            if (_perfLogEnabled)
             {
-                perfDrawCalls++;
+                _perfDrawCalls++;
             }
         }
 
@@ -930,7 +930,7 @@ namespace Veldrith.D3D12
         {
             flushPendingUavBarrier();
             var d3d12Buffer = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(buffer);
-            ID3D12Resource temporaryUpload = d3d12Buffer.Update(nativeCommandList, source, bufferOffsetInBytes, sizeInBytes);
+            ID3D12Resource temporaryUpload = d3d12Buffer.Update(_nativeCommandList, source, bufferOffsetInBytes, sizeInBytes);
             if (temporaryUpload != null)
             {
                 gd.DisposeWhenIdle(temporaryUpload);
@@ -972,7 +972,7 @@ namespace Veldrith.D3D12
 
         private protected override void PopDebugGroupCore()
         {
-            endEventMethod?.Invoke(nativeCommandList, null);
+            _endEventMethod?.Invoke(_nativeCommandList, null);
         }
 
         private protected override void InsertDebugMarkerCore(string name)
@@ -988,11 +988,11 @@ namespace Veldrith.D3D12
             }
 
             ResourceBarrier barrier = ResourceBarrier.BarrierTransition(resource, from, to, VorticeD3D12.ResourceBarrierAllSubResources, ResourceBarrierFlags.None);
-            singleBarrier[0] = barrier;
-            nativeCommandList.ResourceBarrier(singleBarrier);
-            if (perfLogEnabled)
+            _singleBarrier[0] = barrier;
+            _nativeCommandList.ResourceBarrier(_singleBarrier);
+            if (_perfLogEnabled)
             {
-                perfTransitions++;
+                _perfTransitions++;
             }
         }
 
@@ -1001,9 +1001,9 @@ namespace Veldrith.D3D12
             transitionBuffer(buffer, ResourceStates.VertexAndConstantBuffer);
 
             uint stride = 0;
-            if (currentGraphicsPipeline != null && index < currentGraphicsPipeline.VertexStrides.Length)
+            if (_currentGraphicsPipeline != null && index < _currentGraphicsPipeline.VertexStrides.Length)
             {
-                stride = currentGraphicsPipeline.VertexStrides[index];
+                stride = _currentGraphicsPipeline.VertexStrides[index];
             }
 
             uint viewSize = buffer.GetBindableSize(offset);
@@ -1011,25 +1011,25 @@ namespace Veldrith.D3D12
                 buffer.GetGpuVirtualAddress(offset),
                 viewSize,
                 stride);
-            nativeCommandList.IASetVertexBuffers(index, view);
+            _nativeCommandList.IASetVertexBuffers(index, view);
         }
 
         private void rebindVertexBuffersForCurrentPipeline()
         {
-            if (currentGraphicsPipeline == null)
+            if (_currentGraphicsPipeline == null)
             {
                 return;
             }
 
-            for (uint index = 0; index < maxBoundVertexBufferSlot; index++)
+            for (uint index = 0; index < _maxBoundVertexBufferSlot; index++)
             {
-                D3D12DeviceBuffer buffer = boundVertexBuffers[index];
+                D3D12DeviceBuffer buffer = _boundVertexBuffers[index];
                 if (buffer == null)
                 {
                     continue;
                 }
 
-                bindVertexBuffer(index, buffer, boundVertexBufferOffsets[index]);
+                bindVertexBuffer(index, buffer, _boundVertexBufferOffsets[index]);
             }
         }
 
@@ -1041,34 +1041,34 @@ namespace Veldrith.D3D12
             }
 
             ResourceBarrier barrier = ResourceBarrier.BarrierTransition(resource, from, to, subresource, ResourceBarrierFlags.None);
-            singleBarrier[0] = barrier;
-            nativeCommandList.ResourceBarrier(singleBarrier);
-            if (perfLogEnabled)
+            _singleBarrier[0] = barrier;
+            _nativeCommandList.ResourceBarrier(_singleBarrier);
+            if (_perfLogEnabled)
             {
-                perfSubresourceTransitions++;
+                _perfSubresourceTransitions++;
             }
         }
 
         private void flushPendingUavBarrier()
         {
-            if (!uavBarrierPending)
+            if (!_uavBarrierPending)
             {
                 return;
             }
 
             ResourceBarrier barrier = ResourceBarrier.BarrierUnorderedAccessView(null);
-            singleBarrier[0] = barrier;
-            nativeCommandList.ResourceBarrier(singleBarrier);
-            if (perfLogEnabled)
+            _singleBarrier[0] = barrier;
+            _nativeCommandList.ResourceBarrier(_singleBarrier);
+            if (_perfLogEnabled)
             {
-                perfUavBarriers++;
+                _perfUavBarriers++;
             }
-            uavBarrierPending = false;
+            _uavBarrierPending = false;
         }
 
         private void waitForFrameSlot(int frameSlot)
         {
-            ulong fenceValue = frameSlotFenceValues[frameSlot];
+            ulong fenceValue = _frameSlotFenceValues[frameSlot];
             if (fenceValue == 0)
             {
                 return;
@@ -1080,16 +1080,16 @@ namespace Veldrith.D3D12
             }
 
             long startTicks = 0;
-            if (perfLogEnabled)
+            if (_perfLogEnabled)
             {
                 startTicks = Stopwatch.GetTimestamp();
             }
             gd.WaitForSubmissionFence(fenceValue);
-            if (perfLogEnabled)
+            if (_perfLogEnabled)
             {
                 long elapsedTicks = Stopwatch.GetTimestamp() - startTicks;
-                perfBeginWaitMs += elapsedTicks * 1000.0 / Stopwatch.Frequency;
-                perfBeginWaitCount++;
+                _perfBeginWaitMs += elapsedTicks * 1000.0 / Stopwatch.Frequency;
+                _perfBeginWaitCount++;
             }
         }
 
@@ -1112,7 +1112,7 @@ namespace Veldrith.D3D12
 
             if (stride == argumentSize)
             {
-                nativeCommandList.ExecuteIndirect(signature, drawCount, argumentBuffer.NativeBuffer, offset, null, 0);
+                _nativeCommandList.ExecuteIndirect(signature, drawCount, argumentBuffer.NativeBuffer, offset, null, 0);
                 transitionBuffer(argumentBuffer, previousState);
                 return;
             }
@@ -1120,21 +1120,21 @@ namespace Veldrith.D3D12
             for (uint i = 0; i < drawCount; i++)
             {
                 ulong commandOffset = offset + ((ulong)i * stride);
-                nativeCommandList.ExecuteIndirect(signature, 1, argumentBuffer.NativeBuffer, commandOffset, null, 0);
+                _nativeCommandList.ExecuteIndirect(signature, 1, argumentBuffer.NativeBuffer, commandOffset, null, 0);
             }
 
             transitionBuffer(argumentBuffer, previousState);
-            uavBarrierPending = true;
+            _uavBarrierPending = true;
         }
 
         private bool ensureIndirectCommandSignatures()
         {
-            if (indirectSignaturesInitialized)
+            if (_indirectSignaturesInitialized)
             {
-                return indirectSignaturesAvailable;
+                return _indirectSignaturesAvailable;
             }
 
-            indirectSignaturesInitialized = true;
+            _indirectSignaturesInitialized = true;
             try
             {
                 IndirectArgumentDescription drawArgument = default;
@@ -1142,32 +1142,32 @@ namespace Veldrith.D3D12
                 CommandSignatureDescription drawDescription = default;
                 drawDescription.ByteStride = Unsafe.SizeOf<IndirectDrawArguments>();
                 drawDescription.IndirectArguments = new[] { drawArgument };
-                drawIndirectSignature = createCommandSignature(drawDescription);
+                _drawIndirectSignature = createCommandSignature(drawDescription);
 
                 IndirectArgumentDescription drawIndexedArgument = default;
                 drawIndexedArgument.Type = IndirectArgumentType.DrawIndexed;
                 CommandSignatureDescription drawIndexedDescription = default;
                 drawIndexedDescription.ByteStride = Unsafe.SizeOf<IndirectDrawIndexedArguments>();
                 drawIndexedDescription.IndirectArguments = new[] { drawIndexedArgument };
-                drawIndexedIndirectSignature = createCommandSignature(drawIndexedDescription);
+                _drawIndexedIndirectSignature = createCommandSignature(drawIndexedDescription);
 
                 IndirectArgumentDescription dispatchArgument = default;
                 dispatchArgument.Type = IndirectArgumentType.Dispatch;
                 CommandSignatureDescription dispatchDescription = default;
                 dispatchDescription.ByteStride = Unsafe.SizeOf<IndirectDispatchArguments>();
                 dispatchDescription.IndirectArguments = new[] { dispatchArgument };
-                dispatchIndirectSignature = createCommandSignature(dispatchDescription);
+                _dispatchIndirectSignature = createCommandSignature(dispatchDescription);
 
-                indirectSignaturesAvailable = drawIndirectSignature != null
-                    && drawIndexedIndirectSignature != null
-                    && dispatchIndirectSignature != null;
+                _indirectSignaturesAvailable = _drawIndirectSignature != null
+                    && _drawIndexedIndirectSignature != null
+                    && _dispatchIndirectSignature != null;
             }
             catch
             {
-                indirectSignaturesAvailable = false;
+                _indirectSignaturesAvailable = false;
             }
 
-            return indirectSignaturesAvailable;
+            return _indirectSignaturesAvailable;
         }
 
         private ID3D12CommandSignature createCommandSignature(CommandSignatureDescription description)
@@ -1194,13 +1194,13 @@ namespace Veldrith.D3D12
 
         private void generateMipmapsGpu(D3D12Texture texture)
         {
-            D3D12Pipeline previousGraphics = currentGraphicsPipeline;
-            D3D12Pipeline previousCompute = currentComputePipeline;
+            D3D12Pipeline previousGraphics = _currentGraphicsPipeline;
+            D3D12Pipeline previousCompute = _currentComputePipeline;
 
-            nativeCommandList.SetPipelineState(gpuMipPipeline.PipelineState);
-            nativeCommandList.SetComputeRootSignature(gpuMipPipeline.RootSignature);
-            currentGraphicsPipeline = null;
-            currentComputePipeline = gpuMipPipeline;
+            _nativeCommandList.SetPipelineState(_gpuMipPipeline.PipelineState);
+            _nativeCommandList.SetComputeRootSignature(_gpuMipPipeline.RootSignature);
+            _currentGraphicsPipeline = null;
+            _currentComputePipeline = _gpuMipPipeline;
 
             uint layerCount = texture.ArrayLayers;
             uint subresourceCount = texture.MipLevels * layerCount;
@@ -1234,13 +1234,13 @@ namespace Veldrith.D3D12
 
                         using TextureView srcView = gd.ResourceFactory.CreateTextureView(new TextureViewDescription(texture, mipLevel - 1, 1, layer, 1));
                         using TextureView dstView = gd.ResourceFactory.CreateTextureView(new TextureViewDescription(texture, mipLevel, 1, layer, 1));
-                        using ResourceSet mipResourceSet = gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(gpuMipResourceLayout, srcView, dstView, gpuMipSampler));
+                        using ResourceSet mipResourceSet = gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(_gpuMipResourceLayout, srcView, dstView, _gpuMipSampler));
 
                         SetComputeResourceSet(0, mipResourceSet);
                         Util.GetMipDimensions(texture, mipLevel, out uint mipWidth, out uint mipHeight, out _);
                         uint groupCountX = (mipWidth + 7) / 8;
                         uint groupCountY = (mipHeight + 7) / 8;
-                        nativeCommandList.Dispatch(groupCountX, groupCountY, 1);
+                        _nativeCommandList.Dispatch(groupCountX, groupCountY, 1);
                     }
                 }
 
@@ -1262,23 +1262,23 @@ namespace Veldrith.D3D12
             {
                 if (previousCompute != null)
                 {
-                    nativeCommandList.SetPipelineState(previousCompute.PipelineState);
-                    nativeCommandList.SetComputeRootSignature(previousCompute.RootSignature);
-                    currentComputePipeline = previousCompute;
-                    currentGraphicsPipeline = null;
+                    _nativeCommandList.SetPipelineState(previousCompute.PipelineState);
+                    _nativeCommandList.SetComputeRootSignature(previousCompute.RootSignature);
+                    _currentComputePipeline = previousCompute;
+                    _currentGraphicsPipeline = null;
                 }
                 else if (previousGraphics != null)
                 {
-                    nativeCommandList.SetPipelineState(previousGraphics.PipelineState);
-                    nativeCommandList.SetGraphicsRootSignature(previousGraphics.RootSignature);
-                    nativeCommandList.IASetPrimitiveTopology(previousGraphics.PrimitiveTopology);
-                    currentGraphicsPipeline = previousGraphics;
-                    currentComputePipeline = null;
+                    _nativeCommandList.SetPipelineState(previousGraphics.PipelineState);
+                    _nativeCommandList.SetGraphicsRootSignature(previousGraphics.RootSignature);
+                    _nativeCommandList.IASetPrimitiveTopology(previousGraphics.PrimitiveTopology);
+                    _currentGraphicsPipeline = previousGraphics;
+                    _currentComputePipeline = null;
                 }
                 else
                 {
-                    currentComputePipeline = null;
-                    currentGraphicsPipeline = null;
+                    _currentComputePipeline = null;
+                    _currentGraphicsPipeline = null;
                 }
             }
         }
@@ -1286,15 +1286,15 @@ namespace Veldrith.D3D12
         [SupportedOSPlatform("windows")]
         private bool ensureGpuMipmapResources()
         {
-            if (gpuMipResourcesInitialized)
+            if (_gpuMipResourcesInitialized)
             {
-                return gpuMipResourcesAvailable;
+                return _gpuMipResourcesAvailable;
             }
 
-            gpuMipResourcesInitialized = true;
+            _gpuMipResourcesInitialized = true;
             try
             {
-                byte[] shaderBytes = compileComputeShader(mipmapComputeShaderCode, "cs_main", "cs_5_0");
+                byte[] shaderBytes = compileComputeShader(_mipmapComputeShaderCode, "cs_main", "cs_5_0");
                 using Shader mipShader = gd.ResourceFactory.CreateShader(new ShaderDescription(ShaderStages.Compute, shaderBytes, "cs_main"));
 
                 ResourceLayoutDescription resourceLayoutDescription = new ResourceLayoutDescription(
@@ -1302,28 +1302,28 @@ namespace Veldrith.D3D12
                     new ResourceLayoutElementDescription("DestinationTexture", ResourceKind.TextureReadWrite, ShaderStages.Compute),
                     new ResourceLayoutElementDescription("LinearSampler", ResourceKind.Sampler, ShaderStages.Compute));
 
-                gpuMipResourceLayout = gd.ResourceFactory.CreateResourceLayout(resourceLayoutDescription);
+                _gpuMipResourceLayout = gd.ResourceFactory.CreateResourceLayout(resourceLayoutDescription);
                 var samplerDescription = SamplerDescription.LINEAR;
                 samplerDescription.AddressModeU = SamplerAddressMode.Clamp;
                 samplerDescription.AddressModeV = SamplerAddressMode.Clamp;
                 samplerDescription.AddressModeW = SamplerAddressMode.Clamp;
-                gpuMipSampler = gd.ResourceFactory.CreateSampler(samplerDescription);
+                _gpuMipSampler = gd.ResourceFactory.CreateSampler(samplerDescription);
 
                 var computePipelineDescription = new ComputePipelineDescription(
                     mipShader,
-                    new[] { gpuMipResourceLayout },
+                    new[] { _gpuMipResourceLayout },
                     8,
                     8,
                     1);
-                gpuMipPipeline = Util.AssertSubtype<Pipeline, D3D12Pipeline>(gd.ResourceFactory.CreateComputePipeline(computePipelineDescription));
-                gpuMipResourcesAvailable = true;
+                _gpuMipPipeline = Util.AssertSubtype<Pipeline, D3D12Pipeline>(gd.ResourceFactory.CreateComputePipeline(computePipelineDescription));
+                _gpuMipResourcesAvailable = true;
             }
             catch
             {
-                gpuMipResourcesAvailable = false;
+                _gpuMipResourcesAvailable = false;
             }
 
-            return gpuMipResourcesAvailable;
+            return _gpuMipResourcesAvailable;
         }
 
         [SupportedOSPlatform("windows")]
@@ -1521,7 +1521,7 @@ namespace Veldrith.D3D12
             {
                 IntPtr dataPtr = (IntPtr)bytesPtr;
                 int size = utf8Bytes.Length;
-                MethodInfo markerMethod = beginEvent ? beginEventMethod : setMarkerMethod;
+                MethodInfo markerMethod = beginEvent ? _beginEventMethod : _setMarkerMethod;
                 if (markerMethod == null)
                 {
                     return;
@@ -1532,18 +1532,18 @@ namespace Veldrith.D3D12
                 object sizeValue = parameters[2].ParameterType == typeof(int) ? size : (uint)size;
                 if (beginEvent)
                 {
-                    markerMethod.Invoke(nativeCommandList, new[] { metadata, (object)dataPtr, sizeValue });
+                    markerMethod.Invoke(_nativeCommandList, new[] { metadata, (object)dataPtr, sizeValue });
                 }
                 else if (setMarker)
                 {
-                    markerMethod.Invoke(nativeCommandList, new[] { metadata, (object)dataPtr, sizeValue });
+                    markerMethod.Invoke(_nativeCommandList, new[] { metadata, (object)dataPtr, sizeValue });
                 }
             }
         }
 
         private MethodInfo getDebugMarkerMethod(string methodName)
         {
-            MethodInfo[] methods = nativeCommandList.GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance);
+            MethodInfo[] methods = _nativeCommandList.GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance);
             for (int i = 0; i < methods.Length; i++)
             {
                 MethodInfo method = methods[i];
@@ -1591,7 +1591,7 @@ namespace Veldrith.D3D12
             nuint GetBufferSize();
         }
 
-        private const string mipmapComputeShaderCode = @"
+        private const string _mipmapComputeShaderCode = @"
 Texture2D<float4> SourceTexture : register(t0);
 RWTexture2D<float4> DestinationTexture : register(u0);
 SamplerState LinearSampler : register(s0);
@@ -1638,13 +1638,13 @@ void cs_main(uint3 dispatchThreadID : SV_DispatchThreadID)
             switch (bindingInfo.Kind)
             {
                 case ResourceKind.UniformBuffer:
-                    nativeCommandList.SetGraphicsRootConstantBufferView(bindingInfo.RootParameterIndex, gpuAddress);
+                    _nativeCommandList.SetGraphicsRootConstantBufferView(bindingInfo.RootParameterIndex, gpuAddress);
                     break;
                 case ResourceKind.StructuredBufferReadOnly:
-                    nativeCommandList.SetGraphicsRootShaderResourceView(bindingInfo.RootParameterIndex, gpuAddress);
+                    _nativeCommandList.SetGraphicsRootShaderResourceView(bindingInfo.RootParameterIndex, gpuAddress);
                     break;
                 case ResourceKind.StructuredBufferReadWrite:
-                    nativeCommandList.SetGraphicsRootUnorderedAccessView(bindingInfo.RootParameterIndex, gpuAddress);
+                    _nativeCommandList.SetGraphicsRootUnorderedAccessView(bindingInfo.RootParameterIndex, gpuAddress);
                     break;
                 case ResourceKind.TextureReadOnly:
                 case ResourceKind.TextureReadWrite:
@@ -1682,13 +1682,13 @@ void cs_main(uint3 dispatchThreadID : SV_DispatchThreadID)
             switch (bindingInfo.Kind)
             {
                 case ResourceKind.UniformBuffer:
-                    nativeCommandList.SetComputeRootConstantBufferView(bindingInfo.RootParameterIndex, gpuAddress);
+                    _nativeCommandList.SetComputeRootConstantBufferView(bindingInfo.RootParameterIndex, gpuAddress);
                     break;
                 case ResourceKind.StructuredBufferReadOnly:
-                    nativeCommandList.SetComputeRootShaderResourceView(bindingInfo.RootParameterIndex, gpuAddress);
+                    _nativeCommandList.SetComputeRootShaderResourceView(bindingInfo.RootParameterIndex, gpuAddress);
                     break;
                 case ResourceKind.StructuredBufferReadWrite:
-                    nativeCommandList.SetComputeRootUnorderedAccessView(bindingInfo.RootParameterIndex, gpuAddress);
+                    _nativeCommandList.SetComputeRootUnorderedAccessView(bindingInfo.RootParameterIndex, gpuAddress);
                     break;
                 case ResourceKind.TextureReadOnly:
                 case ResourceKind.TextureReadWrite:
@@ -1732,17 +1732,17 @@ void cs_main(uint3 dispatchThreadID : SV_DispatchThreadID)
                     }
                     if (compute)
                     {
-                        nativeCommandList.SetComputeRootDescriptorTable(bindingInfo.RootParameterIndex, gpuHandle);
+                        _nativeCommandList.SetComputeRootDescriptorTable(bindingInfo.RootParameterIndex, gpuHandle);
                         setComputeRootTableCache(bindingInfo.RootParameterIndex, gpuHandle.Ptr);
                     }
                     else
                     {
-                        nativeCommandList.SetGraphicsRootDescriptorTable(bindingInfo.RootParameterIndex, gpuHandle);
+                        _nativeCommandList.SetGraphicsRootDescriptorTable(bindingInfo.RootParameterIndex, gpuHandle);
                         setGraphicsRootTableCache(bindingInfo.RootParameterIndex, gpuHandle.Ptr);
                     }
-                    if (perfLogEnabled)
+                    if (_perfLogEnabled)
                     {
-                        perfRootTableSets++;
+                        _perfRootTableSets++;
                     }
                     break;
                 }
@@ -1768,17 +1768,17 @@ void cs_main(uint3 dispatchThreadID : SV_DispatchThreadID)
                     }
                     if (compute)
                     {
-                        nativeCommandList.SetComputeRootDescriptorTable(bindingInfo.RootParameterIndex, gpuHandle);
+                        _nativeCommandList.SetComputeRootDescriptorTable(bindingInfo.RootParameterIndex, gpuHandle);
                         setComputeRootTableCache(bindingInfo.RootParameterIndex, gpuHandle.Ptr);
                     }
                     else
                     {
-                        nativeCommandList.SetGraphicsRootDescriptorTable(bindingInfo.RootParameterIndex, gpuHandle);
+                        _nativeCommandList.SetGraphicsRootDescriptorTable(bindingInfo.RootParameterIndex, gpuHandle);
                         setGraphicsRootTableCache(bindingInfo.RootParameterIndex, gpuHandle.Ptr);
                     }
-                    if (perfLogEnabled)
+                    if (_perfLogEnabled)
                     {
-                        perfRootTableSets++;
+                        _perfRootTableSets++;
                     }
                     break;
                 }
@@ -1799,17 +1799,17 @@ void cs_main(uint3 dispatchThreadID : SV_DispatchThreadID)
                     }
                     if (compute)
                     {
-                        nativeCommandList.SetComputeRootDescriptorTable(bindingInfo.RootParameterIndex, gpuHandle);
+                        _nativeCommandList.SetComputeRootDescriptorTable(bindingInfo.RootParameterIndex, gpuHandle);
                         setComputeRootTableCache(bindingInfo.RootParameterIndex, gpuHandle.Ptr);
                     }
                     else
                     {
-                        nativeCommandList.SetGraphicsRootDescriptorTable(bindingInfo.RootParameterIndex, gpuHandle);
+                        _nativeCommandList.SetGraphicsRootDescriptorTable(bindingInfo.RootParameterIndex, gpuHandle);
                         setGraphicsRootTableCache(bindingInfo.RootParameterIndex, gpuHandle.Ptr);
                     }
-                    if (perfLogEnabled)
+                    if (_perfLogEnabled)
                     {
-                        perfRootTableSets++;
+                        _perfRootTableSets++;
                     }
                     break;
                 }
@@ -1845,50 +1845,50 @@ void cs_main(uint3 dispatchThreadID : SV_DispatchThreadID)
 
         private void bindDescriptorHeaps()
         {
-            if (descriptorHeapsBound)
+            if (_descriptorHeapsBound)
             {
                 return;
             }
 
-            boundDescriptorHeaps[0] = shaderVisibleSrvUavHeaps[currentFrameSlot];
-            boundDescriptorHeaps[1] = shaderVisibleSamplerHeaps[currentFrameSlot];
-            nativeCommandList.SetDescriptorHeaps(boundDescriptorHeaps);
-            descriptorHeapsBound = true;
+            _boundDescriptorHeaps[0] = _shaderVisibleSrvUavHeaps[_currentFrameSlot];
+            _boundDescriptorHeaps[1] = _shaderVisibleSamplerHeaps[_currentFrameSlot];
+            _nativeCommandList.SetDescriptorHeaps(_boundDescriptorHeaps);
+            _descriptorHeapsBound = true;
         }
 
         private void allocateSrvUavDescriptor(out CpuDescriptorHandle cpuHandle, out GpuDescriptorHandle gpuHandle)
         {
-            if (nextSrvUavDescriptor >= maxSrvUavDescriptors)
+            if (_nextSrvUavDescriptor >= _maxSrvUavDescriptors)
             {
                 throw new VeldridException("D3D12 SRV/UAV descriptor heap exhausted for this CommandList recording.");
             }
 
-            CpuDescriptorHandle cpuStart = shaderVisibleSrvUavHeaps[currentFrameSlot].GetCPUDescriptorHandleForHeapStart();
-            GpuDescriptorHandle gpuStart = shaderVisibleSrvUavHeaps[currentFrameSlot].GetGPUDescriptorHandleForHeapStart();
-            cpuHandle = new CpuDescriptorHandle(cpuStart, (int)nextSrvUavDescriptor, (uint)srvUavDescriptorSize);
-            gpuHandle = new GpuDescriptorHandle(gpuStart, (int)nextSrvUavDescriptor, (uint)srvUavDescriptorSize);
-            nextSrvUavDescriptor++;
-            nextSrvUavDescriptorsPerFrameSlot[currentFrameSlot] = nextSrvUavDescriptor;
+            CpuDescriptorHandle cpuStart = _shaderVisibleSrvUavHeaps[_currentFrameSlot].GetCPUDescriptorHandleForHeapStart();
+            GpuDescriptorHandle gpuStart = _shaderVisibleSrvUavHeaps[_currentFrameSlot].GetGPUDescriptorHandleForHeapStart();
+            cpuHandle = new CpuDescriptorHandle(cpuStart, (int)_nextSrvUavDescriptor, (uint)_srvUavDescriptorSize);
+            gpuHandle = new GpuDescriptorHandle(gpuStart, (int)_nextSrvUavDescriptor, (uint)_srvUavDescriptorSize);
+            _nextSrvUavDescriptor++;
+            _nextSrvUavDescriptorsPerFrameSlot[_currentFrameSlot] = _nextSrvUavDescriptor;
         }
 
         private void allocateSamplerDescriptor(out CpuDescriptorHandle cpuHandle, out GpuDescriptorHandle gpuHandle)
         {
-            if (nextSamplerDescriptor >= maxSamplerDescriptors)
+            if (_nextSamplerDescriptor >= _maxSamplerDescriptors)
             {
                 throw new VeldridException("D3D12 sampler descriptor heap exhausted for this CommandList recording.");
             }
 
-            CpuDescriptorHandle cpuStart = shaderVisibleSamplerHeaps[currentFrameSlot].GetCPUDescriptorHandleForHeapStart();
-            GpuDescriptorHandle gpuStart = shaderVisibleSamplerHeaps[currentFrameSlot].GetGPUDescriptorHandleForHeapStart();
-            cpuHandle = new CpuDescriptorHandle(cpuStart, (int)nextSamplerDescriptor, (uint)samplerDescriptorSize);
-            gpuHandle = new GpuDescriptorHandle(gpuStart, (int)nextSamplerDescriptor, (uint)samplerDescriptorSize);
-            nextSamplerDescriptor++;
-            nextSamplerDescriptorsPerFrameSlot[currentFrameSlot] = nextSamplerDescriptor;
+            CpuDescriptorHandle cpuStart = _shaderVisibleSamplerHeaps[_currentFrameSlot].GetCPUDescriptorHandleForHeapStart();
+            GpuDescriptorHandle gpuStart = _shaderVisibleSamplerHeaps[_currentFrameSlot].GetGPUDescriptorHandleForHeapStart();
+            cpuHandle = new CpuDescriptorHandle(cpuStart, (int)_nextSamplerDescriptor, (uint)_samplerDescriptorSize);
+            gpuHandle = new GpuDescriptorHandle(gpuStart, (int)_nextSamplerDescriptor, (uint)_samplerDescriptorSize);
+            _nextSamplerDescriptor++;
+            _nextSamplerDescriptorsPerFrameSlot[_currentFrameSlot] = _nextSamplerDescriptor;
         }
 
         private GpuDescriptorHandle getOrCreateDescriptorTableHandle(IBindableResource resource, ResourceKind kind, Func<GpuDescriptorHandle> createHandle)
         {
-            Dictionary<DescriptorCacheKey, GpuDescriptorHandle> descriptorTableCache = descriptorTableCaches[currentFrameSlot];
+            Dictionary<DescriptorCacheKey, GpuDescriptorHandle> descriptorTableCache = _descriptorTableCaches[_currentFrameSlot];
             var key = new DescriptorCacheKey(resource, kind);
             if (descriptorTableCache.TryGetValue(key, out GpuDescriptorHandle cachedHandle))
             {
@@ -1896,9 +1896,9 @@ void cs_main(uint3 dispatchThreadID : SV_DispatchThreadID)
             }
 
             GpuDescriptorHandle newHandle = createHandle();
-            if (perfLogEnabled)
+            if (_perfLogEnabled)
             {
-                perfDescriptorCopies++;
+                _perfDescriptorCopies++;
             }
             descriptorTableCache.Add(key, newHandle);
             return newHandle;
@@ -1907,26 +1907,26 @@ void cs_main(uint3 dispatchThreadID : SV_DispatchThreadID)
         private ResourceSetBindingPlanEntry[] getGraphicsResourceSetBindingPlan(D3D12Pipeline pipeline, uint slot, D3D12ResourceLayout layout)
         {
             var key = new ResourceSetBindingPlanKey(pipeline, layout, slot);
-            if (graphicsResourceSetBindingPlans.TryGetValue(key, out ResourceSetBindingPlanEntry[] existingPlan))
+            if (_graphicsResourceSetBindingPlans.TryGetValue(key, out ResourceSetBindingPlanEntry[] existingPlan))
             {
                 return existingPlan;
             }
 
             ResourceSetBindingPlanEntry[] createdPlan = createGraphicsResourceSetBindingPlan(pipeline, slot, layout.Elements);
-            graphicsResourceSetBindingPlans.Add(key, createdPlan);
+            _graphicsResourceSetBindingPlans.Add(key, createdPlan);
             return createdPlan;
         }
 
         private ResourceSetBindingPlanEntry[] getComputeResourceSetBindingPlan(D3D12Pipeline pipeline, uint slot, D3D12ResourceLayout layout)
         {
             var key = new ResourceSetBindingPlanKey(pipeline, layout, slot);
-            if (computeResourceSetBindingPlans.TryGetValue(key, out ResourceSetBindingPlanEntry[] existingPlan))
+            if (_computeResourceSetBindingPlans.TryGetValue(key, out ResourceSetBindingPlanEntry[] existingPlan))
             {
                 return existingPlan;
             }
 
             ResourceSetBindingPlanEntry[] createdPlan = createComputeResourceSetBindingPlan(pipeline, slot, layout.Elements);
-            computeResourceSetBindingPlans.Add(key, createdPlan);
+            _computeResourceSetBindingPlans.Add(key, createdPlan);
             return createdPlan;
         }
 
@@ -2070,81 +2070,81 @@ void cs_main(uint3 dispatchThreadID : SV_DispatchThreadID)
         private bool isSameGraphicsRootBuffer(uint rootParameterIndex, ulong gpuAddress)
         {
             int index = (int)rootParameterIndex;
-            Util.EnsureArrayMinimumSize(ref graphicsRootBufferAddresses, rootParameterIndex + 1);
-            Util.EnsureArrayMinimumSize(ref graphicsRootBufferAddressValid, rootParameterIndex + 1);
-            return graphicsRootBufferAddressValid[index] && graphicsRootBufferAddresses[index] == gpuAddress;
+            Util.EnsureArrayMinimumSize(ref _graphicsRootBufferAddresses, rootParameterIndex + 1);
+            Util.EnsureArrayMinimumSize(ref _graphicsRootBufferAddressValid, rootParameterIndex + 1);
+            return _graphicsRootBufferAddressValid[index] && _graphicsRootBufferAddresses[index] == gpuAddress;
         }
 
         private void setGraphicsRootBufferCache(uint rootParameterIndex, ulong gpuAddress)
         {
             int index = (int)rootParameterIndex;
-            Util.EnsureArrayMinimumSize(ref graphicsRootBufferAddresses, rootParameterIndex + 1);
-            Util.EnsureArrayMinimumSize(ref graphicsRootBufferAddressValid, rootParameterIndex + 1);
-            graphicsRootBufferAddresses[index] = gpuAddress;
-            graphicsRootBufferAddressValid[index] = true;
+            Util.EnsureArrayMinimumSize(ref _graphicsRootBufferAddresses, rootParameterIndex + 1);
+            Util.EnsureArrayMinimumSize(ref _graphicsRootBufferAddressValid, rootParameterIndex + 1);
+            _graphicsRootBufferAddresses[index] = gpuAddress;
+            _graphicsRootBufferAddressValid[index] = true;
         }
 
         private bool isSameComputeRootBuffer(uint rootParameterIndex, ulong gpuAddress)
         {
             int index = (int)rootParameterIndex;
-            Util.EnsureArrayMinimumSize(ref computeRootBufferAddresses, rootParameterIndex + 1);
-            Util.EnsureArrayMinimumSize(ref computeRootBufferAddressValid, rootParameterIndex + 1);
-            return computeRootBufferAddressValid[index] && computeRootBufferAddresses[index] == gpuAddress;
+            Util.EnsureArrayMinimumSize(ref _computeRootBufferAddresses, rootParameterIndex + 1);
+            Util.EnsureArrayMinimumSize(ref _computeRootBufferAddressValid, rootParameterIndex + 1);
+            return _computeRootBufferAddressValid[index] && _computeRootBufferAddresses[index] == gpuAddress;
         }
 
         private void setComputeRootBufferCache(uint rootParameterIndex, ulong gpuAddress)
         {
             int index = (int)rootParameterIndex;
-            Util.EnsureArrayMinimumSize(ref computeRootBufferAddresses, rootParameterIndex + 1);
-            Util.EnsureArrayMinimumSize(ref computeRootBufferAddressValid, rootParameterIndex + 1);
-            computeRootBufferAddresses[index] = gpuAddress;
-            computeRootBufferAddressValid[index] = true;
+            Util.EnsureArrayMinimumSize(ref _computeRootBufferAddresses, rootParameterIndex + 1);
+            Util.EnsureArrayMinimumSize(ref _computeRootBufferAddressValid, rootParameterIndex + 1);
+            _computeRootBufferAddresses[index] = gpuAddress;
+            _computeRootBufferAddressValid[index] = true;
         }
 
         private bool isSameGraphicsRootTable(uint rootParameterIndex, ulong tablePtr)
         {
             int index = (int)rootParameterIndex;
-            Util.EnsureArrayMinimumSize(ref graphicsRootTablePointers, rootParameterIndex + 1);
-            Util.EnsureArrayMinimumSize(ref graphicsRootTablePointerValid, rootParameterIndex + 1);
-            return graphicsRootTablePointerValid[index] && graphicsRootTablePointers[index] == tablePtr;
+            Util.EnsureArrayMinimumSize(ref _graphicsRootTablePointers, rootParameterIndex + 1);
+            Util.EnsureArrayMinimumSize(ref _graphicsRootTablePointerValid, rootParameterIndex + 1);
+            return _graphicsRootTablePointerValid[index] && _graphicsRootTablePointers[index] == tablePtr;
         }
 
         private void setGraphicsRootTableCache(uint rootParameterIndex, ulong tablePtr)
         {
             int index = (int)rootParameterIndex;
-            Util.EnsureArrayMinimumSize(ref graphicsRootTablePointers, rootParameterIndex + 1);
-            Util.EnsureArrayMinimumSize(ref graphicsRootTablePointerValid, rootParameterIndex + 1);
-            graphicsRootTablePointers[index] = tablePtr;
-            graphicsRootTablePointerValid[index] = true;
+            Util.EnsureArrayMinimumSize(ref _graphicsRootTablePointers, rootParameterIndex + 1);
+            Util.EnsureArrayMinimumSize(ref _graphicsRootTablePointerValid, rootParameterIndex + 1);
+            _graphicsRootTablePointers[index] = tablePtr;
+            _graphicsRootTablePointerValid[index] = true;
         }
 
         private bool isSameComputeRootTable(uint rootParameterIndex, ulong tablePtr)
         {
             int index = (int)rootParameterIndex;
-            Util.EnsureArrayMinimumSize(ref computeRootTablePointers, rootParameterIndex + 1);
-            Util.EnsureArrayMinimumSize(ref computeRootTablePointerValid, rootParameterIndex + 1);
-            return computeRootTablePointerValid[index] && computeRootTablePointers[index] == tablePtr;
+            Util.EnsureArrayMinimumSize(ref _computeRootTablePointers, rootParameterIndex + 1);
+            Util.EnsureArrayMinimumSize(ref _computeRootTablePointerValid, rootParameterIndex + 1);
+            return _computeRootTablePointerValid[index] && _computeRootTablePointers[index] == tablePtr;
         }
 
         private void setComputeRootTableCache(uint rootParameterIndex, ulong tablePtr)
         {
             int index = (int)rootParameterIndex;
-            Util.EnsureArrayMinimumSize(ref computeRootTablePointers, rootParameterIndex + 1);
-            Util.EnsureArrayMinimumSize(ref computeRootTablePointerValid, rootParameterIndex + 1);
-            computeRootTablePointers[index] = tablePtr;
-            computeRootTablePointerValid[index] = true;
+            Util.EnsureArrayMinimumSize(ref _computeRootTablePointers, rootParameterIndex + 1);
+            Util.EnsureArrayMinimumSize(ref _computeRootTablePointerValid, rootParameterIndex + 1);
+            _computeRootTablePointers[index] = tablePtr;
+            _computeRootTablePointerValid[index] = true;
         }
 
         private void invalidateGraphicsRootCaches()
         {
-            Array.Clear(graphicsRootBufferAddressValid, 0, graphicsRootBufferAddressValid.Length);
-            Array.Clear(graphicsRootTablePointerValid, 0, graphicsRootTablePointerValid.Length);
+            Array.Clear(_graphicsRootBufferAddressValid, 0, _graphicsRootBufferAddressValid.Length);
+            Array.Clear(_graphicsRootTablePointerValid, 0, _graphicsRootTablePointerValid.Length);
         }
 
         private void invalidateComputeRootCaches()
         {
-            Array.Clear(computeRootBufferAddressValid, 0, computeRootBufferAddressValid.Length);
-            Array.Clear(computeRootTablePointerValid, 0, computeRootTablePointerValid.Length);
+            Array.Clear(_computeRootBufferAddressValid, 0, _computeRootBufferAddressValid.Length);
+            Array.Clear(_computeRootTablePointerValid, 0, _computeRootTablePointerValid.Length);
         }
 
         private static void clearBoundResourceSets(BoundResourceSetInfo[] infos)
@@ -2169,13 +2169,13 @@ void cs_main(uint3 dispatchThreadID : SV_DispatchThreadID)
                 return;
             }
 
-            if (transitionedBackBufferIndex < 0)
+            if (_transitionedBackBufferIndex < 0)
             {
                 return;
             }
 
             if (swapchainFramebuffer.Swapchain.TryGetCurrentBackBuffer(out ID3D12Resource backBuffer, out _, out int currentIndex, out ResourceStates state)
-                && currentIndex == transitionedBackBufferIndex)
+                && currentIndex == _transitionedBackBufferIndex)
             {
                 transition(backBuffer, state, ResourceStates.Present);
                 swapchainFramebuffer.Swapchain.SetBackBufferState(currentIndex, ResourceStates.Present);

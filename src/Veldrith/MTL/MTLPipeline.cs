@@ -25,11 +25,11 @@ namespace Veldrith.MTL
         public bool HasStencil { get; }
         public uint StencilReference { get; }
         public RgbaFloat BlendColor { get; }
-        public override bool IsDisposed => disposed;
+        public override bool IsDisposed => _disposed;
         public override string Name { get; set; }
 
-        private bool disposed;
-        private List<MTLFunction> specializedFunctions;
+        private bool _disposed;
+        private List<MTLFunction> _specializedFunctions;
 
         public MtlPipeline(ref GraphicsPipelineDescription description, MtlGraphicsDevice gd)
             : base(ref description)
@@ -271,7 +271,7 @@ namespace Veldrith.MTL
 
         public override void Dispose()
         {
-            if (!disposed)
+            if (!_disposed)
             {
                 if (RenderPipelineState.NativePtr != IntPtr.Zero)
                     ObjectiveCRuntime.release(RenderPipelineState.NativePtr);
@@ -282,14 +282,14 @@ namespace Veldrith.MTL
                 if (ComputePipelineState.NativePtr != IntPtr.Zero)
                     ObjectiveCRuntime.release(ComputePipelineState.NativePtr);
 
-                if (specializedFunctions != null)
+                if (_specializedFunctions != null)
                 {
-                    foreach (var function in specializedFunctions) ObjectiveCRuntime.release(function.NativePtr);
+                    foreach (var function in _specializedFunctions) ObjectiveCRuntime.release(function.NativePtr);
 
-                    specializedFunctions.Clear();
+                    _specializedFunctions.Clear();
                 }
 
-                disposed = true;
+                _disposed = true;
             }
         }
 
@@ -313,8 +313,8 @@ namespace Veldrith.MTL
 
         private void addSpecializedFunction(MTLFunction function)
         {
-            specializedFunctions ??= new List<MTLFunction>();
-            specializedFunctions.Add(function);
+            _specializedFunctions ??= new List<MTLFunction>();
+            _specializedFunctions.Add(function);
         }
     }
 }

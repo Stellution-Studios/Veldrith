@@ -1,23 +1,23 @@
-﻿namespace Veldrith.Vk
+namespace Veldrith.Vk
 {
     internal struct VkVersion
     {
-        private readonly uint value;
+        private readonly uint _value;
 
         public VkVersion(uint major, uint minor, uint patch)
         {
-            value = (major << 22) | (minor << 12) | patch;
+            _value = (major << 22) | (minor << 12) | patch;
         }
 
-        public uint Major => value >> 22;
+        public uint Major => _value >> 22;
 
-        public uint Minor => (value >> 12) & 0x3ff;
+        public uint Minor => (_value >> 12) & 0x3ff;
 
-        public uint Patch => (value >> 22) & 0xfff;
+        public uint Patch => (_value >> 22) & 0xfff;
 
         public static implicit operator uint(VkVersion version)
         {
-            return version.value;
+            return version._value;
         }
     }
 }

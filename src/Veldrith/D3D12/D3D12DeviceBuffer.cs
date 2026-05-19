@@ -6,27 +6,27 @@ namespace Veldrith.D3D12
     internal sealed class D3D12DeviceBuffer : DeviceBuffer
     {
         private readonly D3D12GraphicsDevice gd;
-        private readonly bool isDynamic;
-        private readonly bool isStaging;
-        private readonly bool isDefault;
-        private readonly bool dynamicSnapshotEnabled;
-        private readonly uint dynamicSnapshotCapacity;
+        private readonly bool _isDynamic;
+        private readonly bool _isStaging;
+        private readonly bool _isDefault;
+        private readonly bool _dynamicSnapshotEnabled;
+        private readonly uint _dynamicSnapshotCapacity;
         private readonly uint sizeInBytes;
-        private ID3D12Resource nativeBuffer;
-        private readonly ID3D12Resource stagingWriteBuffer;
-        private readonly ID3D12Resource stagingReadBuffer;
-        private IntPtr dynamicMappedPointer;
-        private readonly IntPtr stagingWriteMappedPointer;
-        private readonly IntPtr stagingReadMappedPointer;
-        private bool stagingReadBufferDirtyFromWriteBuffer;
-        private bool stagingWriteBufferDirtyFromReadBuffer;
-        private uint dynamicSnapshotWriteHead;
-        private uint dynamicSnapshotBaseOffset;
-        private bool dynamicSnapshotInitialized;
-        private ulong dynamicBindVersion;
-        private MapMode? activeMapMode;
-        private bool disposed;
-        private string name;
+        private ID3D12Resource _nativeBuffer;
+        private readonly ID3D12Resource _stagingWriteBuffer;
+        private readonly ID3D12Resource _stagingReadBuffer;
+        private IntPtr _dynamicMappedPointer;
+        private readonly IntPtr _stagingWriteMappedPointer;
+        private readonly IntPtr _stagingReadMappedPointer;
+        private bool _stagingReadBufferDirtyFromWriteBuffer;
+        private bool _stagingWriteBufferDirtyFromReadBuffer;
+        private uint _dynamicSnapshotWriteHead;
+        private uint _dynamicSnapshotBaseOffset;
+        private bool _dynamicSnapshotInitialized;
+        private ulong _dynamicBindVersion;
+        private MapMode? _activeMapMode;
+        private bool _disposed;
+        private string _name;
 
         public D3D12DeviceBuffer(D3D12GraphicsDevice gd, ref BufferDescription description)
         {
@@ -34,49 +34,49 @@ namespace Veldrith.D3D12
             SizeInBytes = description.SizeInBytes;
             Usage = description.Usage;
             sizeInBytes = description.SizeInBytes;
-            isDynamic = (description.Usage & BufferUsage.Dynamic) == BufferUsage.Dynamic;
-            isStaging = (description.Usage & BufferUsage.Staging) == BufferUsage.Staging;
-            isDefault = !isDynamic && !isStaging;
-            dynamicSnapshotEnabled = isDynamic
+            _isDynamic = (description.Usage & BufferUsage.Dynamic) == BufferUsage.Dynamic;
+            _isStaging = (description.Usage & BufferUsage.Staging) == BufferUsage.Staging;
+            _isDefault = !_isDynamic && !_isStaging;
+            _dynamicSnapshotEnabled = _isDynamic
                 && ((description.Usage & BufferUsage.VertexBuffer) == BufferUsage.VertexBuffer
                     || (description.Usage & BufferUsage.IndexBuffer) == BufferUsage.IndexBuffer);
-            dynamicSnapshotCapacity = dynamicSnapshotEnabled
+            _dynamicSnapshotCapacity = _dynamicSnapshotEnabled
                 ? calculateDynamicSnapshotCapacity(description.SizeInBytes)
                 : description.SizeInBytes;
 
             ResourceDescription resourceDescription = ResourceDescription.Buffer(
-                dynamicSnapshotEnabled ? dynamicSnapshotCapacity : description.SizeInBytes,
+                _dynamicSnapshotEnabled ? _dynamicSnapshotCapacity : description.SizeInBytes,
                 getResourceFlags(description.Usage));
-            if (isStaging)
+            if (_isStaging)
             {
-                stagingWriteBuffer = gd.Device.CreateCommittedResource(
+                _stagingWriteBuffer = gd.Device.CreateCommittedResource(
                     HeapType.Upload,
                     HeapFlags.None,
                     resourceDescription,
                     ResourceStates.GenericRead,
                     null);
-                stagingReadBuffer = gd.Device.CreateCommittedResource(
+                _stagingReadBuffer = gd.Device.CreateCommittedResource(
                     HeapType.Readback,
                     HeapFlags.None,
                     resourceDescription,
                     ResourceStates.CopyDest,
                     null);
-                nativeBuffer = stagingWriteBuffer;
+                _nativeBuffer = _stagingWriteBuffer;
 
                 unsafe
                 {
                     void* writePtr = null;
-                    stagingWriteBuffer.Map(0, &writePtr).CheckError();
-                    stagingWriteMappedPointer = (IntPtr)writePtr;
+                    _stagingWriteBuffer.Map(0, &writePtr).CheckError();
+                    _stagingWriteMappedPointer = (IntPtr)writePtr;
 
                     void* readPtr = null;
-                    stagingReadBuffer.Map(0, &readPtr).CheckError();
-                    stagingReadMappedPointer = (IntPtr)readPtr;
+                    _stagingReadBuffer.Map(0, &readPtr).CheckError();
+                    _stagingReadMappedPointer = (IntPtr)readPtr;
                 }
             }
-            else if (isDynamic)
+            else if (_isDynamic)
             {
-                nativeBuffer = gd.Device.CreateCommittedResource(
+                _nativeBuffer = gd.Device.CreateCommittedResource(
                     HeapType.Upload,
                     HeapFlags.None,
                     resourceDescription,
@@ -85,13 +85,13 @@ namespace Veldrith.D3D12
                 unsafe
                 {
                     void* dataPointer = null;
-                    nativeBuffer.Map(0, &dataPointer).CheckError();
-                    dynamicMappedPointer = (IntPtr)dataPointer;
+                    _nativeBuffer.Map(0, &dataPointer).CheckError();
+                    _dynamicMappedPointer = (IntPtr)dataPointer;
                 }
             }
             else
             {
-                nativeBuffer = gd.Device.CreateCommittedResource(
+                _nativeBuffer = gd.Device.CreateCommittedResource(
                     HeapType.Default,
                     HeapFlags.None,
                     resourceDescription,
@@ -103,51 +103,51 @@ namespace Veldrith.D3D12
 
         public override uint SizeInBytes { get; }
         public override BufferUsage Usage { get; }
-        internal ID3D12Resource NativeBuffer => nativeBuffer;
-        internal ulong GpuVirtualAddress => nativeBuffer.GPUVirtualAddress;
-        internal uint CurrentNativeSizeInBytes => (uint)Math.Min(uint.MaxValue, nativeBuffer.Description.Width);
-        internal ulong GetGpuVirtualAddress(uint offset) => nativeBuffer.GPUVirtualAddress + ResolveNativeOffset(offset);
+        internal ID3D12Resource NativeBuffer => _nativeBuffer;
+        internal ulong GpuVirtualAddress => _nativeBuffer.GPUVirtualAddress;
+        internal uint CurrentNativeSizeInBytes => (uint)Math.Min(uint.MaxValue, _nativeBuffer.Description.Width);
+        internal ulong GetGpuVirtualAddress(uint offset) => _nativeBuffer.GPUVirtualAddress + ResolveNativeOffset(offset);
         internal uint GetBindableSize(uint offset) => offset < SizeInBytes ? SizeInBytes - offset : 0;
-        internal uint ResolveNativeOffset(uint offset) => dynamicSnapshotEnabled ? dynamicSnapshotBaseOffset + offset : offset;
+        internal uint ResolveNativeOffset(uint offset) => _dynamicSnapshotEnabled ? _dynamicSnapshotBaseOffset + offset : offset;
         internal ResourceStates CurrentState { get; set; }
-        internal bool CanTransitionState => isDefault;
-        internal ulong BindVersion => dynamicSnapshotEnabled ? dynamicBindVersion : 0UL;
-        public override bool IsDisposed => disposed;
+        internal bool CanTransitionState => _isDefault;
+        internal ulong BindVersion => _dynamicSnapshotEnabled ? _dynamicBindVersion : 0UL;
+        public override bool IsDisposed => _disposed;
 
         public override string Name
         {
-            get => name;
+            get => _name;
             set
             {
-                name = value;
+                _name = value;
             }
         }
 
         public override void Dispose()
         {
-            if (disposed)
+            if (_disposed)
             {
                 return;
             }
 
-            if (isStaging)
+            if (_isStaging)
             {
-                stagingWriteBuffer.Unmap(0);
-                stagingReadBuffer.Unmap(0);
-                stagingWriteBuffer.Dispose();
-                stagingReadBuffer.Dispose();
+                _stagingWriteBuffer.Unmap(0);
+                _stagingReadBuffer.Unmap(0);
+                _stagingWriteBuffer.Dispose();
+                _stagingReadBuffer.Dispose();
             }
-            else if (isDynamic)
+            else if (_isDynamic)
             {
-                nativeBuffer.Unmap(0);
-                nativeBuffer.Dispose();
+                _nativeBuffer.Unmap(0);
+                _nativeBuffer.Dispose();
             }
             else
             {
-                nativeBuffer.Dispose();
+                _nativeBuffer.Dispose();
             }
 
-            disposed = true;
+            _disposed = true;
         }
 
         internal ID3D12Resource Update(ID3D12GraphicsCommandList commandList, IntPtr source, uint destinationOffset, uint sizeInBytes)
@@ -157,9 +157,9 @@ namespace Veldrith.D3D12
                 throw new VeldridException("Buffer update range exceeds the destination buffer size.");
             }
 
-            if (!isDefault)
+            if (!_isDefault)
             {
-                if (dynamicSnapshotEnabled)
+                if (_dynamicSnapshotEnabled)
                 {
                     updateDynamicSnapshot(source, destinationOffset, sizeInBytes);
                     return null;
@@ -172,7 +172,7 @@ namespace Veldrith.D3D12
             ID3D12Resource uploadBuffer = createUploadBuffer(source, sizeInBytes);
             ResourceStates previousState = CurrentState;
             transition(commandList, previousState, ResourceStates.CopyDest);
-            commandList.CopyBufferRegion(nativeBuffer, destinationOffset, uploadBuffer, 0, sizeInBytes);
+            commandList.CopyBufferRegion(_nativeBuffer, destinationOffset, uploadBuffer, 0, sizeInBytes);
             transition(commandList, ResourceStates.CopyDest, previousState);
             CurrentState = previousState;
             return uploadBuffer;
@@ -191,19 +191,19 @@ namespace Veldrith.D3D12
                 snapshotSize = 1;
             }
 
-            if (snapshotSize > dynamicSnapshotCapacity)
+            if (snapshotSize > _dynamicSnapshotCapacity)
             {
                 throw new VeldridException("Dynamic snapshot update exceeds snapshot buffer capacity.");
             }
 
-            if (dynamicSnapshotWriteHead + snapshotSize > dynamicSnapshotCapacity)
+            if (_dynamicSnapshotWriteHead + snapshotSize > _dynamicSnapshotCapacity)
             {
-                dynamicSnapshotWriteHead = 0;
+                _dynamicSnapshotWriteHead = 0;
             }
 
-            uint newBaseOffset = dynamicSnapshotWriteHead;
-            byte* mappedPointer = (byte*)dynamicMappedPointer.ToPointer();
-            if (dynamicSnapshotInitialized && newBaseOffset != dynamicSnapshotBaseOffset)
+            uint newBaseOffset = _dynamicSnapshotWriteHead;
+            byte* mappedPointer = (byte*)_dynamicMappedPointer.ToPointer();
+            if (_dynamicSnapshotInitialized && newBaseOffset != _dynamicSnapshotBaseOffset)
             {
                 // Preserve only the unchanged prefix when callers update a subrange.
                 // Most high-frequency VB/IB updates write from offset 0, so this avoids
@@ -211,7 +211,7 @@ namespace Veldrith.D3D12
                 if (destinationOffset > 0)
                 {
                     uint prefixSize = destinationOffset;
-                    byte* src = mappedPointer + dynamicSnapshotBaseOffset;
+                    byte* src = mappedPointer + _dynamicSnapshotBaseOffset;
                     byte* dst = mappedPointer + newBaseOffset;
                     Buffer.MemoryCopy(src, dst, snapshotSize, prefixSize);
                 }
@@ -220,13 +220,13 @@ namespace Veldrith.D3D12
             byte* destination = mappedPointer + newBaseOffset + destinationOffset;
             Buffer.MemoryCopy(source.ToPointer(), destination, snapshotSize - destinationOffset, copySize);
 
-            uint previousBaseOffset = dynamicSnapshotBaseOffset;
-            dynamicSnapshotBaseOffset = newBaseOffset;
-            dynamicSnapshotWriteHead = alignUp(newBaseOffset + snapshotSize, 16);
-            dynamicSnapshotInitialized = true;
+            uint previousBaseOffset = _dynamicSnapshotBaseOffset;
+            _dynamicSnapshotBaseOffset = newBaseOffset;
+            _dynamicSnapshotWriteHead = alignUp(newBaseOffset + snapshotSize, 16);
+            _dynamicSnapshotInitialized = true;
             if (newBaseOffset != previousBaseOffset)
             {
-                dynamicBindVersion++;
+                _dynamicBindVersion++;
             }
         }
 
@@ -273,32 +273,32 @@ namespace Veldrith.D3D12
                 destination.CurrentState = dstPrevious;
             }
 
-            if (destination.isStaging)
+            if (destination._isStaging)
             {
-                destination.stagingWriteBufferDirtyFromReadBuffer = true;
-                destination.stagingReadBufferDirtyFromWriteBuffer = false;
+                destination._stagingWriteBufferDirtyFromReadBuffer = true;
+                destination._stagingReadBufferDirtyFromWriteBuffer = false;
             }
         }
 
         internal MappedResource Map(MapMode mode)
         {
             IntPtr pointer = getMapPointer(mode);
-            activeMapMode = mode;
+            _activeMapMode = mode;
             return new MappedResource(this, mode, pointer, sizeInBytes);
         }
 
         internal bool TryGetCpuReadPointer(out IntPtr pointer)
         {
-            if (isStaging)
+            if (_isStaging)
             {
                 ensureReadBufferIsCurrent();
-                pointer = stagingReadMappedPointer;
+                pointer = _stagingReadMappedPointer;
                 return true;
             }
 
-            if (isDynamic)
+            if (_isDynamic)
             {
-                pointer = dynamicMappedPointer;
+                pointer = _dynamicMappedPointer;
                 return true;
             }
 
@@ -308,50 +308,50 @@ namespace Veldrith.D3D12
 
         internal void Unmap()
         {
-            if (!activeMapMode.HasValue)
+            if (!_activeMapMode.HasValue)
             {
                 return;
             }
 
-            if (isStaging)
+            if (_isStaging)
             {
-                if (activeMapMode == MapMode.Write)
+                if (_activeMapMode == MapMode.Write)
                 {
-                    stagingReadBufferDirtyFromWriteBuffer = true;
-                    stagingWriteBufferDirtyFromReadBuffer = false;
+                    _stagingReadBufferDirtyFromWriteBuffer = true;
+                    _stagingWriteBufferDirtyFromReadBuffer = false;
                 }
-                else if (activeMapMode == MapMode.ReadWrite)
+                else if (_activeMapMode == MapMode.ReadWrite)
                 {
-                    stagingWriteBufferDirtyFromReadBuffer = true;
-                    stagingReadBufferDirtyFromWriteBuffer = false;
+                    _stagingWriteBufferDirtyFromReadBuffer = true;
+                    _stagingReadBufferDirtyFromWriteBuffer = false;
                     syncReadBufferToWriteBuffer();
                 }
             }
 
-            activeMapMode = null;
+            _activeMapMode = null;
         }
 
         private IntPtr getMapPointer(MapMode mode)
         {
-            if (isDynamic)
+            if (_isDynamic)
             {
                 if (mode != MapMode.Write)
                 {
                     throw new VeldridException("Dynamic D3D12 buffers only support MapMode.Write.");
                 }
 
-                return dynamicMappedPointer;
+                return _dynamicMappedPointer;
             }
 
-            if (isStaging)
+            if (_isStaging)
             {
                 if (mode == MapMode.Read || mode == MapMode.ReadWrite)
                 {
                     ensureReadBufferIsCurrent();
-                    return stagingReadMappedPointer;
+                    return _stagingReadMappedPointer;
                 }
 
-                return stagingWriteMappedPointer;
+                return _stagingWriteMappedPointer;
             }
 
             throw new VeldridException("Only Dynamic or Staging buffers can be mapped.");
@@ -359,19 +359,19 @@ namespace Veldrith.D3D12
 
         private unsafe void writeCpuData(IntPtr source, uint destinationOffset, uint copySize)
         {
-            if (isDynamic)
+            if (_isDynamic)
             {
-                byte* dst = (byte*)dynamicMappedPointer + destinationOffset;
+                byte* dst = (byte*)_dynamicMappedPointer + destinationOffset;
                 Buffer.MemoryCopy(source.ToPointer(), dst, SizeInBytes - destinationOffset, copySize);
                 return;
             }
 
-            if (isStaging)
+            if (_isStaging)
             {
-                byte* dst = (byte*)stagingWriteMappedPointer + destinationOffset;
+                byte* dst = (byte*)_stagingWriteMappedPointer + destinationOffset;
                 Buffer.MemoryCopy(source.ToPointer(), dst, SizeInBytes - destinationOffset, copySize);
-                stagingReadBufferDirtyFromWriteBuffer = true;
-                stagingWriteBufferDirtyFromReadBuffer = false;
+                _stagingReadBufferDirtyFromWriteBuffer = true;
+                _stagingWriteBufferDirtyFromReadBuffer = false;
                 return;
             }
 
@@ -408,7 +408,7 @@ namespace Veldrith.D3D12
         {
             if (!TryGetCpuReadPointer(out IntPtr sourcePtr))
             {
-                if (isDefault)
+                if (_isDefault)
                 {
                     copyDefaultSourceToCpuWritableDestination(destination, sourceOffset, destinationOffset, copySize);
                     return;
@@ -418,13 +418,13 @@ namespace Veldrith.D3D12
             }
 
             IntPtr destinationPtr;
-            if (destination.isDynamic)
+            if (destination._isDynamic)
             {
-                destinationPtr = destination.dynamicMappedPointer;
+                destinationPtr = destination._dynamicMappedPointer;
             }
-            else if (destination.isStaging)
+            else if (destination._isStaging)
             {
-                destinationPtr = destination.stagingWriteMappedPointer;
+                destinationPtr = destination._stagingWriteMappedPointer;
             }
             else
             {
@@ -434,23 +434,23 @@ namespace Veldrith.D3D12
             byte* src = (byte*)sourcePtr + sourceOffset;
             byte* dst = (byte*)destinationPtr + destinationOffset;
             Buffer.MemoryCopy(src, dst, destination.SizeInBytes - destinationOffset, copySize);
-            if (destination.isStaging)
+            if (destination._isStaging)
             {
-                destination.stagingReadBufferDirtyFromWriteBuffer = true;
-                destination.stagingWriteBufferDirtyFromReadBuffer = false;
+                destination._stagingReadBufferDirtyFromWriteBuffer = true;
+                destination._stagingWriteBufferDirtyFromReadBuffer = false;
             }
         }
 
         private unsafe void copyDefaultSourceToCpuWritableDestination(D3D12DeviceBuffer destination, uint sourceOffset, uint destinationOffset, uint copySize)
         {
             IntPtr destinationPtr;
-            if (destination.isDynamic)
+            if (destination._isDynamic)
             {
-                destinationPtr = destination.dynamicMappedPointer;
+                destinationPtr = destination._dynamicMappedPointer;
             }
-            else if (destination.isStaging)
+            else if (destination._isStaging)
             {
-                destinationPtr = destination.stagingWriteMappedPointer;
+                destinationPtr = destination._stagingWriteMappedPointer;
             }
             else
             {
@@ -471,7 +471,7 @@ namespace Veldrith.D3D12
                 if (CanTransitionState && previousState != ResourceStates.CopySource)
                 {
                     ResourceBarrier toCopySource = ResourceBarrier.BarrierTransition(
-                        nativeBuffer,
+                        _nativeBuffer,
                         previousState,
                         ResourceStates.CopySource,
                         Vortice.Direct3D12.D3D12.ResourceBarrierAllSubResources,
@@ -479,12 +479,12 @@ namespace Veldrith.D3D12
                     commandList.ResourceBarrier(new[] { toCopySource });
                 }
 
-                commandList.CopyBufferRegion(readbackBuffer, 0, nativeBuffer, sourceOffset, copySize);
+                commandList.CopyBufferRegion(readbackBuffer, 0, _nativeBuffer, sourceOffset, copySize);
 
                 if (CanTransitionState && previousState != ResourceStates.CopySource)
                 {
                     ResourceBarrier fromCopySource = ResourceBarrier.BarrierTransition(
-                        nativeBuffer,
+                        _nativeBuffer,
                         ResourceStates.CopySource,
                         previousState,
                         Vortice.Direct3D12.D3D12.ResourceBarrierAllSubResources,
@@ -516,24 +516,24 @@ namespace Veldrith.D3D12
                 readbackBuffer.Dispose();
             }
 
-            if (destination.isStaging)
+            if (destination._isStaging)
             {
-                destination.stagingReadBufferDirtyFromWriteBuffer = true;
-                destination.stagingWriteBufferDirtyFromReadBuffer = false;
+                destination._stagingReadBufferDirtyFromWriteBuffer = true;
+                destination._stagingWriteBufferDirtyFromReadBuffer = false;
             }
         }
 
         private ID3D12Resource getCopySourceResource()
         {
-            if (isDefault || isDynamic)
+            if (_isDefault || _isDynamic)
             {
-                return nativeBuffer;
+                return _nativeBuffer;
             }
 
-            if (isStaging)
+            if (_isStaging)
             {
                 ensureWriteBufferIsCurrent();
-                return stagingWriteBuffer;
+                return _stagingWriteBuffer;
             }
 
             return null;
@@ -541,14 +541,14 @@ namespace Veldrith.D3D12
 
         private ID3D12Resource getCopyDestinationResource()
         {
-            if (isDefault)
+            if (_isDefault)
             {
-                return nativeBuffer;
+                return _nativeBuffer;
             }
 
-            if (isStaging)
+            if (_isStaging)
             {
-                return stagingReadBuffer;
+                return _stagingReadBuffer;
             }
 
             return null;
@@ -556,7 +556,7 @@ namespace Veldrith.D3D12
 
         private void ensureReadBufferIsCurrent()
         {
-            if (!isStaging || !stagingReadBufferDirtyFromWriteBuffer)
+            if (!_isStaging || !_stagingReadBufferDirtyFromWriteBuffer)
             {
                 return;
             }
@@ -564,19 +564,19 @@ namespace Veldrith.D3D12
             unsafe
             {
                 Buffer.MemoryCopy(
-                    stagingWriteMappedPointer.ToPointer(),
-                    stagingReadMappedPointer.ToPointer(),
+                    _stagingWriteMappedPointer.ToPointer(),
+                    _stagingReadMappedPointer.ToPointer(),
                     sizeInBytes,
                     sizeInBytes);
             }
 
-            stagingReadBufferDirtyFromWriteBuffer = false;
-            stagingWriteBufferDirtyFromReadBuffer = false;
+            _stagingReadBufferDirtyFromWriteBuffer = false;
+            _stagingWriteBufferDirtyFromReadBuffer = false;
         }
 
         private void ensureWriteBufferIsCurrent()
         {
-            if (!isStaging || !stagingWriteBufferDirtyFromReadBuffer)
+            if (!_isStaging || !_stagingWriteBufferDirtyFromReadBuffer)
             {
                 return;
             }
@@ -589,14 +589,14 @@ namespace Veldrith.D3D12
             unsafe
             {
                 Buffer.MemoryCopy(
-                    stagingReadMappedPointer.ToPointer(),
-                    stagingWriteMappedPointer.ToPointer(),
+                    _stagingReadMappedPointer.ToPointer(),
+                    _stagingWriteMappedPointer.ToPointer(),
                     sizeInBytes,
                     sizeInBytes);
             }
 
-            stagingWriteBufferDirtyFromReadBuffer = false;
-            stagingReadBufferDirtyFromWriteBuffer = false;
+            _stagingWriteBufferDirtyFromReadBuffer = false;
+            _stagingReadBufferDirtyFromWriteBuffer = false;
         }
 
         private void transition(ID3D12GraphicsCommandList commandList, ResourceStates from, ResourceStates to)
@@ -607,7 +607,7 @@ namespace Veldrith.D3D12
             }
 
             ResourceBarrier barrier = ResourceBarrier.BarrierTransition(
-                nativeBuffer,
+                _nativeBuffer,
                 from,
                 to,
                 Vortice.Direct3D12.D3D12.ResourceBarrierAllSubResources,

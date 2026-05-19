@@ -1,4 +1,4 @@
-﻿using Vulkan;
+using Vulkan;
 using static Vulkan.VulkanNative;
 using static Veldrith.Vk.VulkanUtil;
 
@@ -6,28 +6,28 @@ namespace Veldrith.Vk
 {
     internal unsafe class VkResourceLayout : ResourceLayout
     {
-        public VkDescriptorSetLayout DescriptorSetLayout => dsl;
+        public VkDescriptorSetLayout DescriptorSetLayout => _dsl;
         public VkDescriptorType[] DescriptorTypes { get; }
 
         public DescriptorResourceCounts DescriptorResourceCounts { get; }
         public new int DynamicBufferCount { get; }
 
-        public override bool IsDisposed => disposed;
+        public override bool IsDisposed => _disposed;
 
         public override string Name
         {
-            get => name;
+            get => _name;
             set
             {
-                name = value;
+                _name = value;
                 gd.SetResourceName(this, value);
             }
         }
 
         private readonly VkGraphicsDevice gd;
-        private readonly VkDescriptorSetLayout dsl;
-        private bool disposed;
-        private string name;
+        private readonly VkDescriptorSetLayout _dsl;
+        private bool _disposed;
+        private string _name;
 
         public VkResourceLayout(VkGraphicsDevice gd, ref ResourceLayoutDescription description)
             : base(ref description)
@@ -101,7 +101,7 @@ namespace Veldrith.Vk
             dslCi.bindingCount = (uint)elements.Length;
             dslCi.pBindings = bindings;
 
-            var result = vkCreateDescriptorSetLayout(this.gd.Device, ref dslCi, null, out dsl);
+            var result = vkCreateDescriptorSetLayout(this.gd.Device, ref dslCi, null, out _dsl);
             CheckResult(result);
         }
 
@@ -109,10 +109,10 @@ namespace Veldrith.Vk
 
         public override void Dispose()
         {
-            if (!disposed)
+            if (!_disposed)
             {
-                disposed = true;
-                vkDestroyDescriptorSetLayout(gd.Device, dsl, null);
+                _disposed = true;
+                vkDestroyDescriptorSetLayout(gd.Device, _dsl, null);
             }
         }
 

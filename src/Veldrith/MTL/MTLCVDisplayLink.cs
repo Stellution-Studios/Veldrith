@@ -8,36 +8,36 @@ namespace Veldrith.MTL
 {
     internal unsafe class MtlcvDisplayLink : IMtlDisplayLink
     {
-        private CVDisplayLink displayLink;
+        private CVDisplayLink _displayLink;
 
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
-        private readonly CVDisplayLinkOutputCallbackDelegate cvDisplayLinkCallbackHandler;
+        private readonly CVDisplayLinkOutputCallbackDelegate _cvDisplayLinkCallbackHandler;
 
         public MtlcvDisplayLink()
         {
-            cvDisplayLinkCallbackHandler = OnCallback;
-            displayLink = CVDisplayLink.CreateWithActiveCGDisplays();
-            displayLink.SetOutputCallback(cvDisplayLinkCallbackHandler, IntPtr.Zero);
-            displayLink.Start();
+            _cvDisplayLinkCallbackHandler = OnCallback;
+            _displayLink = CVDisplayLink.CreateWithActiveCGDisplays();
+            _displayLink.SetOutputCallback(_cvDisplayLinkCallbackHandler, IntPtr.Zero);
+            _displayLink.Start();
         }
 
         #region Disposal
 
         public void Dispose()
         {
-            displayLink.Release();
+            _displayLink.Release();
         }
 
         #endregion
 
         public void UpdateActiveDisplay(int x, int y, int w, int h)
         {
-            displayLink.UpdateActiveMonitor(x, y, w, h);
+            _displayLink.UpdateActiveMonitor(x, y, w, h);
         }
 
         public double GetActualOutputVideoRefreshPeriod()
         {
-            return displayLink.GetActualOutputVideoRefreshPeriod();
+            return _displayLink.GetActualOutputVideoRefreshPeriod();
         }
 
         private int OnCallback(CVDisplayLink displaylink, CVTimeStamp* innow, CVTimeStamp* inoutputtime, long flagsin, long flagsout, IntPtr userdata)

@@ -2,29 +2,29 @@ namespace Veldrith.D3D12
 {
     internal sealed class D3D12ResourceLayout : ResourceLayout
     {
-        private readonly ResourceLayoutElementDescription[] elements;
-        private bool disposed;
-        private string name;
+        private readonly ResourceLayoutElementDescription[] _elements;
+        private bool _disposed;
+        private string _name;
 
         public D3D12ResourceLayout(ref ResourceLayoutDescription description)
             : base(ref description)
         {
-            elements = Util.ShallowClone(description.Elements);
+            _elements = Util.ShallowClone(description.Elements);
         }
 
-        internal ResourceLayoutElementDescription[] Elements => elements;
+        internal ResourceLayoutElementDescription[] Elements => _elements;
 
-        public override bool IsDisposed => disposed;
+        public override bool IsDisposed => _disposed;
 
         public override string Name
         {
-            get => name;
-            set => name = value;
+            get => _name;
+            set => _name = value;
         }
 
         public override void Dispose()
         {
-            disposed = true;
+            _disposed = true;
         }
     }
 }

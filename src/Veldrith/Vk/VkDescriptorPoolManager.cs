@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Diagnostics;
 using Vulkan;
 using static Vulkan.VulkanNative;
@@ -8,13 +8,13 @@ namespace Veldrith.Vk
     internal class VkDescriptorPoolManager
     {
         private readonly VkGraphicsDevice gd;
-        private readonly List<PoolInfo> pools = new List<PoolInfo>();
+        private readonly List<PoolInfo> _pools = new List<PoolInfo>();
         private readonly object @lock = new object();
 
         public VkDescriptorPoolManager(VkGraphicsDevice gd)
         {
             this.gd = gd;
-            pools.Add(createNewPool());
+            _pools.Add(createNewPool());
         }
 
         public unsafe DescriptorAllocationToken Allocate(DescriptorResourceCounts counts, VkDescriptorSetLayout setLayout)
@@ -37,7 +37,7 @@ namespace Veldrith.Vk
         {
             lock (@lock)
             {
-                foreach (var poolInfo in pools)
+                foreach (var poolInfo in _pools)
                 {
                     if (poolInfo.Pool == token.Pool)
                         poolInfo.Free(gd.Device, token, counts);
@@ -47,7 +47,7 @@ namespace Veldrith.Vk
 
         internal unsafe void DestroyAll()
         {
-            foreach (var poolInfo in pools)
+            foreach (var poolInfo in _pools)
                 vkDestroyDescriptorPool(gd.Device, poolInfo.Pool, null);
         }
 
@@ -55,14 +55,14 @@ namespace Veldrith.Vk
         {
             lock (@lock)
             {
-                foreach (var poolInfo in pools)
+                foreach (var poolInfo in _pools)
                 {
                     if (poolInfo.Allocate(counts))
                         return poolInfo.Pool;
                 }
 
                 var newPool = createNewPool();
-                pools.Add(newPool);
+                _pools.Add(newPool);
                 bool result = newPool.Allocate(counts);
                 Debug.Assert(result);
                 return newPool.Pool;

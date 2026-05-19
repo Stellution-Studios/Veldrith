@@ -23,12 +23,12 @@ namespace Veldrith.D3D12
         }
 
         private readonly D3D12GraphicsDevice gd;
-        private RootBindingInfo[][] rootBindings = Array.Empty<RootBindingInfo[]>();
-        private bool[][] rootBindingValid = Array.Empty<bool[]>();
-        private readonly ResourceLayout[] pipelineResourceLayouts;
-        private bool disposed;
-        private string name;
-        private bool usingSetRegisterSpaces;
+        private RootBindingInfo[][] _rootBindings = Array.Empty<RootBindingInfo[]>();
+        private bool[][] _rootBindingValid = Array.Empty<bool[]>();
+        private readonly ResourceLayout[] _pipelineResourceLayouts;
+        private bool _disposed;
+        private string _name;
+        private bool _usingSetRegisterSpaces;
 
         public D3D12Pipeline(D3D12GraphicsDevice gd, ref GraphicsPipelineDescription description)
             : base(ref description)
@@ -42,7 +42,7 @@ namespace Veldrith.D3D12
             {
                 VertexStrides[i] = description.ShaderSet.VertexLayouts[i].Stride;
             }
-            pipelineResourceLayouts = description.ResourceLayouts;
+            _pipelineResourceLayouts = description.ResourceLayouts;
 
             createRootSignature(description.ResourceLayouts, useSetRegisterSpaces: true);
             try
@@ -61,7 +61,7 @@ namespace Veldrith.D3D12
         {
             this.gd = gd;
             IsComputePipeline = true;
-            pipelineResourceLayouts = description.ResourceLayouts;
+            _pipelineResourceLayouts = description.ResourceLayouts;
             createRootSignature(description.ResourceLayouts, useSetRegisterSpaces: true);
             try
             {
@@ -80,26 +80,26 @@ namespace Veldrith.D3D12
         public Vortice.Direct3D.PrimitiveTopology PrimitiveTopology { get; }
         public PrimitiveTopologyType PrimitiveTopologyType { get; }
         public uint[] VertexStrides { get; } = Array.Empty<uint>();
-        public override bool IsDisposed => disposed;
+        public override bool IsDisposed => _disposed;
 
         public override string Name
         {
-            get => name;
+            get => _name;
             set
             {
-                name = value;
+                _name = value;
             }
         }
 
         public override void Dispose()
         {
-            if (disposed)
+            if (_disposed)
             {
                 return;
             }
 
             PipelineState?.Dispose();
-            disposed = true;
+            _disposed = true;
         }
 
         internal bool TryGetGraphicsRootBinding(uint set, uint element, out RootBindingInfo bindingInfo)
@@ -110,7 +110,7 @@ namespace Veldrith.D3D12
 
         private void createRootSignature(ResourceLayout[] resourceLayouts, bool useSetRegisterSpaces)
         {
-            usingSetRegisterSpaces = useSetRegisterSpaces;
+            _usingSetRegisterSpaces = useSetRegisterSpaces;
             var rootParameters = new List<RootParameter>();
             initializeRootBindingTables(resourceLayouts);
             uint globalCbvRegister = 0;
@@ -157,8 +157,8 @@ namespace Veldrith.D3D12
 
                         uint rootParameterIndex = (uint)rootParameters.Count;
                         rootParameters.Add(rootParameter);
-                        rootBindings[setIndex][elementIndex] = new RootBindingInfo(rootParameterIndex, element.Kind, descriptorTable);
-                        rootBindingValid[setIndex][elementIndex] = true;
+                        _rootBindings[setIndex][elementIndex] = new RootBindingInfo(rootParameterIndex, element.Kind, descriptorTable);
+                        _rootBindingValid[setIndex][elementIndex] = true;
                     }
                 }
             }
@@ -177,12 +177,12 @@ namespace Veldrith.D3D12
 
         private void recreateRootSignatureWithoutSetSpaces()
         {
-            if (!usingSetRegisterSpaces)
+            if (!_usingSetRegisterSpaces)
             {
                 return;
             }
 
-            createRootSignature(pipelineResourceLayouts, useSetRegisterSpaces: false);
+            createRootSignature(_pipelineResourceLayouts, useSetRegisterSpaces: false);
         }
 
         private static uint allocateShaderRegister(
@@ -211,11 +211,11 @@ namespace Veldrith.D3D12
 
         private bool tryGetRootBinding(uint set, uint element, out RootBindingInfo bindingInfo)
         {
-            if (set < (uint)rootBindings.Length
-                && element < (uint)rootBindings[set].Length
-                && rootBindingValid[set][element])
+            if (set < (uint)_rootBindings.Length
+                && element < (uint)_rootBindings[set].Length
+                && _rootBindingValid[set][element])
             {
-                bindingInfo = rootBindings[set][element];
+                bindingInfo = _rootBindings[set][element];
                 return true;
             }
 
@@ -227,19 +227,19 @@ namespace Veldrith.D3D12
         {
             if (resourceLayouts == null || resourceLayouts.Length == 0)
             {
-                rootBindings = Array.Empty<RootBindingInfo[]>();
-                rootBindingValid = Array.Empty<bool[]>();
+                _rootBindings = Array.Empty<RootBindingInfo[]>();
+                _rootBindingValid = Array.Empty<bool[]>();
                 return;
             }
 
-            rootBindings = new RootBindingInfo[resourceLayouts.Length][];
-            rootBindingValid = new bool[resourceLayouts.Length][];
+            _rootBindings = new RootBindingInfo[resourceLayouts.Length][];
+            _rootBindingValid = new bool[resourceLayouts.Length][];
             for (int setIndex = 0; setIndex < resourceLayouts.Length; setIndex++)
             {
                 var resourceLayout = Util.AssertSubtype<ResourceLayout, D3D12ResourceLayout>(resourceLayouts[setIndex]);
                 int elementCount = resourceLayout.Elements.Length;
-                rootBindings[setIndex] = new RootBindingInfo[elementCount];
-                rootBindingValid[setIndex] = new bool[elementCount];
+                _rootBindings[setIndex] = new RootBindingInfo[elementCount];
+                _rootBindingValid[setIndex] = new bool[elementCount];
             }
         }
 
@@ -441,7 +441,7 @@ namespace Veldrith.D3D12
                     $"DepthFormat={psoDescription.DepthStencilFormat}, " +
                     $"SampleCount={FormatHelpers.GetSampleCountUInt32(description.Outputs.SampleCount)}, " +
                     $"PrimitiveTopology={description.PrimitiveTopology}, " +
-                    $"UseSetRegisterSpaces={usingSetRegisterSpaces}.",
+                    $"UseSetRegisterSpaces={_usingSetRegisterSpaces}.",
                     ex);
             }
         }

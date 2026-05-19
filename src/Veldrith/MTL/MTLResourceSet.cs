@@ -5,10 +5,10 @@ namespace Veldrith.MTL
         public new IBindableResource[] Resources { get; }
         public new MtlResourceLayout Layout { get; }
 
-        public override bool IsDisposed => disposed;
+        public override bool IsDisposed => _disposed;
 
         public override string Name { get; set; }
-        private bool disposed;
+        private bool _disposed;
 
         public MtlResourceSet(ref ResourceSetDescription description, MtlGraphicsDevice gd)
             : base(ref description)
@@ -21,7 +21,7 @@ namespace Veldrith.MTL
 
         public override void Dispose()
         {
-            disposed = true;
+            _disposed = true;
         }
 
         #endregion

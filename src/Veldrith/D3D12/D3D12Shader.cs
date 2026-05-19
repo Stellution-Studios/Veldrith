@@ -6,8 +6,8 @@ namespace Veldrith.D3D12
 {
     internal sealed class D3D12Shader : Shader
     {
-        private bool disposed;
-        private string name;
+        private bool _disposed;
+        private string _name;
 
         public D3D12Shader(ref ShaderDescription description)
             : base(description.Stage, description.EntryPoint)
@@ -18,17 +18,17 @@ namespace Veldrith.D3D12
 
         public byte[] ShaderBytes { get; }
         public bool Debug { get; }
-        public override bool IsDisposed => disposed;
+        public override bool IsDisposed => _disposed;
 
         public override string Name
         {
-            get => name;
-            set => name = value;
+            get => _name;
+            set => _name = value;
         }
 
         public override void Dispose()
         {
-            disposed = true;
+            _disposed = true;
         }
 
         private static byte[] EnsureDxbcBytecode(ShaderDescription description)

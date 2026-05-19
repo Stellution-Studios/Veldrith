@@ -15,7 +15,7 @@ namespace Veldrith.D3D12
 {
     internal sealed class D3D12GraphicsDevice : GraphicsDevice
     {
-        private static readonly GraphicsDeviceFeatures d3d12Features = new GraphicsDeviceFeatures(
+        private static readonly GraphicsDeviceFeatures _d3d12Features = new GraphicsDeviceFeatures(
             computeShader: true,
             geometryShader: true,
             tessellationShaders: true,
@@ -36,22 +36,22 @@ namespace Veldrith.D3D12
             bufferRangeBinding: true,
             shaderFloat64: false);
 
-        private readonly D3D12ResourceFactory resourceFactory;
-        private readonly BackendInfoD3D12 d3d12Info;
-        private readonly Swapchain mainSwapchain;
-        private readonly IDXGIFactory4 dxgiFactory;
-        private readonly ID3D12Device device;
-        private readonly ID3D12CommandQueue commandQueue;
-        private readonly ID3D12Fence submissionFence;
-        private readonly AutoResetEvent submissionFenceEvent;
-        private ulong nextSubmissionFenceValue = 1;
-        private readonly Dictionary<string, ID3D12RootSignature> rootSignatureCache = new Dictionary<string, ID3D12RootSignature>(StringComparer.Ordinal);
-        private readonly object rootSignatureCacheLock = new object();
-        private readonly Dictionary<Format, CachedFormatSupport> formatSupportCache = new Dictionary<Format, CachedFormatSupport>();
-        private readonly object formatSupportCacheLock = new object();
-        private readonly string deviceName;
-        private readonly string vendorName;
-        private ulong immediateFenceValue = 1;
+        private readonly D3D12ResourceFactory _resourceFactory;
+        private readonly BackendInfoD3D12 _d3d12Info;
+        private readonly Swapchain _mainSwapchain;
+        private readonly IDXGIFactory4 _dxgiFactory;
+        private readonly ID3D12Device _device;
+        private readonly ID3D12CommandQueue _commandQueue;
+        private readonly ID3D12Fence _submissionFence;
+        private readonly AutoResetEvent _submissionFenceEvent;
+        private ulong _nextSubmissionFenceValue = 1;
+        private readonly Dictionary<string, ID3D12RootSignature> _rootSignatureCache = new Dictionary<string, ID3D12RootSignature>(StringComparer.Ordinal);
+        private readonly object _rootSignatureCacheLock = new object();
+        private readonly Dictionary<Format, CachedFormatSupport> _formatSupportCache = new Dictionary<Format, CachedFormatSupport>();
+        private readonly object _formatSupportCacheLock = new object();
+        private readonly string _deviceName;
+        private readonly string _vendorName;
+        private ulong _immediateFenceValue = 1;
 
         public static bool IsSupported()
         {
@@ -70,22 +70,22 @@ namespace Veldrith.D3D12
                 throw new PlatformNotSupportedException("Direct3D 12 is only supported on Windows.");
             }
 
-            dxgiFactory = VorticeDXGI.CreateDXGIFactory2<IDXGIFactory4>(false);
-            IDXGIAdapter1 adapter = selectAdapter(dxgiFactory);
+            _dxgiFactory = VorticeDXGI.CreateDXGIFactory2<IDXGIFactory4>(false);
+            IDXGIAdapter1 adapter = selectAdapter(_dxgiFactory);
             try
             {
                 if (adapter != null)
                 {
-                    VorticeD3D12.D3D12CreateDevice(adapter, FeatureLevel.Level_11_0, out device).CheckError();
+                    VorticeD3D12.D3D12CreateDevice(adapter, FeatureLevel.Level_11_0, out _device).CheckError();
                     AdapterDescription1 description = adapter.Description1;
-                    deviceName = description.Description?.TrimEnd('\0');
-                    vendorName = $"0x{description.VendorId:X4}";
+                    _deviceName = description.Description?.TrimEnd('\0');
+                    _vendorName = $"0x{description.VendorId:X4}";
                 }
                 else
                 {
-                    VorticeD3D12.D3D12CreateDevice(null, FeatureLevel.Level_11_0, out device).CheckError();
-                    deviceName = "Direct3D 12 Device";
-                    vendorName = "Unknown";
+                    VorticeD3D12.D3D12CreateDevice(null, FeatureLevel.Level_11_0, out _device).CheckError();
+                    _deviceName = "Direct3D 12 Device";
+                    _vendorName = "Unknown";
                 }
             }
             finally
@@ -93,28 +93,28 @@ namespace Veldrith.D3D12
                 adapter?.Dispose();
             }
 
-            commandQueue = device.CreateCommandQueue(new CommandQueueDescription(CommandListType.Direct));
-            submissionFence = device.CreateFence(0, FenceFlags.None);
-            submissionFenceEvent = new AutoResetEvent(false);
-            resourceFactory = new D3D12ResourceFactory(this, Features);
+            _commandQueue = _device.CreateCommandQueue(new CommandQueueDescription(CommandListType.Direct));
+            _submissionFence = _device.CreateFence(0, FenceFlags.None);
+            _submissionFenceEvent = new AutoResetEvent(false);
+            _resourceFactory = new D3D12ResourceFactory(this, Features);
 
             if (swapchainDescription != null)
             {
                 SwapchainDescription scDesc = swapchainDescription.Value;
-                mainSwapchain = new D3D12Swapchain(this, ref scDesc);
+                _mainSwapchain = new D3D12Swapchain(this, ref scDesc);
             }
 
-            d3d12Info = new BackendInfoD3D12(device.NativePointer);
-            if (mainSwapchain != null)
+            _d3d12Info = new BackendInfoD3D12(_device.NativePointer);
+            if (_mainSwapchain != null)
             {
                 SyncToVerticalBlank = options.SyncToVerticalBlank;
             }
             PostDeviceCreated();
         }
 
-        public override string DeviceName => deviceName;
+        public override string DeviceName => _deviceName;
 
-        public override string VendorName => vendorName;
+        public override string VendorName => _vendorName;
 
         public override GraphicsApiVersion ApiVersion => GraphicsApiVersion.Unknown;
 
@@ -126,47 +126,47 @@ namespace Veldrith.D3D12
 
         public override bool IsClipSpaceYInverted => true;
 
-        public override ResourceFactory ResourceFactory => resourceFactory;
+        public override ResourceFactory ResourceFactory => _resourceFactory;
 
-        public override Swapchain MainSwapchain => mainSwapchain;
+        public override Swapchain MainSwapchain => _mainSwapchain;
 
-        public override GraphicsDeviceFeatures Features => d3d12Features;
+        public override GraphicsDeviceFeatures Features => _d3d12Features;
         public override bool AllowTearing
         {
-            get => mainSwapchain is D3D12Swapchain d3d12Swapchain && d3d12Swapchain.AllowTearing;
+            get => _mainSwapchain is D3D12Swapchain d3d12Swapchain && d3d12Swapchain.AllowTearing;
             set
             {
-                if (mainSwapchain is D3D12Swapchain d3d12Swapchain)
+                if (_mainSwapchain is D3D12Swapchain d3d12Swapchain)
                 {
                     d3d12Swapchain.AllowTearing = value;
                 }
             }
         }
-        internal ID3D12Device Device => device;
-        internal ID3D12CommandQueue CommandQueue => commandQueue;
-        internal IDXGIFactory4 DxgiFactory => dxgiFactory;
-        internal bool IsSubmissionFenceComplete(ulong value) => submissionFence.CompletedValue >= value;
+        internal ID3D12Device Device => _device;
+        internal ID3D12CommandQueue CommandQueue => _commandQueue;
+        internal IDXGIFactory4 DxgiFactory => _dxgiFactory;
+        internal bool IsSubmissionFenceComplete(ulong value) => _submissionFence.CompletedValue >= value;
         internal void WaitForSubmissionFence(ulong value)
         {
-            if (submissionFence.CompletedValue >= value)
+            if (_submissionFence.CompletedValue >= value)
             {
                 return;
             }
 
-            submissionFence.SetEventOnCompletion(value, submissionFenceEvent.SafeWaitHandle.DangerousGetHandle()).CheckError();
-            submissionFenceEvent.WaitOne();
+            _submissionFence.SetEventOnCompletion(value, _submissionFenceEvent.SafeWaitHandle.DangerousGetHandle()).CheckError();
+            _submissionFenceEvent.WaitOne();
         }
         internal ID3D12RootSignature GetOrCreateRootSignature(string cacheKey, in RootSignatureDescription description)
         {
-            lock (rootSignatureCacheLock)
+            lock (_rootSignatureCacheLock)
             {
-                if (rootSignatureCache.TryGetValue(cacheKey, out ID3D12RootSignature cached))
+                if (_rootSignatureCache.TryGetValue(cacheKey, out ID3D12RootSignature cached))
                 {
                     return cached;
                 }
 
-                ID3D12RootSignature created = device.CreateRootSignature(in description, RootSignatureVersion.Version1);
-                rootSignatureCache.Add(cacheKey, created);
+                ID3D12RootSignature created = _device.CreateRootSignature(in description, RootSignatureVersion.Version1);
+                _rootSignatureCache.Add(cacheKey, created);
                 return created;
             }
         }
@@ -314,21 +314,21 @@ namespace Veldrith.D3D12
 
         protected override void PlatformDispose()
         {
-            lock (rootSignatureCacheLock)
+            lock (_rootSignatureCacheLock)
             {
-                foreach (ID3D12RootSignature rootSignature in rootSignatureCache.Values)
+                foreach (ID3D12RootSignature rootSignature in _rootSignatureCache.Values)
                 {
                     rootSignature?.Dispose();
                 }
-                rootSignatureCache.Clear();
+                _rootSignatureCache.Clear();
             }
 
-            submissionFenceEvent?.Dispose();
-            submissionFence?.Dispose();
-            mainSwapchain?.Dispose();
-            commandQueue?.Dispose();
-            device?.Dispose();
-            dxgiFactory?.Dispose();
+            _submissionFenceEvent?.Dispose();
+            _submissionFence?.Dispose();
+            _mainSwapchain?.Dispose();
+            _commandQueue?.Dispose();
+            _device?.Dispose();
+            _dxgiFactory?.Dispose();
         }
 
         private protected override void SubmitCommandsCore(CommandList commandList, Fence fence)
@@ -336,15 +336,15 @@ namespace Veldrith.D3D12
             if (commandList is D3D12CommandList d3d12CommandList)
             {
                 d3d12CommandList.ExecuteNoSignal();
-                ulong signalValue = nextSubmissionFenceValue++;
-                commandQueue.Signal(submissionFence, signalValue).CheckError();
+                ulong signalValue = _nextSubmissionFenceValue++;
+                _commandQueue.Signal(_submissionFence, signalValue).CheckError();
                 d3d12CommandList.MarkSubmitted(signalValue);
                 d3d12CommandList.ClearCachedState();
             }
 
             if (fence is D3D12Fence d3d12Fence)
             {
-                d3d12Fence.Signal(commandQueue);
+                d3d12Fence.Signal(_commandQueue);
             }
         }
 
@@ -415,14 +415,14 @@ namespace Veldrith.D3D12
                 throw new VeldridException("Buffer belongs to a different backend.");
             }
 
-            ID3D12CommandAllocator allocator = device.CreateCommandAllocator(CommandListType.Direct);
-            ID3D12GraphicsCommandList commandList = device.CreateCommandList<ID3D12GraphicsCommandList>(0, CommandListType.Direct, allocator, null);
+            ID3D12CommandAllocator allocator = _device.CreateCommandAllocator(CommandListType.Direct);
+            ID3D12GraphicsCommandList commandList = _device.CreateCommandList<ID3D12GraphicsCommandList>(0, CommandListType.Direct, allocator, null);
             ID3D12Resource temporaryUpload = null;
             try
             {
                 temporaryUpload = d3d12Buffer.Update(commandList, source, bufferOffsetInBytes, sizeInBytes);
                 commandList.Close();
-                commandQueue.ExecuteCommandList(commandList);
+                _commandQueue.ExecuteCommandList(commandList);
                 waitForQueueIdle();
             }
             finally
@@ -605,7 +605,7 @@ namespace Veldrith.D3D12
 
         public override bool GetD3D12Info(out BackendInfoD3D12 info)
         {
-            info = d3d12Info;
+            info = _d3d12Info;
             return true;
         }
 
@@ -783,9 +783,9 @@ namespace Veldrith.D3D12
 
         private bool tryGetFormatSupport(Format format, out FeatureDataFormatSupport formatSupport)
         {
-            lock (formatSupportCacheLock)
+            lock (_formatSupportCacheLock)
             {
-                if (formatSupportCache.TryGetValue(format, out CachedFormatSupport cached))
+                if (_formatSupportCache.TryGetValue(format, out CachedFormatSupport cached))
                 {
                     formatSupport = cached.Support;
                     return cached.IsSupported;
@@ -797,7 +797,7 @@ namespace Veldrith.D3D12
                 };
 
                 bool isSupported = tryCheckFeatureSupport(D3D12Feature.FormatSupport, ref formatSupport);
-                formatSupportCache[format] = new CachedFormatSupport(isSupported, formatSupport);
+                _formatSupportCache[format] = new CachedFormatSupport(isSupported, formatSupport);
                 return isSupported;
             }
         }
@@ -820,7 +820,7 @@ namespace Veldrith.D3D12
         private bool tryCheckFeatureSupport<T>(D3D12Feature feature, ref T data)
             where T : unmanaged
         {
-            return device.CheckFeatureSupport(feature, ref data);
+            return _device.CheckFeatureSupport(feature, ref data);
         }
 
         private readonly struct CachedFormatSupport
@@ -918,9 +918,9 @@ namespace Veldrith.D3D12
             using var waitEvent = new AutoResetEvent(false);
             try
             {
-                fence = device.CreateFence(0, FenceFlags.None);
-                ulong signalValue = immediateFenceValue++;
-                commandQueue.Signal(fence, signalValue);
+                fence = _device.CreateFence(0, FenceFlags.None);
+                ulong signalValue = _immediateFenceValue++;
+                _commandQueue.Signal(fence, signalValue);
                 if (fence.CompletedValue < signalValue)
                 {
                     fence.SetEventOnCompletion(signalValue, waitEvent.SafeWaitHandle.DangerousGetHandle()).CheckError();

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using Vulkan;
 using static Vulkan.VulkanNative;
@@ -7,8 +7,8 @@ namespace Veldrith.Vk
 {
     internal static unsafe class VulkanUtil
     {
-        private static readonly Lazy<bool> s_is_vulkan_loaded = new Lazy<bool>(tryLoadVulkan);
-        private static readonly Lazy<string[]> s_instance_extensions = new Lazy<string[]>(enumerateInstanceExtensions);
+        private static readonly Lazy<bool> _s_is_vulkan_loaded = new Lazy<bool>(tryLoadVulkan);
+        private static readonly Lazy<string[]> _s_instance_extensions = new Lazy<string[]>(enumerateInstanceExtensions);
 
         [Conditional("DEBUG")]
         public static void CheckResult(VkResult result)
@@ -55,12 +55,12 @@ namespace Veldrith.Vk
 
         public static string[] GetInstanceExtensions()
         {
-            return s_instance_extensions.Value;
+            return _s_instance_extensions.Value;
         }
 
         public static bool IsVulkanLoaded()
         {
-            return s_is_vulkan_loaded.Value;
+            return _s_is_vulkan_loaded.Value;
         }
 
         public static void TransitionImageLayout(

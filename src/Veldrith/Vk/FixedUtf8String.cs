@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -7,9 +7,9 @@ namespace Veldrith.Vk
 {
     internal unsafe class FixedUtf8String : IDisposable
     {
-        public byte* StringPtr => (byte*)handle.AddrOfPinnedObject().ToPointer();
-        private GCHandle handle;
-        private readonly uint numBytes;
+        public byte* StringPtr => (byte*)_handle.AddrOfPinnedObject().ToPointer();
+        private GCHandle _handle;
+        private readonly uint _numBytes;
 
         public FixedUtf8String(string s)
         {
@@ -17,8 +17,8 @@ namespace Veldrith.Vk
 
             int byteCount = Encoding.UTF8.GetByteCount(s);
             byte[] text = new byte[byteCount + 1];
-            handle = GCHandle.Alloc(text, GCHandleType.Pinned);
-            numBytes = (uint)text.Length - 1; // Includes null terminator
+            _handle = GCHandle.Alloc(text, GCHandleType.Pinned);
+            _numBytes = (uint)text.Length - 1; // Includes null terminator
             int encodedCount = Encoding.UTF8.GetBytes(s, 0, s.Length, text, 0);
             Debug.Assert(encodedCount == byteCount);
         }
@@ -27,7 +27,7 @@ namespace Veldrith.Vk
 
         public void Dispose()
         {
-            handle.Free();
+            _handle.Free();
         }
 
         #endregion
@@ -59,7 +59,7 @@ namespace Veldrith.Vk
 
         private string getString()
         {
-            return Encoding.UTF8.GetString(StringPtr, (int)numBytes);
+            return Encoding.UTF8.GetString(StringPtr, (int)_numBytes);
         }
     }
 }

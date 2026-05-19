@@ -11,8 +11,8 @@ namespace Veldrith.MTL
 
         public MTLFeatureSet MaxFeatureSet { get; }
 
-        public int Count => supportedFeatureSets.Count;
-        private readonly HashSet<MTLFeatureSet> supportedFeatureSets = new HashSet<MTLFeatureSet>();
+        public int Count => _supportedFeatureSets.Count;
+        private readonly HashSet<MTLFeatureSet> _supportedFeatureSets = new HashSet<MTLFeatureSet>();
 
         public MtlFeatureSupport(MTLDevice device)
         {
@@ -20,7 +20,7 @@ namespace Veldrith.MTL
             {
                 if (device.supportsFeatureSet(set))
                 {
-                    supportedFeatureSets.Add(set);
+                    _supportedFeatureSets.Add(set);
                     MaxFeatureSet = set;
                 }
             }
@@ -32,7 +32,7 @@ namespace Veldrith.MTL
 
         public bool IsSupported(MTLFeatureSet featureSet)
         {
-            return supportedFeatureSets.Contains(featureSet);
+            return _supportedFeatureSets.Contains(featureSet);
         }
 
         public bool IsDrawBaseVertexInstanceSupported()
@@ -47,7 +47,7 @@ namespace Veldrith.MTL
 
         public IEnumerator<MTLFeatureSet> GetEnumerator()
         {
-            return supportedFeatureSets.GetEnumerator();
+            return _supportedFeatureSets.GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()

@@ -1,30 +1,30 @@
-﻿using Vulkan;
+using Vulkan;
 using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk
 {
     internal unsafe class VkSampler : Sampler
     {
-        public Vulkan.VkSampler DeviceSampler => sampler;
+        public Vulkan.VkSampler DeviceSampler => _sampler;
 
         public ResourceRefCount RefCount { get; }
 
-        public override bool IsDisposed => disposed;
+        public override bool IsDisposed => _disposed;
 
         public override string Name
         {
-            get => name;
+            get => _name;
             set
             {
-                name = value;
+                _name = value;
                 gd.SetResourceName(this, value);
             }
         }
 
         private readonly VkGraphicsDevice gd;
-        private readonly Vulkan.VkSampler sampler;
-        private bool disposed;
-        private string name;
+        private readonly Vulkan.VkSampler _sampler;
+        private bool _disposed;
+        private string _name;
 
         public VkSampler(VkGraphicsDevice gd, ref SamplerDescription description)
         {
@@ -52,7 +52,7 @@ namespace Veldrith.Vk
                 borderColor = VkFormats.VdToVkSamplerBorderColor(description.BorderColor)
             };
 
-            vkCreateSampler(this.gd.Device, ref samplerCi, null, out sampler);
+            vkCreateSampler(this.gd.Device, ref samplerCi, null, out _sampler);
             RefCount = new ResourceRefCount(disposeCore);
         }
 
@@ -67,10 +67,10 @@ namespace Veldrith.Vk
 
         private void disposeCore()
         {
-            if (!disposed)
+            if (!_disposed)
             {
-                vkDestroySampler(gd.Device, sampler, null);
-                disposed = true;
+                vkDestroySampler(gd.Device, _sampler, null);
+                _disposed = true;
             }
         }
     }

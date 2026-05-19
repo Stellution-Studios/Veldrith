@@ -4,10 +4,10 @@ namespace Veldrith.MTL
 {
     internal class MtlFramebuffer : Framebuffer
     {
-        public override bool IsDisposed => disposed;
+        public override bool IsDisposed => _disposed;
 
         public override string Name { get; set; }
-        private bool disposed;
+        private bool _disposed;
 
         public MtlFramebuffer(MtlGraphicsDevice gd, ref FramebufferDescription description)
             : base(description.DepthTarget, description.ColorTargets)
@@ -22,7 +22,7 @@ namespace Veldrith.MTL
 
         public override void Dispose()
         {
-            disposed = true;
+            _disposed = true;
         }
 
         #endregion

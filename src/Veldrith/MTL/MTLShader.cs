@@ -7,12 +7,12 @@ namespace Veldrith.MTL
     internal class MtlShader : Shader
     {
         public bool HasFunctionConstants { get; }
-        public override bool IsDisposed => disposed;
+        public override bool IsDisposed => _disposed;
 
         public MTLLibrary Library { get; }
         public MTLFunction Function { get; }
         public override string Name { get; set; }
-        private bool disposed;
+        private bool _disposed;
 
         public unsafe MtlShader(ref ShaderDescription description, MtlGraphicsDevice gd)
             : base(description.Stage, description.EntryPoint)
@@ -66,9 +66,9 @@ namespace Veldrith.MTL
 
         public override void Dispose()
         {
-            if (!disposed)
+            if (!_disposed)
             {
-                disposed = true;
+                _disposed = true;
                 ObjectiveCRuntime.release(Function.NativePtr);
                 ObjectiveCRuntime.release(Library.NativePtr);
             }

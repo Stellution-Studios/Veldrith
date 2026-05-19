@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Veldrith
 {
@@ -67,8 +67,8 @@ namespace Veldrith
         /// </summary>
         public abstract string Name { get; set; }
 
-        private readonly object fullTextureViewLock = new object();
-        private TextureView fullTextureView;
+        private readonly object _fullTextureViewLock = new object();
+        private TextureView _fullTextureView;
 
         #region Disposal
 
@@ -77,7 +77,7 @@ namespace Veldrith
         /// </summary>
         public virtual void Dispose()
         {
-            lock (fullTextureViewLock) fullTextureView?.Dispose();
+            lock (_fullTextureViewLock) _fullTextureView?.Dispose();
 
             DisposeCore();
         }
@@ -97,9 +97,9 @@ namespace Veldrith
 
         internal TextureView GetFullTextureView(GraphicsDevice gd)
         {
-            lock (fullTextureViewLock)
+            lock (_fullTextureViewLock)
             {
-                return fullTextureView ??= CreateFullTextureView(gd);
+                return _fullTextureView ??= CreateFullTextureView(gd);
             }
         }
 

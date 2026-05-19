@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.CompilerServices;
 
 namespace Veldrith
@@ -85,7 +85,7 @@ namespace Veldrith
     /// <typeparam name="T">The blittable value type which mapped data is viewed as.</typeparam>
     public unsafe struct MappedResourceView<T> where T : struct
     {
-        private static readonly int s_sizeof_t = Unsafe.SizeOf<T>();
+        private static readonly int _s_sizeof_t = Unsafe.SizeOf<T>();
 
         /// <summary>
         ///     The <see cref="MappedResource" /> that this instance views.
@@ -111,7 +111,7 @@ namespace Veldrith
         {
             MappedResource = rawResource;
             SizeInBytes = rawResource.SizeInBytes;
-            Count = (int)(SizeInBytes / s_sizeof_t);
+            Count = (int)(SizeInBytes / _s_sizeof_t);
         }
 
         /// <summary>
@@ -129,7 +129,7 @@ namespace Veldrith
                         $"Given index ({index}) must be non-negative and less than Count ({Count}).");
                 }
 
-                byte* ptr = (byte*)MappedResource.Data + index * s_sizeof_t;
+                byte* ptr = (byte*)MappedResource.Data + index * _s_sizeof_t;
                 return ref Unsafe.AsRef<T>(ptr);
             }
         }
@@ -149,7 +149,7 @@ namespace Veldrith
                         $"Given index ({index}) must be less than Count ({Count}).");
                 }
 
-                byte* ptr = (byte*)MappedResource.Data + index * s_sizeof_t;
+                byte* ptr = (byte*)MappedResource.Data + index * _s_sizeof_t;
                 return ref Unsafe.AsRef<T>(ptr);
             }
         }
@@ -164,7 +164,7 @@ namespace Veldrith
         {
             get
             {
-                byte* ptr = (byte*)MappedResource.Data + y * MappedResource.RowPitch + x * s_sizeof_t;
+                byte* ptr = (byte*)MappedResource.Data + y * MappedResource.RowPitch + x * _s_sizeof_t;
                 return ref Unsafe.AsRef<T>(ptr);
             }
         }
@@ -179,7 +179,7 @@ namespace Veldrith
         {
             get
             {
-                byte* ptr = (byte*)MappedResource.Data + y * MappedResource.RowPitch + x * s_sizeof_t;
+                byte* ptr = (byte*)MappedResource.Data + y * MappedResource.RowPitch + x * _s_sizeof_t;
                 return ref Unsafe.AsRef<T>(ptr);
             }
         }
@@ -198,7 +198,7 @@ namespace Veldrith
                 byte* ptr = (byte*)MappedResource.Data
                             + z * MappedResource.DepthPitch
                             + y * MappedResource.RowPitch
-                            + x * s_sizeof_t;
+                            + x * _s_sizeof_t;
                 return ref Unsafe.AsRef<T>(ptr);
             }
         }
@@ -217,7 +217,7 @@ namespace Veldrith
                 byte* ptr = (byte*)MappedResource.Data
                             + z * MappedResource.DepthPitch
                             + y * MappedResource.RowPitch
-                            + x * s_sizeof_t;
+                            + x * _s_sizeof_t;
                 return ref Unsafe.AsRef<T>(ptr);
             }
         }

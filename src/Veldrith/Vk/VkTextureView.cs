@@ -1,32 +1,32 @@
-﻿using Vulkan;
+using Vulkan;
 using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk
 {
     internal unsafe class VkTextureView : TextureView
     {
-        public VkImageView ImageView => imageView;
+        public VkImageView ImageView => _imageView;
 
         public new VkTexture Target => (VkTexture)base.Target;
 
         public ResourceRefCount RefCount { get; }
 
-        public override bool IsDisposed => destroyed;
+        public override bool IsDisposed => _destroyed;
 
         public override string Name
         {
-            get => name;
+            get => _name;
             set
             {
-                name = value;
+                _name = value;
                 gd.SetResourceName(this, value);
             }
         }
 
         private readonly VkGraphicsDevice gd;
-        private readonly VkImageView imageView;
-        private bool destroyed;
-        private string name;
+        private readonly VkImageView _imageView;
+        private bool _destroyed;
+        private string _name;
 
         public VkTextureView(VkGraphicsDevice gd, ref TextureViewDescription description)
             : base(ref description)
@@ -75,7 +75,7 @@ namespace Veldrith.Vk
                 }
             }
 
-            vkCreateImageView(this.gd.Device, ref imageViewCi, null, out imageView);
+            vkCreateImageView(this.gd.Device, ref imageViewCi, null, out _imageView);
             RefCount = new ResourceRefCount(disposeCore);
         }
 
@@ -90,9 +90,9 @@ namespace Veldrith.Vk
 
         private void disposeCore()
         {
-            if (!destroyed)
+            if (!_destroyed)
             {
-                destroyed = true;
+                _destroyed = true;
                 vkDestroyImageView(gd.Device, ImageView, null);
             }
         }

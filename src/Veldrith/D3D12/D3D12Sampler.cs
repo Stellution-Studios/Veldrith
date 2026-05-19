@@ -6,9 +6,9 @@ namespace Veldrith.D3D12
     {
         private readonly D3D12GraphicsDevice gd;
         private readonly SamplerDescription description;
-        private ID3D12DescriptorHeap descriptorHeap;
-        private bool disposed;
-        private string name;
+        private ID3D12DescriptorHeap _descriptorHeap;
+        private bool _disposed;
+        private string _name;
 
         public D3D12Sampler(D3D12GraphicsDevice gd, ref SamplerDescription description)
         {
@@ -19,9 +19,9 @@ namespace Veldrith.D3D12
         internal SamplerDescription Description => description;
         internal CpuDescriptorHandle GetOrCreateDescriptor()
         {
-            if (descriptorHeap == null)
+            if (_descriptorHeap == null)
             {
-                descriptorHeap = gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(
+                _descriptorHeap = gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(
                     DescriptorHeapType.Sampler,
                     1,
                     DescriptorHeapFlags.None));
@@ -43,24 +43,24 @@ namespace Veldrith.D3D12
                     MinLOD = description.MinimumLod,
                     MaxLOD = description.MaximumLod
                 };
-                gd.Device.CreateSampler(ref samplerDescription, descriptorHeap.GetCPUDescriptorHandleForHeapStart());
+                gd.Device.CreateSampler(ref samplerDescription, _descriptorHeap.GetCPUDescriptorHandleForHeapStart());
             }
 
-            return descriptorHeap.GetCPUDescriptorHandleForHeapStart();
+            return _descriptorHeap.GetCPUDescriptorHandleForHeapStart();
         }
 
-        public override bool IsDisposed => disposed;
+        public override bool IsDisposed => _disposed;
 
         public override string Name
         {
-            get => name;
-            set => name = value;
+            get => _name;
+            set => _name = value;
         }
 
         public override void Dispose()
         {
-            descriptorHeap?.Dispose();
-            disposed = true;
+            _descriptorHeap?.Dispose();
+            _disposed = true;
         }
     }
 }

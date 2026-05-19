@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.CompilerServices;
 
 namespace Veldrith.Vk
@@ -10,9 +10,9 @@ namespace Veldrith.Vk
     internal unsafe struct StackList<T> where T : struct
     {
         public const int CAPACITY_IN_BYTES = 256;
-        private static readonly int s_sizeof_t = Unsafe.SizeOf<T>();
+        private static readonly int _s_sizeof_t = Unsafe.SizeOf<T>();
 
-        private fixed byte storage[CAPACITY_IN_BYTES];
+        private fixed byte _storage[CAPACITY_IN_BYTES];
 
         public uint Count { get; private set; }
 
@@ -21,7 +21,7 @@ namespace Veldrith.Vk
         public void Add(T item)
         {
             byte* basePtr = (byte*)Data;
-            int offset = (int)(Count * s_sizeof_t);
+            int offset = (int)(Count * _s_sizeof_t);
 #if DEBUG
             Debug.Assert(offset + s_sizeof_t <= CAPACITY_IN_BYTES);
 #endif
@@ -35,7 +35,7 @@ namespace Veldrith.Vk
             get
             {
                 byte* basePtr = (byte*)Unsafe.AsPointer(ref this);
-                int offset = (int)(index * s_sizeof_t);
+                int offset = (int)(index * _s_sizeof_t);
                 return ref Unsafe.AsRef<T>(basePtr + offset);
             }
         }
@@ -45,7 +45,7 @@ namespace Veldrith.Vk
             get
             {
                 byte* basePtr = (byte*)Unsafe.AsPointer(ref this);
-                int offset = index * s_sizeof_t;
+                int offset = index * _s_sizeof_t;
                 return ref Unsafe.AsRef<T>(basePtr + offset);
             }
         }
@@ -58,10 +58,10 @@ namespace Veldrith.Vk
     /// <typeparam name="TSize">A type parameter dictating the capacity of the list.</typeparam>
     internal unsafe struct StackList<T, TSize> where T : struct where TSize : struct
     {
-        private static readonly int s_sizeof_t = Unsafe.SizeOf<T>();
+        private static readonly int _s_sizeof_t = Unsafe.SizeOf<T>();
 
 #pragma warning disable 0169 // Unused field. This is used implicity because it controls the size of the structure on the stack.
-        private TSize storage;
+        private TSize _storage;
 #pragma warning restore 0169
 
         public uint Count { get; private set; }
@@ -70,7 +70,7 @@ namespace Veldrith.Vk
 
         public void Add(T item)
         {
-            ref var dest = ref Unsafe.Add(ref Unsafe.As<TSize, T>(ref storage), (int)Count);
+            ref var dest = ref Unsafe.Add(ref Unsafe.As<TSize, T>(ref _storage), (int)Count);
 #if DEBUG
             int offset = (int)(Count * s_sizeof_t);
             Debug.Assert(offset + s_sizeof_t <= Unsafe.SizeOf<TSize>());

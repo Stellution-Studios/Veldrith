@@ -9,25 +9,25 @@ namespace Veldrith.MTL
 
         public uint ActualCapacity { get; }
 
-        public override bool IsDisposed => disposed;
+        public override bool IsDisposed => _disposed;
 
         public override string Name
         {
-            get => name;
+            get => _name;
             set
             {
                 var nameNss = NSString.New(value);
                 DeviceBuffer.addDebugMarker(nameNss, new NSRange(0, SizeInBytes));
                 ObjectiveCRuntime.release(nameNss.NativePtr);
-                name = value;
+                _name = value;
             }
         }
 
         public MTLBuffer DeviceBuffer { get; }
 
         public unsafe void* Pointer { get; private set; }
-        private string name;
-        private bool disposed;
+        private string _name;
+        private bool _disposed;
 
         public MtlBuffer(ref BufferDescription bd, MtlGraphicsDevice gd)
         {
@@ -54,9 +54,9 @@ namespace Veldrith.MTL
 
         public override void Dispose()
         {
-            if (!disposed)
+            if (!_disposed)
             {
-                disposed = true;
+                _disposed = true;
                 ObjectiveCRuntime.release(DeviceBuffer.NativePtr);
             }
         }

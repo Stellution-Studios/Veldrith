@@ -6,61 +6,61 @@ namespace Veldrith.D3D12
     internal sealed class D3D12TextureView : TextureView
     {
         private readonly D3D12GraphicsDevice gd;
-        private readonly D3D12Texture targetTexture;
-        private ID3D12DescriptorHeap srvDescriptorHeap;
-        private ID3D12DescriptorHeap uavDescriptorHeap;
-        private bool disposed;
-        private string name;
+        private readonly D3D12Texture _targetTexture;
+        private ID3D12DescriptorHeap _srvDescriptorHeap;
+        private ID3D12DescriptorHeap _uavDescriptorHeap;
+        private bool _disposed;
+        private string _name;
 
         public D3D12TextureView(D3D12GraphicsDevice gd, ref TextureViewDescription description)
             : base(ref description)
         {
             this.gd = gd;
-            targetTexture = Util.AssertSubtype<Texture, D3D12Texture>(description.Target);
+            _targetTexture = Util.AssertSubtype<Texture, D3D12Texture>(description.Target);
         }
 
-        internal D3D12Texture TargetTexture => targetTexture;
+        internal D3D12Texture TargetTexture => _targetTexture;
 
-        public override bool IsDisposed => disposed;
+        public override bool IsDisposed => _disposed;
 
         public override string Name
         {
-            get => name;
-            set => name = value;
+            get => _name;
+            set => _name = value;
         }
 
         internal CpuDescriptorHandle GetOrCreateShaderResourceViewDescriptor()
         {
-            if (srvDescriptorHeap == null)
+            if (_srvDescriptorHeap == null)
             {
-                srvDescriptorHeap = gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(
+                _srvDescriptorHeap = gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(
                     DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView,
                     1,
                     DescriptorHeapFlags.None));
-                ID3D12Resource nativeTexture = targetTexture.NativeTexture
+                ID3D12Resource nativeTexture = _targetTexture.NativeTexture
                     ?? throw new PlatformNotSupportedException("Texture has no native D3D12 resource.");
                 ShaderResourceViewDescription srvDescription = GetShaderResourceViewDescription();
-                gd.Device.CreateShaderResourceView(nativeTexture, srvDescription, srvDescriptorHeap.GetCPUDescriptorHandleForHeapStart());
+                gd.Device.CreateShaderResourceView(nativeTexture, srvDescription, _srvDescriptorHeap.GetCPUDescriptorHandleForHeapStart());
             }
 
-            return srvDescriptorHeap.GetCPUDescriptorHandleForHeapStart();
+            return _srvDescriptorHeap.GetCPUDescriptorHandleForHeapStart();
         }
 
         internal CpuDescriptorHandle GetOrCreateUnorderedAccessViewDescriptor()
         {
-            if (uavDescriptorHeap == null)
+            if (_uavDescriptorHeap == null)
             {
-                uavDescriptorHeap = gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(
+                _uavDescriptorHeap = gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(
                     DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView,
                     1,
                     DescriptorHeapFlags.None));
-                ID3D12Resource nativeTexture = targetTexture.NativeTexture
+                ID3D12Resource nativeTexture = _targetTexture.NativeTexture
                     ?? throw new PlatformNotSupportedException("Texture has no native D3D12 resource.");
                 UnorderedAccessViewDescription uavDescription = GetUnorderedAccessViewDescription();
-                gd.Device.CreateUnorderedAccessView(nativeTexture, null, uavDescription, uavDescriptorHeap.GetCPUDescriptorHandleForHeapStart());
+                gd.Device.CreateUnorderedAccessView(nativeTexture, null, uavDescription, _uavDescriptorHeap.GetCPUDescriptorHandleForHeapStart());
             }
 
-            return uavDescriptorHeap.GetCPUDescriptorHandleForHeapStart();
+            return _uavDescriptorHeap.GetCPUDescriptorHandleForHeapStart();
         }
 
         internal ShaderResourceViewDescription GetShaderResourceViewDescription()
@@ -71,7 +71,7 @@ namespace Veldrith.D3D12
                 Shader4ComponentMapping = ShaderComponentMapping.Default
             };
 
-            if (targetTexture.Type == TextureType.Texture3D)
+            if (_targetTexture.Type == TextureType.Texture3D)
             {
                 description.ViewDimension = ShaderResourceViewDimension.Texture3D;
                 description.Texture3D = new Texture3DShaderResourceView
@@ -83,8 +83,8 @@ namespace Veldrith.D3D12
                 return description;
             }
 
-            bool isMultisampled = targetTexture.SampleCount != TextureSampleCount.Count1;
-            bool isCube = (targetTexture.Usage & TextureUsage.Cubemap) == TextureUsage.Cubemap;
+            bool isMultisampled = _targetTexture.SampleCount != TextureSampleCount.Count1;
+            bool isCube = (_targetTexture.Usage & TextureUsage.Cubemap) == TextureUsage.Cubemap;
 
             if (isCube)
             {
@@ -166,7 +166,7 @@ namespace Veldrith.D3D12
 
         internal UnorderedAccessViewDescription GetUnorderedAccessViewDescription()
         {
-            if (targetTexture.SampleCount != TextureSampleCount.Count1)
+            if (_targetTexture.SampleCount != TextureSampleCount.Count1)
             {
                 throw new PlatformNotSupportedException("Multisampled UAV textures are not supported.");
             }
@@ -176,7 +176,7 @@ namespace Veldrith.D3D12
                 Format = D3D12Formats.GetViewFormat(D3D12Formats.ToDxgiFormat(Format, false))
             };
 
-            if (targetTexture.Type == TextureType.Texture3D)
+            if (_targetTexture.Type == TextureType.Texture3D)
             {
                 description.ViewDimension = UnorderedAccessViewDimension.Texture3D;
                 description.Texture3D = new Texture3DUnorderedAccessView
@@ -214,9 +214,9 @@ namespace Veldrith.D3D12
 
         public override void Dispose()
         {
-            srvDescriptorHeap?.Dispose();
-            uavDescriptorHeap?.Dispose();
-            disposed = true;
+            _srvDescriptorHeap?.Dispose();
+            _uavDescriptorHeap?.Dispose();
+            _disposed = true;
         }
     }
 }

@@ -7,11 +7,11 @@ namespace Veldrith.MTL
 {
     internal class MtlSwapchainTexture : MtlTexture
     {
-        public override MTLTexture DeviceTexture => deviceTexture;
+        public override MTLTexture DeviceTexture => _deviceTexture;
 
-        public override uint Width => width;
+        public override uint Width => _width;
 
-        public override uint Height => height;
+        public override uint Height => _height;
 
         public override uint Depth => 1;
 
@@ -25,21 +25,21 @@ namespace Veldrith.MTL
 
         public override TextureSampleCount SampleCount => TextureSampleCount.Count1;
 
-        public override MTLPixelFormat MtlPixelFormat => mtlPixelFormat;
+        public override MTLPixelFormat MtlPixelFormat => _mtlPixelFormat;
 
         public override MTLTextureType MtlTextureType => MTLTextureType.Type2D;
 
-        private MTLTexture deviceTexture;
-        private uint width;
-        private uint height;
-        private MTLPixelFormat mtlPixelFormat;
+        private MTLTexture _deviceTexture;
+        private uint _width;
+        private uint _height;
+        private MTLPixelFormat _mtlPixelFormat;
 
         public void SetDrawable(CAMetalDrawable drawable, CGSize size, PixelFormat format)
         {
-            deviceTexture = drawable.texture;
-            width = (uint)size.width;
-            height = (uint)size.height;
-            mtlPixelFormat = MtlFormats.VdToMtlPixelFormat(Format, false);
+            _deviceTexture = drawable.texture;
+            _width = (uint)size.width;
+            _height = (uint)size.height;
+            _mtlPixelFormat = MtlFormats.VdToMtlPixelFormat(Format, false);
         }
     }
 }

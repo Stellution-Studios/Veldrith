@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Diagnostics;
 using Vulkan;
 using static Vulkan.VulkanNative;
@@ -8,36 +8,36 @@ namespace Veldrith.Vk
 {
     internal unsafe class VkFramebuffer : VkFramebufferBase
     {
-        public override Vulkan.VkFramebuffer CurrentFramebuffer => deviceFramebuffer;
-        public override VkRenderPass RenderPassNoClearInit => renderPassNoClear;
-        public override VkRenderPass RenderPassNoClearLoad => renderPassNoClearLoad;
-        public override VkRenderPass RenderPassClear => renderPassClear;
+        public override Vulkan.VkFramebuffer CurrentFramebuffer => _deviceFramebuffer;
+        public override VkRenderPass RenderPassNoClearInit => _renderPassNoClear;
+        public override VkRenderPass RenderPassNoClearLoad => _renderPassNoClearLoad;
+        public override VkRenderPass RenderPassClear => _renderPassClear;
 
         public override uint RenderableWidth => Width;
         public override uint RenderableHeight => Height;
 
         public override uint AttachmentCount { get; }
 
-        public override bool IsDisposed => destroyed;
+        public override bool IsDisposed => _destroyed;
 
         public override string Name
         {
-            get => name;
+            get => _name;
             set
             {
-                name = value;
+                _name = value;
                 gd.SetResourceName(this, value);
             }
         }
 
         private readonly VkGraphicsDevice gd;
-        private readonly Vulkan.VkFramebuffer deviceFramebuffer;
-        private readonly VkRenderPass renderPassNoClearLoad;
-        private readonly VkRenderPass renderPassNoClear;
-        private readonly VkRenderPass renderPassClear;
-        private readonly List<VkImageView> attachmentViews = new List<VkImageView>();
-        private bool destroyed;
-        private string name;
+        private readonly Vulkan.VkFramebuffer _deviceFramebuffer;
+        private readonly VkRenderPass _renderPassNoClearLoad;
+        private readonly VkRenderPass _renderPassNoClear;
+        private readonly VkRenderPass _renderPassClear;
+        private readonly List<VkImageView> _attachmentViews = new List<VkImageView>();
+        private bool _destroyed;
+        private string _name;
 
         public VkFramebuffer(VkGraphicsDevice gd, ref FramebufferDescription description, bool isPresented)
             : base(description.DepthTarget, description.ColorTargets)
@@ -135,7 +135,7 @@ namespace Veldrith.Vk
             renderPassCi.dependencyCount = 1;
             renderPassCi.pDependencies = &subpassDependency;
 
-            var creationResult = vkCreateRenderPass(this.gd.Device, ref renderPassCi, null, out renderPassNoClear);
+            var creationResult = vkCreateRenderPass(this.gd.Device, ref renderPassCi, null, out _renderPassNoClear);
             CheckResult(creationResult);
 
             for (int i = 0; i < colorAttachmentCount; i++)
@@ -152,7 +152,7 @@ namespace Veldrith.Vk
                 if (hasStencil) attachments[attachments.Count - 1].stencilLoadOp = VkAttachmentLoadOp.Load;
             }
 
-            creationResult = vkCreateRenderPass(this.gd.Device, ref renderPassCi, null, out renderPassNoClearLoad);
+            creationResult = vkCreateRenderPass(this.gd.Device, ref renderPassCi, null, out _renderPassNoClearLoad);
             CheckResult(creationResult);
 
             // Load version
@@ -171,7 +171,7 @@ namespace Veldrith.Vk
                 attachments[i].initialLayout = VkImageLayout.Undefined;
             }
 
-            creationResult = vkCreateRenderPass(this.gd.Device, ref renderPassCi, null, out renderPassClear);
+            creationResult = vkCreateRenderPass(this.gd.Device, ref renderPassCi, null, out _renderPassClear);
             CheckResult(creationResult);
 
             var fbCi = VkFramebufferCreateInfo.New();
@@ -195,7 +195,7 @@ namespace Veldrith.Vk
                 var dest = fbAttachments + i;
                 var result = vkCreateImageView(this.gd.Device, ref imageViewCi, null, dest);
                 CheckResult(result);
-                attachmentViews.Add(*dest);
+                _attachmentViews.Add(*dest);
             }
 
             // Depth
@@ -217,7 +217,7 @@ namespace Veldrith.Vk
                 var dest = fbAttachments + (fbAttachmentsCount - 1);
                 var result = vkCreateImageView(this.gd.Device, ref depthViewCi, null, dest);
                 CheckResult(result);
-                attachmentViews.Add(*dest);
+                _attachmentViews.Add(*dest);
             }
 
             Texture dimTex;
@@ -248,9 +248,9 @@ namespace Veldrith.Vk
             fbCi.attachmentCount = fbAttachmentsCount;
             fbCi.pAttachments = fbAttachments;
             fbCi.layers = 1;
-            fbCi.renderPass = renderPassNoClear;
+            fbCi.renderPass = _renderPassNoClear;
 
-            creationResult = vkCreateFramebuffer(this.gd.Device, ref fbCi, null, out deviceFramebuffer);
+            creationResult = vkCreateFramebuffer(this.gd.Device, ref fbCi, null, out _deviceFramebuffer);
             CheckResult(creationResult);
 
             if (DepthTarget != null) AttachmentCount += 1;
@@ -310,15 +310,15 @@ namespace Veldrith.Vk
 
         protected override void DisposeCore()
         {
-            if (!destroyed)
+            if (!_destroyed)
             {
-                vkDestroyFramebuffer(gd.Device, deviceFramebuffer, null);
-                vkDestroyRenderPass(gd.Device, renderPassNoClear, null);
-                vkDestroyRenderPass(gd.Device, renderPassNoClearLoad, null);
-                vkDestroyRenderPass(gd.Device, renderPassClear, null);
-                foreach (var view in attachmentViews) vkDestroyImageView(gd.Device, view, null);
+                vkDestroyFramebuffer(gd.Device, _deviceFramebuffer, null);
+                vkDestroyRenderPass(gd.Device, _renderPassNoClear, null);
+                vkDestroyRenderPass(gd.Device, _renderPassNoClearLoad, null);
+                vkDestroyRenderPass(gd.Device, _renderPassClear, null);
+                foreach (var view in _attachmentViews) vkDestroyImageView(gd.Device, view, null);
 
-                destroyed = true;
+                _destroyed = true;
             }
         }
     }
