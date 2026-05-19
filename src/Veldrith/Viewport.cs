@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Veldrith
 {
@@ -48,12 +48,12 @@ namespace Veldrith
         /// <param name="maxDepth">The maximum depth.</param>
         public Viewport(float x, float y, float width, float height, float minDepth, float maxDepth)
         {
-            X = x;
-            Y = y;
-            Width = width;
-            Height = height;
-            MinDepth = minDepth;
-            MaxDepth = maxDepth;
+            this.X = x;
+            this.Y = y;
+            this.Width = width;
+            this.Height = height;
+            this.MinDepth = minDepth;
+            this.MaxDepth = maxDepth;
         }
 
         /// <summary>
@@ -63,9 +63,9 @@ namespace Veldrith
         /// <returns>True if all elements are equal; false otherswise.</returns>
         public bool Equals(Viewport other)
         {
-            return X.Equals(other.X) && Y.Equals(other.Y)
-                                     && Width.Equals(other.Width) && Height.Equals(other.Height)
-                                     && MinDepth.Equals(other.MinDepth) && MaxDepth.Equals(other.MaxDepth);
+            return this.X.Equals(other.X) && this.Y.Equals(other.Y)
+                                     && this.Width.Equals(other.Width) && this.Height.Equals(other.Height)
+                                     && this.MinDepth.Equals(other.MinDepth) && this.MaxDepth.Equals(other.MaxDepth);
         }
 
         /// <summary>
@@ -75,12 +75,12 @@ namespace Veldrith
         public override int GetHashCode()
         {
             return HashHelper.Combine(
-                X.GetHashCode(),
-                Y.GetHashCode(),
-                Width.GetHashCode(),
-                Height.GetHashCode(),
-                MinDepth.GetHashCode(),
-                MaxDepth.GetHashCode());
+                this.X.GetHashCode(),
+                this.Y.GetHashCode(),
+                this.Width.GetHashCode(),
+                this.Height.GetHashCode(),
+                this.MinDepth.GetHashCode(),
+                this.MaxDepth.GetHashCode());
         }
     }
 }

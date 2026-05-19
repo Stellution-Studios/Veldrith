@@ -77,7 +77,7 @@ namespace Veldrith
         /// </summary>
         public virtual void Dispose()
         {
-            lock (_fullTextureViewLock) _fullTextureView?.Dispose();
+            lock (this._fullTextureViewLock) this._fullTextureView?.Dispose();
 
             DisposeCore();
         }
@@ -97,9 +97,9 @@ namespace Veldrith
 
         internal TextureView GetFullTextureView(GraphicsDevice gd)
         {
-            lock (_fullTextureViewLock)
+            lock (this._fullTextureViewLock)
             {
-                return _fullTextureView ??= CreateFullTextureView(gd);
+                return this._fullTextureView ??= CreateFullTextureView(gd);
             }
         }
 

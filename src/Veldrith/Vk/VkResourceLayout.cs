@@ -6,20 +6,20 @@ namespace Veldrith.Vk
 {
     internal unsafe class VkResourceLayout : ResourceLayout
     {
-        public VkDescriptorSetLayout DescriptorSetLayout => _dsl;
+        public VkDescriptorSetLayout DescriptorSetLayout => this._dsl;
         public VkDescriptorType[] DescriptorTypes { get; }
 
         public DescriptorResourceCounts DescriptorResourceCounts { get; }
         public new int DynamicBufferCount { get; }
 
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => this._disposed;
 
         public override string Name
         {
-            get => _name;
+            get => this._name;
             set
             {
-                _name = value;
+                this._name = value;
                 gd.SetResourceName(this, value);
             }
         }
@@ -101,7 +101,7 @@ namespace Veldrith.Vk
             dslCi.bindingCount = (uint)elements.Length;
             dslCi.pBindings = bindings;
 
-            var result = vkCreateDescriptorSetLayout(this.gd.Device, ref dslCi, null, out _dsl);
+            var result = vkCreateDescriptorSetLayout(this.gd.Device, ref dslCi, null, out this._dsl);
             CheckResult(result);
         }
 
@@ -109,10 +109,10 @@ namespace Veldrith.Vk
 
         public override void Dispose()
         {
-            if (!_disposed)
+            if (!this._disposed)
             {
-                _disposed = true;
-                vkDestroyDescriptorSetLayout(gd.Device, _dsl, null);
+                this._disposed = true;
+                vkDestroyDescriptorSetLayout(gd.Device, this._dsl, null);
             }
         }
 

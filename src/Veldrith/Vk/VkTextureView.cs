@@ -5,20 +5,20 @@ namespace Veldrith.Vk
 {
     internal unsafe class VkTextureView : TextureView
     {
-        public VkImageView ImageView => _imageView;
+        public VkImageView ImageView => this._imageView;
 
         public new VkTexture Target => (VkTexture)base.Target;
 
         public ResourceRefCount RefCount { get; }
 
-        public override bool IsDisposed => _destroyed;
+        public override bool IsDisposed => this._destroyed;
 
         public override string Name
         {
-            get => _name;
+            get => this._name;
             set
             {
-                _name = value;
+                this._name = value;
                 gd.SetResourceName(this, value);
             }
         }
@@ -75,8 +75,8 @@ namespace Veldrith.Vk
                 }
             }
 
-            vkCreateImageView(this.gd.Device, ref imageViewCi, null, out _imageView);
-            RefCount = new ResourceRefCount(disposeCore);
+            vkCreateImageView(this.gd.Device, ref imageViewCi, null, out this._imageView);
+            RefCount = new ResourceRefCount(DisposeCore);
         }
 
         #region Disposal
@@ -88,11 +88,11 @@ namespace Veldrith.Vk
 
         #endregion
 
-        private void disposeCore()
+        private void DisposeCore()
         {
-            if (!_destroyed)
+            if (!this._destroyed)
             {
-                _destroyed = true;
+                this._destroyed = true;
                 vkDestroyImageView(gd.Device, ImageView, null);
             }
         }

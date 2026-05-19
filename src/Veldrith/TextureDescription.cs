@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Veldrith
 {
@@ -86,15 +86,15 @@ namespace Veldrith
             TextureUsage usage,
             TextureType type)
         {
-            Width = width;
-            Height = height;
-            Depth = depth;
-            MipLevels = mipLevels;
-            ArrayLayers = arrayLayers;
-            Format = format;
-            Usage = usage;
-            SampleCount = TextureSampleCount.Count1;
-            Type = type;
+            this.Width = width;
+            this.Height = height;
+            this.Depth = depth;
+            this.MipLevels = mipLevels;
+            this.ArrayLayers = arrayLayers;
+            this.Format = format;
+            this.Usage = usage;
+            this.SampleCount = TextureSampleCount.Count1;
+            this.Type = type;
         }
 
         /// <summary>
@@ -130,15 +130,15 @@ namespace Veldrith
             TextureType type,
             TextureSampleCount sampleCount)
         {
-            Width = width;
-            Height = height;
-            Depth = depth;
-            MipLevels = mipLevels;
-            ArrayLayers = arrayLayers;
-            Format = format;
-            Usage = usage;
-            Type = type;
-            SampleCount = sampleCount;
+            this.Width = width;
+            this.Height = height;
+            this.Depth = depth;
+            this.MipLevels = mipLevels;
+            this.ArrayLayers = arrayLayers;
+            this.Format = format;
+            this.Usage = usage;
+            this.Type = type;
+            this.SampleCount = sampleCount;
         }
 
         /// <summary>
@@ -297,15 +297,15 @@ namespace Veldrith
         /// <returns>True if all elements are equal; false otherswise.</returns>
         public bool Equals(TextureDescription other)
         {
-            return Width.Equals(other.Width)
-                   && Height.Equals(other.Height)
-                   && Depth.Equals(other.Depth)
-                   && MipLevels.Equals(other.MipLevels)
-                   && ArrayLayers.Equals(other.ArrayLayers)
-                   && Format == other.Format
-                   && Usage == other.Usage
-                   && Type == other.Type
-                   && SampleCount == other.SampleCount;
+            return this.Width.Equals(other.Width)
+                   && this.Height.Equals(other.Height)
+                   && this.Depth.Equals(other.Depth)
+                   && this.MipLevels.Equals(other.MipLevels)
+                   && this.ArrayLayers.Equals(other.ArrayLayers)
+                   && this.Format == other.Format
+                   && this.Usage == other.Usage
+                   && this.Type == other.Type
+                   && this.SampleCount == other.SampleCount;
         }
 
         /// <summary>
@@ -315,15 +315,15 @@ namespace Veldrith
         public override int GetHashCode()
         {
             return HashHelper.Combine(
-                Width.GetHashCode(),
-                Height.GetHashCode(),
-                Depth.GetHashCode(),
-                MipLevels.GetHashCode(),
-                ArrayLayers.GetHashCode(),
-                (int)Format,
-                (int)Usage,
-                (int)Type,
-                (int)SampleCount);
+                this.Width.GetHashCode(),
+                this.Height.GetHashCode(),
+                this.Depth.GetHashCode(),
+                this.MipLevels.GetHashCode(),
+                this.ArrayLayers.GetHashCode(),
+                (int)this.Format,
+                (int)this.Usage,
+                (int)this.Type,
+                (int)this.SampleCount);
         }
     }
 }

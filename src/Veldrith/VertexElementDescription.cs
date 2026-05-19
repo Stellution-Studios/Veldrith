@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Veldrith
 {
@@ -51,10 +51,10 @@ namespace Veldrith
             VertexElementFormat format,
             VertexElementSemantic semantic)
         {
-            Name = name;
-            Format = format;
-            Semantic = semantic;
-            Offset = 0;
+            this.Name = name;
+            this.Format = format;
+            this.Semantic = semantic;
+            this.Offset = 0;
         }
 
         /// <summary>
@@ -70,10 +70,10 @@ namespace Veldrith
             VertexElementFormat format,
             uint offset)
         {
-            Name = name;
-            Format = format;
-            Semantic = semantic;
-            Offset = offset;
+            this.Name = name;
+            this.Format = format;
+            this.Semantic = semantic;
+            this.Offset = offset;
         }
 
         /// <summary>
@@ -83,10 +83,10 @@ namespace Veldrith
         /// <returns>True if all elements are equal; false otherswise.</returns>
         public bool Equals(VertexElementDescription other)
         {
-            return Name.Equals(other.Name)
-                   && Format == other.Format
-                   && Semantic == other.Semantic
-                   && Offset == other.Offset;
+            return this.Name.Equals(other.Name)
+                   && this.Format == other.Format
+                   && this.Semantic == other.Semantic
+                   && this.Offset == other.Offset;
         }
 
         /// <summary>
@@ -96,10 +96,10 @@ namespace Veldrith
         public override int GetHashCode()
         {
             return HashHelper.Combine(
-                Name.GetHashCode(),
-                (int)Format,
-                (int)Semantic,
-                (int)Offset);
+                this.Name.GetHashCode(),
+                (int)this.Format,
+                (int)this.Semantic,
+                (int)this.Offset);
         }
     }
 }

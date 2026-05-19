@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.CompilerServices;
 
 namespace Veldrith
@@ -36,9 +36,9 @@ namespace Veldrith
         /// </param>
         public SpecializationConstant(uint id, ShaderConstantType type, ulong data)
         {
-            ID = id;
-            Type = type;
-            Data = data;
+            this.ID = id;
+            this.Type = type;
+            this.Data = data;
         }
 
         /// <summary>
@@ -145,7 +145,7 @@ namespace Veldrith
         /// <returns>True if all elements are equal; false otherswise.</returns>
         public bool Equals(SpecializationConstant other)
         {
-            return ID.Equals(other.ID) && Type == other.Type && Data.Equals(other.Data);
+            return this.ID.Equals(other.ID) && this.Type == other.Type && this.Data.Equals(other.Data);
         }
 
         /// <summary>
@@ -154,7 +154,7 @@ namespace Veldrith
         /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
         public override int GetHashCode()
         {
-            return HashHelper.Combine(ID.GetHashCode(), (int)Type, Data.GetHashCode());
+            return HashHelper.Combine(this.ID.GetHashCode(), (int)this.Type, this.Data.GetHashCode());
         }
     }
 }

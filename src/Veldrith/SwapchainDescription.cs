@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Veldrith
 {
@@ -65,12 +65,12 @@ namespace Veldrith
             PixelFormat? depthFormat,
             bool syncToVerticalBlank)
         {
-            Source = source;
-            Width = width;
-            Height = height;
-            DepthFormat = depthFormat;
-            SyncToVerticalBlank = syncToVerticalBlank;
-            ColorSrgb = false;
+            this.Source = source;
+            this.Width = width;
+            this.Height = height;
+            this.DepthFormat = depthFormat;
+            this.SyncToVerticalBlank = syncToVerticalBlank;
+            this.ColorSrgb = false;
         }
 
         /// <summary>
@@ -100,12 +100,12 @@ namespace Veldrith
             bool syncToVerticalBlank,
             bool colorSrgb)
         {
-            Source = source;
-            Width = width;
-            Height = height;
-            DepthFormat = depthFormat;
-            SyncToVerticalBlank = syncToVerticalBlank;
-            ColorSrgb = colorSrgb;
+            this.Source = source;
+            this.Width = width;
+            this.Height = height;
+            this.DepthFormat = depthFormat;
+            this.SyncToVerticalBlank = syncToVerticalBlank;
+            this.ColorSrgb = colorSrgb;
         }
 
         /// <summary>
@@ -115,12 +115,12 @@ namespace Veldrith
         /// <returns>True if all elements are equal; false otherswise.</returns>
         public bool Equals(SwapchainDescription other)
         {
-            return Source.Equals(other.Source)
-                   && Width.Equals(other.Width)
-                   && Height.Equals(other.Height)
-                   && DepthFormat == other.DepthFormat
-                   && SyncToVerticalBlank.Equals(other.SyncToVerticalBlank)
-                   && ColorSrgb.Equals(other.ColorSrgb);
+            return this.Source.Equals(other.Source)
+                   && this.Width.Equals(other.Width)
+                   && this.Height.Equals(other.Height)
+                   && this.DepthFormat == other.DepthFormat
+                   && this.SyncToVerticalBlank.Equals(other.SyncToVerticalBlank)
+                   && this.ColorSrgb.Equals(other.ColorSrgb);
         }
 
         /// <summary>
@@ -130,12 +130,12 @@ namespace Veldrith
         public override int GetHashCode()
         {
             return HashHelper.Combine(
-                Source.GetHashCode(),
-                Width.GetHashCode(),
-                Height.GetHashCode(),
-                DepthFormat.GetHashCode(),
-                SyncToVerticalBlank.GetHashCode(),
-                ColorSrgb.GetHashCode());
+                this.Source.GetHashCode(),
+                this.Width.GetHashCode(),
+                this.Height.GetHashCode(),
+                this.DepthFormat.GetHashCode(),
+                this.SyncToVerticalBlank.GetHashCode(),
+                this.ColorSrgb.GetHashCode());
         }
     }
 }

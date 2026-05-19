@@ -7,7 +7,7 @@ namespace Veldrith.MTL
     {
         public MTLSamplerState DeviceSampler { get; }
 
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => this._disposed;
 
         public override string Name { get; set; }
         private bool _disposed;
@@ -41,9 +41,9 @@ namespace Veldrith.MTL
 
         public override void Dispose()
         {
-            if (!_disposed)
+            if (!this._disposed)
             {
-                _disposed = true;
+                this._disposed = true;
                 ObjectiveCRuntime.release(DeviceSampler.NativePtr);
             }
         }

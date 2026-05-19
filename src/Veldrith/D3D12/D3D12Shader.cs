@@ -18,17 +18,17 @@ namespace Veldrith.D3D12
 
         public byte[] ShaderBytes { get; }
         public bool Debug { get; }
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => this._disposed;
 
         public override string Name
         {
-            get => _name;
-            set => _name = value;
+            get => this._name;
+            set => this._name = value;
         }
 
         public override void Dispose()
         {
-            _disposed = true;
+            this._disposed = true;
         }
 
         private static byte[] EnsureDxbcBytecode(ShaderDescription description)

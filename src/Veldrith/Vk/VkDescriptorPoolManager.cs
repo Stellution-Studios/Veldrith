@@ -14,14 +14,14 @@ namespace Veldrith.Vk
         public VkDescriptorPoolManager(VkGraphicsDevice gd)
         {
             this.gd = gd;
-            _pools.Add(createNewPool());
+            this._pools.Add(CreateNewPool());
         }
 
         public unsafe DescriptorAllocationToken Allocate(DescriptorResourceCounts counts, VkDescriptorSetLayout setLayout)
         {
-            lock (@lock)
+            lock (this.@lock)
             {
-                var pool = getPool(counts);
+                var pool = GetPool(counts);
                 var dsAi = VkDescriptorSetAllocateInfo.New();
                 dsAi.descriptorSetCount = 1;
                 dsAi.pSetLayouts = &setLayout;
@@ -35,9 +35,9 @@ namespace Veldrith.Vk
 
         public void Free(DescriptorAllocationToken token, DescriptorResourceCounts counts)
         {
-            lock (@lock)
+            lock (this.@lock)
             {
-                foreach (var poolInfo in _pools)
+                foreach (var poolInfo in this._pools)
                 {
                     if (poolInfo.Pool == token.Pool)
                         poolInfo.Free(gd.Device, token, counts);
@@ -47,29 +47,29 @@ namespace Veldrith.Vk
 
         internal unsafe void DestroyAll()
         {
-            foreach (var poolInfo in _pools)
+            foreach (var poolInfo in this._pools)
                 vkDestroyDescriptorPool(gd.Device, poolInfo.Pool, null);
         }
 
-        private VkDescriptorPool getPool(DescriptorResourceCounts counts)
+        private VkDescriptorPool GetPool(DescriptorResourceCounts counts)
         {
-            lock (@lock)
+            lock (this.@lock)
             {
-                foreach (var poolInfo in _pools)
+                foreach (var poolInfo in this._pools)
                 {
                     if (poolInfo.Allocate(counts))
                         return poolInfo.Pool;
                 }
 
-                var newPool = createNewPool();
-                _pools.Add(newPool);
+                var newPool = CreateNewPool();
+                this._pools.Add(newPool);
                 bool result = newPool.Allocate(counts);
                 Debug.Assert(result);
                 return newPool.Pool;
             }
         }
 
-        private unsafe PoolInfo createNewPool()
+        private unsafe PoolInfo CreateNewPool()
         {
             const uint total_sets = 1000;
             const uint descriptor_count = 100;
@@ -118,36 +118,36 @@ namespace Veldrith.Vk
 
             public PoolInfo(VkDescriptorPool pool, uint totalSets, uint descriptorCount)
             {
-                Pool = pool;
-                RemainingSets = totalSets;
-                UniformBufferCount = descriptorCount;
-                UniformBufferDynamicCount = descriptorCount;
-                SampledImageCount = descriptorCount;
-                SamplerCount = descriptorCount;
-                StorageBufferCount = descriptorCount;
-                StorageBufferDynamicCount = descriptorCount;
-                StorageImageCount = descriptorCount;
+                this.Pool = pool;
+                this.RemainingSets = totalSets;
+                this.UniformBufferCount = descriptorCount;
+                this.UniformBufferDynamicCount = descriptorCount;
+                this.SampledImageCount = descriptorCount;
+                this.SamplerCount = descriptorCount;
+                this.StorageBufferCount = descriptorCount;
+                this.StorageBufferDynamicCount = descriptorCount;
+                this.StorageImageCount = descriptorCount;
             }
 
             internal bool Allocate(DescriptorResourceCounts counts)
             {
-                if (RemainingSets > 0
-                    && UniformBufferCount >= counts.UniformBufferCount
-                    && UniformBufferDynamicCount >= counts.UniformBufferDynamicCount
-                    && SampledImageCount >= counts.SampledImageCount
-                    && SamplerCount >= counts.SamplerCount
-                    && StorageBufferCount >= counts.StorageBufferCount
-                    && StorageBufferDynamicCount >= counts.StorageBufferDynamicCount
-                    && StorageImageCount >= counts.StorageImageCount)
+                if (this.RemainingSets > 0
+                    && this.UniformBufferCount >= counts.UniformBufferCount
+                    && this.UniformBufferDynamicCount >= counts.UniformBufferDynamicCount
+                    && this.SampledImageCount >= counts.SampledImageCount
+                    && this.SamplerCount >= counts.SamplerCount
+                    && this.StorageBufferCount >= counts.StorageBufferCount
+                    && this.StorageBufferDynamicCount >= counts.StorageBufferDynamicCount
+                    && this.StorageImageCount >= counts.StorageImageCount)
                 {
-                    RemainingSets -= 1;
-                    UniformBufferCount -= counts.UniformBufferCount;
-                    UniformBufferDynamicCount -= counts.UniformBufferDynamicCount;
-                    SampledImageCount -= counts.SampledImageCount;
-                    SamplerCount -= counts.SamplerCount;
-                    StorageBufferCount -= counts.StorageBufferCount;
-                    StorageBufferDynamicCount -= counts.StorageBufferDynamicCount;
-                    StorageImageCount -= counts.StorageImageCount;
+                    this.RemainingSets -= 1;
+                    this.UniformBufferCount -= counts.UniformBufferCount;
+                    this.UniformBufferDynamicCount -= counts.UniformBufferDynamicCount;
+                    this.SampledImageCount -= counts.SampledImageCount;
+                    this.SamplerCount -= counts.SamplerCount;
+                    this.StorageBufferCount -= counts.StorageBufferCount;
+                    this.StorageBufferDynamicCount -= counts.StorageBufferDynamicCount;
+                    this.StorageImageCount -= counts.StorageImageCount;
                     return true;
                 }
 
@@ -157,15 +157,15 @@ namespace Veldrith.Vk
             internal void Free(VkDevice device, DescriptorAllocationToken token, DescriptorResourceCounts counts)
             {
                 var set = token.Set;
-                vkFreeDescriptorSets(device, Pool, 1, ref set);
+                vkFreeDescriptorSets(device, this.Pool, 1, ref set);
 
-                RemainingSets += 1;
+                this.RemainingSets += 1;
 
-                UniformBufferCount += counts.UniformBufferCount;
-                SampledImageCount += counts.SampledImageCount;
-                SamplerCount += counts.SamplerCount;
-                StorageBufferCount += counts.StorageBufferCount;
-                StorageImageCount += counts.StorageImageCount;
+                this.UniformBufferCount += counts.UniformBufferCount;
+                this.SampledImageCount += counts.SampledImageCount;
+                this.SamplerCount += counts.SamplerCount;
+                this.StorageBufferCount += counts.StorageBufferCount;
+                this.StorageImageCount += counts.StorageImageCount;
             }
         }
     }
@@ -177,8 +177,8 @@ namespace Veldrith.Vk
 
         public DescriptorAllocationToken(VkDescriptorSet set, VkDescriptorPool pool)
         {
-            Set = set;
-            Pool = pool;
+            this.Set = set;
+            this.Pool = pool;
         }
     }
 }

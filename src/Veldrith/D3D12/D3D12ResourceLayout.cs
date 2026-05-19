@@ -9,22 +9,22 @@ namespace Veldrith.D3D12
         public D3D12ResourceLayout(ref ResourceLayoutDescription description)
             : base(ref description)
         {
-            _elements = Util.ShallowClone(description.Elements);
+            this._elements = Util.ShallowClone(description.Elements);
         }
 
-        internal ResourceLayoutElementDescription[] Elements => _elements;
+        internal ResourceLayoutElementDescription[] Elements => this._elements;
 
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => this._disposed;
 
         public override string Name
         {
-            get => _name;
-            set => _name = value;
+            get => this._name;
+            set => this._name = value;
         }
 
         public override void Dispose()
         {
-            _disposed = true;
+            this._disposed = true;
         }
     }
 }

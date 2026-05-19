@@ -7,8 +7,8 @@ namespace Veldrith.Vk
 {
     internal static unsafe class VulkanUtil
     {
-        private static readonly Lazy<bool> _s_is_vulkan_loaded = new Lazy<bool>(tryLoadVulkan);
-        private static readonly Lazy<string[]> _s_instance_extensions = new Lazy<string[]>(enumerateInstanceExtensions);
+        private static readonly Lazy<bool> _s_is_vulkan_loaded = new Lazy<bool>(TryLoadVulkan);
+        private static readonly Lazy<string[]> _s_instance_extensions = new Lazy<string[]>(EnumerateInstanceExtensions);
 
         [Conditional("DEBUG")]
         public static void CheckResult(VkResult result)
@@ -265,7 +265,7 @@ namespace Veldrith.Vk
                 1, &barrier);
         }
 
-        private static string[] enumerateInstanceExtensions()
+        private static string[] EnumerateInstanceExtensions()
         {
             if (!IsVulkanLoaded()) return Array.Empty<string>();
 
@@ -288,7 +288,7 @@ namespace Veldrith.Vk
             return ret;
         }
 
-        private static bool tryLoadVulkan()
+        private static bool TryLoadVulkan()
         {
             try
             {

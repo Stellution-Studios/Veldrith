@@ -19,9 +19,9 @@ namespace Veldrith.D3D12
         internal SamplerDescription Description => description;
         internal CpuDescriptorHandle GetOrCreateDescriptor()
         {
-            if (_descriptorHeap == null)
+            if (this._descriptorHeap == null)
             {
-                _descriptorHeap = gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(
+                this._descriptorHeap = gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(
                     DescriptorHeapType.Sampler,
                     1,
                     DescriptorHeapFlags.None));
@@ -43,24 +43,24 @@ namespace Veldrith.D3D12
                     MinLOD = description.MinimumLod,
                     MaxLOD = description.MaximumLod
                 };
-                gd.Device.CreateSampler(ref samplerDescription, _descriptorHeap.GetCPUDescriptorHandleForHeapStart());
+                gd.Device.CreateSampler(ref samplerDescription, this._descriptorHeap.GetCPUDescriptorHandleForHeapStart());
             }
 
-            return _descriptorHeap.GetCPUDescriptorHandleForHeapStart();
+            return this._descriptorHeap.GetCPUDescriptorHandleForHeapStart();
         }
 
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => this._disposed;
 
         public override string Name
         {
-            get => _name;
-            set => _name = value;
+            get => this._name;
+            set => this._name = value;
         }
 
         public override void Dispose()
         {
-            _descriptorHeap?.Dispose();
-            _disposed = true;
+            this._descriptorHeap?.Dispose();
+            this._disposed = true;
         }
     }
 }

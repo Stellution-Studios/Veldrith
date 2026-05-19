@@ -1,4 +1,4 @@
-﻿namespace Veldrith
+namespace Veldrith
 {
     /// <summary>
     ///     A structure describing Vulkan-specific device creation options.
@@ -30,8 +30,8 @@
         /// </param>
         public VulkanDeviceOptions(string[] instanceExtensions, string[] deviceExtensions)
         {
-            InstanceExtensions = instanceExtensions;
-            DeviceExtensions = deviceExtensions;
+            this.InstanceExtensions = instanceExtensions;
+            this.DeviceExtensions = deviceExtensions;
         }
     }
 }

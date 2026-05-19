@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Veldrith
 {
@@ -35,10 +35,10 @@ namespace Veldrith
         /// <param name="stages">The <see cref="ShaderStages" /> in which this element is used.</param>
         public ResourceLayoutElementDescription(string name, ResourceKind kind, ShaderStages stages)
         {
-            Name = name;
-            Kind = kind;
-            Stages = stages;
-            Options = ResourceLayoutElementOptions.None;
+            this.Name = name;
+            this.Kind = kind;
+            this.Stages = stages;
+            this.Options = ResourceLayoutElementOptions.None;
         }
 
         /// <summary>
@@ -54,10 +54,10 @@ namespace Veldrith
             ShaderStages stages,
             ResourceLayoutElementOptions options)
         {
-            Name = name;
-            Kind = kind;
-            Stages = stages;
-            Options = options;
+            this.Name = name;
+            this.Kind = kind;
+            this.Stages = stages;
+            this.Options = options;
         }
 
         /// <summary>
@@ -67,7 +67,7 @@ namespace Veldrith
         /// <returns>True if all elements are equal; false otherswise.</returns>
         public bool Equals(ResourceLayoutElementDescription other)
         {
-            return Name == other.Name && Kind == other.Kind && Stages == other.Stages && Options == other.Options;
+            return this.Name == other.Name && this.Kind == other.Kind && this.Stages == other.Stages && this.Options == other.Options;
         }
 
         /// <summary>
@@ -76,7 +76,7 @@ namespace Veldrith
         /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
         public override int GetHashCode()
         {
-            return HashHelper.Combine(Name.GetHashCode(), (int)Kind, (int)Stages, (int)Options);
+            return HashHelper.Combine(this.Name.GetHashCode(), (int)this.Kind, (int)this.Stages, (int)this.Options);
         }
     }
 

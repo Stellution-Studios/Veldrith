@@ -48,11 +48,11 @@ namespace Veldrith
         /// </summary>
         public string DriverInfo => gd.DriverInfo;
 
-        public ReadOnlyCollection<string> AvailableInstanceLayers => _instanceLayers.Value;
+        public ReadOnlyCollection<string> AvailableInstanceLayers => this._instanceLayers.Value;
 
         public ReadOnlyCollection<string> AvailableInstanceExtensions { get; }
 
-        public ReadOnlyCollection<ExtensionProperties> AvailableDeviceExtensions => _deviceExtensions.Value;
+        public ReadOnlyCollection<ExtensionProperties> AvailableDeviceExtensions => this._deviceExtensions.Value;
 
         public readonly struct ExtensionProperties
         {
@@ -61,13 +61,13 @@ namespace Veldrith
 
             public ExtensionProperties(string name, uint specVersion)
             {
-                Name = name ?? throw new ArgumentNullException(nameof(name));
-                SpecVersion = specVersion;
+                this.Name = name ?? throw new ArgumentNullException(nameof(name));
+                this.SpecVersion = specVersion;
             }
 
             public override string ToString()
             {
-                return Name;
+                return this.Name;
             }
         }
 
@@ -78,9 +78,9 @@ namespace Veldrith
         internal BackendInfoVulkan(VkGraphicsDevice gd)
         {
             this.gd = gd;
-            _instanceLayers = new Lazy<ReadOnlyCollection<string>>(() => new ReadOnlyCollection<string>(VulkanUtil.EnumerateInstanceLayers()));
+            this._instanceLayers = new Lazy<ReadOnlyCollection<string>>(() => new ReadOnlyCollection<string>(VulkanUtil.EnumerateInstanceLayers()));
             AvailableInstanceExtensions = new ReadOnlyCollection<string>(VulkanUtil.GetInstanceExtensions());
-            _deviceExtensions = new Lazy<ReadOnlyCollection<ExtensionProperties>>(enumerateDeviceExtensions);
+            this._deviceExtensions = new Lazy<ReadOnlyCollection<ExtensionProperties>>(EnumerateDeviceExtensions);
         }
 
         /// <summary>
@@ -129,7 +129,7 @@ namespace Veldrith
             gd.TransitionImageLayout(Util.AssertSubtype<Texture, VkTexture>(texture), (VkImageLayout)layout);
         }
 
-        private unsafe ReadOnlyCollection<ExtensionProperties> enumerateDeviceExtensions()
+        private unsafe ReadOnlyCollection<ExtensionProperties> EnumerateDeviceExtensions()
         {
             var vkProps = gd.GetDeviceExtensionProperties();
             var veldridProps = new ExtensionProperties[vkProps.Length];

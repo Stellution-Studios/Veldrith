@@ -1,4 +1,4 @@
-﻿namespace Veldrith.Vk
+namespace Veldrith.Vk
 {
     internal struct DescriptorResourceCounts
     {
@@ -19,13 +19,13 @@
             uint storageBufferDynamicCount,
             uint storageImageCount)
         {
-            UniformBufferCount = uniformBufferCount;
-            UniformBufferDynamicCount = uniformBufferDynamicCount;
-            SampledImageCount = sampledImageCount;
-            SamplerCount = samplerCount;
-            StorageBufferCount = storageBufferCount;
-            StorageBufferDynamicCount = storageBufferDynamicCount;
-            StorageImageCount = storageImageCount;
+            this.UniformBufferCount = uniformBufferCount;
+            this.UniformBufferDynamicCount = uniformBufferDynamicCount;
+            this.SampledImageCount = sampledImageCount;
+            this.SamplerCount = samplerCount;
+            this.StorageBufferCount = storageBufferCount;
+            this.StorageBufferDynamicCount = storageBufferDynamicCount;
+            this.StorageImageCount = storageImageCount;
         }
     }
 }

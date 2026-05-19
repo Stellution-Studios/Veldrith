@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Veldrith
 {
@@ -77,9 +77,9 @@ namespace Veldrith
                     $"{nameof(mipLevel)} must be less than {nameof(target)}.{nameof(Texture.MipLevels)}.");
             }
 #endif
-            Target = target;
-            ArrayLayer = arrayLayer;
-            MipLevel = mipLevel;
+            this.Target = target;
+            this.ArrayLayer = arrayLayer;
+            this.MipLevel = mipLevel;
         }
 
         /// <summary>
@@ -89,7 +89,7 @@ namespace Veldrith
         /// <returns>True if all elements and all array elements are equal; false otherswise.</returns>
         public bool Equals(FramebufferAttachmentDescription other)
         {
-            return Target.Equals(other.Target) && ArrayLayer.Equals(other.ArrayLayer) && MipLevel.Equals(other.MipLevel);
+            return this.Target.Equals(other.Target) && this.ArrayLayer.Equals(other.ArrayLayer) && this.MipLevel.Equals(other.MipLevel);
         }
 
         /// <summary>
@@ -98,7 +98,7 @@ namespace Veldrith
         /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
         public override int GetHashCode()
         {
-            return HashHelper.Combine(Target.GetHashCode(), ArrayLayer.GetHashCode(), MipLevel.GetHashCode());
+            return HashHelper.Combine(this.Target.GetHashCode(), this.ArrayLayer.GetHashCode(), this.MipLevel.GetHashCode());
         }
     }
 }

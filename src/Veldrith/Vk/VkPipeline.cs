@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using Vulkan;
 using static Vulkan.VulkanNative;
 using static Veldrith.Vk.VulkanUtil;
@@ -7,9 +7,9 @@ namespace Veldrith.Vk
 {
     internal unsafe class VkPipeline : Pipeline
     {
-        public Vulkan.VkPipeline DevicePipeline => _devicePipeline;
+        public Vulkan.VkPipeline DevicePipeline => this._devicePipeline;
 
-        public VkPipelineLayout PipelineLayout => _pipelineLayout;
+        public VkPipelineLayout PipelineLayout => this._pipelineLayout;
 
         public uint ResourceSetCount { get; }
         public uint DynamicOffsetsCount { get; }
@@ -19,14 +19,14 @@ namespace Veldrith.Vk
 
         public ResourceRefCount RefCount { get; }
 
-        public override bool IsDisposed => _destroyed;
+        public override bool IsDisposed => this._destroyed;
 
         public override string Name
         {
-            get => _name;
+            get => this._name;
             set
             {
-                _name = value;
+                this._name = value;
                 gd.SetResourceName(this, value);
             }
         }
@@ -43,7 +43,7 @@ namespace Veldrith.Vk
         {
             this.gd = gd;
             IsComputePipeline = false;
-            RefCount = new ResourceRefCount(disposeCore);
+            RefCount = new ResourceRefCount(DisposeCore);
 
             var pipelineCi = VkGraphicsPipelineCreateInfo.New();
 
@@ -259,8 +259,8 @@ namespace Veldrith.Vk
             for (int i = 0; i < resourceLayouts.Length; i++) dsls[i] = Util.AssertSubtype<ResourceLayout, VkResourceLayout>(resourceLayouts[i]).DescriptorSetLayout;
             pipelineLayoutCi.pSetLayouts = dsls;
 
-            vkCreatePipelineLayout(this.gd.Device, ref pipelineLayoutCi, null, out _pipelineLayout);
-            pipelineCi.layout = _pipelineLayout;
+            vkCreatePipelineLayout(this.gd.Device, ref pipelineLayoutCi, null, out this._pipelineLayout);
+            pipelineCi.layout = this._pipelineLayout;
 
             // Create fake RenderPass for compatibility.
 
@@ -338,12 +338,12 @@ namespace Veldrith.Vk
             renderPassCi.dependencyCount = 1;
             renderPassCi.pDependencies = &subpassDependency;
 
-            var creationResult = vkCreateRenderPass(this.gd.Device, ref renderPassCi, null, out _renderPass);
+            var creationResult = vkCreateRenderPass(this.gd.Device, ref renderPassCi, null, out this._renderPass);
             CheckResult(creationResult);
 
-            pipelineCi.renderPass = _renderPass;
+            pipelineCi.renderPass = this._renderPass;
 
-            var result = vkCreateGraphicsPipelines(this.gd.Device, VkPipelineCache.Null, 1, ref pipelineCi, null, out _devicePipeline);
+            var result = vkCreateGraphicsPipelines(this.gd.Device, VkPipelineCache.Null, 1, ref pipelineCi, null, out this._devicePipeline);
             CheckResult(result);
 
             ResourceSetCount = (uint)description.ResourceLayouts.Length;
@@ -357,7 +357,7 @@ namespace Veldrith.Vk
         {
             this.gd = gd;
             IsComputePipeline = true;
-            RefCount = new ResourceRefCount(disposeCore);
+            RefCount = new ResourceRefCount(DisposeCore);
 
             var pipelineCi = VkComputePipelineCreateInfo.New();
 
@@ -369,8 +369,8 @@ namespace Veldrith.Vk
             for (int i = 0; i < resourceLayouts.Length; i++) dsls[i] = Util.AssertSubtype<ResourceLayout, VkResourceLayout>(resourceLayouts[i]).DescriptorSetLayout;
             pipelineLayoutCi.pSetLayouts = dsls;
 
-            vkCreatePipelineLayout(this.gd.Device, ref pipelineLayoutCi, null, out _pipelineLayout);
-            pipelineCi.layout = _pipelineLayout;
+            vkCreatePipelineLayout(this.gd.Device, ref pipelineLayoutCi, null, out this._pipelineLayout);
+            pipelineCi.layout = this._pipelineLayout;
 
             // Shader Stage
 
@@ -419,7 +419,7 @@ namespace Veldrith.Vk
                 1,
                 ref pipelineCi,
                 null,
-                out _devicePipeline);
+                out this._devicePipeline);
             CheckResult(result);
 
             ResourceSetCount = (uint)description.ResourceLayouts.Length;
@@ -437,14 +437,14 @@ namespace Veldrith.Vk
 
         #endregion
 
-        private void disposeCore()
+        private void DisposeCore()
         {
-            if (!_destroyed)
+            if (!this._destroyed)
             {
-                _destroyed = true;
-                vkDestroyPipelineLayout(gd.Device, _pipelineLayout, null);
-                vkDestroyPipeline(gd.Device, _devicePipeline, null);
-                if (!IsComputePipeline) vkDestroyRenderPass(gd.Device, _renderPass, null);
+                this._destroyed = true;
+                vkDestroyPipelineLayout(gd.Device, this._pipelineLayout, null);
+                vkDestroyPipeline(gd.Device, this._devicePipeline, null);
+                if (!IsComputePipeline) vkDestroyRenderPass(gd.Device, this._renderPass, null);
             }
         }
     }

@@ -12,7 +12,7 @@ namespace Veldrith.MTL
 #endif
         public ResourceBindingInfo GetBindingInfo(int index)
         {
-            return _bindingInfosByVdIndex[index];
+            return this._bindingInfosByVdIndex[index];
         }
 
 #if !VALIDATE_USAGE
@@ -35,13 +35,13 @@ namespace Veldrith.MTL
             }
 #endif
 
-            _bindingInfosByVdIndex = new ResourceBindingInfo[elements.Length];
+            this._bindingInfosByVdIndex = new ResourceBindingInfo[elements.Length];
 
             uint bufferIndex = 0;
             uint texIndex = 0;
             uint samplerIndex = 0;
 
-            for (int i = 0; i < _bindingInfosByVdIndex.Length; i++)
+            for (int i = 0; i < this._bindingInfosByVdIndex.Length; i++)
             {
                 uint slot;
 
@@ -74,7 +74,7 @@ namespace Veldrith.MTL
                     default: throw Illegal.Value<ResourceKind>();
                 }
 
-                _bindingInfosByVdIndex[i] = new ResourceBindingInfo(
+                this._bindingInfosByVdIndex[i] = new ResourceBindingInfo(
                     slot,
                     elements[i].Stages,
                     elements[i].Kind,
@@ -88,11 +88,11 @@ namespace Veldrith.MTL
 
         public override string Name { get; set; }
 
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => this._disposed;
 
         public override void Dispose()
         {
-            _disposed = true;
+            this._disposed = true;
         }
 
         internal struct ResourceBindingInfo
@@ -104,10 +104,10 @@ namespace Veldrith.MTL
 
             public ResourceBindingInfo(uint slot, ShaderStages stages, ResourceKind kind, bool dynamicBuffer)
             {
-                Slot = slot;
-                Stages = stages;
-                Kind = kind;
-                DynamicBuffer = dynamicBuffer;
+                this.Slot = slot;
+                this.Stages = stages;
+                this.Kind = kind;
+                this.DynamicBuffer = dynamicBuffer;
             }
         }
     }

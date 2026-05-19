@@ -32,7 +32,7 @@ namespace Veldrith.MTL
         public override TextureType Type { get; }
 
         public override TextureSampleCount SampleCount { get; }
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => this._disposed;
         public virtual MTLPixelFormat MtlPixelFormat { get; }
         public virtual MTLTextureType MtlTextureType { get; }
         public MTLStorageMode MtlStorageMode { get; }
@@ -156,9 +156,9 @@ namespace Veldrith.MTL
 
         private protected override void DisposeCore()
         {
-            if (!_disposed)
+            if (!this._disposed)
             {
-                _disposed = true;
+                this._disposed = true;
 
                 // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
                 if (StagingBuffer.IsNull)

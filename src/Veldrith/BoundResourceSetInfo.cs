@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.CompilerServices;
 
 namespace Veldrith
@@ -10,17 +10,17 @@ namespace Veldrith
 
         public BoundResourceSetInfo(ResourceSet set, uint offsetsCount, ref uint offsets)
         {
-            Set = set;
-            Offsets = new SmallFixedOrDynamicArray(offsetsCount, ref offsets);
+            this.Set = set;
+            this.Offsets = new SmallFixedOrDynamicArray(offsetsCount, ref offsets);
         }
 
         public bool Equals(ResourceSet set, uint offsetsCount, ref uint offsets)
         {
-            if (set != Set || offsetsCount != Offsets.Count) return false;
+            if (set != this.Set || offsetsCount != this.Offsets.Count) return false;
 
-            for (uint i = 0; i < Offsets.Count; i++)
+            for (uint i = 0; i < this.Offsets.Count; i++)
             {
-                if (Unsafe.Add(ref offsets, (int)i) != Offsets.Get(i))
+                if (Unsafe.Add(ref offsets, (int)i) != this.Offsets.Get(i))
                     return false;
             }
 
@@ -29,11 +29,11 @@ namespace Veldrith
 
         public bool Equals(BoundResourceSetInfo other)
         {
-            if (Set != other.Set || Offsets.Count != other.Offsets.Count) return false;
+            if (this.Set != other.Set || this.Offsets.Count != other.Offsets.Count) return false;
 
-            for (uint i = 0; i < Offsets.Count; i++)
+            for (uint i = 0; i < this.Offsets.Count; i++)
             {
-                if (Offsets.Get(i) != other.Offsets.Get(i)) return false;
+                if (this.Offsets.Get(i) != other.Offsets.Get(i)) return false;
             }
 
             return true;

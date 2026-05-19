@@ -14,32 +14,32 @@ namespace Veldrith
 
         public uint Get(uint i)
         {
-            return Count > _max_fixed_values ? Data[i] : _fixedData[i];
+            return this.Count > _max_fixed_values ? this.Data[i] : this._fixedData[i];
         }
 
         public SmallFixedOrDynamicArray(uint count, ref uint data)
         {
             if (count > _max_fixed_values)
             {
-                Data = ArrayPool<uint>.Shared.Rent((int)count);
+                this.Data = ArrayPool<uint>.Shared.Rent((int)count);
                 for (int i = 0; i < count; i++)
                 {
-                    Data[i] = Unsafe.Add(ref data, i);
+                    this.Data[i] = Unsafe.Add(ref data, i);
                 }
             }
             else
             {
-                for (int i = 0; i < count; i++) _fixedData[i] = Unsafe.Add(ref data, i);
+                for (int i = 0; i < count; i++) this._fixedData[i] = Unsafe.Add(ref data, i);
 
-                Data = null;
+                this.Data = null;
             }
 
-            Count = count;
+            this.Count = count;
         }
 
         public void Dispose()
         {
-            if (Data != null) ArrayPool<uint>.Shared.Return(Data);
+            if (this.Data != null) ArrayPool<uint>.Shared.Return(this.Data);
         }
     }
 }

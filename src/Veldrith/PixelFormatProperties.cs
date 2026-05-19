@@ -1,4 +1,4 @@
-﻿namespace Veldrith
+namespace Veldrith
 {
     /// <summary>
     ///     Describes the properties that are supported for a particular combination of <see cref="PixelFormat" />,
@@ -55,11 +55,11 @@
             uint maxArrayLayers,
             uint sampleCounts)
         {
-            MaxWidth = maxWidth;
-            MaxHeight = maxHeight;
-            MaxDepth = maxDepth;
-            MaxMipLevels = maxMipLevels;
-            MaxArrayLayers = maxArrayLayers;
+            this.MaxWidth = maxWidth;
+            this.MaxHeight = maxHeight;
+            this.MaxDepth = maxDepth;
+            this.MaxMipLevels = maxMipLevels;
+            this.MaxArrayLayers = maxArrayLayers;
             this.sampleCounts = sampleCounts;
         }
     }

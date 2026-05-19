@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Veldrith
 {
@@ -22,7 +22,7 @@ namespace Veldrith
         /// </param>
         public ResourceLayoutDescription(params ResourceLayoutElementDescription[] elements)
         {
-            Elements = elements;
+            this.Elements = elements;
         }
 
         /// <summary>
@@ -32,7 +32,7 @@ namespace Veldrith
         /// <returns>True if all array elements are equal; false otherswise.</returns>
         public bool Equals(ResourceLayoutDescription other)
         {
-            return Util.ArrayEqualsEquatable(Elements, other.Elements);
+            return Util.ArrayEqualsEquatable(this.Elements, other.Elements);
         }
 
         /// <summary>
@@ -41,7 +41,7 @@ namespace Veldrith
         /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
         public override int GetHashCode()
         {
-            return HashHelper.Array(Elements);
+            return HashHelper.Array(this.Elements);
         }
     }
 }

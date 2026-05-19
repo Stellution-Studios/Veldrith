@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Vulkan;
@@ -36,9 +36,9 @@ namespace Veldrith.Vk
 
         public void Dispose()
         {
-            foreach (var kvp in _allocatorsByMemoryType) kvp.Value.Dispose();
+            foreach (var kvp in this._allocatorsByMemoryType) kvp.Value.Dispose();
 
-            foreach (var kvp in _allocatorsByMemoryTypeUnmapped) kvp.Value.Dispose();
+            foreach (var kvp in this._allocatorsByMemoryTypeUnmapped) kvp.Value.Dispose();
         }
 
         #endregion
@@ -99,7 +99,7 @@ namespace Veldrith.Vk
                 size = (size / bufferImageGranularity + 1) * bufferImageGranularity;
             }
 
-            lock (@lock)
+            lock (this.@lock)
             {
                 if (!TryFindMemoryType(memProperties, memoryTypeBits, flags, out uint memoryTypeIndex)) throw new VeldridException("No suitable memory type.");
 
@@ -138,7 +138,7 @@ namespace Veldrith.Vk
                     return new VkMemoryBlock(memory, 0, size, memoryTypeBits, mappedPtr, true);
                 }
 
-                var allocator = getAllocator(memoryTypeIndex, persistentMapped);
+                var allocator = GetAllocator(memoryTypeIndex, persistentMapped);
                 bool result = allocator.Allocate(size, alignment, out var ret);
                 if (!result) throw new VeldridException("Unable to allocate sufficient Vulkan memory.");
 
@@ -148,12 +148,12 @@ namespace Veldrith.Vk
 
         public void Free(VkMemoryBlock block)
         {
-            lock (@lock)
+            lock (this.@lock)
             {
                 if (block.DedicatedAllocation)
                     vkFreeMemory(device, block.DeviceMemory, null);
                 else
-                    getAllocator(block.MemoryTypeIndex, block.IsPersistentMapped).Free(block);
+                    GetAllocator(block.MemoryTypeIndex, block.IsPersistentMapped).Free(block);
             }
         }
 
@@ -165,24 +165,24 @@ namespace Veldrith.Vk
             return (IntPtr)ret;
         }
 
-        private ChunkAllocatorSet getAllocator(uint memoryTypeIndex, bool persistentMapped)
+        private ChunkAllocatorSet GetAllocator(uint memoryTypeIndex, bool persistentMapped)
         {
             ChunkAllocatorSet ret;
 
             if (persistentMapped)
             {
-                if (!_allocatorsByMemoryType.TryGetValue(memoryTypeIndex, out ret))
+                if (!this._allocatorsByMemoryType.TryGetValue(memoryTypeIndex, out ret))
                 {
                     ret = new ChunkAllocatorSet(device, memoryTypeIndex, true);
-                    _allocatorsByMemoryType.Add(memoryTypeIndex, ret);
+                    this._allocatorsByMemoryType.Add(memoryTypeIndex, ret);
                 }
             }
             else
             {
-                if (!_allocatorsByMemoryTypeUnmapped.TryGetValue(memoryTypeIndex, out ret))
+                if (!this._allocatorsByMemoryTypeUnmapped.TryGetValue(memoryTypeIndex, out ret))
                 {
                     ret = new ChunkAllocatorSet(device, memoryTypeIndex, false);
-                    _allocatorsByMemoryTypeUnmapped.Add(memoryTypeIndex, ret);
+                    this._allocatorsByMemoryTypeUnmapped.Add(memoryTypeIndex, ret);
                 }
             }
 
@@ -207,27 +207,27 @@ namespace Veldrith.Vk
 
             public void Dispose()
             {
-                foreach (var allocator in _allocators) allocator.Dispose();
+                foreach (var allocator in this._allocators) allocator.Dispose();
             }
 
             #endregion
 
             public bool Allocate(ulong size, ulong alignment, out VkMemoryBlock block)
             {
-                foreach (var allocator in _allocators)
+                foreach (var allocator in this._allocators)
                 {
                     if (allocator.Allocate(size, alignment, out block))
                         return true;
                 }
 
                 var newAllocator = new ChunkAllocator(device, memoryTypeIndex, persistentMapped);
-                _allocators.Add(newAllocator);
+                this._allocators.Add(newAllocator);
                 return newAllocator.Allocate(size, alignment, out block);
             }
 
             public void Free(VkMemoryBlock block)
             {
-                foreach (var chunk in _allocators)
+                foreach (var chunk in this._allocators)
                 {
                     if (chunk.Memory == block.DeviceMemory)
                         chunk.Free(block);
@@ -275,7 +275,7 @@ namespace Veldrith.Vk
                     this.memoryTypeIndex,
                     mappedPtr,
                     false);
-                _freeBlocks.Add(initialBlock);
+                this._freeBlocks.Add(initialBlock);
             }
 
             #region Disposal
@@ -291,9 +291,9 @@ namespace Veldrith.Vk
             {
                 checked
                 {
-                    for (int i = 0; i < _freeBlocks.Count; i++)
+                    for (int i = 0; i < this._freeBlocks.Count; i++)
                     {
-                        var freeBlock = _freeBlocks[i];
+                        var freeBlock = this._freeBlocks[i];
                         ulong alignedBlockSize = freeBlock.Size;
 
                         if (freeBlock.Offset % alignment != 0)
@@ -306,7 +306,7 @@ namespace Veldrith.Vk
 
                         if (alignedBlockSize >= size) // Valid match -- split it and return.
                         {
-                            _freeBlocks.RemoveAt(i);
+                            this._freeBlocks.RemoveAt(i);
 
                             freeBlock.Size = alignedBlockSize;
                             if (freeBlock.Offset % alignment != 0) freeBlock.Offset += alignment - freeBlock.Offset % alignment;
@@ -322,7 +322,7 @@ namespace Veldrith.Vk
                                     memoryTypeIndex,
                                     freeBlock.BaseMappedPointer,
                                     false);
-                                _freeBlocks.Insert(i, splitBlock);
+                                this._freeBlocks.Insert(i, splitBlock);
                                 block = freeBlock;
                                 block.Size = size;
                             }
@@ -341,12 +341,12 @@ namespace Veldrith.Vk
 
             public void Free(VkMemoryBlock block)
             {
-                for (int i = 0; i < _freeBlocks.Count; i++)
+                for (int i = 0; i < this._freeBlocks.Count; i++)
                 {
-                    if (_freeBlocks[i].Offset > block.Offset)
+                    if (this._freeBlocks[i].Offset > block.Offset)
                     {
-                        _freeBlocks.Insert(i, block);
-                        mergeContiguousBlocks();
+                        this._freeBlocks.Insert(i, block);
+                        MergeContiguousBlocks();
 #if DEBUG
                         removeAllocatedBlock(block);
 #endif
@@ -354,27 +354,27 @@ namespace Veldrith.Vk
                     }
                 }
 
-                _freeBlocks.Add(block);
+                this._freeBlocks.Add(block);
 #if DEBUG
                 removeAllocatedBlock(block);
 #endif
             }
 
-            private void mergeContiguousBlocks()
+            private void MergeContiguousBlocks()
             {
                 int contiguousLength = 1;
 
-                for (int i = 0; i < _freeBlocks.Count - 1; i++)
+                for (int i = 0; i < this._freeBlocks.Count - 1; i++)
                 {
-                    ulong blockStart = _freeBlocks[i].Offset;
-                    while (i + contiguousLength < _freeBlocks.Count
-                           && _freeBlocks[i + contiguousLength - 1].End == _freeBlocks[i + contiguousLength].Offset)
+                    ulong blockStart = this._freeBlocks[i].Offset;
+                    while (i + contiguousLength < this._freeBlocks.Count
+                           && this._freeBlocks[i + contiguousLength - 1].End == this._freeBlocks[i + contiguousLength].Offset)
                         contiguousLength += 1;
 
                     if (contiguousLength > 1)
                     {
-                        ulong blockEnd = _freeBlocks[i + contiguousLength - 1].End;
-                        _freeBlocks.RemoveRange(i, contiguousLength);
+                        ulong blockEnd = this._freeBlocks[i + contiguousLength - 1].End;
+                        this._freeBlocks.RemoveRange(i, contiguousLength);
                         var mergedBlock = new VkMemoryBlock(
                             Memory,
                             blockStart,
@@ -382,7 +382,7 @@ namespace Veldrith.Vk
                             memoryTypeIndex,
                             mappedPtr,
                             false);
-                        _freeBlocks.Insert(i, mergedBlock);
+                        this._freeBlocks.Insert(i, mergedBlock);
                         contiguousLength = 0;
                     }
                 }
@@ -430,9 +430,9 @@ namespace Veldrith.Vk
         public ulong Offset;
         public ulong Size;
 
-        public void* BlockMappedPointer => (byte*)BaseMappedPointer + Offset;
-        public bool IsPersistentMapped => BaseMappedPointer != null;
-        public ulong End => Offset + Size;
+        public void* BlockMappedPointer => (byte*)this.BaseMappedPointer + this.Offset;
+        public bool IsPersistentMapped => this.BaseMappedPointer != null;
+        public ulong End => this.Offset + this.Size;
 
         public VkMemoryBlock(
             VkDeviceMemory memory,
@@ -442,19 +442,19 @@ namespace Veldrith.Vk
             void* mappedPtr,
             bool dedicatedAllocation)
         {
-            DeviceMemory = memory;
-            Offset = offset;
-            Size = size;
-            MemoryTypeIndex = memoryTypeIndex;
-            BaseMappedPointer = mappedPtr;
-            DedicatedAllocation = dedicatedAllocation;
+            this.DeviceMemory = memory;
+            this.Offset = offset;
+            this.Size = size;
+            this.MemoryTypeIndex = memoryTypeIndex;
+            this.BaseMappedPointer = mappedPtr;
+            this.DedicatedAllocation = dedicatedAllocation;
         }
 
         public bool Equals(VkMemoryBlock other)
         {
-            return DeviceMemory.Equals(other.DeviceMemory)
-                   && Offset.Equals(other.Offset)
-                   && Size.Equals(other.Size);
+            return this.DeviceMemory.Equals(other.DeviceMemory)
+                   && this.Offset.Equals(other.Offset)
+                   && this.Size.Equals(other.Size);
         }
     }
 }

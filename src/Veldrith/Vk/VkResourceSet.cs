@@ -6,7 +6,7 @@ namespace Veldrith.Vk
 {
     internal unsafe class VkResourceSet : ResourceSet
     {
-        public VkDescriptorSet DescriptorSet => _descriptorAllocationToken.Set;
+        public VkDescriptorSet DescriptorSet => this._descriptorAllocationToken.Set;
         public List<VkTexture> SampledTextures { get; } = new List<VkTexture>();
 
         public List<VkTexture> StorageTextures { get; } = new List<VkTexture>();
@@ -14,14 +14,14 @@ namespace Veldrith.Vk
         public ResourceRefCount RefCount { get; }
         public List<ResourceRefCount> RefCounts { get; } = new List<ResourceRefCount>();
 
-        public override bool IsDisposed => _destroyed;
+        public override bool IsDisposed => this._destroyed;
 
         public override string Name
         {
-            get => _name;
+            get => this._name;
             set
             {
-                _name = value;
+                this._name = value;
                 gd.SetResourceName(this, value);
             }
         }
@@ -37,12 +37,12 @@ namespace Veldrith.Vk
             : base(ref description)
         {
             this.gd = gd;
-            RefCount = new ResourceRefCount(disposeCore);
+            RefCount = new ResourceRefCount(DisposeCore);
             var vkLayout = Util.AssertSubtype<ResourceLayout, VkResourceLayout>(description.Layout);
 
             var dsl = vkLayout.DescriptorSetLayout;
-            _descriptorCounts = vkLayout.DescriptorResourceCounts;
-            _descriptorAllocationToken = this.gd.DescriptorPoolManager.Allocate(_descriptorCounts, dsl);
+            this._descriptorCounts = vkLayout.DescriptorResourceCounts;
+            this._descriptorAllocationToken = this.gd.DescriptorPoolManager.Allocate(this._descriptorCounts, dsl);
 
             var boundResources = description.BoundResources;
             uint descriptorWriteCount = (uint)boundResources.Length;
@@ -58,7 +58,7 @@ namespace Veldrith.Vk
                 descriptorWrites[i].descriptorCount = 1;
                 descriptorWrites[i].descriptorType = type;
                 descriptorWrites[i].dstBinding = (uint)i;
-                descriptorWrites[i].dstSet = _descriptorAllocationToken.Set;
+                descriptorWrites[i].dstSet = this._descriptorAllocationToken.Set;
 
                 if (type == VkDescriptorType.UniformBuffer || type == VkDescriptorType.UniformBufferDynamic
                                                            || type == VkDescriptorType.StorageBuffer || type == VkDescriptorType.StorageBufferDynamic)
@@ -112,12 +112,12 @@ namespace Veldrith.Vk
 
         #endregion
 
-        private void disposeCore()
+        private void DisposeCore()
         {
-            if (!_destroyed)
+            if (!this._destroyed)
             {
-                _destroyed = true;
-                gd.DescriptorPoolManager.Free(_descriptorAllocationToken, _descriptorCounts);
+                this._destroyed = true;
+                gd.DescriptorPoolManager.Free(this._descriptorAllocationToken, this._descriptorCounts);
             }
         }
     }

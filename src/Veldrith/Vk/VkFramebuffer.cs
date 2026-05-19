@@ -8,24 +8,24 @@ namespace Veldrith.Vk
 {
     internal unsafe class VkFramebuffer : VkFramebufferBase
     {
-        public override Vulkan.VkFramebuffer CurrentFramebuffer => _deviceFramebuffer;
-        public override VkRenderPass RenderPassNoClearInit => _renderPassNoClear;
-        public override VkRenderPass RenderPassNoClearLoad => _renderPassNoClearLoad;
-        public override VkRenderPass RenderPassClear => _renderPassClear;
+        public override Vulkan.VkFramebuffer CurrentFramebuffer => this._deviceFramebuffer;
+        public override VkRenderPass RenderPassNoClearInit => this._renderPassNoClear;
+        public override VkRenderPass RenderPassNoClearLoad => this._renderPassNoClearLoad;
+        public override VkRenderPass RenderPassClear => this._renderPassClear;
 
         public override uint RenderableWidth => Width;
         public override uint RenderableHeight => Height;
 
         public override uint AttachmentCount { get; }
 
-        public override bool IsDisposed => _destroyed;
+        public override bool IsDisposed => this._destroyed;
 
         public override string Name
         {
-            get => _name;
+            get => this._name;
             set
             {
-                _name = value;
+                this._name = value;
                 gd.SetResourceName(this, value);
             }
         }
@@ -135,7 +135,7 @@ namespace Veldrith.Vk
             renderPassCi.dependencyCount = 1;
             renderPassCi.pDependencies = &subpassDependency;
 
-            var creationResult = vkCreateRenderPass(this.gd.Device, ref renderPassCi, null, out _renderPassNoClear);
+            var creationResult = vkCreateRenderPass(this.gd.Device, ref renderPassCi, null, out this._renderPassNoClear);
             CheckResult(creationResult);
 
             for (int i = 0; i < colorAttachmentCount; i++)
@@ -152,7 +152,7 @@ namespace Veldrith.Vk
                 if (hasStencil) attachments[attachments.Count - 1].stencilLoadOp = VkAttachmentLoadOp.Load;
             }
 
-            creationResult = vkCreateRenderPass(this.gd.Device, ref renderPassCi, null, out _renderPassNoClearLoad);
+            creationResult = vkCreateRenderPass(this.gd.Device, ref renderPassCi, null, out this._renderPassNoClearLoad);
             CheckResult(creationResult);
 
             // Load version
@@ -171,7 +171,7 @@ namespace Veldrith.Vk
                 attachments[i].initialLayout = VkImageLayout.Undefined;
             }
 
-            creationResult = vkCreateRenderPass(this.gd.Device, ref renderPassCi, null, out _renderPassClear);
+            creationResult = vkCreateRenderPass(this.gd.Device, ref renderPassCi, null, out this._renderPassClear);
             CheckResult(creationResult);
 
             var fbCi = VkFramebufferCreateInfo.New();
@@ -195,7 +195,7 @@ namespace Veldrith.Vk
                 var dest = fbAttachments + i;
                 var result = vkCreateImageView(this.gd.Device, ref imageViewCi, null, dest);
                 CheckResult(result);
-                _attachmentViews.Add(*dest);
+                this._attachmentViews.Add(*dest);
             }
 
             // Depth
@@ -217,7 +217,7 @@ namespace Veldrith.Vk
                 var dest = fbAttachments + (fbAttachmentsCount - 1);
                 var result = vkCreateImageView(this.gd.Device, ref depthViewCi, null, dest);
                 CheckResult(result);
-                _attachmentViews.Add(*dest);
+                this._attachmentViews.Add(*dest);
             }
 
             Texture dimTex;
@@ -248,9 +248,9 @@ namespace Veldrith.Vk
             fbCi.attachmentCount = fbAttachmentsCount;
             fbCi.pAttachments = fbAttachments;
             fbCi.layers = 1;
-            fbCi.renderPass = _renderPassNoClear;
+            fbCi.renderPass = this._renderPassNoClear;
 
-            creationResult = vkCreateFramebuffer(this.gd.Device, ref fbCi, null, out _deviceFramebuffer);
+            creationResult = vkCreateFramebuffer(this.gd.Device, ref fbCi, null, out this._deviceFramebuffer);
             CheckResult(creationResult);
 
             if (DepthTarget != null) AttachmentCount += 1;
@@ -310,15 +310,15 @@ namespace Veldrith.Vk
 
         protected override void DisposeCore()
         {
-            if (!_destroyed)
+            if (!this._destroyed)
             {
-                vkDestroyFramebuffer(gd.Device, _deviceFramebuffer, null);
-                vkDestroyRenderPass(gd.Device, _renderPassNoClear, null);
-                vkDestroyRenderPass(gd.Device, _renderPassNoClearLoad, null);
-                vkDestroyRenderPass(gd.Device, _renderPassClear, null);
-                foreach (var view in _attachmentViews) vkDestroyImageView(gd.Device, view, null);
+                vkDestroyFramebuffer(gd.Device, this._deviceFramebuffer, null);
+                vkDestroyRenderPass(gd.Device, this._renderPassNoClear, null);
+                vkDestroyRenderPass(gd.Device, this._renderPassNoClearLoad, null);
+                vkDestroyRenderPass(gd.Device, this._renderPassClear, null);
+                foreach (var view in this._attachmentViews) vkDestroyImageView(gd.Device, view, null);
 
-                _destroyed = true;
+                this._destroyed = true;
             }
         }
     }

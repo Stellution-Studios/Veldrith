@@ -8,35 +8,35 @@ namespace Veldrith.Vk
 {
     internal unsafe class VkSwapchain : Swapchain
     {
-        public override Framebuffer Framebuffer => _framebuffer;
+        public override Framebuffer Framebuffer => this._framebuffer;
 
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => this._disposed;
 
-        public VkSwapchainKHR DeviceSwapchain => _deviceSwapchain;
-        public uint ImageIndex => _currentImageIndex;
-        public Vulkan.VkFence ImageAvailableFence => _imageAvailableFence;
+        public VkSwapchainKHR DeviceSwapchain => this._deviceSwapchain;
+        public uint ImageIndex => this._currentImageIndex;
+        public Vulkan.VkFence ImageAvailableFence => this._imageAvailableFence;
         public VkSurfaceKHR Surface { get; }
 
-        public VkQueue PresentQueue => _presentQueue;
-        public uint PresentQueueIndex => _presentQueueIndex;
+        public VkQueue PresentQueue => this._presentQueue;
+        public uint PresentQueueIndex => this._presentQueueIndex;
         public ResourceRefCount RefCount { get; }
 
         public override string Name
         {
-            get => _name;
+            get => this._name;
             set
             {
-                _name = value;
+                this._name = value;
                 gd.SetResourceName(this, value);
             }
         }
 
         public override bool SyncToVerticalBlank
         {
-            get => _newSyncToVBlank ?? _syncToVBlank;
+            get => this._newSyncToVBlank ?? this._syncToVBlank;
             set
             {
-                if (_syncToVBlank != value) _newSyncToVBlank = value;
+                if (this._syncToVBlank != value) this._newSyncToVBlank = value;
             }
         }
 
@@ -44,15 +44,15 @@ namespace Veldrith.Vk
 
         public bool AllowTearing
         {
-            get => _allowTearing;
+            get => this._allowTearing;
             set
             {
-                if (_allowTearing == value)
+                if (this._allowTearing == value)
                     return;
 
-                _allowTearing = value;
+                this._allowTearing = value;
 
-                recreateAndReacquire(_framebuffer.Width, _framebuffer.Height);
+                RecreateAndReacquire(this._framebuffer.Width, this._framebuffer.Height);
             }
         }
 
@@ -77,8 +77,8 @@ namespace Veldrith.Vk
         public VkSwapchain(VkGraphicsDevice gd, ref SwapchainDescription description, VkSurfaceKHR existingSurface)
         {
             this.gd = gd;
-            _syncToVBlank = description.SyncToVerticalBlank;
-            _colorSrgb = description.ColorSrgb;
+            this._syncToVBlank = description.SyncToVerticalBlank;
+            this._colorSrgb = description.ColorSrgb;
 
             SwapchainSource swapchainSource = description.Source;
 
@@ -86,23 +86,23 @@ namespace Veldrith.Vk
                 ? VkSurfaceUtil.CreateSurface(gd, gd.Instance, swapchainSource)
                 : existingSurface;
 
-            if (!getPresentQueueIndex(out _presentQueueIndex)) throw new VeldridException("The system does not support presenting the given Vulkan surface.");
+            if (!GetPresentQueueIndex(out this._presentQueueIndex)) throw new VeldridException("The system does not support presenting the given Vulkan surface.");
 
-            vkGetDeviceQueue(this.gd.Device, _presentQueueIndex, 0, out _presentQueue);
+            vkGetDeviceQueue(this.gd.Device, this._presentQueueIndex, 0, out this._presentQueue);
 
-            _framebuffer = new VkSwapchainFramebuffer(gd, this, Surface, description.Width, description.Height, description.DepthFormat);
+            this._framebuffer = new VkSwapchainFramebuffer(gd, this, Surface, description.Width, description.Height, description.DepthFormat);
 
-            createSwapchain(description.Width, description.Height);
+            CreateSwapchain(description.Width, description.Height);
 
             var fenceCi = VkFenceCreateInfo.New();
             fenceCi.flags = VkFenceCreateFlags.None;
-            vkCreateFence(this.gd.Device, ref fenceCi, null, out _imageAvailableFence);
+            vkCreateFence(this.gd.Device, ref fenceCi, null, out this._imageAvailableFence);
 
-            AcquireNextImage(this.gd.Device, VkSemaphore.Null, _imageAvailableFence);
-            vkWaitForFences(this.gd.Device, 1, ref _imageAvailableFence, true, ulong.MaxValue);
-            vkResetFences(this.gd.Device, 1, ref _imageAvailableFence);
+            AcquireNextImage(this.gd.Device, VkSemaphore.Null, this._imageAvailableFence);
+            vkWaitForFences(this.gd.Device, 1, ref this._imageAvailableFence, true, ulong.MaxValue);
+            vkResetFences(this.gd.Device, 1, ref this._imageAvailableFence);
 
-            RefCount = new ResourceRefCount(disposeCore);
+            RefCount = new ResourceRefCount(DisposeCore);
         }
 
         #region Disposal
@@ -116,31 +116,31 @@ namespace Veldrith.Vk
 
         public override void Resize(uint width, uint height)
         {
-            recreateAndReacquire(width, height);
+            RecreateAndReacquire(width, height);
         }
 
         public bool AcquireNextImage(VkDevice device, VkSemaphore semaphore, Vulkan.VkFence fence)
         {
-            if (_newSyncToVBlank != null)
+            if (this._newSyncToVBlank != null)
             {
-                _syncToVBlank = _newSyncToVBlank.Value;
-                _newSyncToVBlank = null;
-                recreateAndReacquire(_framebuffer.Width, _framebuffer.Height);
+                this._syncToVBlank = this._newSyncToVBlank.Value;
+                this._newSyncToVBlank = null;
+                RecreateAndReacquire(this._framebuffer.Width, this._framebuffer.Height);
                 return false;
             }
 
             var result = vkAcquireNextImageKHR(
                 device,
-                _deviceSwapchain,
+                this._deviceSwapchain,
                 ulong.MaxValue,
                 semaphore,
                 fence,
-                ref _currentImageIndex);
-            _framebuffer.SetImageIndex(_currentImageIndex);
+                ref this._currentImageIndex);
+            this._framebuffer.SetImageIndex(this._currentImageIndex);
 
             if (result == VkResult.ErrorOutOfDateKHR || result == VkResult.SuboptimalKHR)
             {
-                createSwapchain(_framebuffer.Width, _framebuffer.Height);
+                CreateSwapchain(this._framebuffer.Width, this._framebuffer.Height);
                 return false;
             }
 
@@ -149,19 +149,19 @@ namespace Veldrith.Vk
             return true;
         }
 
-        private void recreateAndReacquire(uint width, uint height)
+        private void RecreateAndReacquire(uint width, uint height)
         {
-            if (createSwapchain(width, height))
+            if (CreateSwapchain(width, height))
             {
-                if (AcquireNextImage(gd.Device, VkSemaphore.Null, _imageAvailableFence))
+                if (AcquireNextImage(gd.Device, VkSemaphore.Null, this._imageAvailableFence))
                 {
-                    vkWaitForFences(gd.Device, 1, ref _imageAvailableFence, true, ulong.MaxValue);
-                    vkResetFences(gd.Device, 1, ref _imageAvailableFence);
+                    vkWaitForFences(gd.Device, 1, ref this._imageAvailableFence, true, ulong.MaxValue);
+                    vkResetFences(gd.Device, 1, ref this._imageAvailableFence);
                 }
             }
         }
 
-        private bool createSwapchain(uint width, uint height)
+        private bool CreateSwapchain(uint width, uint height)
         {
             // Obtain the surface capabilities first -- this will indicate whether the surface has been lost.
             var result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gd.PhysicalDevice, Surface, out var surfaceCapabilities);
@@ -171,9 +171,9 @@ namespace Veldrith.Vk
                                                               && surfaceCapabilities.maxImageExtent.width == 0 && surfaceCapabilities.maxImageExtent.height == 0)
                 return false;
 
-            if (_deviceSwapchain != VkSwapchainKHR.Null) gd.WaitForIdle();
+            if (this._deviceSwapchain != VkSwapchainKHR.Null) gd.WaitForIdle();
 
-            _currentImageIndex = 0;
+            this._currentImageIndex = 0;
             uint surfaceFormatCount = 0;
             result = vkGetPhysicalDeviceSurfaceFormatsKHR(gd.PhysicalDevice, Surface, ref surfaceFormatCount, null);
             CheckResult(result);
@@ -181,7 +181,7 @@ namespace Veldrith.Vk
             result = vkGetPhysicalDeviceSurfaceFormatsKHR(gd.PhysicalDevice, Surface, ref surfaceFormatCount, out formats[0]);
             CheckResult(result);
 
-            var desiredFormat = _colorSrgb
+            var desiredFormat = this._colorSrgb
                 ? VkFormat.B8g8r8a8Srgb
                 : VkFormat.B8g8r8a8Unorm;
 
@@ -202,7 +202,7 @@ namespace Veldrith.Vk
 
                 if (surfaceFormat.format == VkFormat.Undefined)
                 {
-                    if (_colorSrgb && surfaceFormat.format != VkFormat.R8g8b8a8Srgb) throw new VeldridException("Unable to create an sRGB Swapchain for this surface.");
+                    if (this._colorSrgb && surfaceFormat.format != VkFormat.R8g8b8a8Srgb) throw new VeldridException("Unable to create an sRGB Swapchain for this surface.");
 
                     surfaceFormat = formats[0];
                 }
@@ -217,12 +217,12 @@ namespace Veldrith.Vk
 
             var presentMode = VkPresentModeKHR.FifoKHR;
 
-            if (_syncToVBlank)
+            if (this._syncToVBlank)
             {
                 if (presentModes.Contains(VkPresentModeKHR.FifoRelaxedKHR))
                     presentMode = VkPresentModeKHR.FifoRelaxedKHR;
             }
-            else if (_allowTearing && presentModes.Contains(VkPresentModeKHR.ImmediateKHR))
+            else if (this._allowTearing && presentModes.Contains(VkPresentModeKHR.ImmediateKHR))
                 presentMode = VkPresentModeKHR.ImmediateKHR;
             else if (presentModes.Contains(VkPresentModeKHR.MailboxKHR))
                 presentMode = VkPresentModeKHR.MailboxKHR;
@@ -262,29 +262,29 @@ namespace Veldrith.Vk
             swapchainCi.compositeAlpha = VkCompositeAlphaFlagsKHR.OpaqueKHR;
             swapchainCi.clipped = true;
 
-            var oldSwapchain = _deviceSwapchain;
+            var oldSwapchain = this._deviceSwapchain;
             swapchainCi.oldSwapchain = oldSwapchain;
 
-            result = vkCreateSwapchainKHR(gd.Device, ref swapchainCi, null, out _deviceSwapchain);
+            result = vkCreateSwapchainKHR(gd.Device, ref swapchainCi, null, out this._deviceSwapchain);
             CheckResult(result);
             if (oldSwapchain != VkSwapchainKHR.Null) vkDestroySwapchainKHR(gd.Device, oldSwapchain, null);
 
-            _framebuffer.SetNewSwapchain(_deviceSwapchain, width, height, surfaceFormat, swapchainCi.imageExtent);
+            this._framebuffer.SetNewSwapchain(this._deviceSwapchain, width, height, surfaceFormat, swapchainCi.imageExtent);
             return true;
         }
 
-        private bool getPresentQueueIndex(out uint queueFamilyIndex)
+        private bool GetPresentQueueIndex(out uint queueFamilyIndex)
         {
             uint deviceGraphicsQueueIndex = gd.GraphicsQueueIndex;
             uint devicePresentQueueIndex = gd.PresentQueueIndex;
 
-            if (queueSupportsPresent(deviceGraphicsQueueIndex, Surface))
+            if (QueueSupportsPresent(deviceGraphicsQueueIndex, Surface))
             {
                 queueFamilyIndex = deviceGraphicsQueueIndex;
                 return true;
             }
 
-            if (deviceGraphicsQueueIndex != devicePresentQueueIndex && queueSupportsPresent(devicePresentQueueIndex, Surface))
+            if (deviceGraphicsQueueIndex != devicePresentQueueIndex && QueueSupportsPresent(devicePresentQueueIndex, Surface))
             {
                 queueFamilyIndex = devicePresentQueueIndex;
                 return true;
@@ -294,7 +294,7 @@ namespace Veldrith.Vk
             return false;
         }
 
-        private bool queueSupportsPresent(uint queueFamilyIndex, VkSurfaceKHR surface)
+        private bool QueueSupportsPresent(uint queueFamilyIndex, VkSurfaceKHR surface)
         {
             var result = vkGetPhysicalDeviceSurfaceSupportKHR(
                 gd.PhysicalDevice,
@@ -305,14 +305,14 @@ namespace Veldrith.Vk
             return supported;
         }
 
-        private void disposeCore()
+        private void DisposeCore()
         {
-            vkDestroyFence(gd.Device, _imageAvailableFence, null);
-            _framebuffer.Dispose();
-            vkDestroySwapchainKHR(gd.Device, _deviceSwapchain, null);
+            vkDestroyFence(gd.Device, this._imageAvailableFence, null);
+            this._framebuffer.Dispose();
+            vkDestroySwapchainKHR(gd.Device, this._deviceSwapchain, null);
             vkDestroySurfaceKHR(gd.Instance, Surface, null);
 
-            _disposed = true;
+            this._disposed = true;
         }
     }
 }

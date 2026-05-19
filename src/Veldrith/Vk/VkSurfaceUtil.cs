@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Veldrith.MetalBindings;
 using Veldrith.Android;
 using Vulkan;
@@ -27,71 +27,71 @@ namespace Veldrith.Vk
                     if (doCheck && !gd.HasSurfaceExtension(CommonStrings.VkKhrXlibSurfaceExtensionName))
                         throw new VeldridException($"The required instance extension was not available: {CommonStrings.VkKhrXlibSurfaceExtensionName}");
 
-                    return createXlib(instance, xlibSource);
+                    return CreateXlib(instance, xlibSource);
 
                 case WaylandSwapchainSource waylandSource:
                     if (doCheck && !gd.HasSurfaceExtension(CommonStrings.VkKhrWaylandSurfaceExtensionName))
                         throw new VeldridException($"The required instance extension was not available: {CommonStrings.VkKhrWaylandSurfaceExtensionName}");
 
-                    return createWayland(instance, waylandSource);
+                    return CreateWayland(instance, waylandSource);
 
                 case Win32SwapchainSource win32Source:
                     if (doCheck && !gd.HasSurfaceExtension(CommonStrings.VkKhrWin32SurfaceExtensionName))
                         throw new VeldridException($"The required instance extension was not available: {CommonStrings.VkKhrWin32SurfaceExtensionName}");
 
-                    return createWin32(instance, win32Source);
+                    return CreateWin32(instance, win32Source);
 
                 case AndroidSurfaceSwapchainSource androidSource:
                     if (doCheck && !gd.HasSurfaceExtension(CommonStrings.VkKhrAndroidSurfaceExtensionName))
                         throw new VeldridException($"The required instance extension was not available: {CommonStrings.VkKhrAndroidSurfaceExtensionName}");
 
-                    return createAndroidSurface(instance, androidSource);
+                    return CreateAndroidSurface(instance, androidSource);
 
                 case NSWindowSwapchainSource nsWindowSource:
                     if (doCheck)
                     {
                         bool hasMetalExtension = gd.HasSurfaceExtension(CommonStrings.VkExtMetalSurfaceExtensionName);
                         if (hasMetalExtension || gd.HasSurfaceExtension(CommonStrings.VkMvkMacosSurfaceExtensionName))
-                            return createNSWindowSurface(gd, instance, nsWindowSource, hasMetalExtension);
+                            return CreateNSWindowSurface(gd, instance, nsWindowSource, hasMetalExtension);
 
                         throw new VeldridException("Neither macOS surface extension was available: " +
                                                    $"{CommonStrings.VkMvkMacosSurfaceExtensionName}, {CommonStrings.VkExtMetalSurfaceExtensionName}");
                     }
 
-                    return createNSWindowSurface(null, instance, nsWindowSource, false);
+                    return CreateNSWindowSurface(null, instance, nsWindowSource, false);
 
                 case NSViewSwapchainSource nsViewSource:
                     if (doCheck)
                     {
                         bool hasMetalExtension = gd.HasSurfaceExtension(CommonStrings.VkExtMetalSurfaceExtensionName);
                         if (hasMetalExtension || gd.HasSurfaceExtension(CommonStrings.VkMvkMacosSurfaceExtensionName))
-                            return createNSViewSurface(gd, instance, nsViewSource, hasMetalExtension);
+                            return CreateNSViewSurface(gd, instance, nsViewSource, hasMetalExtension);
 
                         throw new VeldridException("Neither macOS surface extension was available: " +
                                                    $"{CommonStrings.VkMvkMacosSurfaceExtensionName}, {CommonStrings.VkExtMetalSurfaceExtensionName}");
                     }
 
-                    return createNSViewSurface(null, instance, nsViewSource, false);
+                    return CreateNSViewSurface(null, instance, nsViewSource, false);
 
                 case UIViewSwapchainSource uiViewSource:
                     if (doCheck)
                     {
                         bool hasMetalExtension = gd.HasSurfaceExtension(CommonStrings.VkExtMetalSurfaceExtensionName);
                         if (hasMetalExtension || gd.HasSurfaceExtension(CommonStrings.VkMvkIOSSurfaceExtensionName))
-                            return createUIViewSurface(gd, instance, uiViewSource, hasMetalExtension);
+                            return CreateUIViewSurface(gd, instance, uiViewSource, hasMetalExtension);
 
                         throw new VeldridException("Neither macOS surface extension was available: " +
                                                    $"{CommonStrings.VkMvkMacosSurfaceExtensionName}, {CommonStrings.VkMvkIOSSurfaceExtensionName}");
                     }
 
-                    return createUIViewSurface(null, instance, uiViewSource, false);
+                    return CreateUIViewSurface(null, instance, uiViewSource, false);
 
                 default:
                     throw new VeldridException("The provided SwapchainSource cannot be used to create a Vulkan surface.");
             }
         }
 
-        private static VkSurfaceKHR createWin32(VkInstance instance, Win32SwapchainSource win32Source)
+        private static VkSurfaceKHR CreateWin32(VkInstance instance, Win32SwapchainSource win32Source)
         {
             var surfaceCi = VkWin32SurfaceCreateInfoKHR.New();
             surfaceCi.hwnd = win32Source.Hwnd;
@@ -101,7 +101,7 @@ namespace Veldrith.Vk
             return surface;
         }
 
-        private static VkSurfaceKHR createXlib(VkInstance instance, XlibSwapchainSource xlibSource)
+        private static VkSurfaceKHR CreateXlib(VkInstance instance, XlibSwapchainSource xlibSource)
         {
             var xsci = VkXlibSurfaceCreateInfoKHR.New();
             xsci.dpy = (Display*)xlibSource.Display;
@@ -111,7 +111,7 @@ namespace Veldrith.Vk
             return surface;
         }
 
-        private static VkSurfaceKHR createWayland(VkInstance instance, WaylandSwapchainSource waylandSource)
+        private static VkSurfaceKHR CreateWayland(VkInstance instance, WaylandSwapchainSource waylandSource)
         {
             var wsci = VkWaylandSurfaceCreateInfoKHR.New();
             wsci.display = (wl_display*)waylandSource.Display;
@@ -121,7 +121,7 @@ namespace Veldrith.Vk
             return surface;
         }
 
-        private static VkSurfaceKHR createAndroidSurface(VkInstance instance, AndroidSurfaceSwapchainSource androidSource)
+        private static VkSurfaceKHR CreateAndroidSurface(VkInstance instance, AndroidSurfaceSwapchainSource androidSource)
         {
             IntPtr aNativeWindow = AndroidRuntime.ANativeWindow_fromSurface(androidSource.JniEnv, androidSource.Surface);
 
@@ -132,13 +132,13 @@ namespace Veldrith.Vk
             return surface;
         }
 
-        private static VkSurfaceKHR createNSWindowSurface(VkGraphicsDevice gd, VkInstance instance, NSWindowSwapchainSource nsWindowSource, bool hasExtMetalSurface)
+        private static VkSurfaceKHR CreateNSWindowSurface(VkGraphicsDevice gd, VkInstance instance, NSWindowSwapchainSource nsWindowSource, bool hasExtMetalSurface)
         {
             var nswindow = new NSWindow(nsWindowSource.NSWindow);
-            return createNSViewSurface(gd, instance, new NSViewSwapchainSource(nswindow.contentView), hasExtMetalSurface);
+            return CreateNSViewSurface(gd, instance, new NSViewSwapchainSource(nswindow.contentView), hasExtMetalSurface);
         }
 
-        private static VkSurfaceKHR createNSViewSurface(VkGraphicsDevice gd, VkInstance instance, NSViewSwapchainSource nsViewSource, bool hasExtMetalSurface)
+        private static VkSurfaceKHR CreateNSViewSurface(VkGraphicsDevice gd, VkInstance instance, NSViewSwapchainSource nsViewSource, bool hasExtMetalSurface)
         {
             var contentView = new NSView(nsViewSource.NSView);
 
@@ -171,7 +171,7 @@ namespace Veldrith.Vk
             }
         }
 
-        private static VkSurfaceKHR createUIViewSurface(VkGraphicsDevice gd, VkInstance instance, UIViewSwapchainSource uiViewSource, bool hasExtMetalSurface)
+        private static VkSurfaceKHR CreateUIViewSurface(VkGraphicsDevice gd, VkInstance instance, UIViewSwapchainSource uiViewSource, bool hasExtMetalSurface)
         {
             var uiView = new UIView(uiViewSource.UIView);
 

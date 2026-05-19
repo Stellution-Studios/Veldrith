@@ -34,22 +34,22 @@ namespace Veldrith.D3D12
             Usage = description.Usage;
             Type = description.Type;
             SampleCount = description.SampleCount;
-            _effectiveArrayLayers = getEffectiveArrayLayers(Usage, ArrayLayers);
-            _data = new byte[computeTotalSize(ref description)];
-            _subresourceStates = new ResourceStates[MipLevels * _effectiveArrayLayers];
+            this._effectiveArrayLayers = GetEffectiveArrayLayers(Usage, ArrayLayers);
+            this._data = new byte[ComputeTotalSize(ref description)];
+            this._subresourceStates = new ResourceStates[MipLevels * this._effectiveArrayLayers];
 
             if (nativeHandle == null)
             {
-                NativeTexture = createNativeTexture(gd, ref description);
-                _ownsNativeTexture = true;
-                initializeSubresourceStates(getCreatedTextureInitialState(description.Usage));
+                NativeTexture = CreateNativeTexture(gd, ref description);
+                this._ownsNativeTexture = true;
+                InitializeSubresourceStates(GetCreatedTextureInitialState(description.Usage));
             }
             else
             {
-                NativeTexture = createWrappedNativeTexture(nativeHandle.Value);
-                _ownsNativeTexture = false;
-                validateWrappedTextureDescription(NativeTexture.Description, ref description);
-                initializeSubresourceStates(ResourceStates.Common);
+                NativeTexture = CreateWrappedNativeTexture(nativeHandle.Value);
+                this._ownsNativeTexture = false;
+                ValidateWrappedTextureDescription(NativeTexture.Description, ref description);
+                InitializeSubresourceStates(ResourceStates.Common);
             }
         }
 
@@ -62,28 +62,28 @@ namespace Veldrith.D3D12
         public override TextureUsage Usage { get; }
         public override TextureType Type { get; }
         public override TextureSampleCount SampleCount { get; }
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => this._disposed;
         internal ID3D12Resource NativeTexture { get; }
         internal ResourceStates CurrentState
         {
             get
             {
-                if (_subresourceStates == null || _subresourceStates.Length == 0)
+                if (this._subresourceStates == null || this._subresourceStates.Length == 0)
                 {
                     return ResourceStates.Common;
                 }
 
-                return _subresourceStates[0];
+                return this._subresourceStates[0];
             }
             set => SetAllSubresourceStates(value);
         }
-        internal uint SubresourceCount => (uint)(_subresourceStates?.Length ?? 0);
-        internal uint EffectiveArrayLayers => _effectiveArrayLayers;
+        internal uint SubresourceCount => (uint)(this._subresourceStates?.Length ?? 0);
+        internal uint EffectiveArrayLayers => this._effectiveArrayLayers;
 
         public override string Name
         {
-            get => _name;
-            set => _name = value;
+            get => this._name;
+            set => this._name = value;
         }
 
         internal void Update(
@@ -111,8 +111,8 @@ namespace Veldrith.D3D12
                 throw new VeldridException("Texture update source size is smaller than required for the destination region.");
             }
 
-            getSubresourceLayout(subresource, out uint dstOffset, out uint dstSize, out uint dstRowPitch, out uint dstDepthPitch);
-            if (dstOffset + dstSize > (uint)_data.Length)
+            GetSubresourceLayout(subresource, out uint dstOffset, out uint dstSize, out uint dstRowPitch, out uint dstDepthPitch);
+            if (dstOffset + dstSize > (uint)this._data.Length)
             {
                 throw new VeldridException("Texture update destination region exceeds texture storage.");
             }
@@ -121,7 +121,7 @@ namespace Veldrith.D3D12
             uint srcDepthPitch = FormatHelpers.GetDepthPitch(srcRowPitch, height, Format);
             unsafe
             {
-                fixed (byte* dstBase = _data)
+                fixed (byte* dstBase = this._data)
                 {
                     Util.CopyTextureRegion(
                         source.ToPointer(),
@@ -160,7 +160,7 @@ namespace Veldrith.D3D12
             }
 
             uint subresource = CalculateSubresource(mipLevel, arrayLayer);
-            syncSubresourceToNative(subresource);
+            SyncSubresourceToNative(subresource);
         }
 
         internal MappedResource Map(MapMode mode, uint subresource)
@@ -170,40 +170,40 @@ namespace Veldrith.D3D12
                 throw new VeldridException("Subresource index is out of bounds.");
             }
 
-            if (isStagingTexture() && NativeTexture != null && (mode == MapMode.Read || mode == MapMode.ReadWrite))
+            if (IsStagingTexture() && NativeTexture != null && (mode == MapMode.Read || mode == MapMode.ReadWrite))
             {
-                syncSubresourceFromNative(subresource);
+                SyncSubresourceFromNative(subresource);
             }
 
-            if (!_mapped)
+            if (!this._mapped)
             {
-                _pinnedData = GCHandle.Alloc(_data, GCHandleType.Pinned);
-                _mapped = true;
+                this._pinnedData = GCHandle.Alloc(this._data, GCHandleType.Pinned);
+                this._mapped = true;
             }
 
-            _activeMapMode = mode;
-            _activeMapSubresource = subresource;
-            getSubresourceLayout(subresource, out uint offset, out uint size, out uint rowPitch, out uint depthPitch);
-            IntPtr dataPtr = IntPtr.Add(_pinnedData.AddrOfPinnedObject(), (int)offset);
+            this._activeMapMode = mode;
+            this._activeMapSubresource = subresource;
+            GetSubresourceLayout(subresource, out uint offset, out uint size, out uint rowPitch, out uint depthPitch);
+            IntPtr dataPtr = IntPtr.Add(this._pinnedData.AddrOfPinnedObject(), (int)offset);
             return new MappedResource(this, mode, dataPtr, size, subresource, rowPitch, depthPitch);
         }
 
         internal void Unmap()
         {
-            if (_mapped
-                && isStagingTexture()
+            if (this._mapped
+                && IsStagingTexture()
                 && NativeTexture != null
-                && _activeMapMode.HasValue
-                && (_activeMapMode.Value == MapMode.Write || _activeMapMode.Value == MapMode.ReadWrite))
+                && this._activeMapMode.HasValue
+                && (this._activeMapMode.Value == MapMode.Write || this._activeMapMode.Value == MapMode.ReadWrite))
             {
-                syncSubresourceToNative(_activeMapSubresource);
+                SyncSubresourceToNative(this._activeMapSubresource);
             }
 
-            _activeMapMode = null;
-            if (_mapped)
+            this._activeMapMode = null;
+            if (this._mapped)
             {
-                _pinnedData.Free();
-                _mapped = false;
+                this._pinnedData.Free();
+                this._mapped = false;
             }
         }
 
@@ -233,12 +233,12 @@ namespace Veldrith.D3D12
             {
                 uint srcSubresource = (srcBaseArrayLayer + layer) * MipLevels + srcMipLevel;
                 uint dstSubresource = (dstBaseArrayLayer + layer) * destination.MipLevels + dstMipLevel;
-                getSubresourceLayout(srcSubresource, out uint srcBaseOffset, out _, out uint srcRowPitch, out uint srcDepthPitch);
-                destination.getSubresourceLayout(dstSubresource, out uint dstBaseOffset, out _, out uint dstRowPitch, out uint dstDepthPitch);
+                GetSubresourceLayout(srcSubresource, out uint srcBaseOffset, out _, out uint srcRowPitch, out uint srcDepthPitch);
+                destination.GetSubresourceLayout(dstSubresource, out uint dstBaseOffset, out _, out uint dstRowPitch, out uint dstDepthPitch);
 
                 unsafe
                 {
-                    fixed (byte* srcBase = _data)
+                    fixed (byte* srcBase = this._data)
                     {
                         fixed (byte* dstBase = destination._data)
                         {
@@ -276,15 +276,15 @@ namespace Veldrith.D3D12
                 return false;
             }
 
-            for (uint layer = 0; layer < _effectiveArrayLayers; layer++)
+            for (uint layer = 0; layer < this._effectiveArrayLayers; layer++)
             {
                 for (uint mipLevel = 1; mipLevel < MipLevels; mipLevel++)
                 {
                     uint srcSubresource = CalculateSubresource(mipLevel - 1, layer);
                     uint dstSubresource = CalculateSubresource(mipLevel, layer);
 
-                    getSubresourceLayout(srcSubresource, out uint srcBaseOffset, out _, out uint srcRowPitch, out uint srcDepthPitch);
-                    getSubresourceLayout(dstSubresource, out uint dstBaseOffset, out _, out uint dstRowPitch, out uint dstDepthPitch);
+                    GetSubresourceLayout(srcSubresource, out uint srcBaseOffset, out _, out uint srcRowPitch, out uint srcDepthPitch);
+                    GetSubresourceLayout(dstSubresource, out uint dstBaseOffset, out _, out uint dstRowPitch, out uint dstDepthPitch);
 
                     Util.GetMipDimensions(this, mipLevel - 1, out uint srcWidth, out uint srcHeight, out uint srcDepth);
                     Util.GetMipDimensions(this, mipLevel, out uint dstWidth, out uint dstHeight, out uint dstDepth);
@@ -315,20 +315,20 @@ namespace Veldrith.D3D12
                                     uint sum = 0;
                                     uint sampleCount = 0;
 
-                                    sum += getSourceByte(srcBaseOffset, srcRowPitch, srcDepthPitch, srcX0, srcY0, srcZ0, bytesPerPixel, component); sampleCount++;
-                                    sum += getSourceByte(srcBaseOffset, srcRowPitch, srcDepthPitch, srcX1, srcY0, srcZ0, bytesPerPixel, component); sampleCount++;
-                                    sum += getSourceByte(srcBaseOffset, srcRowPitch, srcDepthPitch, srcX0, srcY1, srcZ0, bytesPerPixel, component); sampleCount++;
-                                    sum += getSourceByte(srcBaseOffset, srcRowPitch, srcDepthPitch, srcX1, srcY1, srcZ0, bytesPerPixel, component); sampleCount++;
+                                    sum += GetSourceByte(srcBaseOffset, srcRowPitch, srcDepthPitch, srcX0, srcY0, srcZ0, bytesPerPixel, component); sampleCount++;
+                                    sum += GetSourceByte(srcBaseOffset, srcRowPitch, srcDepthPitch, srcX1, srcY0, srcZ0, bytesPerPixel, component); sampleCount++;
+                                    sum += GetSourceByte(srcBaseOffset, srcRowPitch, srcDepthPitch, srcX0, srcY1, srcZ0, bytesPerPixel, component); sampleCount++;
+                                    sum += GetSourceByte(srcBaseOffset, srcRowPitch, srcDepthPitch, srcX1, srcY1, srcZ0, bytesPerPixel, component); sampleCount++;
 
                                     if (srcDepth > 1)
                                     {
-                                        sum += getSourceByte(srcBaseOffset, srcRowPitch, srcDepthPitch, srcX0, srcY0, srcZ1, bytesPerPixel, component); sampleCount++;
-                                        sum += getSourceByte(srcBaseOffset, srcRowPitch, srcDepthPitch, srcX1, srcY0, srcZ1, bytesPerPixel, component); sampleCount++;
-                                        sum += getSourceByte(srcBaseOffset, srcRowPitch, srcDepthPitch, srcX0, srcY1, srcZ1, bytesPerPixel, component); sampleCount++;
-                                        sum += getSourceByte(srcBaseOffset, srcRowPitch, srcDepthPitch, srcX1, srcY1, srcZ1, bytesPerPixel, component); sampleCount++;
+                                        sum += GetSourceByte(srcBaseOffset, srcRowPitch, srcDepthPitch, srcX0, srcY0, srcZ1, bytesPerPixel, component); sampleCount++;
+                                        sum += GetSourceByte(srcBaseOffset, srcRowPitch, srcDepthPitch, srcX1, srcY0, srcZ1, bytesPerPixel, component); sampleCount++;
+                                        sum += GetSourceByte(srcBaseOffset, srcRowPitch, srcDepthPitch, srcX0, srcY1, srcZ1, bytesPerPixel, component); sampleCount++;
+                                        sum += GetSourceByte(srcBaseOffset, srcRowPitch, srcDepthPitch, srcX1, srcY1, srcZ1, bytesPerPixel, component); sampleCount++;
                                     }
 
-                                    _data[dstPixelOffset + component] = (byte)(sum / sampleCount);
+                                    this._data[dstPixelOffset + component] = (byte)(sum / sampleCount);
                                 }
                             }
                         }
@@ -346,14 +346,14 @@ namespace Veldrith.D3D12
                 return;
             }
 
-            fixed (byte* dataPtr = _data)
+            fixed (byte* dataPtr = this._data)
             {
-                for (uint layer = 0; layer < _effectiveArrayLayers; layer++)
+                for (uint layer = 0; layer < this._effectiveArrayLayers; layer++)
                 {
                     for (uint mipLevel = 1; mipLevel < MipLevels; mipLevel++)
                     {
                         uint subresource = CalculateSubresource(mipLevel, layer);
-                        getSubresourceLayout(subresource, out uint offset, out uint size, out _, out _);
+                        GetSubresourceLayout(subresource, out uint offset, out uint size, out _, out _);
                         Util.GetMipDimensions(this, mipLevel, out uint mipWidth, out uint mipHeight, out uint mipDepth);
                         gd.UpdateTexture(
                             this,
@@ -367,7 +367,7 @@ namespace Veldrith.D3D12
             }
         }
 
-        private uint getSourceByte(
+        private uint GetSourceByte(
             uint srcBaseOffset,
             uint srcRowPitch,
             uint srcDepthPitch,
@@ -383,13 +383,13 @@ namespace Veldrith.D3D12
                 + srcY * srcRowPitch
                 + srcX * bytesPerPixel
                 + component);
-            return _data[srcPixelOffset];
+            return this._data[srcPixelOffset];
         }
 
-        private ID3D12Resource createNativeTexture(D3D12GraphicsDevice gd, ref TextureDescription description)
+        private ID3D12Resource CreateNativeTexture(D3D12GraphicsDevice gd, ref TextureDescription description)
         {
             bool isDepth = (description.Usage & TextureUsage.DepthStencil) == TextureUsage.DepthStencil;
-            uint effectiveDescriptionArrayLayers = getEffectiveArrayLayers(description.Usage, description.ArrayLayers);
+            uint effectiveDescriptionArrayLayers = GetEffectiveArrayLayers(description.Usage, description.ArrayLayers);
             Format dxgiFormat = D3D12Formats.ToDxgiFormat(description.Format, isDepth);
             ResourceFlags resourceFlags = D3D12Formats.ToResourceFlags(description.Usage);
             ResourceDescription resourceDescription;
@@ -452,7 +452,7 @@ namespace Veldrith.D3D12
                 null);
         }
 
-        private static ID3D12Resource createWrappedNativeTexture(ulong nativeHandle)
+        private static ID3D12Resource CreateWrappedNativeTexture(ulong nativeHandle)
         {
             if (nativeHandle == 0)
             {
@@ -462,7 +462,7 @@ namespace Veldrith.D3D12
             return new ID3D12Resource((IntPtr)nativeHandle);
         }
 
-        private static void validateWrappedTextureDescription(ResourceDescription nativeDescription, ref TextureDescription description)
+        private static void ValidateWrappedTextureDescription(ResourceDescription nativeDescription, ref TextureDescription description)
         {
             bool validDimension =
                 (description.Type == TextureType.Texture1D && nativeDescription.Dimension == ResourceDimension.Texture1D)
@@ -487,7 +487,7 @@ namespace Veldrith.D3D12
             }
             else
             {
-                uint expectedArrayLayers = getEffectiveArrayLayers(description.Usage, description.ArrayLayers);
+                uint expectedArrayLayers = GetEffectiveArrayLayers(description.Usage, description.ArrayLayers);
                 if (nativeDescription.DepthOrArraySize != expectedArrayLayers)
                 {
                     throw new VeldridException("Wrapped native D3D12 texture array layers do not match TextureDescription.");
@@ -504,7 +504,7 @@ namespace Veldrith.D3D12
                 throw new VeldridException("Wrapped native D3D12 texture sample count does not match TextureDescription.");
             }
 
-            if (!isNativeFormatCompatible(nativeDescription.Format, ref description))
+            if (!IsNativeFormatCompatible(nativeDescription.Format, ref description))
             {
                 throw new VeldridException("Wrapped native D3D12 texture format does not match TextureDescription.");
             }
@@ -529,7 +529,7 @@ namespace Veldrith.D3D12
             }
         }
 
-        private static bool isNativeFormatCompatible(Format nativeFormat, ref TextureDescription description)
+        private static bool IsNativeFormatCompatible(Format nativeFormat, ref TextureDescription description)
         {
             bool depthUsage = (description.Usage & TextureUsage.DepthStencil) != 0;
             Format expectedResourceFormat = D3D12Formats.ToDxgiFormat(description.Format, depthUsage);
@@ -560,7 +560,7 @@ namespace Veldrith.D3D12
             return false;
         }
 
-        private static ResourceStates getCreatedTextureInitialState(TextureUsage usage)
+        private static ResourceStates GetCreatedTextureInitialState(TextureUsage usage)
         {
             if ((usage & TextureUsage.DepthStencil) == TextureUsage.DepthStencil)
             {
@@ -575,21 +575,21 @@ namespace Veldrith.D3D12
             return ResourceStates.Common;
         }
 
-        private void initializeSubresourceStates(ResourceStates initialState)
+        private void InitializeSubresourceStates(ResourceStates initialState)
         {
-            for (int i = 0; i < _subresourceStates.Length; i++)
+            for (int i = 0; i < this._subresourceStates.Length; i++)
             {
-                _subresourceStates[i] = initialState;
+                this._subresourceStates[i] = initialState;
             }
 
-            _hasCachedCommonState = true;
-            _cachedCommonState = initialState;
+            this._hasCachedCommonState = true;
+            this._cachedCommonState = initialState;
         }
 
-        private void getSubresourceLayout(uint subresource, out uint offset, out uint size, out uint rowPitch, out uint depthPitch)
+        private void GetSubresourceLayout(uint subresource, out uint offset, out uint size, out uint rowPitch, out uint depthPitch)
         {
             uint totalOffset = 0;
-            for (uint arrayLayer = 0; arrayLayer < _effectiveArrayLayers; arrayLayer++)
+            for (uint arrayLayer = 0; arrayLayer < this._effectiveArrayLayers; arrayLayer++)
             {
                 uint mipWidth = Width;
                 uint mipHeight = Height;
@@ -619,10 +619,10 @@ namespace Veldrith.D3D12
             throw new VeldridException("Subresource index is out of bounds.");
         }
 
-        private static int computeTotalSize(ref TextureDescription description)
+        private static int ComputeTotalSize(ref TextureDescription description)
         {
             uint total = 0;
-            uint effectiveDescriptionArrayLayers = getEffectiveArrayLayers(description.Usage, description.ArrayLayers);
+            uint effectiveDescriptionArrayLayers = GetEffectiveArrayLayers(description.Usage, description.ArrayLayers);
             uint width = description.Width;
             uint height = description.Height;
             uint depth = description.Depth;
@@ -638,7 +638,7 @@ namespace Veldrith.D3D12
             return (int)total;
         }
 
-        private static uint getEffectiveArrayLayers(TextureUsage usage, uint arrayLayers)
+        private static uint GetEffectiveArrayLayers(TextureUsage usage, uint arrayLayers)
         {
             if ((usage & TextureUsage.Cubemap) != 0)
             {
@@ -648,9 +648,9 @@ namespace Veldrith.D3D12
             return arrayLayers;
         }
 
-        private bool isStagingTexture() => (Usage & TextureUsage.Staging) == TextureUsage.Staging;
+        private bool IsStagingTexture() => (Usage & TextureUsage.Staging) == TextureUsage.Staging;
 
-        private void syncSubresourceToNative(uint subresource)
+        private void SyncSubresourceToNative(uint subresource)
         {
             ResourceDescription textureDescription = NativeTexture.Description;
             var layouts = new PlacedSubresourceFootPrint[1];
@@ -667,7 +667,7 @@ namespace Veldrith.D3D12
 
             try
             {
-                getSubresourceLayout(subresource, out uint srcOffset, out _, out uint srcRowPitch, out uint srcDepthPitch);
+                GetSubresourceLayout(subresource, out uint srcOffset, out _, out uint srcRowPitch, out uint srcDepthPitch);
                 Util.GetMipLevelAndArrayLayer(this, subresource, out uint mipLevel, out _);
                 Util.GetMipDimensions(this, mipLevel, out uint mipWidth, out uint mipHeight, out uint mipDepth);
 
@@ -677,7 +677,7 @@ namespace Veldrith.D3D12
                     uploadBuffer.Map(0, &mappedUpload).CheckError();
                     try
                     {
-                        fixed (byte* srcBase = _data)
+                        fixed (byte* srcBase = this._data)
                         {
                             byte* srcSubresource = srcBase + srcOffset;
                             byte* dstUpload = (byte*)mappedUpload + layouts[0].Offset;
@@ -704,7 +704,7 @@ namespace Veldrith.D3D12
                     }
                 }
 
-                executeTextureBufferCopy(
+                ExecuteTextureBufferCopy(
                     subresource,
                     ResourceStates.CopyDest,
                     previousState =>
@@ -721,7 +721,7 @@ namespace Veldrith.D3D12
             }
         }
 
-        private void syncSubresourceFromNative(uint subresource)
+        private void SyncSubresourceFromNative(uint subresource)
         {
             ResourceDescription textureDescription = NativeTexture.Description;
             var layouts = new PlacedSubresourceFootPrint[1];
@@ -738,11 +738,11 @@ namespace Veldrith.D3D12
 
             try
             {
-                getSubresourceLayout(subresource, out uint dstOffset, out _, out uint dstRowPitch, out uint dstDepthPitch);
+                GetSubresourceLayout(subresource, out uint dstOffset, out _, out uint dstRowPitch, out uint dstDepthPitch);
                 Util.GetMipLevelAndArrayLayer(this, subresource, out uint mipLevel, out _);
                 Util.GetMipDimensions(this, mipLevel, out uint mipWidth, out uint mipHeight, out uint mipDepth);
 
-                executeTextureBufferCopy(
+                ExecuteTextureBufferCopy(
                     subresource,
                     ResourceStates.CopySource,
                     previousState =>
@@ -760,7 +760,7 @@ namespace Veldrith.D3D12
                     readbackBuffer.Map(0, &mappedReadback).CheckError();
                     try
                     {
-                        fixed (byte* dstBase = _data)
+                        fixed (byte* dstBase = this._data)
                         {
                             byte* srcReadback = (byte*)mappedReadback + layouts[0].Offset;
                             byte* dstSubresource = dstBase + dstOffset;
@@ -793,7 +793,7 @@ namespace Veldrith.D3D12
             }
         }
 
-        private unsafe void executeTextureBufferCopy(
+        private unsafe void ExecuteTextureBufferCopy(
             uint subresource,
             ResourceStates copyState,
             Func<ResourceStates, (TextureCopyLocation destination, TextureCopyLocation source, Box? sourceBox, ResourceStates previousState)> buildCopy,
@@ -865,90 +865,90 @@ namespace Veldrith.D3D12
 
         private protected override void DisposeCore()
         {
-            if (_mapped)
+            if (this._mapped)
             {
-                _pinnedData.Free();
-                _mapped = false;
+                this._pinnedData.Free();
+                this._mapped = false;
             }
 
-            if (_ownsNativeTexture)
+            if (this._ownsNativeTexture)
             {
                 NativeTexture?.Dispose();
             }
-            _disposed = true;
+            this._disposed = true;
         }
 
         internal ResourceStates GetSubresourceState(uint subresource)
         {
-            if (_subresourceStates == null || subresource >= _subresourceStates.Length)
+            if (this._subresourceStates == null || subresource >= this._subresourceStates.Length)
             {
                 return ResourceStates.Common;
             }
 
-            return _subresourceStates[subresource];
+            return this._subresourceStates[subresource];
         }
 
         internal void SetSubresourceState(uint subresource, ResourceStates state)
         {
-            if (_subresourceStates == null || subresource >= _subresourceStates.Length)
+            if (this._subresourceStates == null || subresource >= this._subresourceStates.Length)
             {
                 return;
             }
 
-            ResourceStates previous = _subresourceStates[subresource];
+            ResourceStates previous = this._subresourceStates[subresource];
             if (previous == state)
             {
                 return;
             }
 
-            _subresourceStates[subresource] = state;
-            if (_hasCachedCommonState && state != _cachedCommonState)
+            this._subresourceStates[subresource] = state;
+            if (this._hasCachedCommonState && state != this._cachedCommonState)
             {
-                _hasCachedCommonState = false;
+                this._hasCachedCommonState = false;
             }
         }
 
         internal void SetAllSubresourceStates(ResourceStates state)
         {
-            if (_subresourceStates == null)
+            if (this._subresourceStates == null)
             {
                 return;
             }
 
-            for (int i = 0; i < _subresourceStates.Length; i++)
+            for (int i = 0; i < this._subresourceStates.Length; i++)
             {
-                _subresourceStates[i] = state;
+                this._subresourceStates[i] = state;
             }
 
-            _hasCachedCommonState = true;
-            _cachedCommonState = state;
+            this._hasCachedCommonState = true;
+            this._cachedCommonState = state;
         }
 
         internal bool TryGetCommonState(out ResourceStates state)
         {
-            if (_subresourceStates == null || _subresourceStates.Length == 0)
+            if (this._subresourceStates == null || this._subresourceStates.Length == 0)
             {
                 state = ResourceStates.Common;
                 return true;
             }
 
-            if (_hasCachedCommonState)
+            if (this._hasCachedCommonState)
             {
-                state = _cachedCommonState;
+                state = this._cachedCommonState;
                 return true;
             }
 
-            state = _subresourceStates[0];
-            for (int i = 1; i < _subresourceStates.Length; i++)
+            state = this._subresourceStates[0];
+            for (int i = 1; i < this._subresourceStates.Length; i++)
             {
-                if (_subresourceStates[i] != state)
+                if (this._subresourceStates[i] != state)
                 {
                     return false;
                 }
             }
 
-            _hasCachedCommonState = true;
-            _cachedCommonState = state;
+            this._hasCachedCommonState = true;
+            this._cachedCommonState = state;
             return true;
         }
     }

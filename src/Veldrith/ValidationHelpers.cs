@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 
 namespace Veldrith
 {
@@ -17,7 +17,7 @@ namespace Veldrith
                     $"The number of resources specified ({resources.Length}) must be equal to the number of resources in the {nameof(ResourceLayout)} ({elements.Length}).");
             }
 
-            for (uint i = 0; i < elements.Length; i++) validateResourceKind(elements[i].Kind, resources[i], i);
+            for (uint i = 0; i < elements.Length; i++) ValidateResourceKind(elements[i].Kind, resources[i], i);
 
             for (int i = 0; i < description.Layout.Description.Elements.Length; i++)
             {
@@ -50,7 +50,7 @@ namespace Veldrith
         }
 
         [Conditional("VALIDATE_USAGE")]
-        private static void validateResourceKind(ResourceKind kind, IBindableResource resource, uint slot)
+        private static void ValidateResourceKind(ResourceKind kind, IBindableResource resource, uint slot)
         {
             switch (kind)
             {

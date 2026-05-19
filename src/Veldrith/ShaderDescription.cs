@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Veldrith
 {
@@ -43,10 +43,10 @@ namespace Veldrith
         /// <param name="entryPoint">The name of the entry point function in the shader module to be used in this stage.</param>
         public ShaderDescription(ShaderStages stage, byte[] shaderBytes, string entryPoint)
         {
-            Stage = stage;
-            ShaderBytes = shaderBytes;
-            EntryPoint = entryPoint;
-            Debug = false;
+            this.Stage = stage;
+            this.ShaderBytes = shaderBytes;
+            this.EntryPoint = entryPoint;
+            this.Debug = false;
         }
 
         /// <summary>
@@ -61,10 +61,10 @@ namespace Veldrith
         /// </param>
         public ShaderDescription(ShaderStages stage, byte[] shaderBytes, string entryPoint, bool debug)
         {
-            Stage = stage;
-            ShaderBytes = shaderBytes;
-            EntryPoint = entryPoint;
-            Debug = debug;
+            this.Stage = stage;
+            this.ShaderBytes = shaderBytes;
+            this.EntryPoint = entryPoint;
+            this.Debug = debug;
         }
 
         /// <summary>
@@ -74,10 +74,10 @@ namespace Veldrith
         /// <returns>True if all elements and if array instances are equal; false otherswise.</returns>
         public bool Equals(ShaderDescription other)
         {
-            return Stage == other.Stage
-                   && ShaderBytes == other.ShaderBytes
-                   && EntryPoint.Equals(other.EntryPoint)
-                   && Debug.Equals(other.Debug);
+            return this.Stage == other.Stage
+                   && this.ShaderBytes == other.ShaderBytes
+                   && this.EntryPoint.Equals(other.EntryPoint)
+                   && this.Debug.Equals(other.Debug);
         }
 
         /// <summary>
@@ -87,10 +87,10 @@ namespace Veldrith
         public override int GetHashCode()
         {
             return HashHelper.Combine(
-                (int)Stage,
-                ShaderBytes.GetHashCode(),
-                EntryPoint.GetHashCode(),
-                Debug.GetHashCode());
+                (int)this.Stage,
+                this.ShaderBytes.GetHashCode(),
+                this.EntryPoint.GetHashCode(),
+                this.Debug.GetHashCode());
         }
     }
 }

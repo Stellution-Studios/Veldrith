@@ -9,17 +9,17 @@ namespace Veldrith.MTL
 
         public uint ActualCapacity { get; }
 
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => this._disposed;
 
         public override string Name
         {
-            get => _name;
+            get => this._name;
             set
             {
                 var nameNss = NSString.New(value);
                 DeviceBuffer.addDebugMarker(nameNss, new NSRange(0, SizeInBytes));
                 ObjectiveCRuntime.release(nameNss.NativePtr);
-                _name = value;
+                this._name = value;
             }
         }
 
@@ -54,9 +54,9 @@ namespace Veldrith.MTL
 
         public override void Dispose()
         {
-            if (!_disposed)
+            if (!this._disposed)
             {
-                _disposed = true;
+                this._disposed = true;
                 ObjectiveCRuntime.release(DeviceBuffer.NativePtr);
             }
         }

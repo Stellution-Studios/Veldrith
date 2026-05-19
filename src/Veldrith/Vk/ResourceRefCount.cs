@@ -11,12 +11,12 @@ namespace Veldrith.Vk
         public ResourceRefCount(Action disposeAction)
         {
             this.disposeAction = disposeAction;
-            _refCount = 1;
+            this._refCount = 1;
         }
 
         public int Increment()
         {
-            int ret = Interlocked.Increment(ref _refCount);
+            int ret = Interlocked.Increment(ref this._refCount);
 #if VALIDATE_USAGE
             if (ret == 0) throw new VeldridException("An attempt was made to reference a disposed resource.");
 #endif
@@ -25,7 +25,7 @@ namespace Veldrith.Vk
 
         public int Decrement()
         {
-            int ret = Interlocked.Decrement(ref _refCount);
+            int ret = Interlocked.Decrement(ref this._refCount);
             if (ret == 0) disposeAction();
 
             return ret;

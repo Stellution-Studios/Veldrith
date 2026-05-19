@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Veldrith
 {
@@ -46,9 +46,9 @@ namespace Veldrith
         /// </param>
         public ShaderSetDescription(VertexLayoutDescription[] vertexLayouts, Shader[] shaders)
         {
-            VertexLayouts = vertexLayouts;
-            Shaders = shaders;
-            Specializations = null;
+            this.VertexLayouts = vertexLayouts;
+            this.Shaders = shaders;
+            this.Specializations = null;
         }
 
         /// <summary>
@@ -76,9 +76,9 @@ namespace Veldrith
             Shader[] shaders,
             SpecializationConstant[] specializations)
         {
-            VertexLayouts = vertexLayouts;
-            Shaders = shaders;
-            Specializations = specializations;
+            this.VertexLayouts = vertexLayouts;
+            this.Shaders = shaders;
+            this.Specializations = specializations;
         }
 
         /// <summary>
@@ -88,9 +88,9 @@ namespace Veldrith
         /// <returns>True if all array elements are equal; false otherswise.</returns>
         public bool Equals(ShaderSetDescription other)
         {
-            return Util.ArrayEqualsEquatable(VertexLayouts, other.VertexLayouts)
-                   && Util.ArrayEquals(Shaders, other.Shaders)
-                   && Util.ArrayEqualsEquatable(Specializations, other.Specializations);
+            return Util.ArrayEqualsEquatable(this.VertexLayouts, other.VertexLayouts)
+                   && Util.ArrayEquals(this.Shaders, other.Shaders)
+                   && Util.ArrayEqualsEquatable(this.Specializations, other.Specializations);
         }
 
         /// <summary>
@@ -100,9 +100,9 @@ namespace Veldrith
         public override int GetHashCode()
         {
             return HashHelper.Combine(
-                HashHelper.Array(VertexLayouts),
-                HashHelper.Array(Shaders),
-                HashHelper.Array(Specializations));
+                HashHelper.Array(this.VertexLayouts),
+                HashHelper.Array(this.Shaders),
+                HashHelper.Array(this.Specializations));
         }
     }
 }

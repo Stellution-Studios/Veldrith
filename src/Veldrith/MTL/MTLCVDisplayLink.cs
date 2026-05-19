@@ -15,29 +15,29 @@ namespace Veldrith.MTL
 
         public MtlcvDisplayLink()
         {
-            _cvDisplayLinkCallbackHandler = OnCallback;
-            _displayLink = CVDisplayLink.CreateWithActiveCGDisplays();
-            _displayLink.SetOutputCallback(_cvDisplayLinkCallbackHandler, IntPtr.Zero);
-            _displayLink.Start();
+            this._cvDisplayLinkCallbackHandler = OnCallback;
+            this._displayLink = CVDisplayLink.CreateWithActiveCGDisplays();
+            this._displayLink.SetOutputCallback(this._cvDisplayLinkCallbackHandler, IntPtr.Zero);
+            this._displayLink.Start();
         }
 
         #region Disposal
 
         public void Dispose()
         {
-            _displayLink.Release();
+            this._displayLink.Release();
         }
 
         #endregion
 
         public void UpdateActiveDisplay(int x, int y, int w, int h)
         {
-            _displayLink.UpdateActiveMonitor(x, y, w, h);
+            this._displayLink.UpdateActiveMonitor(x, y, w, h);
         }
 
         public double GetActualOutputVideoRefreshPeriod()
         {
-            return _displayLink.GetActualOutputVideoRefreshPeriod();
+            return this._displayLink.GetActualOutputVideoRefreshPeriod();
         }
 
         private int OnCallback(CVDisplayLink displaylink, CVTimeStamp* innow, CVTimeStamp* inoutputtime, long flagsin, long flagsout, IntPtr userdata)

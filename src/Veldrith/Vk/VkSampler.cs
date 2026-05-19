@@ -5,18 +5,18 @@ namespace Veldrith.Vk
 {
     internal unsafe class VkSampler : Sampler
     {
-        public Vulkan.VkSampler DeviceSampler => _sampler;
+        public Vulkan.VkSampler DeviceSampler => this._sampler;
 
         public ResourceRefCount RefCount { get; }
 
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => this._disposed;
 
         public override string Name
         {
-            get => _name;
+            get => this._name;
             set
             {
-                _name = value;
+                this._name = value;
                 gd.SetResourceName(this, value);
             }
         }
@@ -52,8 +52,8 @@ namespace Veldrith.Vk
                 borderColor = VkFormats.VdToVkSamplerBorderColor(description.BorderColor)
             };
 
-            vkCreateSampler(this.gd.Device, ref samplerCi, null, out _sampler);
-            RefCount = new ResourceRefCount(disposeCore);
+            vkCreateSampler(this.gd.Device, ref samplerCi, null, out this._sampler);
+            RefCount = new ResourceRefCount(DisposeCore);
         }
 
         #region Disposal
@@ -65,12 +65,12 @@ namespace Veldrith.Vk
 
         #endregion
 
-        private void disposeCore()
+        private void DisposeCore()
         {
-            if (!_disposed)
+            if (!this._disposed)
             {
-                vkDestroySampler(gd.Device, _sampler, null);
-                _disposed = true;
+                vkDestroySampler(gd.Device, this._sampler, null);
+                this._disposed = true;
             }
         }
     }

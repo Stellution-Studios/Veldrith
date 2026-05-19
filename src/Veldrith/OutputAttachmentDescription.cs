@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Veldrith
 {
@@ -18,7 +18,7 @@ namespace Veldrith
         /// <param name="format">THe format of the <see cref="Texture" /> attachment.</param>
         public OutputAttachmentDescription(PixelFormat format)
         {
-            Format = format;
+            this.Format = format;
         }
 
         /// <summary>
@@ -28,7 +28,7 @@ namespace Veldrith
         /// <returns>True if all elements are equal; false otherswise.</returns>
         public bool Equals(OutputAttachmentDescription other)
         {
-            return Format == other.Format;
+            return this.Format == other.Format;
         }
 
         /// <summary>
@@ -37,7 +37,7 @@ namespace Veldrith
         /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
         public override int GetHashCode()
         {
-            return (int)Format;
+            return (int)this.Format;
         }
     }
 }

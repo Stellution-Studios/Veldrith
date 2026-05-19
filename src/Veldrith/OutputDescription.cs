@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Veldrith
 {
@@ -29,9 +29,9 @@ namespace Veldrith
         /// <param name="colorAttachments">An array of descriptions of each color attachment.</param>
         public OutputDescription(OutputAttachmentDescription? depthAttachment, params OutputAttachmentDescription[] colorAttachments)
         {
-            DepthAttachment = depthAttachment;
-            ColorAttachments = colorAttachments ?? Array.Empty<OutputAttachmentDescription>();
-            SampleCount = TextureSampleCount.Count1;
+            this.DepthAttachment = depthAttachment;
+            this.ColorAttachments = colorAttachments ?? Array.Empty<OutputAttachmentDescription>();
+            this.SampleCount = TextureSampleCount.Count1;
         }
 
         /// <summary>
@@ -45,9 +45,9 @@ namespace Veldrith
             OutputAttachmentDescription[] colorAttachments,
             TextureSampleCount sampleCount)
         {
-            DepthAttachment = depthAttachment;
-            ColorAttachments = colorAttachments ?? Array.Empty<OutputAttachmentDescription>();
-            SampleCount = sampleCount;
+            this.DepthAttachment = depthAttachment;
+            this.ColorAttachments = colorAttachments ?? Array.Empty<OutputAttachmentDescription>();
+            this.SampleCount = sampleCount;
         }
 
         internal static OutputDescription CreateFromFramebuffer(Framebuffer fb)
@@ -79,9 +79,9 @@ namespace Veldrith
         /// <returns>True if all elements and all array elements are equal; false otherswise.</returns>
         public bool Equals(OutputDescription other)
         {
-            return DepthAttachment.GetValueOrDefault().Equals(other.DepthAttachment.GetValueOrDefault())
-                   && Util.ArrayEqualsEquatable(ColorAttachments, other.ColorAttachments)
-                   && SampleCount == other.SampleCount;
+            return this.DepthAttachment.GetValueOrDefault().Equals(other.DepthAttachment.GetValueOrDefault())
+                   && Util.ArrayEqualsEquatable(this.ColorAttachments, other.ColorAttachments)
+                   && this.SampleCount == other.SampleCount;
         }
 
         /// <summary>
@@ -91,9 +91,9 @@ namespace Veldrith
         public override int GetHashCode()
         {
             return HashHelper.Combine(
-                DepthAttachment.GetHashCode(),
-                HashHelper.Array(ColorAttachments),
-                (int)SampleCount);
+                this.DepthAttachment.GetHashCode(),
+                HashHelper.Array(this.ColorAttachments),
+                (int)this.SampleCount);
         }
     }
 }

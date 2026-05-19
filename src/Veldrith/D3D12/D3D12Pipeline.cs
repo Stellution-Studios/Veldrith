@@ -42,17 +42,17 @@ namespace Veldrith.D3D12
             {
                 VertexStrides[i] = description.ShaderSet.VertexLayouts[i].Stride;
             }
-            _pipelineResourceLayouts = description.ResourceLayouts;
+            this._pipelineResourceLayouts = description.ResourceLayouts;
 
-            createRootSignature(description.ResourceLayouts, useSetRegisterSpaces: true);
+            CreateRootSignature(description.ResourceLayouts, useSetRegisterSpaces: true);
             try
             {
-                createGraphicsPipelineState(ref description);
+                CreateGraphicsPipelineState(ref description);
             }
             catch (VeldridException)
             {
-                recreateRootSignatureWithoutSetSpaces();
-                createGraphicsPipelineState(ref description);
+                RecreateRootSignatureWithoutSetSpaces();
+                CreateGraphicsPipelineState(ref description);
             }
         }
 
@@ -61,16 +61,16 @@ namespace Veldrith.D3D12
         {
             this.gd = gd;
             IsComputePipeline = true;
-            _pipelineResourceLayouts = description.ResourceLayouts;
-            createRootSignature(description.ResourceLayouts, useSetRegisterSpaces: true);
+            this._pipelineResourceLayouts = description.ResourceLayouts;
+            CreateRootSignature(description.ResourceLayouts, useSetRegisterSpaces: true);
             try
             {
-                createComputePipelineState(ref description);
+                CreateComputePipelineState(ref description);
             }
             catch (Exception)
             {
-                recreateRootSignatureWithoutSetSpaces();
-                createComputePipelineState(ref description);
+                RecreateRootSignatureWithoutSetSpaces();
+                CreateComputePipelineState(ref description);
             }
         }
 
@@ -80,39 +80,39 @@ namespace Veldrith.D3D12
         public Vortice.Direct3D.PrimitiveTopology PrimitiveTopology { get; }
         public PrimitiveTopologyType PrimitiveTopologyType { get; }
         public uint[] VertexStrides { get; } = Array.Empty<uint>();
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => this._disposed;
 
         public override string Name
         {
-            get => _name;
+            get => this._name;
             set
             {
-                _name = value;
+                this._name = value;
             }
         }
 
         public override void Dispose()
         {
-            if (_disposed)
+            if (this._disposed)
             {
                 return;
             }
 
             PipelineState?.Dispose();
-            _disposed = true;
+            this._disposed = true;
         }
 
         internal bool TryGetGraphicsRootBinding(uint set, uint element, out RootBindingInfo bindingInfo)
-            => tryGetRootBinding(set, element, out bindingInfo);
+            => TryGetRootBinding(set, element, out bindingInfo);
 
         internal bool TryGetComputeRootBinding(uint set, uint element, out RootBindingInfo bindingInfo)
-            => tryGetRootBinding(set, element, out bindingInfo);
+            => TryGetRootBinding(set, element, out bindingInfo);
 
-        private void createRootSignature(ResourceLayout[] resourceLayouts, bool useSetRegisterSpaces)
+        private void CreateRootSignature(ResourceLayout[] resourceLayouts, bool useSetRegisterSpaces)
         {
-            _usingSetRegisterSpaces = useSetRegisterSpaces;
+            this._usingSetRegisterSpaces = useSetRegisterSpaces;
             var rootParameters = new List<RootParameter>();
-            initializeRootBindingTables(resourceLayouts);
+            InitializeRootBindingTables(resourceLayouts);
             uint globalCbvRegister = 0;
             uint globalSrvRegister = 0;
             uint globalUavRegister = 0;
@@ -131,7 +131,7 @@ namespace Veldrith.D3D12
                         // SPIR-V -> HLSL remapping in Veldrith.SPIRV assigns binding indices
                         // globally per resource-kind (CBV/SRV/UAV/Sampler), not per set.
                         // Keep register numbering global here for both space modes.
-                        shaderRegister = allocateShaderRegister(
+                        shaderRegister = AllocateShaderRegister(
                             element.Kind,
                             ref globalCbvRegister,
                             ref globalSrvRegister,
@@ -139,26 +139,26 @@ namespace Veldrith.D3D12
                             ref globalSamplerRegister);
 
                         uint registerSpace = useSetRegisterSpaces ? setIndex : 0u;
-                        bool descriptorTable = usesDescriptorTable(element.Kind);
+                        bool descriptorTable = UsesDescriptorTable(element.Kind);
                         RootParameter rootParameter;
                         if (descriptorTable)
                         {
-                            DescriptorRangeType rangeType = getDescriptorRangeType(element.Kind);
+                            DescriptorRangeType rangeType = GetDescriptorRangeType(element.Kind);
                             var descriptorRange = new DescriptorRange(rangeType, 1, shaderRegister, registerSpace, 0);
                             var descriptorTableInfo = new RootDescriptorTable(new[] { descriptorRange });
-                            rootParameter = new RootParameter(descriptorTableInfo, toShaderVisibility(element.Stages));
+                            rootParameter = new RootParameter(descriptorTableInfo, ToShaderVisibility(element.Stages));
                         }
                         else
                         {
-                            RootParameterType parameterType = getRootParameterType(element.Kind);
+                            RootParameterType parameterType = GetRootParameterType(element.Kind);
                             var rootDescriptor = new RootDescriptor(shaderRegister, registerSpace);
-                            rootParameter = new RootParameter(parameterType, rootDescriptor, toShaderVisibility(element.Stages));
+                            rootParameter = new RootParameter(parameterType, rootDescriptor, ToShaderVisibility(element.Stages));
                         }
 
                         uint rootParameterIndex = (uint)rootParameters.Count;
                         rootParameters.Add(rootParameter);
-                        _rootBindings[setIndex][elementIndex] = new RootBindingInfo(rootParameterIndex, element.Kind, descriptorTable);
-                        _rootBindingValid[setIndex][elementIndex] = true;
+                        this._rootBindings[setIndex][elementIndex] = new RootBindingInfo(rootParameterIndex, element.Kind, descriptorTable);
+                        this._rootBindingValid[setIndex][elementIndex] = true;
                     }
                 }
             }
@@ -171,21 +171,21 @@ namespace Veldrith.D3D12
                 rootSignatureFlags,
                 rootParameters.ToArray(),
                 Array.Empty<StaticSamplerDescription>());
-            string cacheKey = buildRootSignatureCacheKey(resourceLayouts, useSetRegisterSpaces, IsComputePipeline);
+            string cacheKey = BuildRootSignatureCacheKey(resourceLayouts, useSetRegisterSpaces, IsComputePipeline);
             RootSignature = gd.GetOrCreateRootSignature(cacheKey, in rootSignatureDescription);
         }
 
-        private void recreateRootSignatureWithoutSetSpaces()
+        private void RecreateRootSignatureWithoutSetSpaces()
         {
-            if (!_usingSetRegisterSpaces)
+            if (!this._usingSetRegisterSpaces)
             {
                 return;
             }
 
-            createRootSignature(_pipelineResourceLayouts, useSetRegisterSpaces: false);
+            CreateRootSignature(this._pipelineResourceLayouts, useSetRegisterSpaces: false);
         }
 
-        private static uint allocateShaderRegister(
+        private static uint AllocateShaderRegister(
             ResourceKind resourceKind,
             ref uint nextCbvRegister,
             ref uint nextSrvRegister,
@@ -209,13 +209,13 @@ namespace Veldrith.D3D12
             }
         }
 
-        private bool tryGetRootBinding(uint set, uint element, out RootBindingInfo bindingInfo)
+        private bool TryGetRootBinding(uint set, uint element, out RootBindingInfo bindingInfo)
         {
-            if (set < (uint)_rootBindings.Length
-                && element < (uint)_rootBindings[set].Length
-                && _rootBindingValid[set][element])
+            if (set < (uint)this._rootBindings.Length
+                && element < (uint)this._rootBindings[set].Length
+                && this._rootBindingValid[set][element])
             {
-                bindingInfo = _rootBindings[set][element];
+                bindingInfo = this._rootBindings[set][element];
                 return true;
             }
 
@@ -223,27 +223,27 @@ namespace Veldrith.D3D12
             return false;
         }
 
-        private void initializeRootBindingTables(ResourceLayout[] resourceLayouts)
+        private void InitializeRootBindingTables(ResourceLayout[] resourceLayouts)
         {
             if (resourceLayouts == null || resourceLayouts.Length == 0)
             {
-                _rootBindings = Array.Empty<RootBindingInfo[]>();
-                _rootBindingValid = Array.Empty<bool[]>();
+                this._rootBindings = Array.Empty<RootBindingInfo[]>();
+                this._rootBindingValid = Array.Empty<bool[]>();
                 return;
             }
 
-            _rootBindings = new RootBindingInfo[resourceLayouts.Length][];
-            _rootBindingValid = new bool[resourceLayouts.Length][];
+            this._rootBindings = new RootBindingInfo[resourceLayouts.Length][];
+            this._rootBindingValid = new bool[resourceLayouts.Length][];
             for (int setIndex = 0; setIndex < resourceLayouts.Length; setIndex++)
             {
                 var resourceLayout = Util.AssertSubtype<ResourceLayout, D3D12ResourceLayout>(resourceLayouts[setIndex]);
                 int elementCount = resourceLayout.Elements.Length;
-                _rootBindings[setIndex] = new RootBindingInfo[elementCount];
-                _rootBindingValid[setIndex] = new bool[elementCount];
+                this._rootBindings[setIndex] = new RootBindingInfo[elementCount];
+                this._rootBindingValid[setIndex] = new bool[elementCount];
             }
         }
 
-        private static string buildRootSignatureCacheKey(ResourceLayout[] resourceLayouts, bool useSetRegisterSpaces, bool isComputePipeline)
+        private static string BuildRootSignatureCacheKey(ResourceLayout[] resourceLayouts, bool useSetRegisterSpaces, bool isComputePipeline)
         {
             var sb = new StringBuilder(256);
             sb.Append(isComputePipeline ? 'C' : 'G');
@@ -277,7 +277,7 @@ namespace Veldrith.D3D12
             return sb.ToString();
         }
 
-        private void createComputePipelineState(ref ComputePipelineDescription description)
+        private void CreateComputePipelineState(ref ComputePipelineDescription description)
         {
             var d3d12Shader = Util.AssertSubtype<Shader, D3D12Shader>(description.ComputeShader);
             var psoDescription = new ComputePipelineStateDescription
@@ -289,7 +289,7 @@ namespace Veldrith.D3D12
             PipelineState = gd.Device.CreateComputePipelineState(psoDescription);
         }
 
-        private static RootParameterType getRootParameterType(ResourceKind resourceKind)
+        private static RootParameterType GetRootParameterType(ResourceKind resourceKind)
         {
             switch (resourceKind)
             {
@@ -308,12 +308,12 @@ namespace Veldrith.D3D12
             }
         }
 
-        private static bool usesDescriptorTable(ResourceKind resourceKind)
+        private static bool UsesDescriptorTable(ResourceKind resourceKind)
             => resourceKind == ResourceKind.TextureReadOnly
                || resourceKind == ResourceKind.TextureReadWrite
                || resourceKind == ResourceKind.Sampler;
 
-        private static DescriptorRangeType getDescriptorRangeType(ResourceKind resourceKind)
+        private static DescriptorRangeType GetDescriptorRangeType(ResourceKind resourceKind)
         {
             switch (resourceKind)
             {
@@ -328,7 +328,7 @@ namespace Veldrith.D3D12
             }
         }
 
-        private static ShaderVisibility toShaderVisibility(ShaderStages stages)
+        private static ShaderVisibility ToShaderVisibility(ShaderStages stages)
         {
             if (stages == ShaderStages.Vertex)
             {
@@ -358,7 +358,7 @@ namespace Veldrith.D3D12
             return ShaderVisibility.All;
         }
 
-        private void createGraphicsPipelineState(ref GraphicsPipelineDescription description)
+        private void CreateGraphicsPipelineState(ref GraphicsPipelineDescription description)
         {
             ReadOnlyMemory<byte> vertexShader = default;
             ReadOnlyMemory<byte> pixelShader = default;
@@ -390,7 +390,7 @@ namespace Veldrith.D3D12
                 }
             }
 
-            InputElementDescription[] inputElements = buildInputElements(description.ShaderSet.VertexLayouts);
+            InputElementDescription[] inputElements = BuildInputElements(description.ShaderSet.VertexLayouts);
 
             var psoDescription = new GraphicsPipelineStateDescription
             {
@@ -400,9 +400,9 @@ namespace Veldrith.D3D12
                 GeometryShader = geometryShader,
                 HullShader = hullShader,
                 DomainShader = domainShader,
-                BlendState = buildBlendState(ref description.BlendState),
-                RasterizerState = buildRasterizerState(ref description.RasterizerState),
-                DepthStencilState = buildDepthStencilState(ref description.DepthStencilState),
+                BlendState = BuildBlendState(ref description.BlendState),
+                RasterizerState = BuildRasterizerState(ref description.RasterizerState),
+                DepthStencilState = BuildDepthStencilState(ref description.DepthStencilState),
                 SampleMask = uint.MaxValue,
                 PrimitiveTopologyType = PrimitiveTopologyType,
                 InputLayout = new InputLayoutDescription(inputElements),
@@ -441,12 +441,12 @@ namespace Veldrith.D3D12
                     $"DepthFormat={psoDescription.DepthStencilFormat}, " +
                     $"SampleCount={FormatHelpers.GetSampleCountUInt32(description.Outputs.SampleCount)}, " +
                     $"PrimitiveTopology={description.PrimitiveTopology}, " +
-                    $"UseSetRegisterSpaces={_usingSetRegisterSpaces}.",
+                    $"UseSetRegisterSpaces={this._usingSetRegisterSpaces}.",
                     ex);
             }
         }
 
-        private static BlendDescription buildBlendState(ref BlendStateDescription description)
+        private static BlendDescription BuildBlendState(ref BlendStateDescription description)
         {
             var blendDescription = BlendDescription.Opaque;
             blendDescription.AlphaToCoverageEnable = description.AlphaToCoverageEnabled;
@@ -474,7 +474,7 @@ namespace Veldrith.D3D12
             return blendDescription;
         }
 
-        private static RasterizerDescription buildRasterizerState(ref RasterizerStateDescription description)
+        private static RasterizerDescription BuildRasterizerState(ref RasterizerStateDescription description)
         {
             return new RasterizerDescription
             {
@@ -489,7 +489,7 @@ namespace Veldrith.D3D12
             };
         }
 
-        private static DepthStencilDescription buildDepthStencilState(ref DepthStencilStateDescription description)
+        private static DepthStencilDescription BuildDepthStencilState(ref DepthStencilStateDescription description)
         {
             return new DepthStencilDescription
             {
@@ -512,7 +512,7 @@ namespace Veldrith.D3D12
             };
         }
 
-        private static InputElementDescription[] buildInputElements(VertexLayoutDescription[] vertexLayouts)
+        private static InputElementDescription[] BuildInputElements(VertexLayoutDescription[] vertexLayouts)
         {
             if (vertexLayouts == null || vertexLayouts.Length == 0)
             {

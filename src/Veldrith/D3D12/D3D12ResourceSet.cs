@@ -10,24 +10,24 @@ namespace Veldrith.D3D12
         public D3D12ResourceSet(ref ResourceSetDescription description)
             : base(ref description)
         {
-            _layout = Util.AssertSubtype<ResourceLayout, D3D12ResourceLayout>(description.Layout);
-            _boundResources = Util.ShallowClone(description.BoundResources);
+            this._layout = Util.AssertSubtype<ResourceLayout, D3D12ResourceLayout>(description.Layout);
+            this._boundResources = Util.ShallowClone(description.BoundResources);
         }
 
-        internal D3D12ResourceLayout ResourceLayoutInfo => _layout;
-        internal IBindableResource[] BoundResources => _boundResources;
+        internal D3D12ResourceLayout ResourceLayoutInfo => this._layout;
+        internal IBindableResource[] BoundResources => this._boundResources;
 
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => this._disposed;
 
         public override string Name
         {
-            get => _name;
-            set => _name = value;
+            get => this._name;
+            set => this._name = value;
         }
 
         public override void Dispose()
         {
-            _disposed = true;
+            this._disposed = true;
         }
     }
 }

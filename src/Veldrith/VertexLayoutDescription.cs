@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Veldrith
 {
@@ -36,9 +36,9 @@ namespace Veldrith
         /// </param>
         public VertexLayoutDescription(uint stride, params VertexElementDescription[] elements)
         {
-            Stride = stride;
-            Elements = elements;
-            InstanceStepRate = 0;
+            this.Stride = stride;
+            this.Elements = elements;
+            this.InstanceStepRate = 0;
         }
 
         /// <summary>
@@ -58,9 +58,9 @@ namespace Veldrith
         /// </param>
         public VertexLayoutDescription(uint stride, uint instanceStepRate, params VertexElementDescription[] elements)
         {
-            Stride = stride;
-            Elements = elements;
-            InstanceStepRate = instanceStepRate;
+            this.Stride = stride;
+            this.Elements = elements;
+            this.InstanceStepRate = instanceStepRate;
         }
 
         /// <summary>
@@ -72,7 +72,7 @@ namespace Veldrith
         /// </param>
         public VertexLayoutDescription(params VertexElementDescription[] elements)
         {
-            Elements = elements;
+            this.Elements = elements;
             uint computedStride = 0;
 
             for (int i = 0; i < elements.Length; i++)
@@ -84,8 +84,8 @@ namespace Veldrith
                     computedStride += elementSize;
             }
 
-            Stride = computedStride;
-            InstanceStepRate = 0;
+            this.Stride = computedStride;
+            this.InstanceStepRate = 0;
         }
 
         /// <summary>
@@ -95,9 +95,9 @@ namespace Veldrith
         /// <returns>True if all elements and all array elements are equal; false otherswise.</returns>
         public bool Equals(VertexLayoutDescription other)
         {
-            return Stride.Equals(other.Stride)
-                   && Util.ArrayEqualsEquatable(Elements, other.Elements)
-                   && InstanceStepRate.Equals(other.InstanceStepRate);
+            return this.Stride.Equals(other.Stride)
+                   && Util.ArrayEqualsEquatable(this.Elements, other.Elements)
+                   && this.InstanceStepRate.Equals(other.InstanceStepRate);
         }
 
         /// <summary>
@@ -106,7 +106,7 @@ namespace Veldrith
         /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
         public override int GetHashCode()
         {
-            return HashHelper.Combine(Stride.GetHashCode(), HashHelper.Array(Elements), InstanceStepRate.GetHashCode());
+            return HashHelper.Combine(this.Stride.GetHashCode(), HashHelper.Array(this.Elements), this.InstanceStepRate.GetHashCode());
         }
     }
 }

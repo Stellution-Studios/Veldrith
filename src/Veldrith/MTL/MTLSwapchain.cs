@@ -5,18 +5,18 @@ namespace Veldrith.MTL
 {
     internal class MtlSwapchain : Swapchain
     {
-        public override Framebuffer Framebuffer => _framebuffer;
+        public override Framebuffer Framebuffer => this._framebuffer;
 
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => this._disposed;
 
-        public CAMetalDrawable CurrentDrawable => _drawable;
+        public CAMetalDrawable CurrentDrawable => this._drawable;
 
         public override bool SyncToVerticalBlank
         {
-            get => _syncToVerticalBlank;
+            get => this._syncToVerticalBlank;
             set
             {
-                if (_syncToVerticalBlank != value) setSyncToVerticalBlank(value);
+                if (this._syncToVerticalBlank != value) SetSyncToVerticalBlank(value);
             }
         }
 
@@ -33,7 +33,7 @@ namespace Veldrith.MTL
         public MtlSwapchain(MtlGraphicsDevice gd, ref SwapchainDescription description)
         {
             this.gd = gd;
-            _syncToVerticalBlank = description.SyncToVerticalBlank;
+            this._syncToVerticalBlank = description.SyncToVerticalBlank;
 
             uint width;
             uint height;
@@ -48,11 +48,11 @@ namespace Veldrith.MTL
                 width = (uint)windowContentSize.width;
                 height = (uint)windowContentSize.height;
 
-                if (!CAMetalLayer.TryCast(contentView.layer, out _metalLayer))
+                if (!CAMetalLayer.TryCast(contentView.layer, out this._metalLayer))
                 {
-                    _metalLayer = CAMetalLayer.New();
+                    this._metalLayer = CAMetalLayer.New();
                     contentView.wantsLayer = true;
-                    contentView.layer = _metalLayer.NativePtr;
+                    contentView.layer = this._metalLayer.NativePtr;
                 }
             }
             else if (source is NSViewSwapchainSource nsViewSource)
@@ -62,26 +62,26 @@ namespace Veldrith.MTL
                 width = (uint)windowContentSize.width;
                 height = (uint)windowContentSize.height;
 
-                if (!CAMetalLayer.TryCast(contentView.layer, out _metalLayer))
+                if (!CAMetalLayer.TryCast(contentView.layer, out this._metalLayer))
                 {
-                    _metalLayer = CAMetalLayer.New();
+                    this._metalLayer = CAMetalLayer.New();
                     contentView.wantsLayer = true;
-                    contentView.layer = _metalLayer.NativePtr;
+                    contentView.layer = this._metalLayer.NativePtr;
                 }
             }
             else if (source is UIViewSwapchainSource uiViewSource)
             {
-                _uiView = new UIView(uiViewSource.UIView);
-                var viewSize = _uiView.frame.size;
+                this._uiView = new UIView(uiViewSource.UIView);
+                var viewSize = this._uiView.frame.size;
                 width = (uint)viewSize.width;
                 height = (uint)viewSize.height;
 
-                if (!CAMetalLayer.TryCast(_uiView.layer, out _metalLayer))
+                if (!CAMetalLayer.TryCast(this._uiView.layer, out this._metalLayer))
                 {
-                    _metalLayer = CAMetalLayer.New();
-                    _metalLayer.frame = _uiView.frame;
-                    _metalLayer.opaque = true;
-                    _uiView.layer.addSublayer(_metalLayer.NativePtr);
+                    this._metalLayer = CAMetalLayer.New();
+                    this._metalLayer.frame = this._uiView.frame;
+                    this._metalLayer.opaque = true;
+                    this._uiView.layer.addSublayer(this._metalLayer.NativePtr);
                 }
             }
             else
@@ -91,68 +91,68 @@ namespace Veldrith.MTL
                 ? PixelFormat.B8G8R8A8UNormSRgb
                 : PixelFormat.B8G8R8A8UNorm;
 
-            _metalLayer.device = this.gd.Device;
-            _metalLayer.pixelFormat = MtlFormats.VdToMtlPixelFormat(format, false);
-            _metalLayer.framebufferOnly = true;
-            _metalLayer.drawableSize = new CGSize(width, height);
+            this._metalLayer.device = this.gd.Device;
+            this._metalLayer.pixelFormat = MtlFormats.VdToMtlPixelFormat(format, false);
+            this._metalLayer.framebufferOnly = true;
+            this._metalLayer.drawableSize = new CGSize(width, height);
 
-            setSyncToVerticalBlank(_syncToVerticalBlank);
+            SetSyncToVerticalBlank(this._syncToVerticalBlank);
 
-            _framebuffer = new MtlSwapchainFramebuffer(
+            this._framebuffer = new MtlSwapchainFramebuffer(
                 gd,
                 this,
                 description.DepthFormat,
                 format);
 
-            getNextDrawable();
+            GetNextDrawable();
         }
 
         #region Disposal
 
         public override void Dispose()
         {
-            if (_drawable.NativePtr != IntPtr.Zero) ObjectiveCRuntime.release(_drawable.NativePtr);
-            _framebuffer.Dispose();
-            ObjectiveCRuntime.release(_metalLayer.NativePtr);
+            if (this._drawable.NativePtr != IntPtr.Zero) ObjectiveCRuntime.release(this._drawable.NativePtr);
+            this._framebuffer.Dispose();
+            ObjectiveCRuntime.release(this._metalLayer.NativePtr);
 
-            _disposed = true;
+            this._disposed = true;
         }
 
         #endregion
 
         public override void Resize(uint width, uint height)
         {
-            if (_uiView.NativePtr != IntPtr.Zero)
-                _metalLayer.frame = _uiView.frame;
+            if (this._uiView.NativePtr != IntPtr.Zero)
+                this._metalLayer.frame = this._uiView.frame;
 
-            _metalLayer.drawableSize = new CGSize(width, height);
+            this._metalLayer.drawableSize = new CGSize(width, height);
 
-            getNextDrawable();
+            GetNextDrawable();
         }
 
         public bool EnsureDrawableAvailable()
         {
-            return !_drawable.IsNull || getNextDrawable();
+            return !this._drawable.IsNull || GetNextDrawable();
         }
 
         public void InvalidateDrawable()
         {
-            ObjectiveCRuntime.release(_drawable.NativePtr);
-            _drawable = default;
+            ObjectiveCRuntime.release(this._drawable.NativePtr);
+            this._drawable = default;
         }
 
-        private bool getNextDrawable()
+        private bool GetNextDrawable()
         {
-            if (!_drawable.IsNull) ObjectiveCRuntime.release(_drawable.NativePtr);
+            if (!this._drawable.IsNull) ObjectiveCRuntime.release(this._drawable.NativePtr);
 
             using (NSAutoreleasePool.Begin())
             {
-                _drawable = _metalLayer.nextDrawable();
+                this._drawable = this._metalLayer.nextDrawable();
 
-                if (!_drawable.IsNull)
+                if (!this._drawable.IsNull)
                 {
-                    ObjectiveCRuntime.retain(_drawable.NativePtr);
-                    _framebuffer.UpdateTextures(_drawable, _metalLayer.drawableSize);
+                    ObjectiveCRuntime.retain(this._drawable.NativePtr);
+                    this._framebuffer.UpdateTextures(this._drawable, this._metalLayer.drawableSize);
                     return true;
                 }
 
@@ -160,14 +160,14 @@ namespace Veldrith.MTL
             }
         }
 
-        private void setSyncToVerticalBlank(bool value)
+        private void SetSyncToVerticalBlank(bool value)
         {
-            _syncToVerticalBlank = value;
+            this._syncToVerticalBlank = value;
 
             if (gd.MetalFeatures.MaxFeatureSet == MTLFeatureSet.macOS_GPUFamily1_v3
                 || gd.MetalFeatures.MaxFeatureSet == MTLFeatureSet.macOS_GPUFamily1_v4
                 || gd.MetalFeatures.MaxFeatureSet == MTLFeatureSet.macOS_GPUFamily2_v1)
-                _metalLayer.displaySyncEnabled = value;
+                this._metalLayer.displaySyncEnabled = value;
         }
     }
 }

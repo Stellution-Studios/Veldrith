@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Veldrith
 {
@@ -61,16 +61,16 @@ namespace Veldrith
         /// <param name="comparisonKind">The <see cref="ComparisonKind" /> used when considering new depth values.</param>
         public DepthStencilStateDescription(bool depthTestEnabled, bool depthWriteEnabled, ComparisonKind comparisonKind)
         {
-            DepthTestEnabled = depthTestEnabled;
-            DepthWriteEnabled = depthWriteEnabled;
-            DepthComparison = comparisonKind;
+            this.DepthTestEnabled = depthTestEnabled;
+            this.DepthWriteEnabled = depthWriteEnabled;
+            this.DepthComparison = comparisonKind;
 
-            StencilTestEnabled = false;
-            StencilFront = default;
-            StencilBack = default;
-            StencilReadMask = 0;
-            StencilWriteMask = 0;
-            StencilReference = 0;
+            this.StencilTestEnabled = false;
+            this.StencilFront = default;
+            this.StencilBack = default;
+            this.StencilReadMask = 0;
+            this.StencilWriteMask = 0;
+            this.StencilReference = 0;
         }
 
         /// <summary>
@@ -97,16 +97,16 @@ namespace Veldrith
             byte stencilWriteMask,
             uint stencilReference)
         {
-            DepthTestEnabled = depthTestEnabled;
-            DepthWriteEnabled = depthWriteEnabled;
-            DepthComparison = comparisonKind;
+            this.DepthTestEnabled = depthTestEnabled;
+            this.DepthWriteEnabled = depthWriteEnabled;
+            this.DepthComparison = comparisonKind;
 
-            StencilTestEnabled = stencilTestEnabled;
-            StencilFront = stencilFront;
-            StencilBack = stencilBack;
-            StencilReadMask = stencilReadMask;
-            StencilWriteMask = stencilWriteMask;
-            StencilReference = stencilReference;
+            this.StencilTestEnabled = stencilTestEnabled;
+            this.StencilFront = stencilFront;
+            this.StencilBack = stencilBack;
+            this.StencilReadMask = stencilReadMask;
+            this.StencilWriteMask = stencilWriteMask;
+            this.StencilReference = stencilReference;
         }
 
         /// <summary>
@@ -192,15 +192,15 @@ namespace Veldrith
         /// <returns>True if all elements are equal; false otherswise.</returns>
         public bool Equals(DepthStencilStateDescription other)
         {
-            return DepthTestEnabled.Equals(other.DepthTestEnabled)
-                   && DepthWriteEnabled.Equals(other.DepthWriteEnabled)
-                   && DepthComparison == other.DepthComparison
-                   && StencilTestEnabled.Equals(other.StencilTestEnabled)
-                   && StencilFront.Equals(other.StencilFront)
-                   && StencilBack.Equals(other.StencilBack)
-                   && StencilReadMask.Equals(other.StencilReadMask)
-                   && StencilWriteMask.Equals(other.StencilWriteMask)
-                   && StencilReference.Equals(other.StencilReference);
+            return this.DepthTestEnabled.Equals(other.DepthTestEnabled)
+                   && this.DepthWriteEnabled.Equals(other.DepthWriteEnabled)
+                   && this.DepthComparison == other.DepthComparison
+                   && this.StencilTestEnabled.Equals(other.StencilTestEnabled)
+                   && this.StencilFront.Equals(other.StencilFront)
+                   && this.StencilBack.Equals(other.StencilBack)
+                   && this.StencilReadMask.Equals(other.StencilReadMask)
+                   && this.StencilWriteMask.Equals(other.StencilWriteMask)
+                   && this.StencilReference.Equals(other.StencilReference);
         }
 
         /// <summary>
@@ -210,15 +210,15 @@ namespace Veldrith
         public override int GetHashCode()
         {
             return HashHelper.Combine(
-                DepthTestEnabled.GetHashCode(),
-                DepthWriteEnabled.GetHashCode(),
-                (int)DepthComparison,
-                StencilTestEnabled.GetHashCode(),
-                StencilFront.GetHashCode(),
-                StencilBack.GetHashCode(),
-                StencilReadMask.GetHashCode(),
-                StencilWriteMask.GetHashCode(),
-                StencilReference.GetHashCode());
+                this.DepthTestEnabled.GetHashCode(),
+                this.DepthWriteEnabled.GetHashCode(),
+                (int)this.DepthComparison,
+                this.StencilTestEnabled.GetHashCode(),
+                this.StencilFront.GetHashCode(),
+                this.StencilBack.GetHashCode(),
+                this.StencilReadMask.GetHashCode(),
+                this.StencilWriteMask.GetHashCode(),
+                this.StencilReference.GetHashCode());
         }
     }
 }

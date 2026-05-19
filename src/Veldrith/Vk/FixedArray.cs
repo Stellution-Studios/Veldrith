@@ -1,4 +1,4 @@
-﻿namespace Veldrith.Vk
+namespace Veldrith.Vk
 {
     // Fixed-size "array" types, useful for constructing inputs
     // to some Vulkan functions without allocating and pinning a real array.
@@ -10,8 +10,8 @@
 
         public FixedArray2(T first, T second)
         {
-            First = first;
-            Second = second;
+            this.First = first;
+            this.Second = second;
         }
 
         public uint Count => 2;
@@ -25,9 +25,9 @@
 
         public FixedArray3(T first, T second, T third)
         {
-            First = first;
-            Second = second;
-            Third = third;
+            this.First = first;
+            this.Second = second;
+            this.Third = third;
         }
 
         public uint Count => 3;
@@ -42,10 +42,10 @@
 
         public FixedArray4(T first, T second, T third, T fourth)
         {
-            First = first;
-            Second = second;
-            Third = third;
-            Fourth = fourth;
+            this.First = first;
+            this.Second = second;
+            this.Third = third;
+            this.Fourth = fourth;
         }
 
         public uint Count => 4;
@@ -61,11 +61,11 @@
 
         public FixedArray5(T first, T second, T third, T fourth, T fifth)
         {
-            First = first;
-            Second = second;
-            Third = third;
-            Fourth = fourth;
-            Fifth = fifth;
+            this.First = first;
+            this.Second = second;
+            this.Third = third;
+            this.Fourth = fourth;
+            this.Fifth = fifth;
         }
 
         public uint Count => 5;
@@ -82,12 +82,12 @@
 
         public FixedArray6(T first, T second, T third, T fourth, T fifth, T sixth)
         {
-            First = first;
-            Second = second;
-            Third = third;
-            Fourth = fourth;
-            Fifth = fifth;
-            Sixth = sixth;
+            this.First = first;
+            this.Second = second;
+            this.Third = third;
+            this.Fourth = fourth;
+            this.Fifth = fifth;
+            this.Sixth = sixth;
         }
 
         public uint Count => 6;

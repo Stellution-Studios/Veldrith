@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Veldrith
 {
@@ -9,19 +9,19 @@ namespace Veldrith
 
         public MappedResourceCacheKey(IMappableResource resource, uint subresource)
         {
-            Resource = resource;
-            Subresource = subresource;
+            this.Resource = resource;
+            this.Subresource = subresource;
         }
 
         public bool Equals(MappedResourceCacheKey other)
         {
-            return Resource.Equals(other.Resource)
-                   && Subresource.Equals(other.Subresource);
+            return this.Resource.Equals(other.Resource)
+                   && this.Subresource.Equals(other.Subresource);
         }
 
         public override int GetHashCode()
         {
-            return HashHelper.Combine(Resource.GetHashCode(), Subresource.GetHashCode());
+            return HashHelper.Combine(this.Resource.GetHashCode(), this.Subresource.GetHashCode());
         }
     }
 }

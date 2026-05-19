@@ -6,7 +6,7 @@ namespace Veldrith.MTL
     {
         public MTLTexture TargetDeviceTexture { get; }
 
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => this._disposed;
 
         public override string Name { get; set; }
         private readonly bool _hasTextureView;
@@ -21,7 +21,7 @@ namespace Veldrith.MTL
                                   || BaseArrayLayer != 0 || ArrayLayers != Target.ArrayLayers
                                   || Format != Target.Format)
             {
-                _hasTextureView = true;
+                this._hasTextureView = true;
                 uint effectiveArrayLayers = Target.Usage.HasFlag(TextureUsage.Cubemap) ? ArrayLayers * 6 : ArrayLayers;
                 TargetDeviceTexture = targetMtlTexture.DeviceTexture.newTextureView(
                     MtlFormats.VdToMtlPixelFormat(Format, (description.Target.Usage & TextureUsage.DepthStencil) != 0),
@@ -37,9 +37,9 @@ namespace Veldrith.MTL
 
         public override void Dispose()
         {
-            if (_hasTextureView && !_disposed)
+            if (this._hasTextureView && !this._disposed)
             {
-                _disposed = true;
+                this._disposed = true;
                 ObjectiveCRuntime.release(TargetDeviceTexture.NativePtr);
             }
         }

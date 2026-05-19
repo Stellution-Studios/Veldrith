@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Veldrith
 {
@@ -28,8 +28,8 @@ namespace Veldrith
         /// </param>
         public ResourceSetDescription(ResourceLayout layout, params IBindableResource[] boundResources)
         {
-            Layout = layout;
-            BoundResources = boundResources;
+            this.Layout = layout;
+            this.BoundResources = boundResources;
         }
 
         /// <summary>
@@ -39,7 +39,7 @@ namespace Veldrith
         /// <returns>True if all elements and all array elements are equal; false otherswise.</returns>
         public bool Equals(ResourceSetDescription other)
         {
-            return Layout.Equals(other.Layout) && Util.ArrayEquals(BoundResources, other.BoundResources);
+            return this.Layout.Equals(other.Layout) && Util.ArrayEquals(this.BoundResources, other.BoundResources);
         }
 
         /// <summary>
@@ -48,7 +48,7 @@ namespace Veldrith
         /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
         public override int GetHashCode()
         {
-            return HashHelper.Combine(Layout.GetHashCode(), HashHelper.Array(BoundResources));
+            return HashHelper.Combine(this.Layout.GetHashCode(), HashHelper.Array(this.BoundResources));
         }
     }
 }

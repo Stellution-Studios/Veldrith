@@ -70,22 +70,22 @@ namespace Veldrith.D3D12
                 throw new PlatformNotSupportedException("Direct3D 12 is only supported on Windows.");
             }
 
-            _dxgiFactory = VorticeDXGI.CreateDXGIFactory2<IDXGIFactory4>(false);
-            IDXGIAdapter1 adapter = selectAdapter(_dxgiFactory);
+            this._dxgiFactory = VorticeDXGI.CreateDXGIFactory2<IDXGIFactory4>(false);
+            IDXGIAdapter1 adapter = SelectAdapter(this._dxgiFactory);
             try
             {
                 if (adapter != null)
                 {
-                    VorticeD3D12.D3D12CreateDevice(adapter, FeatureLevel.Level_11_0, out _device).CheckError();
+                    VorticeD3D12.D3D12CreateDevice(adapter, FeatureLevel.Level_11_0, out this._device).CheckError();
                     AdapterDescription1 description = adapter.Description1;
-                    _deviceName = description.Description?.TrimEnd('\0');
-                    _vendorName = $"0x{description.VendorId:X4}";
+                    this._deviceName = description.Description?.TrimEnd('\0');
+                    this._vendorName = $"0x{description.VendorId:X4}";
                 }
                 else
                 {
-                    VorticeD3D12.D3D12CreateDevice(null, FeatureLevel.Level_11_0, out _device).CheckError();
-                    _deviceName = "Direct3D 12 Device";
-                    _vendorName = "Unknown";
+                    VorticeD3D12.D3D12CreateDevice(null, FeatureLevel.Level_11_0, out this._device).CheckError();
+                    this._deviceName = "Direct3D 12 Device";
+                    this._vendorName = "Unknown";
                 }
             }
             finally
@@ -93,28 +93,28 @@ namespace Veldrith.D3D12
                 adapter?.Dispose();
             }
 
-            _commandQueue = _device.CreateCommandQueue(new CommandQueueDescription(CommandListType.Direct));
-            _submissionFence = _device.CreateFence(0, FenceFlags.None);
-            _submissionFenceEvent = new AutoResetEvent(false);
-            _resourceFactory = new D3D12ResourceFactory(this, Features);
+            this._commandQueue = this._device.CreateCommandQueue(new CommandQueueDescription(CommandListType.Direct));
+            this._submissionFence = this._device.CreateFence(0, FenceFlags.None);
+            this._submissionFenceEvent = new AutoResetEvent(false);
+            this._resourceFactory = new D3D12ResourceFactory(this, Features);
 
             if (swapchainDescription != null)
             {
                 SwapchainDescription scDesc = swapchainDescription.Value;
-                _mainSwapchain = new D3D12Swapchain(this, ref scDesc);
+                this._mainSwapchain = new D3D12Swapchain(this, ref scDesc);
             }
 
-            _d3d12Info = new BackendInfoD3D12(_device.NativePointer);
-            if (_mainSwapchain != null)
+            this._d3d12Info = new BackendInfoD3D12(this._device.NativePointer);
+            if (this._mainSwapchain != null)
             {
                 SyncToVerticalBlank = options.SyncToVerticalBlank;
             }
             PostDeviceCreated();
         }
 
-        public override string DeviceName => _deviceName;
+        public override string DeviceName => this._deviceName;
 
-        public override string VendorName => _vendorName;
+        public override string VendorName => this._vendorName;
 
         public override GraphicsApiVersion ApiVersion => GraphicsApiVersion.Unknown;
 
@@ -126,47 +126,47 @@ namespace Veldrith.D3D12
 
         public override bool IsClipSpaceYInverted => true;
 
-        public override ResourceFactory ResourceFactory => _resourceFactory;
+        public override ResourceFactory ResourceFactory => this._resourceFactory;
 
-        public override Swapchain MainSwapchain => _mainSwapchain;
+        public override Swapchain MainSwapchain => this._mainSwapchain;
 
         public override GraphicsDeviceFeatures Features => _d3d12Features;
         public override bool AllowTearing
         {
-            get => _mainSwapchain is D3D12Swapchain d3d12Swapchain && d3d12Swapchain.AllowTearing;
+            get => this._mainSwapchain is D3D12Swapchain d3d12Swapchain && d3d12Swapchain.AllowTearing;
             set
             {
-                if (_mainSwapchain is D3D12Swapchain d3d12Swapchain)
+                if (this._mainSwapchain is D3D12Swapchain d3d12Swapchain)
                 {
                     d3d12Swapchain.AllowTearing = value;
                 }
             }
         }
-        internal ID3D12Device Device => _device;
-        internal ID3D12CommandQueue CommandQueue => _commandQueue;
-        internal IDXGIFactory4 DxgiFactory => _dxgiFactory;
-        internal bool IsSubmissionFenceComplete(ulong value) => _submissionFence.CompletedValue >= value;
+        internal ID3D12Device Device => this._device;
+        internal ID3D12CommandQueue CommandQueue => this._commandQueue;
+        internal IDXGIFactory4 DxgiFactory => this._dxgiFactory;
+        internal bool IsSubmissionFenceComplete(ulong value) => this._submissionFence.CompletedValue >= value;
         internal void WaitForSubmissionFence(ulong value)
         {
-            if (_submissionFence.CompletedValue >= value)
+            if (this._submissionFence.CompletedValue >= value)
             {
                 return;
             }
 
-            _submissionFence.SetEventOnCompletion(value, _submissionFenceEvent.SafeWaitHandle.DangerousGetHandle()).CheckError();
-            _submissionFenceEvent.WaitOne();
+            this._submissionFence.SetEventOnCompletion(value, this._submissionFenceEvent.SafeWaitHandle.DangerousGetHandle()).CheckError();
+            this._submissionFenceEvent.WaitOne();
         }
         internal ID3D12RootSignature GetOrCreateRootSignature(string cacheKey, in RootSignatureDescription description)
         {
-            lock (_rootSignatureCacheLock)
+            lock (this._rootSignatureCacheLock)
             {
-                if (_rootSignatureCache.TryGetValue(cacheKey, out ID3D12RootSignature cached))
+                if (this._rootSignatureCache.TryGetValue(cacheKey, out ID3D12RootSignature cached))
                 {
                     return cached;
                 }
 
-                ID3D12RootSignature created = _device.CreateRootSignature(in description, RootSignatureVersion.Version1);
-                _rootSignatureCache.Add(cacheKey, created);
+                ID3D12RootSignature created = this._device.CreateRootSignature(in description, RootSignatureVersion.Version1);
+                this._rootSignatureCache.Add(cacheKey, created);
                 return created;
             }
         }
@@ -249,7 +249,7 @@ namespace Veldrith.D3D12
                 return TextureSampleCount.Count1;
             }
 
-            if (!tryGetFormatSupport(dxgiFormat, out FeatureDataFormatSupport formatSupport))
+            if (!TryGetFormatSupport(dxgiFormat, out FeatureDataFormatSupport formatSupport))
             {
                 return TextureSampleCount.Count1;
             }
@@ -267,7 +267,7 @@ namespace Veldrith.D3D12
                 return TextureSampleCount.Count1;
             }
 
-            uint sampleMask = getSupportedSampleFlags(dxgiFormat);
+            uint sampleMask = GetSupportedSampleFlags(dxgiFormat);
             if ((sampleMask & (1u << (int)TextureSampleCount.Count32)) != 0) return TextureSampleCount.Count32;
             if ((sampleMask & (1u << (int)TextureSampleCount.Count16)) != 0) return TextureSampleCount.Count16;
             if ((sampleMask & (1u << (int)TextureSampleCount.Count8)) != 0) return TextureSampleCount.Count8;
@@ -314,21 +314,21 @@ namespace Veldrith.D3D12
 
         protected override void PlatformDispose()
         {
-            lock (_rootSignatureCacheLock)
+            lock (this._rootSignatureCacheLock)
             {
-                foreach (ID3D12RootSignature rootSignature in _rootSignatureCache.Values)
+                foreach (ID3D12RootSignature rootSignature in this._rootSignatureCache.Values)
                 {
                     rootSignature?.Dispose();
                 }
-                _rootSignatureCache.Clear();
+                this._rootSignatureCache.Clear();
             }
 
-            _submissionFenceEvent?.Dispose();
-            _submissionFence?.Dispose();
-            _mainSwapchain?.Dispose();
-            _commandQueue?.Dispose();
-            _device?.Dispose();
-            _dxgiFactory?.Dispose();
+            this._submissionFenceEvent?.Dispose();
+            this._submissionFence?.Dispose();
+            this._mainSwapchain?.Dispose();
+            this._commandQueue?.Dispose();
+            this._device?.Dispose();
+            this._dxgiFactory?.Dispose();
         }
 
         private protected override void SubmitCommandsCore(CommandList commandList, Fence fence)
@@ -336,15 +336,15 @@ namespace Veldrith.D3D12
             if (commandList is D3D12CommandList d3d12CommandList)
             {
                 d3d12CommandList.ExecuteNoSignal();
-                ulong signalValue = _nextSubmissionFenceValue++;
-                _commandQueue.Signal(_submissionFence, signalValue).CheckError();
+                ulong signalValue = this._nextSubmissionFenceValue++;
+                this._commandQueue.Signal(this._submissionFence, signalValue).CheckError();
                 d3d12CommandList.MarkSubmitted(signalValue);
                 d3d12CommandList.ClearCachedState();
             }
 
             if (fence is D3D12Fence d3d12Fence)
             {
-                d3d12Fence.Signal(_commandQueue);
+                d3d12Fence.Signal(this._commandQueue);
             }
         }
 
@@ -361,7 +361,7 @@ namespace Veldrith.D3D12
 
         private protected override void WaitForIdleCore()
         {
-            waitForQueueIdle();
+            WaitForQueueIdle();
         }
 
         private protected override void WaitForNextFrameReadyCore()
@@ -390,7 +390,7 @@ namespace Veldrith.D3D12
 
             if (d3d12Texture.NativeTexture != null)
             {
-                updateNativeTexture(
+                UpdateNativeTexture(
                     d3d12Texture,
                     source,
                     sizeInBytes,
@@ -415,15 +415,15 @@ namespace Veldrith.D3D12
                 throw new VeldridException("Buffer belongs to a different backend.");
             }
 
-            ID3D12CommandAllocator allocator = _device.CreateCommandAllocator(CommandListType.Direct);
-            ID3D12GraphicsCommandList commandList = _device.CreateCommandList<ID3D12GraphicsCommandList>(0, CommandListType.Direct, allocator, null);
+            ID3D12CommandAllocator allocator = this._device.CreateCommandAllocator(CommandListType.Direct);
+            ID3D12GraphicsCommandList commandList = this._device.CreateCommandList<ID3D12GraphicsCommandList>(0, CommandListType.Direct, allocator, null);
             ID3D12Resource temporaryUpload = null;
             try
             {
                 temporaryUpload = d3d12Buffer.Update(commandList, source, bufferOffsetInBytes, sizeInBytes);
                 commandList.Close();
-                _commandQueue.ExecuteCommandList(commandList);
-                waitForQueueIdle();
+                this._commandQueue.ExecuteCommandList(commandList);
+                WaitForQueueIdle();
             }
             finally
             {
@@ -477,7 +477,7 @@ namespace Veldrith.D3D12
                 return false;
             }
 
-            if (!tryGetFormatSupport(resourceFormat, out FeatureDataFormatSupport formatSupport))
+            if (!TryGetFormatSupport(resourceFormat, out FeatureDataFormatSupport formatSupport))
             {
                 properties = default;
                 return false;
@@ -485,7 +485,7 @@ namespace Veldrith.D3D12
 
             FormatSupport1 support1 = formatSupport.Support1;
             FormatSupport2 support2 = formatSupport.Support2;
-            if (!isTypeSupported(type, support1))
+            if (!IsTypeSupported(type, support1))
             {
                 properties = default;
                 return false;
@@ -501,7 +501,7 @@ namespace Veldrith.D3D12
             {
                 if (depthUsage)
                 {
-                    if (!tryGetFormatSupport(sampledViewFormat, out FeatureDataFormatSupport sampledSupport))
+                    if (!TryGetFormatSupport(sampledViewFormat, out FeatureDataFormatSupport sampledSupport))
                     {
                         properties = default;
                         return false;
@@ -529,7 +529,7 @@ namespace Veldrith.D3D12
 
             if (depthUsage && (support1 & FormatSupport1.DepthStencil) == 0)
             {
-                if (!tryGetFormatSupport(depthStencilFormat, out FeatureDataFormatSupport depthSupport)
+                if (!TryGetFormatSupport(depthStencilFormat, out FeatureDataFormatSupport depthSupport)
                     || (depthSupport.Support1 & FormatSupport1.DepthStencil) == 0)
                 {
                     properties = default;
@@ -544,7 +544,7 @@ namespace Veldrith.D3D12
                 return false;
             }
 
-            if ((usage & TextureUsage.Storage) != 0 && (FormatHelpers.IsCompressedFormat(format) || isSrgbFormat(format)))
+            if ((usage & TextureUsage.Storage) != 0 && (FormatHelpers.IsCompressedFormat(format) || IsSrgbFormat(format)))
             {
                 properties = default;
                 return false;
@@ -565,14 +565,14 @@ namespace Veldrith.D3D12
             }
 
             if ((usage & TextureUsage.GenerateMipmaps) != 0
-                && !isRuntimeMipmapGenerationSupported(format, type, usage, depthUsage))
+                && !IsRuntimeMipmapGenerationSupported(format, type, usage, depthUsage))
             {
                 properties = default;
                 return false;
             }
 
             Format sampleCountFormat = depthUsage ? depthStencilFormat : resourceFormat;
-            uint sampleFlags = getSupportedSampleFlags(sampleCountFormat);
+            uint sampleFlags = GetSupportedSampleFlags(sampleCountFormat);
             if (sampleFlags == 0)
             {
                 sampleFlags = 1u << (int)TextureSampleCount.Count1;
@@ -585,8 +585,8 @@ namespace Veldrith.D3D12
                 sampleFlags = 1u << (int)TextureSampleCount.Count1;
             }
 
-            getTextureTypeLimits(type, out uint maxWidth, out uint maxHeight, out uint maxDepth, out uint maxArrayLayers);
-            uint maxMipLevels = getMaxMipLevels(maxWidth, maxHeight, maxDepth);
+            GetTextureTypeLimits(type, out uint maxWidth, out uint maxHeight, out uint maxDepth, out uint maxArrayLayers);
+            uint maxMipLevels = GetMaxMipLevels(maxWidth, maxHeight, maxDepth);
             if (type != TextureType.Texture2D
                 || (usage & (TextureUsage.Storage | TextureUsage.Staging | TextureUsage.GenerateMipmaps | TextureUsage.Cubemap)) != 0)
             {
@@ -605,11 +605,11 @@ namespace Veldrith.D3D12
 
         public override bool GetD3D12Info(out BackendInfoD3D12 info)
         {
-            info = _d3d12Info;
+            info = this._d3d12Info;
             return true;
         }
 
-        private static IDXGIAdapter1 selectAdapter(IDXGIFactory4 factory)
+        private static IDXGIAdapter1 SelectAdapter(IDXGIFactory4 factory)
         {
             // Prefer the high-performance adapter when DXGI 1.6 is available.
             using (var factory6 = factory.QueryInterfaceOrNull<IDXGIFactory6>())
@@ -669,18 +669,18 @@ namespace Veldrith.D3D12
             return bestAdapter;
         }
 
-        private uint getSupportedSampleFlags(Format format)
+        private uint GetSupportedSampleFlags(Format format)
         {
             uint sampleFlags = 1u << (int)TextureSampleCount.Count1;
-            sampleFlags |= querySampleSupportFlag(format, 2, TextureSampleCount.Count2);
-            sampleFlags |= querySampleSupportFlag(format, 4, TextureSampleCount.Count4);
-            sampleFlags |= querySampleSupportFlag(format, 8, TextureSampleCount.Count8);
-            sampleFlags |= querySampleSupportFlag(format, 16, TextureSampleCount.Count16);
-            sampleFlags |= querySampleSupportFlag(format, 32, TextureSampleCount.Count32);
+            sampleFlags |= QuerySampleSupportFlag(format, 2, TextureSampleCount.Count2);
+            sampleFlags |= QuerySampleSupportFlag(format, 4, TextureSampleCount.Count4);
+            sampleFlags |= QuerySampleSupportFlag(format, 8, TextureSampleCount.Count8);
+            sampleFlags |= QuerySampleSupportFlag(format, 16, TextureSampleCount.Count16);
+            sampleFlags |= QuerySampleSupportFlag(format, 32, TextureSampleCount.Count32);
             return sampleFlags;
         }
 
-        private uint querySampleSupportFlag(Format format, uint sampleCount, TextureSampleCount textureSampleCount)
+        private uint QuerySampleSupportFlag(Format format, uint sampleCount, TextureSampleCount textureSampleCount)
         {
             var msaa = new FeatureDataMultisampleQualityLevels
             {
@@ -689,7 +689,7 @@ namespace Veldrith.D3D12
                 Flags = MultisampleQualityLevelFlags.None
             };
 
-            if (!tryCheckFeatureSupport(D3D12Feature.MultisampleQualityLevels, ref msaa) || msaa.NumQualityLevels == 0)
+            if (!TryCheckFeatureSupport(D3D12Feature.MultisampleQualityLevels, ref msaa) || msaa.NumQualityLevels == 0)
             {
                 return 0;
             }
@@ -697,7 +697,7 @@ namespace Veldrith.D3D12
             return 1u << (int)textureSampleCount;
         }
 
-        private static void getTextureTypeLimits(TextureType type, out uint maxWidth, out uint maxHeight, out uint maxDepth, out uint maxArrayLayers)
+        private static void GetTextureTypeLimits(TextureType type, out uint maxWidth, out uint maxHeight, out uint maxDepth, out uint maxArrayLayers)
         {
             switch (type)
             {
@@ -724,7 +724,7 @@ namespace Veldrith.D3D12
             }
         }
 
-        private static uint getMaxMipLevels(uint maxWidth, uint maxHeight, uint maxDepth)
+        private static uint GetMaxMipLevels(uint maxWidth, uint maxHeight, uint maxDepth)
         {
             uint maxDimension = Math.Max(maxWidth, Math.Max(maxHeight, maxDepth));
             uint mipLevels = 1;
@@ -737,7 +737,7 @@ namespace Veldrith.D3D12
             return mipLevels;
         }
 
-        private static bool isSrgbFormat(PixelFormat format)
+        private static bool IsSrgbFormat(PixelFormat format)
         {
             switch (format)
             {
@@ -754,7 +754,7 @@ namespace Veldrith.D3D12
             }
         }
 
-        private static bool isRuntimeMipmapGenerationSupported(PixelFormat format, TextureType type, TextureUsage usage, bool depthUsage)
+        private static bool IsRuntimeMipmapGenerationSupported(PixelFormat format, TextureType type, TextureUsage usage, bool depthUsage)
         {
             if (depthUsage)
             {
@@ -781,11 +781,11 @@ namespace Veldrith.D3D12
             return true;
         }
 
-        private bool tryGetFormatSupport(Format format, out FeatureDataFormatSupport formatSupport)
+        private bool TryGetFormatSupport(Format format, out FeatureDataFormatSupport formatSupport)
         {
-            lock (_formatSupportCacheLock)
+            lock (this._formatSupportCacheLock)
             {
-                if (_formatSupportCache.TryGetValue(format, out CachedFormatSupport cached))
+                if (this._formatSupportCache.TryGetValue(format, out CachedFormatSupport cached))
                 {
                     formatSupport = cached.Support;
                     return cached.IsSupported;
@@ -796,13 +796,13 @@ namespace Veldrith.D3D12
                     Format = format
                 };
 
-                bool isSupported = tryCheckFeatureSupport(D3D12Feature.FormatSupport, ref formatSupport);
-                _formatSupportCache[format] = new CachedFormatSupport(isSupported, formatSupport);
+                bool isSupported = TryCheckFeatureSupport(D3D12Feature.FormatSupport, ref formatSupport);
+                this._formatSupportCache[format] = new CachedFormatSupport(isSupported, formatSupport);
                 return isSupported;
             }
         }
 
-        private static bool isTypeSupported(TextureType type, FormatSupport1 support)
+        private static bool IsTypeSupported(TextureType type, FormatSupport1 support)
         {
             switch (type)
             {
@@ -817,10 +817,10 @@ namespace Veldrith.D3D12
             }
         }
 
-        private bool tryCheckFeatureSupport<T>(D3D12Feature feature, ref T data)
+        private bool TryCheckFeatureSupport<T>(D3D12Feature feature, ref T data)
             where T : unmanaged
         {
-            return _device.CheckFeatureSupport(feature, ref data);
+            return this._device.CheckFeatureSupport(feature, ref data);
         }
 
         private readonly struct CachedFormatSupport
@@ -830,13 +830,13 @@ namespace Veldrith.D3D12
 
             public CachedFormatSupport(bool isSupported, FeatureDataFormatSupport support)
             {
-                IsSupported = isSupported;
-                Support = support;
+                this.IsSupported = isSupported;
+                this.Support = support;
             }
         }
 
 
-        private unsafe void updateNativeTexture(
+        private unsafe void UpdateNativeTexture(
             D3D12Texture texture,
             IntPtr source,
             uint sizeInBytes,
@@ -864,7 +864,7 @@ namespace Veldrith.D3D12
                 arrayLayer);
         }
 
-        private unsafe void copyTextureDataToUploadBuffer(
+        private unsafe void CopyTextureDataToUploadBuffer(
             IntPtr source,
             uint sizeInBytes,
             PixelFormat format,
@@ -912,15 +912,15 @@ namespace Veldrith.D3D12
             }
         }
 
-        private void waitForQueueIdle()
+        private void WaitForQueueIdle()
         {
             ID3D12Fence fence = null;
             using var waitEvent = new AutoResetEvent(false);
             try
             {
-                fence = _device.CreateFence(0, FenceFlags.None);
-                ulong signalValue = _immediateFenceValue++;
-                _commandQueue.Signal(fence, signalValue);
+                fence = this._device.CreateFence(0, FenceFlags.None);
+                ulong signalValue = this._immediateFenceValue++;
+                this._commandQueue.Signal(fence, signalValue);
                 if (fence.CompletedValue < signalValue)
                 {
                     fence.SetEventOnCompletion(signalValue, waitEvent.SafeWaitHandle.DangerousGetHandle()).CheckError();

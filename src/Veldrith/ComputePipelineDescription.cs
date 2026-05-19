@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Veldrith
 {
@@ -60,12 +60,12 @@ namespace Veldrith
             uint threadGroupSizeY,
             uint threadGroupSizeZ)
         {
-            ComputeShader = computeShader;
-            ResourceLayouts = resourceLayouts;
-            ThreadGroupSizeX = threadGroupSizeX;
-            ThreadGroupSizeY = threadGroupSizeY;
-            ThreadGroupSizeZ = threadGroupSizeZ;
-            Specializations = null;
+            this.ComputeShader = computeShader;
+            this.ResourceLayouts = resourceLayouts;
+            this.ThreadGroupSizeX = threadGroupSizeX;
+            this.ThreadGroupSizeY = threadGroupSizeY;
+            this.ThreadGroupSizeZ = threadGroupSizeZ;
+            this.Specializations = null;
         }
 
         /// <summary>
@@ -86,12 +86,12 @@ namespace Veldrith
             uint threadGroupSizeY,
             uint threadGroupSizeZ)
         {
-            ComputeShader = shaderStage;
-            ResourceLayouts = new[] { resourceLayout };
-            ThreadGroupSizeX = threadGroupSizeX;
-            ThreadGroupSizeY = threadGroupSizeY;
-            ThreadGroupSizeZ = threadGroupSizeZ;
-            Specializations = null;
+            this.ComputeShader = shaderStage;
+            this.ResourceLayouts = new[] { resourceLayout };
+            this.ThreadGroupSizeX = threadGroupSizeX;
+            this.ThreadGroupSizeY = threadGroupSizeY;
+            this.ThreadGroupSizeZ = threadGroupSizeZ;
+            this.Specializations = null;
         }
 
         /// <summary>
@@ -119,12 +119,12 @@ namespace Veldrith
             uint threadGroupSizeZ,
             SpecializationConstant[] specializations)
         {
-            ComputeShader = shaderStage;
-            ResourceLayouts = new[] { resourceLayout };
-            ThreadGroupSizeX = threadGroupSizeX;
-            ThreadGroupSizeY = threadGroupSizeY;
-            ThreadGroupSizeZ = threadGroupSizeZ;
-            Specializations = specializations;
+            this.ComputeShader = shaderStage;
+            this.ResourceLayouts = new[] { resourceLayout };
+            this.ThreadGroupSizeX = threadGroupSizeX;
+            this.ThreadGroupSizeY = threadGroupSizeY;
+            this.ThreadGroupSizeZ = threadGroupSizeZ;
+            this.Specializations = specializations;
         }
 
         /// <summary>
@@ -134,11 +134,11 @@ namespace Veldrith
         /// <returns>True if all elements and all array elements are equal; false otherswise.</returns>
         public bool Equals(ComputePipelineDescription other)
         {
-            return ComputeShader.Equals(other.ComputeShader)
-                   && Util.ArrayEquals(ResourceLayouts, other.ResourceLayouts)
-                   && ThreadGroupSizeX.Equals(other.ThreadGroupSizeX)
-                   && ThreadGroupSizeY.Equals(other.ThreadGroupSizeY)
-                   && ThreadGroupSizeZ.Equals(other.ThreadGroupSizeZ);
+            return this.ComputeShader.Equals(other.ComputeShader)
+                   && Util.ArrayEquals(this.ResourceLayouts, other.ResourceLayouts)
+                   && this.ThreadGroupSizeX.Equals(other.ThreadGroupSizeX)
+                   && this.ThreadGroupSizeY.Equals(other.ThreadGroupSizeY)
+                   && this.ThreadGroupSizeZ.Equals(other.ThreadGroupSizeZ);
         }
 
         /// <summary>
@@ -148,11 +148,11 @@ namespace Veldrith
         public override int GetHashCode()
         {
             return HashHelper.Combine(
-                ComputeShader.GetHashCode(),
-                HashHelper.Array(ResourceLayouts),
-                ThreadGroupSizeX.GetHashCode(),
-                ThreadGroupSizeY.GetHashCode(),
-                ThreadGroupSizeZ.GetHashCode());
+                this.ComputeShader.GetHashCode(),
+                HashHelper.Array(this.ResourceLayouts),
+                this.ThreadGroupSizeX.GetHashCode(),
+                this.ThreadGroupSizeY.GetHashCode(),
+                this.ThreadGroupSizeZ.GetHashCode());
         }
     }
 }

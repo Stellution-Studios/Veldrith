@@ -104,8 +104,8 @@ namespace Veldrith
                         "GraphicsDevice.Aniso4xSampler cannot be used unless GraphicsDeviceFeatures.SamplerAnisotropy is supported.");
                 }
 
-                Debug.Assert(_aniso4XSampler != null);
-                return _aniso4XSampler;
+                Debug.Assert(this._aniso4XSampler != null);
+                return this._aniso4XSampler;
             }
         }
 
@@ -163,7 +163,7 @@ namespace Veldrith
             WaitForIdle();
             PointSampler.Dispose();
             LinearSampler.Dispose();
-            _aniso4XSampler?.Dispose();
+            this._aniso4XSampler?.Dispose();
             PlatformDispose();
         }
 
@@ -355,7 +355,7 @@ namespace Veldrith
         public void WaitForIdle()
         {
             WaitForIdleCore();
-            flushDeferredDisposals();
+            FlushDeferredDisposals();
         }
 
         /// <summary>
@@ -523,7 +523,7 @@ namespace Veldrith
             uint mipLevel, uint arrayLayer)
         {
 #if VALIDATE_USAGE
-            validateUpdateTextureParameters(texture, sizeInBytes, x, y, z, width, height, depth, mipLevel, arrayLayer);
+            ValidateUpdateTextureParameters(texture, sizeInBytes, x, y, z, width, height, depth, mipLevel, arrayLayer);
 #endif
             UpdateTextureCore(texture, source, sizeInBytes, x, y, z, width, height, depth, mipLevel, arrayLayer);
         }
@@ -591,7 +591,7 @@ namespace Veldrith
         {
             uint sizeInBytes = (uint)(sizeof(T) * source.Length);
 #if VALIDATE_USAGE
-            validateUpdateTextureParameters(texture, sizeInBytes, x, y, z, width, height, depth, mipLevel, arrayLayer);
+            ValidateUpdateTextureParameters(texture, sizeInBytes, x, y, z, width, height, depth, mipLevel, arrayLayer);
 #endif
 
             fixed (void* pin = &MemoryMarshal.GetReference(source))
@@ -832,7 +832,7 @@ namespace Veldrith
         /// <param name="disposable">An object to dispose when this instance becomes idle.</param>
         public void DisposeWhenIdle(IDisposable disposable)
         {
-            lock (_deferredDisposalLock) _disposables.Add(disposable);
+            lock (this._deferredDisposalLock) this._disposables.Add(disposable);
         }
 
         internal abstract uint GetUniformBufferMinOffsetAlignmentCore();
@@ -864,11 +864,11 @@ namespace Veldrith
         {
             PointSampler = ResourceFactory.CreateSampler(SamplerDescription.POINT);
             LinearSampler = ResourceFactory.CreateSampler(SamplerDescription.LINEAR);
-            if (Features.SamplerAnisotropy) _aniso4XSampler = ResourceFactory.CreateSampler(SamplerDescription.ANISO4_X);
+            if (Features.SamplerAnisotropy) this._aniso4XSampler = ResourceFactory.CreateSampler(SamplerDescription.ANISO4_X);
         }
 
         [Conditional("VALIDATE_USAGE")]
-        private static void validateUpdateTextureParameters(
+        private static void ValidateUpdateTextureParameters(
             Texture texture,
             uint sizeInBytes,
             uint x, uint y, uint z,
@@ -925,12 +925,12 @@ namespace Veldrith
             }
         }
 
-        private void flushDeferredDisposals()
+        private void FlushDeferredDisposals()
         {
-            lock (_deferredDisposalLock)
+            lock (this._deferredDisposalLock)
             {
-                foreach (var disposable in _disposables) disposable.Dispose();
-                _disposables.Clear();
+                foreach (var disposable in this._disposables) disposable.Dispose();
+                this._disposables.Clear();
             }
         }
 

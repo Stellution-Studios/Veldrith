@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 
 namespace Veldrith
 {
@@ -176,7 +176,7 @@ namespace Veldrith
         internal static bool IsFormatViewCompatible(PixelFormat viewFormat, PixelFormat realFormat)
         {
             if (IsCompressedFormat(realFormat))
-                return isSrgbCounterpart(viewFormat, realFormat);
+                return IsSrgbCounterpart(viewFormat, realFormat);
 
             return GetViewFamilyFormat(viewFormat) == GetViewFamilyFormat(realFormat);
         }
@@ -349,7 +349,7 @@ namespace Veldrith
             }
         }
 
-        private static bool isSrgbCounterpart(PixelFormat viewFormat, PixelFormat realFormat)
+        private static bool IsSrgbCounterpart(PixelFormat viewFormat, PixelFormat realFormat)
         {
             if (viewFormat == realFormat)
             {

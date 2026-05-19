@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.CompilerServices;
 
 namespace Veldrith
@@ -107,10 +107,10 @@ namespace Veldrith
         /// <param name="a">The alpha component.</param>
         public RgbaByte(byte r, byte g, byte b, byte a)
         {
-            R = r;
-            G = g;
-            B = b;
-            A = a;
+            this.R = r;
+            this.G = g;
+            this.B = b;
+            this.A = a;
         }
 
         /// <summary>
@@ -121,7 +121,7 @@ namespace Veldrith
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Equals(RgbaByte other)
         {
-            return R.Equals(other.R) && G.Equals(other.G) && B.Equals(other.B) && A.Equals(other.A);
+            return this.R.Equals(other.R) && this.G.Equals(other.G) && this.B.Equals(other.B) && this.A.Equals(other.A);
         }
 
         /// <summary>
@@ -141,7 +141,7 @@ namespace Veldrith
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode()
         {
-            return HashHelper.Combine(R.GetHashCode(), G.GetHashCode(), B.GetHashCode(), A.GetHashCode());
+            return HashHelper.Combine(this.R.GetHashCode(), this.G.GetHashCode(), this.B.GetHashCode(), this.A.GetHashCode());
         }
 
         /// <summary>
@@ -150,7 +150,7 @@ namespace Veldrith
         /// <returns></returns>
         public override string ToString()
         {
-            return $"R:{R}, G:{G}, B:{B}, A:{A}";
+            return $"R:{this.R}, G:{this.G}, B:{this.B}, A:{this.A}";
         }
 
         /// <summary>

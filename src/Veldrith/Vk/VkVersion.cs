@@ -6,14 +6,14 @@ namespace Veldrith.Vk
 
         public VkVersion(uint major, uint minor, uint patch)
         {
-            _value = (major << 22) | (minor << 12) | patch;
+            this._value = (major << 22) | (minor << 12) | patch;
         }
 
-        public uint Major => _value >> 22;
+        public uint Major => this._value >> 22;
 
-        public uint Minor => (_value >> 12) & 0x3ff;
+        public uint Minor => (this._value >> 12) & 0x3ff;
 
-        public uint Patch => (_value >> 22) & 0xfff;
+        public uint Patch => (this._value >> 22) & 0xfff;
 
         public static implicit operator uint(VkVersion version)
         {

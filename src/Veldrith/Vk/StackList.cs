@@ -20,7 +20,7 @@ namespace Veldrith.Vk
 
         public void Add(T item)
         {
-            byte* basePtr = (byte*)Data;
+            byte* basePtr = (byte*)this.Data;
             int offset = (int)(Count * _s_sizeof_t);
 #if DEBUG
             Debug.Assert(offset + s_sizeof_t <= CAPACITY_IN_BYTES);
@@ -70,7 +70,7 @@ namespace Veldrith.Vk
 
         public void Add(T item)
         {
-            ref var dest = ref Unsafe.Add(ref Unsafe.As<TSize, T>(ref _storage), (int)Count);
+            ref var dest = ref Unsafe.Add(ref Unsafe.As<TSize, T>(ref this._storage), (int)Count);
 #if DEBUG
             int offset = (int)(Count * s_sizeof_t);
             Debug.Assert(offset + s_sizeof_t <= Unsafe.SizeOf<TSize>());
@@ -80,8 +80,8 @@ namespace Veldrith.Vk
             Count += 1;
         }
 
-        public ref T this[int index] => ref Unsafe.Add(ref Unsafe.AsRef<T>(Data), index);
-        public ref T this[uint index] => ref Unsafe.Add(ref Unsafe.AsRef<T>(Data), (int)index);
+        public ref T this[int index] => ref Unsafe.Add(ref Unsafe.AsRef<T>(this.Data), index);
+        public ref T this[uint index] => ref Unsafe.Add(ref Unsafe.AsRef<T>(this.Data), (int)index);
     }
 
     internal unsafe struct Size16Bytes

@@ -5,17 +5,17 @@ namespace Veldrith.Vk
 {
     internal unsafe class VkFence : Fence
     {
-        public Vulkan.VkFence DeviceFence => _fence;
+        public Vulkan.VkFence DeviceFence => this._fence;
 
-        public override bool Signaled => vkGetFenceStatus(gd.Device, _fence) == VkResult.Success;
-        public override bool IsDisposed => _destroyed;
+        public override bool Signaled => vkGetFenceStatus(gd.Device, this._fence) == VkResult.Success;
+        public override bool IsDisposed => this._destroyed;
 
         public override string Name
         {
-            get => _name;
+            get => this._name;
             set
             {
-                _name = value;
+                this._name = value;
                 gd.SetResourceName(this, value);
             }
         }
@@ -30,7 +30,7 @@ namespace Veldrith.Vk
             this.gd = gd;
             var fenceCi = VkFenceCreateInfo.New();
             fenceCi.flags = signaled ? VkFenceCreateFlags.Signaled : VkFenceCreateFlags.None;
-            var result = vkCreateFence(this.gd.Device, ref fenceCi, null, out _fence);
+            var result = vkCreateFence(this.gd.Device, ref fenceCi, null, out this._fence);
             VulkanUtil.CheckResult(result);
         }
 
@@ -38,10 +38,10 @@ namespace Veldrith.Vk
 
         public override void Dispose()
         {
-            if (!_destroyed)
+            if (!this._destroyed)
             {
-                vkDestroyFence(gd.Device, _fence, null);
-                _destroyed = true;
+                vkDestroyFence(gd.Device, this._fence, null);
+                this._destroyed = true;
             }
         }
 

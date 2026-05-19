@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Veldrith
 {
@@ -34,9 +34,9 @@ namespace Veldrith
         /// <param name="sizeInBytes">The total number of bytes that this range will encompass.</param>
         public DeviceBufferRange(DeviceBuffer buffer, uint offset, uint sizeInBytes)
         {
-            Buffer = buffer;
-            Offset = offset;
-            SizeInBytes = sizeInBytes;
+            this.Buffer = buffer;
+            this.Offset = offset;
+            this.SizeInBytes = sizeInBytes;
         }
 
         /// <summary>
@@ -46,7 +46,7 @@ namespace Veldrith
         /// <returns>True if all elements are equal; false otherswise.</returns>
         public bool Equals(DeviceBufferRange other)
         {
-            return Buffer == other.Buffer && Offset.Equals(other.Offset) && SizeInBytes.Equals(other.SizeInBytes);
+            return this.Buffer == other.Buffer && this.Offset.Equals(other.Offset) && this.SizeInBytes.Equals(other.SizeInBytes);
         }
 
         /// <summary>
@@ -55,8 +55,8 @@ namespace Veldrith
         /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
         public override int GetHashCode()
         {
-            int bufferHash = Buffer?.GetHashCode() ?? 0;
-            return HashHelper.Combine(bufferHash, Offset.GetHashCode(), SizeInBytes.GetHashCode());
+            int bufferHash = this.Buffer?.GetHashCode() ?? 0;
+            return HashHelper.Combine(bufferHash, this.Offset.GetHashCode(), this.SizeInBytes.GetHashCode());
         }
     }
 }

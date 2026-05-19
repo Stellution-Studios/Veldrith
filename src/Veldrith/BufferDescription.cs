@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Veldrith
 {
@@ -37,10 +37,10 @@ namespace Veldrith
         /// <param name="usage">Indicates how the <see cref="DeviceBuffer" /> will be used.</param>
         public BufferDescription(uint sizeInBytes, BufferUsage usage)
         {
-            SizeInBytes = sizeInBytes;
-            Usage = usage;
-            StructureByteStride = 0;
-            RawBuffer = false;
+            this.SizeInBytes = sizeInBytes;
+            this.Usage = usage;
+            this.StructureByteStride = 0;
+            this.RawBuffer = false;
         }
 
         /// <summary>
@@ -54,10 +54,10 @@ namespace Veldrith
         /// </param>
         public BufferDescription(uint sizeInBytes, BufferUsage usage, uint structureByteStride)
         {
-            SizeInBytes = sizeInBytes;
-            Usage = usage;
-            StructureByteStride = structureByteStride;
-            RawBuffer = false;
+            this.SizeInBytes = sizeInBytes;
+            this.Usage = usage;
+            this.StructureByteStride = structureByteStride;
+            this.RawBuffer = false;
         }
 
         /// <summary>
@@ -75,10 +75,10 @@ namespace Veldrith
         /// </param>
         public BufferDescription(uint sizeInBytes, BufferUsage usage, uint structureByteStride, bool rawBuffer)
         {
-            SizeInBytes = sizeInBytes;
-            Usage = usage;
-            StructureByteStride = structureByteStride;
-            RawBuffer = rawBuffer;
+            this.SizeInBytes = sizeInBytes;
+            this.Usage = usage;
+            this.StructureByteStride = structureByteStride;
+            this.RawBuffer = rawBuffer;
         }
 
         /// <summary>
@@ -88,10 +88,10 @@ namespace Veldrith
         /// <returns>True if all elements are equal; false otherswise.</returns>
         public bool Equals(BufferDescription other)
         {
-            return SizeInBytes.Equals(other.SizeInBytes)
-                   && Usage == other.Usage
-                   && StructureByteStride.Equals(other.StructureByteStride)
-                   && RawBuffer.Equals(other.RawBuffer);
+            return this.SizeInBytes.Equals(other.SizeInBytes)
+                   && this.Usage == other.Usage
+                   && this.StructureByteStride.Equals(other.StructureByteStride)
+                   && this.RawBuffer.Equals(other.RawBuffer);
         }
 
         /// <summary>
@@ -101,10 +101,10 @@ namespace Veldrith
         public override int GetHashCode()
         {
             return HashHelper.Combine(
-                SizeInBytes.GetHashCode(),
-                (int)Usage,
-                StructureByteStride.GetHashCode(),
-                RawBuffer.GetHashCode());
+                this.SizeInBytes.GetHashCode(),
+                (int)this.Usage,
+                this.StructureByteStride.GetHashCode(),
+                this.RawBuffer.GetHashCode());
         }
     }
 }

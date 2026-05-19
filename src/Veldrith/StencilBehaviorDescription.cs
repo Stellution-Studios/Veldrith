@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Veldrith
 {
@@ -40,10 +40,10 @@ namespace Veldrith
             StencilOperation depthFail,
             ComparisonKind comparison)
         {
-            Fail = fail;
-            Pass = pass;
-            DepthFail = depthFail;
-            Comparison = comparison;
+            this.Fail = fail;
+            this.Pass = pass;
+            this.DepthFail = depthFail;
+            this.Comparison = comparison;
         }
 
         /// <summary>
@@ -53,7 +53,7 @@ namespace Veldrith
         /// <returns>True if all elements are equal; false otherswise.</returns>
         public bool Equals(StencilBehaviorDescription other)
         {
-            return Fail == other.Fail && Pass == other.Pass && DepthFail == other.DepthFail && Comparison == other.Comparison;
+            return this.Fail == other.Fail && this.Pass == other.Pass && this.DepthFail == other.DepthFail && this.Comparison == other.Comparison;
         }
 
         /// <summary>
@@ -62,7 +62,7 @@ namespace Veldrith
         /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
         public override int GetHashCode()
         {
-            return HashHelper.Combine((int)Fail, (int)Pass, (int)DepthFail, (int)Comparison);
+            return HashHelper.Combine((int)this.Fail, (int)this.Pass, (int)this.DepthFail, (int)this.Comparison);
         }
     }
 }

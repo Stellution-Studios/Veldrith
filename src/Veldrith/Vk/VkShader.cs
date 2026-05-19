@@ -7,16 +7,16 @@ namespace Veldrith.Vk
 {
     internal unsafe class VkShader : Shader
     {
-        public VkShaderModule ShaderModule => _shaderModule;
+        public VkShaderModule ShaderModule => this._shaderModule;
 
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => this._disposed;
 
         public override string Name
         {
-            get => _name;
+            get => this._name;
             set
             {
-                _name = value;
+                this._name = value;
                 gd.SetResourceName(this, value);
             }
         }
@@ -37,7 +37,7 @@ namespace Veldrith.Vk
             {
                 shaderModuleCi.codeSize = (UIntPtr)description.ShaderBytes.Length;
                 shaderModuleCi.pCode = (uint*)codePtr;
-                var result = vkCreateShaderModule(gd.Device, ref shaderModuleCi, null, out _shaderModule);
+                var result = vkCreateShaderModule(gd.Device, ref shaderModuleCi, null, out this._shaderModule);
                 CheckResult(result);
             }
         }
@@ -46,9 +46,9 @@ namespace Veldrith.Vk
 
         public override void Dispose()
         {
-            if (!_disposed)
+            if (!this._disposed)
             {
-                _disposed = true;
+                this._disposed = true;
                 vkDestroyShaderModule(gd.Device, ShaderModule, null);
             }
         }

@@ -6,13 +6,13 @@ namespace Veldrith.MTL
 {
     internal class MtlSwapchainFramebuffer : MtlFramebuffer
     {
-        public override uint Width => _colorTexture.Width;
-        public override uint Height => _colorTexture.Height;
+        public override uint Width => this._colorTexture.Width;
+        public override uint Height => this._colorTexture.Height;
 
         public override OutputDescription OutputDescription { get; }
 
-        public override IReadOnlyList<FramebufferAttachment> ColorTargets => _colorTargets;
-        public override FramebufferAttachment? DepthTarget => _depthTarget;
+        public override IReadOnlyList<FramebufferAttachment> ColorTargets => this._colorTargets;
+        public override FramebufferAttachment? DepthTarget => this._depthTarget;
         private readonly MtlGraphicsDevice gd;
         private readonly MtlSwapchain _parentSwapchain;
         private readonly PixelFormat colorFormat;
@@ -31,7 +31,7 @@ namespace Veldrith.MTL
             PixelFormat colorFormat)
         {
             this.gd = gd;
-            _parentSwapchain = parent;
+            this._parentSwapchain = parent;
             this.colorFormat = colorFormat;
 
             OutputAttachmentDescription? depthAttachment = null;
@@ -44,7 +44,7 @@ namespace Veldrith.MTL
 
             var colorAttachment = new OutputAttachmentDescription(colorFormat);
 
-            _colorTargets = new[] { new FramebufferAttachment(_colorTexture, 0) };
+            this._colorTargets = new[] { new FramebufferAttachment(this._colorTexture, 0) };
 
             OutputDescription = new OutputDescription(depthAttachment, colorAttachment);
         }
@@ -53,7 +53,7 @@ namespace Veldrith.MTL
 
         public override void Dispose()
         {
-            _depthTexture?.Dispose();
+            this._depthTexture?.Dispose();
             base.Dispose();
         }
 
@@ -61,26 +61,26 @@ namespace Veldrith.MTL
 
         public void UpdateTextures(CAMetalDrawable drawable, CGSize size)
         {
-            _colorTexture.SetDrawable(drawable, size, colorFormat);
+            this._colorTexture.SetDrawable(drawable, size, colorFormat);
 
-            if (depthFormat.HasValue && (size.width != _depthTexture?.Width || size.height != _depthTexture?.Height))
-                recreateDepthTexture((uint)size.width, (uint)size.height);
+            if (depthFormat.HasValue && (size.width != this._depthTexture?.Width || size.height != this._depthTexture?.Height))
+                RecreateDepthTexture((uint)size.width, (uint)size.height);
         }
 
         public bool EnsureDrawableAvailable()
         {
-            return _parentSwapchain.EnsureDrawableAvailable();
+            return this._parentSwapchain.EnsureDrawableAvailable();
         }
 
-        private void recreateDepthTexture(uint width, uint height)
+        private void RecreateDepthTexture(uint width, uint height)
         {
             Debug.Assert(depthFormat.HasValue);
-            _depthTexture?.Dispose();
+            this._depthTexture?.Dispose();
 
-            _depthTexture = Util.AssertSubtype<Texture, MtlTexture>(
+            this._depthTexture = Util.AssertSubtype<Texture, MtlTexture>(
                 gd.ResourceFactory.CreateTexture(TextureDescription.Texture2D(
                     width, height, 1, 1, depthFormat.Value, TextureUsage.DepthStencil)));
-            _depthTarget = new FramebufferAttachment(_depthTexture, 0);
+            this._depthTarget = new FramebufferAttachment(this._depthTexture, 0);
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Veldrith
 {
@@ -50,12 +50,12 @@ namespace Veldrith
         /// </param>
         public TextureViewDescription(Texture target)
         {
-            Target = target;
-            BaseMipLevel = 0;
-            MipLevels = target.MipLevels;
-            BaseArrayLayer = 0;
-            ArrayLayers = target.ArrayLayers;
-            Format = target.Format;
+            this.Target = target;
+            this.BaseMipLevel = 0;
+            this.MipLevels = target.MipLevels;
+            this.BaseArrayLayer = 0;
+            this.ArrayLayers = target.ArrayLayers;
+            this.Format = target.Format;
         }
 
         /// <summary>
@@ -75,12 +75,12 @@ namespace Veldrith
         /// </param>
         public TextureViewDescription(Texture target, PixelFormat format)
         {
-            Target = target;
-            BaseMipLevel = 0;
-            MipLevels = target.MipLevels;
-            BaseArrayLayer = 0;
-            ArrayLayers = target.ArrayLayers;
-            Format = format;
+            this.Target = target;
+            this.BaseMipLevel = 0;
+            this.MipLevels = target.MipLevels;
+            this.BaseArrayLayer = 0;
+            this.ArrayLayers = target.ArrayLayers;
+            this.Format = format;
         }
 
         /// <summary>
@@ -95,12 +95,12 @@ namespace Veldrith
         /// <param name="arrayLayers">The number of array layers visible in the view.</param>
         public TextureViewDescription(Texture target, uint baseMipLevel, uint mipLevels, uint baseArrayLayer, uint arrayLayers)
         {
-            Target = target;
-            BaseMipLevel = baseMipLevel;
-            MipLevels = mipLevels;
-            BaseArrayLayer = baseArrayLayer;
-            ArrayLayers = arrayLayers;
-            Format = target.Format;
+            this.Target = target;
+            this.BaseMipLevel = baseMipLevel;
+            this.MipLevels = mipLevels;
+            this.BaseArrayLayer = baseArrayLayer;
+            this.ArrayLayers = arrayLayers;
+            this.Format = target.Format;
         }
 
         /// <summary>
@@ -123,12 +123,12 @@ namespace Veldrith
         /// <param name="arrayLayers">The number of array layers visible in the view.</param>
         public TextureViewDescription(Texture target, PixelFormat format, uint baseMipLevel, uint mipLevels, uint baseArrayLayer, uint arrayLayers)
         {
-            Target = target;
-            BaseMipLevel = baseMipLevel;
-            MipLevels = mipLevels;
-            BaseArrayLayer = baseArrayLayer;
-            ArrayLayers = arrayLayers;
-            Format = target.Format;
+            this.Target = target;
+            this.BaseMipLevel = baseMipLevel;
+            this.MipLevels = mipLevels;
+            this.BaseArrayLayer = baseArrayLayer;
+            this.ArrayLayers = arrayLayers;
+            this.Format = target.Format;
         }
 
         /// <summary>
@@ -138,12 +138,12 @@ namespace Veldrith
         /// <returns>True if all elements are equal; false otherswise.</returns>
         public bool Equals(TextureViewDescription other)
         {
-            return Target.Equals(other.Target)
-                   && BaseMipLevel.Equals(other.BaseMipLevel)
-                   && MipLevels.Equals(other.MipLevels)
-                   && BaseArrayLayer.Equals(other.BaseArrayLayer)
-                   && ArrayLayers.Equals(other.ArrayLayers)
-                   && Format == other.Format;
+            return this.Target.Equals(other.Target)
+                   && this.BaseMipLevel.Equals(other.BaseMipLevel)
+                   && this.MipLevels.Equals(other.MipLevels)
+                   && this.BaseArrayLayer.Equals(other.BaseArrayLayer)
+                   && this.ArrayLayers.Equals(other.ArrayLayers)
+                   && this.Format == other.Format;
         }
 
         /// <summary>
@@ -153,12 +153,12 @@ namespace Veldrith
         public override int GetHashCode()
         {
             return HashHelper.Combine(
-                Target.GetHashCode(),
-                BaseMipLevel.GetHashCode(),
-                MipLevels.GetHashCode(),
-                BaseArrayLayer.GetHashCode(),
-                ArrayLayers.GetHashCode(),
-                Format?.GetHashCode() ?? 0);
+                this.Target.GetHashCode(),
+                this.BaseMipLevel.GetHashCode(),
+                this.MipLevels.GetHashCode(),
+                this.BaseArrayLayer.GetHashCode(),
+                this.ArrayLayers.GetHashCode(),
+                this.Format?.GetHashCode() ?? 0);
         }
     }
 }

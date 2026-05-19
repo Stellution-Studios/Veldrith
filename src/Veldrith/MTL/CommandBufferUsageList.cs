@@ -13,17 +13,17 @@ namespace Veldrith.MTL
         private readonly List<(MTLCommandBuffer buffer, T value)> _items = new List<(MTLCommandBuffer buffer, T item)>();
 
         public void Add(MTLCommandBuffer cb, T value)
-            => _items.Add((cb, value));
+            => this._items.Add((cb, value));
 
         public ItemsEnumerator EnumerateItems()
-            => new ItemsEnumerator(_items);
+            => new ItemsEnumerator(this._items);
 
         public RemovalEnumerator EnumerateAndRemove(MTLCommandBuffer cb)
-            => new RemovalEnumerator(_items, cb);
+            => new RemovalEnumerator(this._items, cb);
 
         public bool Contains(MTLCommandBuffer cb)
         {
-            foreach (var (buffer, _) in _items)
+            foreach (var (buffer, _) in this._items)
             {
                 if (buffer.Equals(cb))
                     return true;
@@ -33,7 +33,7 @@ namespace Veldrith.MTL
         }
 
         public void Clear()
-            => _items.Clear();
+            => this._items.Clear();
 
         /// <summary>
         /// This is a basic enumerator for the list.
@@ -50,18 +50,18 @@ namespace Veldrith.MTL
 
             public bool MoveNext()
             {
-                if (_index == list.Count)
+                if (this._index == list.Count)
                     return false;
 
-                Current = list[_index].value;
-                _index++;
+                Current = list[this._index].value;
+                this._index++;
 
                 return true;
             }
 
             public void Reset()
             {
-                _index = 0;
+                this._index = 0;
             }
 
             public T Current { get; private set; }
@@ -97,34 +97,34 @@ namespace Veldrith.MTL
                 this.list = list;
                 this.cb = cb;
 
-                _count = list.Count;
-                list.EnsureCapacity(_count * 2);
+                this._count = list.Count;
+                list.EnsureCapacity(this._count * 2);
             }
 
             public bool MoveNext()
             {
                 while (true)
                 {
-                    if (_index == _count)
+                    if (this._index == this._count)
                         return false;
 
-                    if (list[_index].buffer.Equals(cb))
+                    if (list[this._index].buffer.Equals(cb))
                         break;
 
                     // Track the item to be kept.
-                    list.Add(list[_index]);
-                    _index++;
+                    list.Add(list[this._index]);
+                    this._index++;
                 }
 
-                Current = list[_index].value;
-                _index++;
+                Current = list[this._index].value;
+                this._index++;
 
                 return true;
             }
 
             public void Reset()
             {
-                _index = 0;
+                this._index = 0;
             }
 
             public T Current { get; private set; }
@@ -136,10 +136,10 @@ namespace Veldrith.MTL
                 if (list.Count == 0)
                     return;
 
-                int toKeepItemCount = list.Count - _count;
+                int toKeepItemCount = list.Count - this._count;
                 var listSpan = CollectionsMarshal.AsSpan(list);
 
-                listSpan.Slice(_count, toKeepItemCount).CopyTo(listSpan);
+                listSpan.Slice(this._count, toKeepItemCount).CopyTo(listSpan);
                 list.RemoveRange(toKeepItemCount, list.Count - toKeepItemCount);
             }
 

@@ -25,7 +25,7 @@ namespace Veldrith.MTL
         public bool HasStencil { get; }
         public uint StencilReference { get; }
         public RgbaFloat BlendColor { get; }
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => this._disposed;
         public override string Name { get; set; }
 
         private bool _disposed;
@@ -61,9 +61,9 @@ namespace Veldrith.MTL
                 if (mtlShader.HasFunctionConstants)
                 {
                     // Need to create specialized MTLFunction.
-                    var constantValues = createConstantValues(description.ShaderSet.Specializations);
+                    var constantValues = CreateConstantValues(description.ShaderSet.Specializations);
                     specializedFunction = mtlShader.Library.newFunctionWithNameConstantValues(mtlShader.EntryPoint, constantValues);
-                    addSpecializedFunction(specializedFunction);
+                    AddSpecializedFunction(specializedFunction);
                     ObjectiveCRuntime.release(constantValues.NativePtr);
 
                     Debug.Assert(specializedFunction.NativePtr != IntPtr.Zero, "Failed to create specialized MTLFunction");
@@ -227,9 +227,9 @@ namespace Veldrith.MTL
             if (mtlShader.HasFunctionConstants)
             {
                 // Need to create specialized MTLFunction.
-                var constantValues = createConstantValues(description.Specializations);
+                var constantValues = CreateConstantValues(description.Specializations);
                 specializedFunction = mtlShader.Library.newFunctionWithNameConstantValues(mtlShader.EntryPoint, constantValues);
-                addSpecializedFunction(specializedFunction);
+                AddSpecializedFunction(specializedFunction);
                 ObjectiveCRuntime.release(constantValues.NativePtr);
 
                 Debug.Assert(specializedFunction.NativePtr != IntPtr.Zero, "Failed to create specialized MTLFunction");
@@ -271,7 +271,7 @@ namespace Veldrith.MTL
 
         public override void Dispose()
         {
-            if (!_disposed)
+            if (!this._disposed)
             {
                 if (RenderPipelineState.NativePtr != IntPtr.Zero)
                     ObjectiveCRuntime.release(RenderPipelineState.NativePtr);
@@ -282,20 +282,20 @@ namespace Veldrith.MTL
                 if (ComputePipelineState.NativePtr != IntPtr.Zero)
                     ObjectiveCRuntime.release(ComputePipelineState.NativePtr);
 
-                if (_specializedFunctions != null)
+                if (this._specializedFunctions != null)
                 {
-                    foreach (var function in _specializedFunctions) ObjectiveCRuntime.release(function.NativePtr);
+                    foreach (var function in this._specializedFunctions) ObjectiveCRuntime.release(function.NativePtr);
 
-                    _specializedFunctions.Clear();
+                    this._specializedFunctions.Clear();
                 }
 
-                _disposed = true;
+                this._disposed = true;
             }
         }
 
         #endregion
 
-        private unsafe MTLFunctionConstantValues createConstantValues(SpecializationConstant[] specializations)
+        private unsafe MTLFunctionConstantValues CreateConstantValues(SpecializationConstant[] specializations)
         {
             var ret = MTLFunctionConstantValues.New();
 
@@ -311,10 +311,10 @@ namespace Veldrith.MTL
             return ret;
         }
 
-        private void addSpecializedFunction(MTLFunction function)
+        private void AddSpecializedFunction(MTLFunction function)
         {
-            _specializedFunctions ??= new List<MTLFunction>();
-            _specializedFunctions.Add(function);
+            this._specializedFunctions ??= new List<MTLFunction>();
+            this._specializedFunctions.Add(function);
         }
     }
 }

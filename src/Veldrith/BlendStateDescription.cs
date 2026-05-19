@@ -32,9 +32,9 @@ namespace Veldrith
         /// <param name="attachmentStates">The blend attachment states.</param>
         public BlendStateDescription(RgbaFloat blendFactor, params BlendAttachmentDescription[] attachmentStates)
         {
-            BlendFactor = blendFactor;
-            AttachmentStates = attachmentStates;
-            AlphaToCoverageEnabled = false;
+            this.BlendFactor = blendFactor;
+            this.AttachmentStates = attachmentStates;
+            this.AlphaToCoverageEnabled = false;
         }
 
         /// <summary>
@@ -51,9 +51,9 @@ namespace Veldrith
             bool alphaToCoverageEnabled,
             params BlendAttachmentDescription[] attachmentStates)
         {
-            BlendFactor = blendFactor;
-            AttachmentStates = attachmentStates;
-            AlphaToCoverageEnabled = alphaToCoverageEnabled;
+            this.BlendFactor = blendFactor;
+            this.AttachmentStates = attachmentStates;
+            this.AlphaToCoverageEnabled = alphaToCoverageEnabled;
         }
 
         /// <summary>
@@ -107,9 +107,9 @@ namespace Veldrith
         /// <returns>True if all elements and all array elements are equal; false otherswise.</returns>
         public bool Equals(BlendStateDescription other)
         {
-            return BlendFactor.Equals(other.BlendFactor)
-                   && AlphaToCoverageEnabled.Equals(other.AlphaToCoverageEnabled)
-                   && Util.ArrayEqualsEquatable(AttachmentStates, other.AttachmentStates);
+            return this.BlendFactor.Equals(other.BlendFactor)
+                   && this.AlphaToCoverageEnabled.Equals(other.AlphaToCoverageEnabled)
+                   && Util.ArrayEqualsEquatable(this.AttachmentStates, other.AttachmentStates);
         }
 
         /// <summary>
@@ -119,9 +119,9 @@ namespace Veldrith
         public override int GetHashCode()
         {
             return HashHelper.Combine(
-                BlendFactor.GetHashCode(),
-                AlphaToCoverageEnabled.GetHashCode(),
-                HashHelper.Array(AttachmentStates));
+                this.BlendFactor.GetHashCode(),
+                this.AlphaToCoverageEnabled.GetHashCode(),
+                HashHelper.Array(this.AttachmentStates));
         }
 
         internal BlendStateDescription ShallowClone()
