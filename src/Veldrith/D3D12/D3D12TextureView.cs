@@ -19,6 +19,26 @@ internal sealed class D3D12TextureView : TextureView {
     private bool _disposed;
 
     /// <summary>
+    /// Tracks whether sampled binding support has been queried for this view.
+    /// </summary>
+    private bool _sampledBindingSupportChecked;
+
+    /// <summary>
+    /// Stores the cached sampled binding support result.
+    /// </summary>
+    private bool _sampledBindingSupported;
+
+    /// <summary>
+    /// Tracks whether storage binding support has been queried for this view.
+    /// </summary>
+    private bool _storageBindingSupportChecked;
+
+    /// <summary>
+    /// Stores the cached storage binding support result.
+    /// </summary>
+    private bool _storageBindingSupported;
+
+    /// <summary>
     /// Stores the srv descriptor heap state used by this instance.
     /// </summary>
     private ID3D12DescriptorHeap _srvDescriptorHeap;
@@ -83,6 +103,40 @@ internal sealed class D3D12TextureView : TextureView {
         }
 
         return this._uavDescriptorHeap.GetCPUDescriptorHandleForHeapStart();
+    }
+
+    /// <summary>
+    /// Validates and caches whether this texture view can be bound with the requested usage.
+    /// </summary>
+    /// <param name="requestedUsage">The binding usage requested by the pipeline.</param>
+    /// <param name="bindingKind">A diagnostic name used in error messages.</param>
+    internal void EnsureBindingSupport(TextureUsage requestedUsage, string bindingKind) {
+        ref bool checkedFlag = ref this._sampledBindingSupportChecked;
+        ref bool supportedFlag = ref this._sampledBindingSupported;
+        if ((requestedUsage & TextureUsage.Storage) != 0) {
+            checkedFlag = ref this._storageBindingSupportChecked;
+            supportedFlag = ref this._storageBindingSupported;
+        }
+
+        if (!checkedFlag) {
+            TextureUsage usage = requestedUsage;
+            if ((requestedUsage & TextureUsage.Sampled) != 0) {
+                if ((this.TargetTexture.Usage & TextureUsage.Cubemap) != 0) {
+                    usage |= TextureUsage.Cubemap;
+                }
+
+                if ((this.TargetTexture.Usage & TextureUsage.DepthStencil) != 0) {
+                    usage |= TextureUsage.DepthStencil;
+                }
+            }
+
+            supportedFlag = this.gd.GetPixelFormatSupport(this.Format, this.TargetTexture.Type, usage);
+            checkedFlag = true;
+        }
+
+        if (!supportedFlag) {
+            throw new PlatformNotSupportedException($"D3D12 {bindingKind} texture view binding is not supported for format {this.Format}, type {this.TargetTexture.Type}, usage {requestedUsage}.");
+        }
     }
 
     /// <summary>

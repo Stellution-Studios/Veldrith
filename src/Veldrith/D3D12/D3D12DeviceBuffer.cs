@@ -49,6 +49,11 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     private readonly ID3D12Resource _stagingWriteBuffer;
 
     /// <summary>
+    /// Reuses a single barrier array for buffer state transitions.
+    /// </summary>
+    private readonly ResourceBarrier[] _singleBarrier = new ResourceBarrier[1];
+
+    /// <summary>
     /// Stores the staging write mapped pointer state used by this instance.
     /// </summary>
     private readonly IntPtr _stagingWriteMappedPointer;
@@ -277,6 +282,10 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         }
 
         ID3D12Resource uploadBuffer = this.CreateUploadBuffer(source, sizeInBytes);
+        if (commandList == null) {
+            throw new VeldridException("A command list is required when updating GPU-local D3D12 buffers.");
+        }
+
         ResourceStates previousState = this.CurrentState;
         this.Transition(commandList, previousState, ResourceStates.CopyDest);
         commandList.CopyBufferRegion(this.NativeBuffer, destinationOffset, uploadBuffer, 0, sizeInBytes);
@@ -497,20 +506,25 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     /// <param name="copySize">The copy size value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     private ID3D12Resource CreateUploadBuffer(IntPtr source, uint copySize) {
-        ID3D12Resource uploadBuffer = this.gd.Device.CreateCommittedResource(HeapType.Upload, HeapFlags.None, ResourceDescription.Buffer(copySize), ResourceStates.GenericRead);
+        ID3D12Resource uploadBuffer = this.gd.RentUploadBuffer(copySize);
+        try {
+            unsafe {
+                void* mapped = null;
+                uploadBuffer.Map(0, &mapped).CheckError();
+                try {
+                    Buffer.MemoryCopy(source.ToPointer(), mapped, copySize, copySize);
+                }
+                finally {
+                    uploadBuffer.Unmap(0);
+                }
+            }
 
-        unsafe {
-            void* mapped = null;
-            uploadBuffer.Map(0, &mapped).CheckError();
-            try {
-                Buffer.MemoryCopy(source.ToPointer(), mapped, copySize, copySize);
-            }
-            finally {
-                uploadBuffer.Unmap(0);
-            }
+            return uploadBuffer;
         }
-
-        return uploadBuffer;
+        catch {
+            this.gd.ReturnUploadBuffer(uploadBuffer);
+            throw;
+        }
     }
 
     /// <summary>
@@ -570,25 +584,23 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         }
 
         ID3D12Resource readbackBuffer = this.gd.Device.CreateCommittedResource(HeapType.Readback, HeapFlags.None, ResourceDescription.Buffer(copySize), ResourceStates.CopyDest);
-        ID3D12CommandAllocator allocator = this.gd.Device.CreateCommandAllocator(CommandListType.Direct);
-        ID3D12GraphicsCommandList commandList = this.gd.Device.CreateCommandList<ID3D12GraphicsCommandList>(0, CommandListType.Direct, allocator);
         try {
-            ResourceStates previousState = this.CurrentState;
-            if (this.CanTransitionState && previousState != ResourceStates.CopySource) {
-                ResourceBarrier toCopySource = ResourceBarrier.BarrierTransition(this.NativeBuffer, previousState, ResourceStates.CopySource);
-                commandList.ResourceBarrier(new[] { toCopySource });
-            }
+            this.gd.ExecuteImmediateCommand(commandList => {
+                ResourceStates previousState = this.CurrentState;
+                if (this.CanTransitionState && previousState != ResourceStates.CopySource) {
+                    ResourceBarrier toCopySource = ResourceBarrier.BarrierTransition(this.NativeBuffer, previousState, ResourceStates.CopySource);
+                    this._singleBarrier[0] = toCopySource;
+                    commandList.ResourceBarrier(this._singleBarrier);
+                }
 
-            commandList.CopyBufferRegion(readbackBuffer, 0, this.NativeBuffer, sourceOffset, copySize);
+                commandList.CopyBufferRegion(readbackBuffer, 0, this.NativeBuffer, sourceOffset, copySize);
 
-            if (this.CanTransitionState && previousState != ResourceStates.CopySource) {
-                ResourceBarrier fromCopySource = ResourceBarrier.BarrierTransition(this.NativeBuffer, ResourceStates.CopySource, previousState);
-                commandList.ResourceBarrier(new[] { fromCopySource });
-            }
-
-            commandList.Close();
-            this.gd.CommandQueue.ExecuteCommandList(commandList);
-            this.gd.WaitForIdle();
+                if (this.CanTransitionState && previousState != ResourceStates.CopySource) {
+                    ResourceBarrier fromCopySource = ResourceBarrier.BarrierTransition(this.NativeBuffer, ResourceStates.CopySource, previousState);
+                    this._singleBarrier[0] = fromCopySource;
+                    commandList.ResourceBarrier(this._singleBarrier);
+                }
+            }, waitForCompletion: true);
 
             void* mapped = null;
             readbackBuffer.Map(0, &mapped).CheckError();
@@ -602,8 +614,6 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
             }
         }
         finally {
-            commandList.Dispose();
-            allocator.Dispose();
             readbackBuffer.Dispose();
         }
 
@@ -697,7 +707,8 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         }
 
         ResourceBarrier barrier = ResourceBarrier.BarrierTransition(this.NativeBuffer, from, to);
-        commandList.ResourceBarrier(new[] { barrier });
+        this._singleBarrier[0] = barrier;
+        commandList.ResourceBarrier(this._singleBarrier);
     }
 
     /// <summary>
@@ -706,10 +717,20 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     /// <param name="logicalSize">The logical size value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     private static uint CalculateDynamicSnapshotCapacity(uint logicalSize) {
-        const ulong maxSnapshotBytes = 256UL * 1024UL * 1024UL;
-        ulong doubled = logicalSize * 2UL;
-        ulong timesThirtyTwo = logicalSize * 32UL;
-        ulong desired = Math.Max(doubled, timesThirtyTwo);
+        // Keep enough history to avoid write-after-read hazards across a few in-flight frames,
+        // but avoid very large per-buffer overallocation spikes when many dynamic meshes stream in.
+        const ulong maxSnapshotBytes = 64UL * 1024UL * 1024UL;
+        ulong desired;
+        if (logicalSize <= 256UL * 1024UL) {
+            desired = logicalSize * 8UL;
+        }
+        else if (logicalSize <= 2UL * 1024UL * 1024UL) {
+            desired = logicalSize * 4UL;
+        }
+        else {
+            desired = logicalSize * 3UL;
+        }
+
         ulong capped = Math.Min(desired, maxSnapshotBytes);
         ulong finalSize = Math.Max(logicalSize, capped);
         if (finalSize > uint.MaxValue) {

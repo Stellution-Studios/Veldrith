@@ -1,3 +1,5 @@
+using System;
+
 namespace Veldrith.D3D12;
 
 /// <summary>
@@ -13,10 +15,12 @@ internal sealed class D3D12ResourceSet : ResourceSet {
     /// <summary>
     /// Initializes a new instance of the <see cref="D3D12ResourceSet" /> class.
     /// </summary>
+    /// <param name="gd">The graphics device that owns this resource set.</param>
     /// <param name="description">The description used to configure this operation.</param>
-    public D3D12ResourceSet(ref ResourceSetDescription description) : base(ref description) {
+    public D3D12ResourceSet(D3D12GraphicsDevice gd, ref ResourceSetDescription description) : base(ref description) {
         this.ResourceLayoutInfo = Util.AssertSubtype<ResourceLayout, D3D12ResourceLayout>(description.Layout);
         this.BoundResources = Util.ShallowClone(description.BoundResources);
+        this.PrepareDescriptors(gd);
     }
 
     /// <summary>
@@ -44,5 +48,42 @@ internal sealed class D3D12ResourceSet : ResourceSet {
     /// </summary>
     public override void Dispose() {
         this._disposed = true;
+    }
+
+    /// <summary>
+    /// Creates persistent CPU descriptors when the resource set is built so first draw binding stays cheap.
+    /// </summary>
+    /// <param name="gd">The graphics device used to resolve full texture views.</param>
+    private void PrepareDescriptors(D3D12GraphicsDevice gd) {
+        ResourceLayoutElementDescription[] elements = this.ResourceLayoutInfo.Elements;
+        int count = Math.Min(elements.Length, this.BoundResources.Length);
+        for (int i = 0; i < count; i++) {
+            IBindableResource resource = this.BoundResources[i];
+            if (resource == null) {
+                continue;
+            }
+
+            switch (elements[i].Kind) {
+                case ResourceKind.TextureReadOnly: {
+                        TextureView textureView = Util.GetTextureView(gd, resource);
+                        D3D12TextureView d3d12TextureView = Util.AssertSubtype<TextureView, D3D12TextureView>(textureView);
+                        d3d12TextureView.EnsureBindingSupport(TextureUsage.Sampled, "sampled");
+                        d3d12TextureView.GetOrCreateShaderResourceViewDescriptor();
+                        break;
+                    }
+                case ResourceKind.TextureReadWrite: {
+                        TextureView textureView = Util.GetTextureView(gd, resource);
+                        D3D12TextureView d3d12TextureView = Util.AssertSubtype<TextureView, D3D12TextureView>(textureView);
+                        d3d12TextureView.EnsureBindingSupport(TextureUsage.Storage, "storage");
+                        d3d12TextureView.GetOrCreateUnorderedAccessViewDescriptor();
+                        break;
+                    }
+                case ResourceKind.Sampler: {
+                        D3D12Sampler d3d12Sampler = Util.AssertSubtype<IBindableResource, D3D12Sampler>(resource);
+                        d3d12Sampler.GetOrCreateDescriptor();
+                        break;
+                    }
+            }
+        }
     }
 }

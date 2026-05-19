@@ -57,6 +57,11 @@ internal sealed class D3D12Pipeline : Pipeline {
     private uint _pushConstantRootParameterIndex;
 
     /// <summary>
+    /// Stores the cache key used for the current root signature.
+    /// </summary>
+    private string _rootSignatureCacheKey;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="D3D12Pipeline" /> class.
     /// </summary>
     /// <param name="gd">The graphics device that owns this operation.</param>
@@ -72,15 +77,8 @@ internal sealed class D3D12Pipeline : Pipeline {
         }
 
         this._pipelineResourceLayouts = description.ResourceLayouts;
-
-        this.CreateRootSignature(description.ResourceLayouts, true);
-        try {
-            this.CreateGraphicsPipelineState(ref description);
-        }
-        catch (VeldridException) {
-            this.RecreateRootSignatureWithoutSetSpaces();
-            this.CreateGraphicsPipelineState(ref description);
-        }
+        this.CreateRootSignature(description.ResourceLayouts, false);
+        this.CreateGraphicsPipelineState(ref description);
     }
 
     /// <summary>
@@ -92,14 +90,8 @@ internal sealed class D3D12Pipeline : Pipeline {
         this.gd = gd;
         this.IsComputePipeline = true;
         this._pipelineResourceLayouts = description.ResourceLayouts;
-        this.CreateRootSignature(description.ResourceLayouts, true);
-        try {
-            this.CreateComputePipelineState(ref description);
-        }
-        catch (Exception) {
-            this.RecreateRootSignatureWithoutSetSpaces();
-            this.CreateComputePipelineState(ref description);
-        }
+        this.CreateRootSignature(description.ResourceLayouts, false);
+        this.CreateComputePipelineState(ref description);
     }
 
     /// <summary>
@@ -160,7 +152,6 @@ internal sealed class D3D12Pipeline : Pipeline {
             return;
         }
 
-        this.PipelineState?.Dispose();
         this._disposed = true;
     }
 
@@ -204,6 +195,8 @@ internal sealed class D3D12Pipeline : Pipeline {
             for (uint setIndex = 0; setIndex < resourceLayouts.Length; setIndex++) {
                 D3D12ResourceLayout resourceLayout = Util.AssertSubtype<ResourceLayout, D3D12ResourceLayout>(resourceLayouts[setIndex]);
                 ResourceLayoutElementDescription[] elements = resourceLayout.Elements;
+                List<PendingDescriptorTableBinding> srvUavBindings = null;
+                List<PendingDescriptorTableBinding> samplerBindings = null;
                 for (uint elementIndex = 0; elementIndex < elements.Length; elementIndex++) {
                     ResourceLayoutElementDescription element = elements[elementIndex];
                     uint shaderRegister;
@@ -214,24 +207,30 @@ internal sealed class D3D12Pipeline : Pipeline {
 
                     uint registerSpace = useSetRegisterSpaces ? setIndex : 0u;
                     bool descriptorTable = UsesDescriptorTable(element.Kind);
-                    RootParameter rootParameter;
                     if (descriptorTable) {
                         DescriptorRangeType rangeType = GetDescriptorRangeType(element.Kind);
-                        DescriptorRange descriptorRange = new(rangeType, 1, shaderRegister, registerSpace, 0);
-                        RootDescriptorTable descriptorTableInfo = new(descriptorRange);
-                        rootParameter = new RootParameter(descriptorTableInfo, ToShaderVisibility(element.Stages));
+                        if (element.Kind == ResourceKind.Sampler) {
+                            samplerBindings ??= new List<PendingDescriptorTableBinding>();
+                            samplerBindings.Add(new PendingDescriptorTableBinding(elementIndex, element.Kind, rangeType, shaderRegister, registerSpace, (uint)samplerBindings.Count));
+                        }
+                        else {
+                            srvUavBindings ??= new List<PendingDescriptorTableBinding>();
+                            srvUavBindings.Add(new PendingDescriptorTableBinding(elementIndex, element.Kind, rangeType, shaderRegister, registerSpace, (uint)srvUavBindings.Count));
+                        }
                     }
                     else {
                         RootParameterType parameterType = GetRootParameterType(element.Kind);
                         RootDescriptor rootDescriptor = new(shaderRegister, registerSpace);
-                        rootParameter = new RootParameter(parameterType, rootDescriptor, ToShaderVisibility(element.Stages));
+                        RootParameter rootParameter = new(parameterType, rootDescriptor, ToShaderVisibility(element.Stages));
+                        uint rootParameterIndex = (uint)rootParameters.Count;
+                        rootParameters.Add(rootParameter);
+                        this._rootBindings[setIndex][elementIndex] = new RootBindingInfo(rootParameterIndex, element.Kind, false, DescriptorTableKind.None, 0);
+                        this._rootBindingValid[setIndex][elementIndex] = true;
                     }
-
-                    uint rootParameterIndex = (uint)rootParameters.Count;
-                    rootParameters.Add(rootParameter);
-                    this._rootBindings[setIndex][elementIndex] = new RootBindingInfo(rootParameterIndex, element.Kind, descriptorTable);
-                    this._rootBindingValid[setIndex][elementIndex] = true;
                 }
+
+                this.AddDescriptorTableRootParameter(rootParameters, setIndex, srvUavBindings, DescriptorTableKind.SrvUav);
+                this.AddDescriptorTableRootParameter(rootParameters, setIndex, samplerBindings, DescriptorTableKind.Sampler);
             }
         }
 
@@ -245,6 +244,7 @@ internal sealed class D3D12Pipeline : Pipeline {
 
         RootSignatureDescription rootSignatureDescription = new(rootSignatureFlags, rootParameters.ToArray(), Array.Empty<StaticSamplerDescription>());
         string cacheKey = BuildRootSignatureCacheKey(resourceLayouts, useSetRegisterSpaces, this.IsComputePipeline);
+        this._rootSignatureCacheKey = cacheKey;
         this.RootSignature = this.gd.GetOrCreateRootSignature(cacheKey, in rootSignatureDescription);
     }
 
@@ -257,6 +257,33 @@ internal sealed class D3D12Pipeline : Pipeline {
         }
 
         this.CreateRootSignature(this._pipelineResourceLayouts, false);
+    }
+
+    /// <summary>
+    /// Adds a grouped descriptor table root parameter for a resource set.
+    /// </summary>
+    /// <param name="rootParameters">The root parameter list being built.</param>
+    /// <param name="setIndex">The resource set index.</param>
+    /// <param name="bindings">The descriptor bindings assigned to the table.</param>
+    /// <param name="tableKind">The grouped table kind.</param>
+    private void AddDescriptorTableRootParameter(List<RootParameter> rootParameters, uint setIndex, List<PendingDescriptorTableBinding> bindings, DescriptorTableKind tableKind) {
+        if (bindings == null || bindings.Count == 0) {
+            return;
+        }
+
+        DescriptorRange[] ranges = new DescriptorRange[bindings.Count];
+        for (int i = 0; i < bindings.Count; i++) {
+            PendingDescriptorTableBinding binding = bindings[i];
+            ranges[i] = new DescriptorRange(binding.RangeType, 1, binding.ShaderRegister, binding.RegisterSpace, binding.TableOffset);
+        }
+
+        uint rootParameterIndex = (uint)rootParameters.Count;
+        rootParameters.Add(new RootParameter(new RootDescriptorTable(ranges), ShaderVisibility.All));
+        for (int i = 0; i < bindings.Count; i++) {
+            PendingDescriptorTableBinding binding = bindings[i];
+            this._rootBindings[setIndex][binding.ElementIndex] = new RootBindingInfo(rootParameterIndex, binding.Kind, true, tableKind, binding.TableOffset);
+            this._rootBindingValid[setIndex][binding.ElementIndex] = true;
+        }
     }
 
     /// <summary>
@@ -356,6 +383,241 @@ internal sealed class D3D12Pipeline : Pipeline {
     }
 
     /// <summary>
+    /// Builds a stable cache key for a compute pipeline state.
+    /// </summary>
+    /// <param name="rootSignatureKey">The root signature cache key.</param>
+    /// <param name="shaderBytes">The compute shader bytecode.</param>
+    /// <returns>The cache key used by the D3D12 pipeline-state cache.</returns>
+    private static string BuildComputePipelineStateCacheKey(string rootSignatureKey, byte[] shaderBytes) {
+        StringBuilder sb = new(128);
+        sb.Append("cpso|");
+        sb.Append(rootSignatureKey);
+        AppendShaderHash(sb, shaderBytes);
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Builds a stable cache key for a graphics pipeline state.
+    /// </summary>
+    /// <param name="description">The graphics pipeline description.</param>
+    /// <param name="rootSignatureKey">The root signature cache key.</param>
+    /// <param name="vertexShader">The vertex shader bytecode.</param>
+    /// <param name="pixelShader">The pixel shader bytecode.</param>
+    /// <param name="geometryShader">The geometry shader bytecode.</param>
+    /// <param name="hullShader">The hull shader bytecode.</param>
+    /// <param name="domainShader">The domain shader bytecode.</param>
+    /// <param name="inputElements">The generated D3D12 input elements.</param>
+    /// <param name="colorTargetCount">The number of color targets.</param>
+    /// <param name="depthStencilFormat">The depth/stencil DXGI format.</param>
+    /// <returns>The cache key used by the D3D12 pipeline-state cache.</returns>
+    private static string BuildGraphicsPipelineStateCacheKey(ref GraphicsPipelineDescription description, string rootSignatureKey, ReadOnlyMemory<byte> vertexShader, ReadOnlyMemory<byte> pixelShader, ReadOnlyMemory<byte> geometryShader, ReadOnlyMemory<byte> hullShader, ReadOnlyMemory<byte> domainShader, InputElementDescription[] inputElements, int colorTargetCount, Format depthStencilFormat) {
+        StringBuilder sb = new(512);
+        sb.Append("gpso|");
+        sb.Append(rootSignatureKey);
+        sb.Append("|pt=");
+        sb.Append((int)description.PrimitiveTopology);
+        sb.Append("|ptt=");
+        sb.Append((int)D3D12Formats.ToPrimitiveTopologyType(description.PrimitiveTopology));
+        sb.Append("|rbm=");
+        sb.Append(description.ResourceBindingModel.HasValue ? (int)description.ResourceBindingModel.Value : -1);
+        sb.Append("|blend=");
+        AppendBlendState(sb, ref description.BlendState);
+        sb.Append("|depth=");
+        AppendDepthStencilState(sb, ref description.DepthStencilState);
+        sb.Append("|rast=");
+        AppendRasterizerState(sb, ref description.RasterizerState);
+        sb.Append("|vl=");
+        AppendVertexLayouts(sb, description.ShaderSet.VertexLayouts);
+        sb.Append("|iel=");
+        sb.Append(inputElements?.Length ?? 0);
+        sb.Append("|out=");
+        AppendOutputDescription(sb, ref description.Outputs, colorTargetCount, depthStencilFormat);
+        sb.Append("|vs");
+        AppendShaderHash(sb, vertexShader);
+        sb.Append("|ps");
+        AppendShaderHash(sb, pixelShader);
+        sb.Append("|gs");
+        AppendShaderHash(sb, geometryShader);
+        sb.Append("|hs");
+        AppendShaderHash(sb, hullShader);
+        sb.Append("|ds");
+        AppendShaderHash(sb, domainShader);
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Appends blend state values to a pipeline-state cache key.
+    /// </summary>
+    /// <param name="sb">The destination string builder.</param>
+    /// <param name="description">The blend state description.</param>
+    private static void AppendBlendState(StringBuilder sb, ref BlendStateDescription description) {
+        sb.Append(description.AlphaToCoverageEnabled ? '1' : '0');
+        sb.Append(':');
+        sb.Append(description.BlendFactor.R);
+        sb.Append(',');
+        sb.Append(description.BlendFactor.G);
+        sb.Append(',');
+        sb.Append(description.BlendFactor.B);
+        sb.Append(',');
+        sb.Append(description.BlendFactor.A);
+        BlendAttachmentDescription[] attachments = description.AttachmentStates;
+        sb.Append(':');
+        sb.Append(attachments?.Length ?? 0);
+        if (attachments == null) {
+            return;
+        }
+
+        for (int i = 0; i < attachments.Length; i++) {
+            BlendAttachmentDescription attachment = attachments[i];
+            sb.Append(';');
+            sb.Append(attachment.BlendEnabled ? '1' : '0');
+            sb.Append(',');
+            sb.Append(attachment.ColorWriteMask.HasValue ? (int)attachment.ColorWriteMask.Value : -1);
+            sb.Append(',');
+            sb.Append((int)attachment.SourceColorFactor);
+            sb.Append(',');
+            sb.Append((int)attachment.DestinationColorFactor);
+            sb.Append(',');
+            sb.Append((int)attachment.ColorFunction);
+            sb.Append(',');
+            sb.Append((int)attachment.SourceAlphaFactor);
+            sb.Append(',');
+            sb.Append((int)attachment.DestinationAlphaFactor);
+            sb.Append(',');
+            sb.Append((int)attachment.AlphaFunction);
+        }
+    }
+
+    /// <summary>
+    /// Appends depth/stencil state values to a pipeline-state cache key.
+    /// </summary>
+    /// <param name="sb">The destination string builder.</param>
+    /// <param name="description">The depth/stencil state description.</param>
+    private static void AppendDepthStencilState(StringBuilder sb, ref DepthStencilStateDescription description) {
+        sb.Append(description.DepthTestEnabled ? '1' : '0');
+        sb.Append(',');
+        sb.Append(description.DepthWriteEnabled ? '1' : '0');
+        sb.Append(',');
+        sb.Append((int)description.DepthComparison);
+        sb.Append(',');
+        sb.Append(description.StencilTestEnabled ? '1' : '0');
+        sb.Append(',');
+        sb.Append(description.StencilReadMask);
+        sb.Append(',');
+        sb.Append(description.StencilWriteMask);
+        sb.Append(',');
+        sb.Append(description.StencilReference);
+        sb.Append(',');
+        sb.Append(description.StencilFront.GetHashCode());
+        sb.Append(',');
+        sb.Append(description.StencilBack.GetHashCode());
+    }
+
+    /// <summary>
+    /// Appends rasterizer state values to a pipeline-state cache key.
+    /// </summary>
+    /// <param name="sb">The destination string builder.</param>
+    /// <param name="description">The rasterizer state description.</param>
+    private static void AppendRasterizerState(StringBuilder sb, ref RasterizerStateDescription description) {
+        sb.Append((int)description.CullMode);
+        sb.Append(',');
+        sb.Append((int)description.FillMode);
+        sb.Append(',');
+        sb.Append((int)description.FrontFace);
+        sb.Append(',');
+        sb.Append(description.DepthClipEnabled ? '1' : '0');
+        sb.Append(',');
+        sb.Append(description.ScissorTestEnabled ? '1' : '0');
+    }
+
+    /// <summary>
+    /// Appends vertex layout values to a pipeline-state cache key.
+    /// </summary>
+    /// <param name="sb">The destination string builder.</param>
+    /// <param name="layouts">The vertex layouts to append.</param>
+    private static void AppendVertexLayouts(StringBuilder sb, VertexLayoutDescription[] layouts) {
+        sb.Append(layouts?.Length ?? 0);
+        if (layouts == null) {
+            return;
+        }
+
+        for (int layoutIndex = 0; layoutIndex < layouts.Length; layoutIndex++) {
+            VertexLayoutDescription layout = layouts[layoutIndex];
+            sb.Append(';');
+            sb.Append(layout.Stride);
+            sb.Append(',');
+            sb.Append(layout.InstanceStepRate);
+            VertexElementDescription[] elements = layout.Elements;
+            sb.Append(',');
+            sb.Append(elements?.Length ?? 0);
+            if (elements == null) {
+                continue;
+            }
+
+            for (int elementIndex = 0; elementIndex < elements.Length; elementIndex++) {
+                VertexElementDescription element = elements[elementIndex];
+                sb.Append('[');
+                sb.Append(element.Name);
+                sb.Append(',');
+                sb.Append((int)element.Semantic);
+                sb.Append(',');
+                sb.Append((int)element.Format);
+                sb.Append(',');
+                sb.Append(element.Offset);
+                sb.Append(']');
+            }
+        }
+    }
+
+    /// <summary>
+    /// Appends output attachment values to a pipeline-state cache key.
+    /// </summary>
+    /// <param name="sb">The destination string builder.</param>
+    /// <param name="description">The output description.</param>
+    /// <param name="colorTargetCount">The number of color targets.</param>
+    /// <param name="depthStencilFormat">The depth/stencil DXGI format.</param>
+    private static void AppendOutputDescription(StringBuilder sb, ref OutputDescription description, int colorTargetCount, Format depthStencilFormat) {
+        sb.Append((int)description.SampleCount);
+        sb.Append(',');
+        sb.Append(colorTargetCount);
+        sb.Append(',');
+        sb.Append((int)depthStencilFormat);
+        OutputAttachmentDescription[] colors = description.ColorAttachments;
+        for (int i = 0; i < colorTargetCount; i++) {
+            sb.Append(',');
+            sb.Append((int)colors[i].Format);
+        }
+    }
+
+    /// <summary>
+    /// Appends a shader bytecode hash to a pipeline-state cache key.
+    /// </summary>
+    /// <param name="sb">The destination string builder.</param>
+    /// <param name="shaderBytes">The shader bytecode.</param>
+    private static void AppendShaderHash(StringBuilder sb, byte[] shaderBytes) {
+        AppendShaderHash(sb, new ReadOnlyMemory<byte>(shaderBytes ?? Array.Empty<byte>()));
+    }
+
+    /// <summary>
+    /// Appends a shader bytecode hash to a pipeline-state cache key.
+    /// </summary>
+    /// <param name="sb">The destination string builder.</param>
+    /// <param name="shaderBytes">The shader bytecode.</param>
+    private static void AppendShaderHash(StringBuilder sb, ReadOnlyMemory<byte> shaderBytes) {
+        ReadOnlySpan<byte> span = shaderBytes.Span;
+        ulong hash = 14695981039346656037UL;
+        for (int i = 0; i < span.Length; i++) {
+            hash ^= span[i];
+            hash *= 1099511628211UL;
+        }
+
+        sb.Append(':');
+        sb.Append(span.Length);
+        sb.Append(':');
+        sb.Append(hash.ToString("X16"));
+    }
+
+    /// <summary>
     /// Creates the compute pipeline state instance used by this backend.
     /// </summary>
     /// <param name="description">The description used to configure this operation.</param>
@@ -366,7 +628,8 @@ internal sealed class D3D12Pipeline : Pipeline {
             ComputeShader = d3d12Shader.ShaderBytes
         };
 
-        this.PipelineState = this.gd.Device.CreateComputePipelineState(psoDescription);
+        string cacheKey = BuildComputePipelineStateCacheKey(this._rootSignatureCacheKey, d3d12Shader.ShaderBytes);
+        this.PipelineState = this.gd.GetOrCreatePipelineState(cacheKey, () => this.gd.Device.CreateComputePipelineState(psoDescription));
     }
 
     /// <summary>
@@ -502,7 +765,8 @@ internal sealed class D3D12Pipeline : Pipeline {
         }
 
         try {
-            this.PipelineState = this.gd.Device.CreateGraphicsPipelineState(psoDescription);
+            string cacheKey = BuildGraphicsPipelineStateCacheKey(ref description, this._rootSignatureCacheKey, vertexShader, pixelShader, geometryShader, hullShader, domainShader, inputElements, colorCount, psoDescription.DepthStencilFormat);
+            this.PipelineState = this.gd.GetOrCreatePipelineState(cacheKey, () => this.gd.Device.CreateGraphicsPipelineState(psoDescription));
         }
         catch (Exception ex) {
             string removedReason = this.gd.GetDeviceRemovedReasonDescription();
@@ -609,6 +873,27 @@ internal sealed class D3D12Pipeline : Pipeline {
     }
 
     /// <summary>
+    /// Identifies which grouped descriptor table contains a root binding.
+    /// </summary>
+    internal enum DescriptorTableKind {
+
+        /// <summary>
+        /// The binding is not stored in a descriptor table.
+        /// </summary>
+        None,
+
+        /// <summary>
+        /// The binding is stored in the SRV/UAV descriptor heap.
+        /// </summary>
+        SrvUav,
+
+        /// <summary>
+        /// The binding is stored in the sampler descriptor heap.
+        /// </summary>
+        Sampler
+    }
+
+    /// <summary>
     /// Represents the RootBindingInfo data structure used by the graphics runtime.
     /// </summary>
     internal readonly struct RootBindingInfo {
@@ -619,10 +904,14 @@ internal sealed class D3D12Pipeline : Pipeline {
         /// <param name="rootParameterIndex">The root parameter index value used by this operation.</param>
         /// <param name="kind">The kind value used by this operation.</param>
         /// <param name="descriptorTable">The descriptor table value used by this operation.</param>
-        public RootBindingInfo(uint rootParameterIndex, ResourceKind kind, bool descriptorTable) {
+        /// <param name="descriptorTableKind">The descriptor table kind.</param>
+        /// <param name="descriptorTableOffset">The descriptor offset inside the grouped table.</param>
+        public RootBindingInfo(uint rootParameterIndex, ResourceKind kind, bool descriptorTable, DescriptorTableKind descriptorTableKind, uint descriptorTableOffset) {
             this.RootParameterIndex = rootParameterIndex;
             this.Kind = kind;
             this.DescriptorTable = descriptorTable;
+            this.DescriptorTableKind = descriptorTableKind;
+            this.DescriptorTableOffset = descriptorTableOffset;
         }
 
         /// <summary>
@@ -639,5 +928,69 @@ internal sealed class D3D12Pipeline : Pipeline {
         /// Gets or sets DescriptorTable.
         /// </summary>
         public bool DescriptorTable { get; }
+
+        /// <summary>
+        /// Gets the grouped descriptor table kind.
+        /// </summary>
+        public DescriptorTableKind DescriptorTableKind { get; }
+
+        /// <summary>
+        /// Gets the descriptor offset inside the grouped descriptor table.
+        /// </summary>
+        public uint DescriptorTableOffset { get; }
+    }
+
+    /// <summary>
+    /// Stores a descriptor binding while a grouped root descriptor table is being built.
+    /// </summary>
+    private readonly struct PendingDescriptorTableBinding {
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PendingDescriptorTableBinding" /> struct.
+        /// </summary>
+        /// <param name="elementIndex">The resource layout element index.</param>
+        /// <param name="kind">The resource kind.</param>
+        /// <param name="rangeType">The D3D12 descriptor range type.</param>
+        /// <param name="shaderRegister">The shader register assigned to the resource.</param>
+        /// <param name="registerSpace">The register space assigned to the resource.</param>
+        /// <param name="tableOffset">The descriptor offset inside the table.</param>
+        public PendingDescriptorTableBinding(uint elementIndex, ResourceKind kind, DescriptorRangeType rangeType, uint shaderRegister, uint registerSpace, uint tableOffset) {
+            this.ElementIndex = elementIndex;
+            this.Kind = kind;
+            this.RangeType = rangeType;
+            this.ShaderRegister = shaderRegister;
+            this.RegisterSpace = registerSpace;
+            this.TableOffset = tableOffset;
+        }
+
+        /// <summary>
+        /// Gets the resource layout element index.
+        /// </summary>
+        public uint ElementIndex { get; }
+
+        /// <summary>
+        /// Gets the resource kind.
+        /// </summary>
+        public ResourceKind Kind { get; }
+
+        /// <summary>
+        /// Gets the D3D12 descriptor range type.
+        /// </summary>
+        public DescriptorRangeType RangeType { get; }
+
+        /// <summary>
+        /// Gets the shader register assigned to the resource.
+        /// </summary>
+        public uint ShaderRegister { get; }
+
+        /// <summary>
+        /// Gets the register space assigned to the resource.
+        /// </summary>
+        public uint RegisterSpace { get; }
+
+        /// <summary>
+        /// Gets the descriptor offset inside the table.
+        /// </summary>
+        public uint TableOffset { get; }
     }
 }

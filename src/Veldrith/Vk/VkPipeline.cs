@@ -360,7 +360,7 @@ internal unsafe class VkPipeline : Pipeline {
 
         pipelineCi.renderPass = this._renderPass;
 
-        VkResult result = vkCreateGraphicsPipelines(this.gd.Device, VkPipelineCache.Null, 1, ref pipelineCi, null, out this._devicePipeline);
+        VkResult result = vkCreateGraphicsPipelines(this.gd.Device, this.gd.PipelineCache, 1, ref pipelineCi, null, out this._devicePipeline);
         CheckResult(result);
 
         this.ResourceSetCount = (uint)description.ResourceLayouts.Length;
@@ -446,7 +446,7 @@ internal unsafe class VkPipeline : Pipeline {
         stageCi.pSpecializationInfo = &specializationInfo;
         pipelineCi.stage = stageCi;
 
-        VkResult result = vkCreateComputePipelines(this.gd.Device, VkPipelineCache.Null, 1, ref pipelineCi, null, out this._devicePipeline);
+        VkResult result = vkCreateComputePipelines(this.gd.Device, this.gd.PipelineCache, 1, ref pipelineCi, null, out this._devicePipeline);
         CheckResult(result);
 
         this.ResourceSetCount = (uint)description.ResourceLayouts.Length;

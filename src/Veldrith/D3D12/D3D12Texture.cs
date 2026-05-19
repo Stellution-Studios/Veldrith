@@ -17,6 +17,11 @@ internal sealed class D3D12Texture : Texture {
     private readonly byte[] _data;
 
     /// <summary>
+    /// Reuses a single barrier array for immediate texture upload transitions.
+    /// </summary>
+    private readonly ResourceBarrier[] _singleBarrier = new ResourceBarrier[1];
+
+    /// <summary>
     /// Stores the owns native texture state used by this instance.
     /// </summary>
     private readonly bool _ownsNativeTexture;
@@ -84,7 +89,7 @@ internal sealed class D3D12Texture : Texture {
         this.Type = description.Type;
         this.SampleCount = description.SampleCount;
         this.EffectiveArrayLayers = GetEffectiveArrayLayers(this.Usage, this.ArrayLayers);
-        this._data = new byte[ComputeTotalSize(ref description)];
+        this._data = RequiresCpuStorage(description.Usage) ? new byte[ComputeTotalSize(ref description)] : null;
         this._subresourceStates = new ResourceStates[this.MipLevels * this.EffectiveArrayLayers];
 
         if (nativeHandle == null) {
@@ -199,6 +204,7 @@ internal sealed class D3D12Texture : Texture {
     /// <param name="mipLevel">The mip level index.</param>
     /// <param name="arrayLayer">The array layer index.</param>
     internal void Update(IntPtr source, uint sizeInBytes, uint x, uint y, uint z, uint width, uint height, uint depth, uint mipLevel, uint arrayLayer) {
+        byte[] data = this.RequireCpuStorage();
         uint subresource = this.CalculateSubresource(mipLevel, arrayLayer);
         Util.GetMipDimensions(this, mipLevel, out uint mipWidth, out uint mipHeight, out uint mipDepth);
         if (x + width > mipWidth || y + height > mipHeight || z + depth > mipDepth) {
@@ -211,14 +217,14 @@ internal sealed class D3D12Texture : Texture {
         }
 
         this.GetSubresourceLayout(subresource, out uint dstOffset, out uint dstSize, out uint dstRowPitch, out uint dstDepthPitch);
-        if (dstOffset + dstSize > (uint)this._data.Length) {
+        if (dstOffset + dstSize > (uint)data.Length) {
             throw new VeldridException("Texture update destination region exceeds texture storage.");
         }
 
         uint srcRowPitch = FormatHelpers.GetRowPitch(width, this.Format);
         uint srcDepthPitch = FormatHelpers.GetDepthPitch(srcRowPitch, height, this.Format);
         unsafe {
-            fixed (byte* dstBase = this._data) {
+            fixed (byte* dstBase = data) {
                 Util.CopyTextureRegion(source.ToPointer(), 0, 0, 0, srcRowPitch, srcDepthPitch, dstBase + dstOffset, x, y, z, dstRowPitch, dstDepthPitch, width, height, depth, this.Format);
             }
         }
@@ -238,14 +244,17 @@ internal sealed class D3D12Texture : Texture {
     /// <param name="mipLevel">The mip level index.</param>
     /// <param name="arrayLayer">The array layer index.</param>
     internal void UpdateNativeSubresource(IntPtr source, uint sizeInBytes, uint x, uint y, uint z, uint width, uint height, uint depth, uint mipLevel, uint arrayLayer) {
-        this.Update(source, sizeInBytes, x, y, z, width, height, depth, mipLevel, arrayLayer);
+        if (this.IsStagingTexture()) {
+            this.Update(source, sizeInBytes, x, y, z, width, height, depth, mipLevel, arrayLayer);
+            if (this.NativeTexture != null) {
+                uint subresource = this.CalculateSubresource(mipLevel, arrayLayer);
+                this.SyncSubresourceToNative(subresource);
+            }
 
-        if (this.NativeTexture == null) {
             return;
         }
 
-        uint subresource = this.CalculateSubresource(mipLevel, arrayLayer);
-        this.SyncSubresourceToNative(subresource);
+        this.UploadRegionToNative(source, sizeInBytes, x, y, z, width, height, depth, mipLevel, arrayLayer);
     }
 
     /// <summary>
@@ -255,6 +264,7 @@ internal sealed class D3D12Texture : Texture {
     /// <param name="subresource">The subresource value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     internal MappedResource Map(MapMode mode, uint subresource) {
+        byte[] data = this.RequireCpuStorage();
         if (subresource >= this.SubresourceCount) {
             throw new VeldridException("Subresource index is out of bounds.");
         }
@@ -264,7 +274,7 @@ internal sealed class D3D12Texture : Texture {
         }
 
         if (!this._mapped) {
-            this._pinnedData = GCHandle.Alloc(this._data, GCHandleType.Pinned);
+            this._pinnedData = GCHandle.Alloc(data, GCHandleType.Pinned);
             this._mapped = true;
         }
 
@@ -313,6 +323,8 @@ internal sealed class D3D12Texture : Texture {
     /// <param name="depth">The depth value.</param>
     /// <param name="layerCount">The layer count value used by this operation.</param>
     internal void CopyRegionTo(D3D12Texture destination, uint srcX, uint srcY, uint srcZ, uint srcMipLevel, uint srcBaseArrayLayer, uint dstX, uint dstY, uint dstZ, uint dstMipLevel, uint dstBaseArrayLayer, uint width, uint height, uint depth, uint layerCount) {
+        byte[] srcData = this.RequireCpuStorage();
+        byte[] dstData = destination.RequireCpuStorage();
         if (this.Format != destination.Format) {
             throw new VeldridException("Source and destination texture formats must match.");
         }
@@ -324,8 +336,8 @@ internal sealed class D3D12Texture : Texture {
             destination.GetSubresourceLayout(dstSubresource, out uint dstBaseOffset, out _, out uint dstRowPitch, out uint dstDepthPitch);
 
             unsafe {
-                fixed (byte* srcBase = this._data) {
-                    fixed (byte* dstBase = destination._data) {
+                fixed (byte* srcBase = srcData) {
+                    fixed (byte* dstBase = dstData) {
                         byte* srcSubresourcePtr = srcBase + srcBaseOffset;
                         byte* dstSubresourcePtr = dstBase + dstBaseOffset;
                         Util.CopyTextureRegion(srcSubresourcePtr, srcX, srcY, srcZ, srcRowPitch, srcDepthPitch, dstSubresourcePtr, dstX, dstY, dstZ, dstRowPitch, dstDepthPitch, width, height, depth, this.Format);
@@ -340,6 +352,11 @@ internal sealed class D3D12Texture : Texture {
     /// </summary>
     /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     internal bool GenerateMipmapsCpu() {
+        byte[] data = this._data;
+        if (data == null) {
+            return false;
+        }
+
         if (this.MipLevels <= 1 || FormatHelpers.IsCompressedFormat(this.Format) || (this.Usage & TextureUsage.DepthStencil) == TextureUsage.DepthStencil) {
             return false;
         }
@@ -381,27 +398,27 @@ internal sealed class D3D12Texture : Texture {
                                 uint sum = 0;
                                 uint sampleCount = 0;
 
-                                sum += this.GetSourceByte(srcBaseOffset, srcRowPitch, srcDepthPitch, srcX0, srcY0, srcZ0, bytesPerPixel, component);
+                                sum += GetSourceByte(data, srcBaseOffset, srcRowPitch, srcDepthPitch, srcX0, srcY0, srcZ0, bytesPerPixel, component);
                                 sampleCount++;
-                                sum += this.GetSourceByte(srcBaseOffset, srcRowPitch, srcDepthPitch, srcX1, srcY0, srcZ0, bytesPerPixel, component);
+                                sum += GetSourceByte(data, srcBaseOffset, srcRowPitch, srcDepthPitch, srcX1, srcY0, srcZ0, bytesPerPixel, component);
                                 sampleCount++;
-                                sum += this.GetSourceByte(srcBaseOffset, srcRowPitch, srcDepthPitch, srcX0, srcY1, srcZ0, bytesPerPixel, component);
+                                sum += GetSourceByte(data, srcBaseOffset, srcRowPitch, srcDepthPitch, srcX0, srcY1, srcZ0, bytesPerPixel, component);
                                 sampleCount++;
-                                sum += this.GetSourceByte(srcBaseOffset, srcRowPitch, srcDepthPitch, srcX1, srcY1, srcZ0, bytesPerPixel, component);
+                                sum += GetSourceByte(data, srcBaseOffset, srcRowPitch, srcDepthPitch, srcX1, srcY1, srcZ0, bytesPerPixel, component);
                                 sampleCount++;
 
                                 if (srcDepth > 1) {
-                                    sum += this.GetSourceByte(srcBaseOffset, srcRowPitch, srcDepthPitch, srcX0, srcY0, srcZ1, bytesPerPixel, component);
+                                    sum += GetSourceByte(data, srcBaseOffset, srcRowPitch, srcDepthPitch, srcX0, srcY0, srcZ1, bytesPerPixel, component);
                                     sampleCount++;
-                                    sum += this.GetSourceByte(srcBaseOffset, srcRowPitch, srcDepthPitch, srcX1, srcY0, srcZ1, bytesPerPixel, component);
+                                    sum += GetSourceByte(data, srcBaseOffset, srcRowPitch, srcDepthPitch, srcX1, srcY0, srcZ1, bytesPerPixel, component);
                                     sampleCount++;
-                                    sum += this.GetSourceByte(srcBaseOffset, srcRowPitch, srcDepthPitch, srcX0, srcY1, srcZ1, bytesPerPixel, component);
+                                    sum += GetSourceByte(data, srcBaseOffset, srcRowPitch, srcDepthPitch, srcX0, srcY1, srcZ1, bytesPerPixel, component);
                                     sampleCount++;
-                                    sum += this.GetSourceByte(srcBaseOffset, srcRowPitch, srcDepthPitch, srcX1, srcY1, srcZ1, bytesPerPixel, component);
+                                    sum += GetSourceByte(data, srcBaseOffset, srcRowPitch, srcDepthPitch, srcX1, srcY1, srcZ1, bytesPerPixel, component);
                                     sampleCount++;
                                 }
 
-                                this._data[dstPixelOffset + component] = (byte)(sum / sampleCount);
+                                data[dstPixelOffset + component] = (byte)(sum / sampleCount);
                             }
                         }
                     }
@@ -416,11 +433,12 @@ internal sealed class D3D12Texture : Texture {
     /// Executes the upload generated mipmaps logic for this backend.
     /// </summary>
     internal unsafe void UploadGeneratedMipmaps() {
-        if (this.NativeTexture == null || this.MipLevels <= 1) {
+        byte[] data = this._data;
+        if (data == null || this.NativeTexture == null || this.MipLevels <= 1) {
             return;
         }
 
-        fixed (byte* dataPtr = this._data) {
+        fixed (byte* dataPtr = data) {
             for (uint layer = 0; layer < this.EffectiveArrayLayers; layer++) {
                 for (uint mipLevel = 1; mipLevel < this.MipLevels; mipLevel++) {
                     uint subresource = this.CalculateSubresource(mipLevel, layer);
@@ -444,13 +462,13 @@ internal sealed class D3D12Texture : Texture {
     /// <param name="bytesPerPixel">The bytes per pixel value used by this operation.</param>
     /// <param name="component">The component value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    private uint GetSourceByte(uint srcBaseOffset, uint srcRowPitch, uint srcDepthPitch, uint srcX, uint srcY, uint srcZ, uint bytesPerPixel, uint component) {
+    private static uint GetSourceByte(byte[] data, uint srcBaseOffset, uint srcRowPitch, uint srcDepthPitch, uint srcX, uint srcY, uint srcZ, uint bytesPerPixel, uint component) {
         int srcPixelOffset = (int)(srcBaseOffset
             + srcZ * srcDepthPitch
             + srcY * srcRowPitch
             + srcX * bytesPerPixel
             + component);
-        return this._data[srcPixelOffset];
+        return data[srcPixelOffset];
     }
 
     /// <summary>
@@ -682,6 +700,16 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
+    /// Aligns a value upward to the specified alignment.
+    /// </summary>
+    /// <param name="value">The value to align.</param>
+    /// <param name="alignment">The alignment boundary.</param>
+    /// <returns>The aligned value.</returns>
+    private static uint AlignUp(uint value, uint alignment) {
+        return (value + alignment - 1) / alignment * alignment;
+    }
+
+    /// <summary>
     /// Gets the effective array layers value.
     /// </summary>
     /// <param name="usage">The usage value used by this operation.</param>
@@ -704,17 +732,124 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
+    /// Determines whether a texture needs CPU-side storage for mapping and staging behavior.
+    /// </summary>
+    /// <param name="usage">The texture usage flags.</param>
+    /// <returns><see langword="true" /> when CPU storage is required.</returns>
+    private static bool RequiresCpuStorage(TextureUsage usage) {
+        return (usage & TextureUsage.Staging) == TextureUsage.Staging;
+    }
+
+    /// <summary>
+    /// Gets CPU-side texture storage or throws when the texture is GPU-only.
+    /// </summary>
+    /// <returns>The CPU-side storage buffer.</returns>
+    private byte[] RequireCpuStorage() {
+        if (this._data == null) {
+            throw new VeldridException("This D3D12 texture does not have CPU-side storage. Use a staging texture for CPU mapping or CPU copies.");
+        }
+
+        return this._data;
+    }
+
+    /// <summary>
+    /// Uploads a packed source region directly into the native D3D12 texture without keeping a CPU-side mirror.
+    /// </summary>
+    /// <param name="source">The packed source data.</param>
+    /// <param name="sizeInBytes">The size of the packed source data in bytes.</param>
+    /// <param name="x">The destination X coordinate.</param>
+    /// <param name="y">The destination Y coordinate.</param>
+    /// <param name="z">The destination Z coordinate.</param>
+    /// <param name="width">The region width.</param>
+    /// <param name="height">The region height.</param>
+    /// <param name="depth">The region depth.</param>
+    /// <param name="mipLevel">The target mip level.</param>
+    /// <param name="arrayLayer">The target array layer.</param>
+    private void UploadRegionToNative(IntPtr source, uint sizeInBytes, uint x, uint y, uint z, uint width, uint height, uint depth, uint mipLevel, uint arrayLayer) {
+        if (this.NativeTexture == null) {
+            return;
+        }
+
+        Util.GetMipDimensions(this, mipLevel, out uint mipWidth, out uint mipHeight, out uint mipDepth);
+        if (x + width > mipWidth || y + height > mipHeight || z + depth > mipDepth) {
+            throw new VeldridException("Texture update region exceeds texture bounds.");
+        }
+
+        uint sourceRowPitch = FormatHelpers.GetRowPitch(width, this.Format);
+        uint sourceRowCount = FormatHelpers.GetNumRows(height, this.Format);
+        uint sourceDepthPitch = sourceRowPitch * sourceRowCount;
+        ulong requiredBytes = (ulong)sourceDepthPitch * depth;
+        if (sizeInBytes < requiredBytes) {
+            throw new VeldridException("Texture update source size is smaller than required for the destination region.");
+        }
+
+        uint uploadRowPitch = AlignUp(sourceRowPitch, Vortice.Direct3D12.D3D12.TextureDataPitchAlignment);
+        ulong uploadDepthPitch = (ulong)uploadRowPitch * sourceRowCount;
+        ulong totalBytes = uploadDepthPitch * depth;
+        ID3D12Resource uploadBuffer = this.gd.RentUploadBuffer(totalBytes);
+        bool uploadEnqueuedForDeferredDisposal = false;
+
+        try {
+            unsafe {
+                void* mappedUpload = null;
+                uploadBuffer.Map(0, &mappedUpload).CheckError();
+                try {
+                    byte* srcBase = (byte*)source.ToPointer();
+                    byte* dstBase = (byte*)mappedUpload;
+                    for (uint slice = 0; slice < depth; slice++) {
+                        for (uint row = 0; row < sourceRowCount; row++) {
+                            byte* srcRow = srcBase + slice * sourceDepthPitch + row * sourceRowPitch;
+                            byte* dstRow = dstBase + slice * uploadDepthPitch + row * uploadRowPitch;
+                            Buffer.MemoryCopy(srcRow, dstRow, uploadRowPitch, sourceRowPitch);
+                        }
+                    }
+                }
+                finally {
+                    uploadBuffer.Unmap(0);
+                }
+            }
+
+            bool depthUsage = (this.Usage & TextureUsage.DepthStencil) != 0;
+            PlacedSubresourceFootPrint footprint = new() {
+                Offset = 0,
+                Footprint = new SubresourceFootPrint(D3D12Formats.ToDxgiFormat(this.Format, depthUsage), width, height, depth, uploadRowPitch)
+            };
+            uint subresource = this.CalculateSubresource(mipLevel, arrayLayer);
+            ulong signalValue = this.ExecuteTextureBufferCopy(subresource, ResourceStates.CopyDest, previousState => {
+                TextureCopyLocation destination = new(this.NativeTexture, subresource);
+                TextureCopyLocation sourceLocation = new(uploadBuffer, footprint);
+                return (destination, sourceLocation, sourceBox: null, previousState);
+            }, true, x, y, z);
+            if (signalValue == 0) {
+                this.gd.EnqueueBatchedImmediateUploadBuffer(uploadBuffer);
+            }
+            else {
+                this.gd.EnqueueImmediateUploadBuffer(uploadBuffer, signalValue);
+            }
+
+            uploadEnqueuedForDeferredDisposal = true;
+        }
+        finally {
+            if (!uploadEnqueuedForDeferredDisposal) {
+                this.gd.ReturnUploadBuffer(uploadBuffer);
+            }
+        }
+    }
+
+    /// <summary>
     /// Executes the sync subresource to native logic for this backend.
     /// </summary>
     /// <param name="subresource">The subresource value used by this operation.</param>
     private void SyncSubresourceToNative(uint subresource) {
+        byte[] data = this.RequireCpuStorage();
         ResourceDescription textureDescription = this.NativeTexture.Description;
         PlacedSubresourceFootPrint[] layouts = new PlacedSubresourceFootPrint[1];
         uint[] rowCounts = new uint[1];
         ulong[] rowSizesInBytes = new ulong[1];
         this.gd.Device.GetCopyableFootprints(textureDescription, subresource, 1, 0, layouts, rowCounts, rowSizesInBytes, out ulong totalBytes);
 
-        ID3D12Resource uploadBuffer = this.gd.Device.CreateCommittedResource(HeapType.Upload, HeapFlags.None, ResourceDescription.Buffer(totalBytes), ResourceStates.GenericRead);
+        ID3D12Resource uploadBuffer = this.gd.RentUploadBuffer(totalBytes);
+        bool uploadEnqueuedForDeferredDisposal = false;
 
         try {
             this.GetSubresourceLayout(subresource, out uint srcOffset, out _, out uint srcRowPitch, out uint srcDepthPitch);
@@ -725,7 +860,7 @@ internal sealed class D3D12Texture : Texture {
                 void* mappedUpload = null;
                 uploadBuffer.Map(0, &mappedUpload).CheckError();
                 try {
-                    fixed (byte* srcBase = this._data) {
+                    fixed (byte* srcBase = data) {
                         byte* srcSubresource = srcBase + srcOffset;
                         byte* dstUpload = (byte*)mappedUpload + layouts[0].Offset;
                         uint dstRowPitch = layouts[0].Footprint.RowPitch;
@@ -738,14 +873,24 @@ internal sealed class D3D12Texture : Texture {
                 }
             }
 
-            this.ExecuteTextureBufferCopy(subresource, ResourceStates.CopyDest, previousState => {
+            ulong signalValue = this.ExecuteTextureBufferCopy(subresource, ResourceStates.CopyDest, previousState => {
                 TextureCopyLocation destination = new(this.NativeTexture, subresource);
                 TextureCopyLocation sourceLocation = new(uploadBuffer, layouts[0]);
                 return (destination, sourceLocation, sourceBox: null, previousState);
             }, true);
+            if (signalValue == 0) {
+                this.gd.EnqueueBatchedImmediateUploadBuffer(uploadBuffer);
+            }
+            else {
+                this.gd.EnqueueImmediateUploadBuffer(uploadBuffer, signalValue);
+            }
+
+            uploadEnqueuedForDeferredDisposal = true;
         }
         finally {
-            uploadBuffer.Dispose();
+            if (!uploadEnqueuedForDeferredDisposal) {
+                this.gd.ReturnUploadBuffer(uploadBuffer);
+            }
         }
     }
 
@@ -754,6 +899,7 @@ internal sealed class D3D12Texture : Texture {
     /// </summary>
     /// <param name="subresource">The subresource value used by this operation.</param>
     private void SyncSubresourceFromNative(uint subresource) {
+        byte[] data = this.RequireCpuStorage();
         ResourceDescription textureDescription = this.NativeTexture.Description;
         PlacedSubresourceFootPrint[] layouts = new PlacedSubresourceFootPrint[1];
         uint[] rowCounts = new uint[1];
@@ -767,7 +913,7 @@ internal sealed class D3D12Texture : Texture {
             Util.GetMipLevelAndArrayLayer(this, subresource, out uint mipLevel, out _);
             Util.GetMipDimensions(this, mipLevel, out uint mipWidth, out uint mipHeight, out uint mipDepth);
 
-            this.ExecuteTextureBufferCopy(subresource, ResourceStates.CopySource, previousState => {
+            _ = this.ExecuteTextureBufferCopy(subresource, ResourceStates.CopySource, previousState => {
                 TextureCopyLocation destination = new(readbackBuffer, layouts[0]);
                 TextureCopyLocation sourceLocation = new(this.NativeTexture, subresource);
                 Box sourceBox = new(0, 0, 0, (int)mipWidth, (int)mipHeight, (int)mipDepth);
@@ -778,7 +924,7 @@ internal sealed class D3D12Texture : Texture {
                 void* mappedReadback = null;
                 readbackBuffer.Map(0, &mappedReadback).CheckError();
                 try {
-                    fixed (byte* dstBase = this._data) {
+                    fixed (byte* dstBase = data) {
                         byte* srcReadback = (byte*)mappedReadback + layouts[0].Offset;
                         byte* dstSubresource = dstBase + dstOffset;
                         uint srcRowPitch = layouts[0].Footprint.RowPitch;
@@ -803,14 +949,14 @@ internal sealed class D3D12Texture : Texture {
     /// <param name="copyState">The copy state value used by this operation.</param>
     /// <param name="buildCopy">The build copy value used by this operation.</param>
     /// <param name="copyToTexture">The copy to texture value used by this operation.</param>
-    private void ExecuteTextureBufferCopy(uint subresource, ResourceStates copyState, Func<ResourceStates, (TextureCopyLocation destination, TextureCopyLocation source, Box? sourceBox, ResourceStates previousState)> buildCopy, bool copyToTexture) {
-        ID3D12CommandAllocator allocator = this.gd.Device.CreateCommandAllocator(CommandListType.Direct);
-        ID3D12GraphicsCommandList commandList = this.gd.Device.CreateCommandList<ID3D12GraphicsCommandList>(0, CommandListType.Direct, allocator);
-        try {
+    /// <returns>The fence value signaled for this copy submission.</returns>
+    private ulong ExecuteTextureBufferCopy(uint subresource, ResourceStates copyState, Func<ResourceStates, (TextureCopyLocation destination, TextureCopyLocation source, Box? sourceBox, ResourceStates previousState)> buildCopy, bool copyToTexture, uint destinationX = 0, uint destinationY = 0, uint destinationZ = 0) {
+        void RecordCopy(ID3D12GraphicsCommandList commandList) {
             ResourceStates previousState = this.GetSubresourceState(subresource);
             if (previousState != copyState) {
                 ResourceBarrier toCopy = ResourceBarrier.BarrierTransition(this.NativeTexture, previousState, copyState, subresource);
-                commandList.ResourceBarrier(new[] { toCopy });
+                this._singleBarrier[0] = toCopy;
+                commandList.ResourceBarrier(this._singleBarrier);
                 this.SetSubresourceState(subresource, copyState);
             }
 
@@ -818,10 +964,10 @@ internal sealed class D3D12Texture : Texture {
                 copyInfo = buildCopy(previousState);
             if (copyToTexture) {
                 if (copyInfo.sourceBox.HasValue) {
-                    commandList.CopyTextureRegion(copyInfo.destination, 0, 0, 0, copyInfo.source, copyInfo.sourceBox.Value);
+                    commandList.CopyTextureRegion(copyInfo.destination, destinationX, destinationY, destinationZ, copyInfo.source, copyInfo.sourceBox.Value);
                 }
                 else {
-                    commandList.CopyTextureRegion(copyInfo.destination, 0, 0, 0, copyInfo.source);
+                    commandList.CopyTextureRegion(copyInfo.destination, destinationX, destinationY, destinationZ, copyInfo.source);
                 }
             }
             else {
@@ -835,18 +981,18 @@ internal sealed class D3D12Texture : Texture {
 
             if (copyInfo.previousState != copyState) {
                 ResourceBarrier fromCopy = ResourceBarrier.BarrierTransition(this.NativeTexture, copyState, copyInfo.previousState, subresource);
-                commandList.ResourceBarrier(new[] { fromCopy });
+                this._singleBarrier[0] = fromCopy;
+                commandList.ResourceBarrier(this._singleBarrier);
                 this.SetSubresourceState(subresource, copyInfo.previousState);
             }
+        }
 
-            commandList.Close();
-            this.gd.CommandQueue.ExecuteCommandList(commandList);
-            this.gd.WaitForIdle();
+        if (copyToTexture) {
+            this.gd.RecordBatchedImmediateCommand(RecordCopy);
+            return 0;
         }
-        finally {
-            commandList.Dispose();
-            allocator.Dispose();
-        }
+
+        return this.gd.ExecuteImmediateCommand(RecordCopy, waitForCompletion: true);
     }
 
     /// <summary>

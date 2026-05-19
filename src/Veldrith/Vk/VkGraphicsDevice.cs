@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -46,9 +47,20 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// <summary>
     /// Stores the s is supported state used by this instance.
     /// </summary>
-
-
     private static readonly Lazy<bool> _s_is_supported = new(checkIsSupported, true);
+
+    /// <summary>
+    /// Enables the persistent Vulkan pipeline cache unless explicitly disabled.
+    /// </summary>
+    private static readonly bool _persistentPipelineCacheEnabled = !string.Equals(Environment.GetEnvironmentVariable("VELDRID_VK_PIPELINE_CACHE"), "0", StringComparison.Ordinal);
+
+    /// <summary>
+    /// Stores the persistent Vulkan pipeline cache directory.
+    /// </summary>
+    private static readonly string _persistentPipelineCacheDirectory = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "Veldrith",
+        "VkPipelineCache");
 
     /// <summary>
     /// Stores the available staging buffers collection used by this instance.
@@ -191,6 +203,11 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     private VkPhysicalDeviceProperties _physicalDeviceProperties;
 
     /// <summary>
+    /// Stores the Vulkan pipeline cache used by pipeline creation.
+    /// </summary>
+    private VkPipelineCache _pipelineCache;
+
+    /// <summary>
     /// Stores the set object name delegate state used by this instance.
     /// </summary>
     private VkDebugMarkerSetObjectNameExtT _setObjectNameDelegate;
@@ -244,6 +261,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
 
         this.createPhysicalDevice();
         this.createLogicalDevice(surface, options.PreferStandardClipSpaceYDirection, vkOptions);
+        this.createPipelineCache();
 
         this.MemoryManager = new VkDeviceMemoryManager(this.device, this._physicalDeviceProperties.limits.bufferImageGranularity, this.GetBufferMemoryRequirements2, this.GetImageMemoryRequirements2);
 
@@ -344,6 +362,11 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// Gets the maximum push-constant payload size, in bytes, supported by the physical device.
     /// </summary>
     internal uint MaxPushConstantsSize => this._physicalDeviceProperties.limits.maxPushConstantsSize;
+
+    /// <summary>
+    /// Gets the Vulkan pipeline cache used by pipeline creation.
+    /// </summary>
+    internal VkPipelineCache PipelineCache => this._pipelineCache;
 
     /// <summary>
     /// Stores the graphics queue state used by this instance.
@@ -819,8 +842,90 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
 
         VkResult result = vkDeviceWaitIdle(this.device);
         CheckResult(result);
+        this.storeAndDestroyPipelineCache();
         vkDestroyDevice(this.device, null);
         vkDestroyInstance(this.instance, null);
+    }
+
+    /// <summary>
+    /// Creates the Vulkan pipeline cache used by pipeline creation.
+    /// </summary>
+    private void createPipelineCache() {
+        if (!_persistentPipelineCacheEnabled) {
+            return;
+        }
+
+        byte[] initialData = null;
+        try {
+            string cachePath = this.getPersistentPipelineCachePath();
+            if (File.Exists(cachePath)) {
+                initialData = File.ReadAllBytes(cachePath);
+            }
+        }
+        catch {
+            initialData = null;
+        }
+
+        VkPipelineCacheCreateInfo cacheCi = VkPipelineCacheCreateInfo.New();
+        fixed (byte* initialDataPtr = initialData) {
+            if (initialDataPtr != null && initialData.Length > 0) {
+                cacheCi.initialDataSize = (UIntPtr)initialData.Length;
+                cacheCi.pInitialData = initialDataPtr;
+            }
+
+            VkResult result = vkCreatePipelineCache(this.device, ref cacheCi, null, out this._pipelineCache);
+            if (result == VkResult.Success) {
+                return;
+            }
+        }
+
+        cacheCi = VkPipelineCacheCreateInfo.New();
+        VkResult emptyResult = vkCreatePipelineCache(this.device, ref cacheCi, null, out this._pipelineCache);
+        if (emptyResult != VkResult.Success) {
+            this._pipelineCache = VkPipelineCache.Null;
+        }
+    }
+
+    /// <summary>
+    /// Stores and destroys the Vulkan pipeline cache.
+    /// </summary>
+    private void storeAndDestroyPipelineCache() {
+        if (this._pipelineCache.Handle == 0) {
+            return;
+        }
+
+        if (_persistentPipelineCacheEnabled) {
+            try {
+                UIntPtr cacheSize = UIntPtr.Zero;
+                VkResult sizeResult = vkGetPipelineCacheData(this.device, this._pipelineCache, ref cacheSize, null);
+                if (sizeResult == VkResult.Success && cacheSize != UIntPtr.Zero) {
+                    byte[] cacheData = new byte[(int)cacheSize];
+                    fixed (byte* cacheDataPtr = cacheData) {
+                        VkResult dataResult = vkGetPipelineCacheData(this.device, this._pipelineCache, ref cacheSize, cacheDataPtr);
+                        if (dataResult == VkResult.Success) {
+                            Directory.CreateDirectory(_persistentPipelineCacheDirectory);
+                            File.WriteAllBytes(this.getPersistentPipelineCachePath(), cacheData);
+                        }
+                    }
+                }
+            }
+            catch {
+                // Pipeline cache failures must not prevent device disposal.
+            }
+        }
+
+        vkDestroyPipelineCache(this.device, this._pipelineCache, null);
+        this._pipelineCache = VkPipelineCache.Null;
+    }
+
+    /// <summary>
+    /// Gets the persistent Vulkan pipeline cache path for the current physical device and driver.
+    /// </summary>
+    /// <returns>The persistent pipeline cache path.</returns>
+    private string getPersistentPipelineCachePath() {
+        return Path.Combine(
+            _persistentPipelineCacheDirectory,
+            $"{this._physicalDeviceProperties.vendorID:X8}_{this._physicalDeviceProperties.deviceID:X8}_{this._physicalDeviceProperties.driverVersion:X8}.bin");
     }
 
     /// <summary>

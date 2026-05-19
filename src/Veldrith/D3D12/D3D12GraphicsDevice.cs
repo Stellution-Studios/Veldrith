@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -18,6 +19,21 @@ namespace Veldrith.D3D12;
 /// Provides the Direct3D 12 backend implementation for D3D12GraphicsDevice.
 /// </summary>
 internal sealed class D3D12GraphicsDevice : GraphicsDevice {
+
+    /// <summary>
+    /// Stores the largest upload buffer size that is retained for reuse.
+    /// </summary>
+    private const ulong MaxPooledUploadBufferSize = 16UL * 1024UL * 1024UL;
+
+    /// <summary>
+    /// Stores the total upload-buffer pool budget.
+    /// </summary>
+    private const ulong MaxPooledUploadBufferBytes = 128UL * 1024UL * 1024UL;
+
+    /// <summary>
+    /// Stores the number of submissions between D3D12 device performance reports.
+    /// </summary>
+    private const int PerfReportIntervalSubmissions = 240;
 
     /// <summary>
     /// Stores the d3d12 features state used by this instance.
@@ -42,6 +58,16 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
 
 
     private static readonly GraphicsDeviceFeatures _d3d12Features = new(true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, false);
+
+    /// <summary>
+    /// Tracks whether D3D12 performance logging is enabled for device-level upload and submit work.
+    /// </summary>
+    private static readonly bool _perfLogEnabled = string.Equals(Environment.GetEnvironmentVariable("VELDRID_D3D12_PERF"), "1", StringComparison.Ordinal);
+
+    /// <summary>
+    /// Gets whether D3D12 performance logging is enabled.
+    /// </summary>
+    internal static bool PerfLogEnabled => _perfLogEnabled;
 
     /// <summary>
     /// Stores the d3d12 info state used by this instance.
@@ -79,6 +105,16 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     private readonly object _rootSignatureCacheLock = new();
 
     /// <summary>
+    /// Caches native D3D12 pipeline states to avoid repeated PSO creation for identical descriptions.
+    /// </summary>
+    private readonly Dictionary<string, ID3D12PipelineState> _pipelineStateCache = new(StringComparer.Ordinal);
+
+    /// <summary>
+    /// Protects native pipeline state cache access.
+    /// </summary>
+    private readonly object _pipelineStateCacheLock = new();
+
+    /// <summary>
     /// Stores the submission fence state used by this instance.
     /// </summary>
     private readonly ID3D12Fence _submissionFence;
@@ -92,6 +128,294 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// Stores the immediate fence value state used by this instance.
     /// </summary>
     private ulong _immediateFenceValue = 1;
+
+    /// <summary>
+    /// Stores the fence used to track completion of immediate copy submissions.
+    /// </summary>
+    private readonly ID3D12Fence _immediateCopyFence;
+
+    /// <summary>
+    /// Stores the event used while waiting for immediate copy fence completion.
+    /// </summary>
+    private readonly AutoResetEvent _immediateCopyFenceEvent;
+
+    /// <summary>
+    /// Caches reusable immediate copy command contexts to avoid allocator and command list churn.
+    /// </summary>
+    private readonly List<ImmediateCopyContext> _immediateCopyContexts = new();
+
+    /// <summary>
+    /// Stores upload buffers recorded into the batched immediate copy command list.
+    /// </summary>
+    private readonly List<ID3D12Resource> _batchedImmediateUploadBuffers = new();
+
+    /// <summary>
+    /// Protects immediate copy command context pool access.
+    /// </summary>
+    private readonly object _immediateCopyContextsLock = new();
+
+    /// <summary>
+    /// Protects the batched immediate copy command list.
+    /// </summary>
+    private readonly object _batchedImmediateCopyLock = new();
+
+    /// <summary>
+    /// Stores deferred disposals tracked by submission fence values.
+    /// </summary>
+    private readonly Queue<DeferredDisposal> _submissionDeferredDisposals = new();
+
+    /// <summary>
+    /// Protects submission deferred disposal queue access.
+    /// </summary>
+    private readonly object _submissionDeferredDisposalsLock = new();
+
+    /// <summary>
+    /// Stores deferred disposals tracked by immediate copy fence values.
+    /// </summary>
+    private readonly Queue<DeferredDisposal> _immediateDeferredDisposals = new();
+
+    /// <summary>
+    /// Protects immediate deferred disposal queue access.
+    /// </summary>
+    private readonly object _immediateDeferredDisposalsLock = new();
+
+    /// <summary>
+    /// Stores reusable upload buffers after their GPU fence has completed.
+    /// </summary>
+    private readonly List<ID3D12Resource> _availableUploadBuffers = new();
+
+    /// <summary>
+    /// Protects reusable upload-buffer pool access.
+    /// </summary>
+    private readonly object _availableUploadBuffersLock = new();
+
+    /// <summary>
+    /// Tracks total bytes retained by the upload-buffer pool.
+    /// </summary>
+    private ulong _availableUploadBufferBytes;
+
+    /// <summary>
+    /// Stores accumulated CPU time spent flushing batched immediate upload work.
+    /// </summary>
+    private double _perfAccumImmediateFlushMs;
+
+    /// <summary>
+    /// Stores accumulated CPU time spent executing standalone immediate command lists.
+    /// </summary>
+    private double _perfAccumImmediateExecuteMs;
+
+    /// <summary>
+    /// Stores accumulated CPU time spent recording batched immediate upload commands.
+    /// </summary>
+    private double _perfAccumImmediateRecordMs;
+
+    /// <summary>
+    /// Stores accumulated CPU time spent waiting for immediate upload fences.
+    /// </summary>
+    private double _perfAccumImmediateWaitMs;
+
+    /// <summary>
+    /// Stores accumulated CPU time spent submitting command lists.
+    /// </summary>
+    private double _perfAccumSubmitMs;
+
+    /// <summary>
+    /// Stores accumulated CPU time spent creating D3D12 buffers.
+    /// </summary>
+    private double _perfAccumCreateBufferMs;
+
+    /// <summary>
+    /// Stores accumulated CPU time spent creating D3D12 pipelines.
+    /// </summary>
+    private double _perfAccumCreatePipelineMs;
+
+    /// <summary>
+    /// Stores accumulated CPU time spent creating D3D12 resource sets.
+    /// </summary>
+    private double _perfAccumCreateResourceSetMs;
+
+    /// <summary>
+    /// Stores accumulated CPU time spent creating D3D12 shaders.
+    /// </summary>
+    private double _perfAccumCreateShaderMs;
+
+    /// <summary>
+    /// Stores accumulated CPU time spent creating D3D12 textures.
+    /// </summary>
+    private double _perfAccumCreateTextureMs;
+
+    /// <summary>
+    /// Stores the number of batched immediate flushes recorded for the current performance window.
+    /// </summary>
+    private ulong _perfAccumImmediateFlushes;
+
+    /// <summary>
+    /// Stores the number of D3D12 buffers created in the current performance window.
+    /// </summary>
+    private ulong _perfAccumCreateBuffers;
+
+    /// <summary>
+    /// Stores the number of D3D12 pipelines created in the current performance window.
+    /// </summary>
+    private ulong _perfAccumCreatePipelines;
+
+    /// <summary>
+    /// Stores the number of D3D12 resource sets created in the current performance window.
+    /// </summary>
+    private ulong _perfAccumCreateResourceSets;
+
+    /// <summary>
+    /// Stores the number of D3D12 shaders created in the current performance window.
+    /// </summary>
+    private ulong _perfAccumCreateShaders;
+
+    /// <summary>
+    /// Stores the number of D3D12 textures created in the current performance window.
+    /// </summary>
+    private ulong _perfAccumCreateTextures;
+
+    /// <summary>
+    /// Stores the number of standalone immediate command lists recorded for the current performance window.
+    /// </summary>
+    private ulong _perfAccumImmediateExecutes;
+
+    /// <summary>
+    /// Stores the number of batched immediate record calls recorded for the current performance window.
+    /// </summary>
+    private ulong _perfAccumImmediateRecordCalls;
+
+    /// <summary>
+    /// Stores the number of upload buffers retained by batched immediate submissions in the current performance window.
+    /// </summary>
+    private ulong _perfAccumImmediateUploadBuffers;
+
+    /// <summary>
+    /// Stores the last elapsed millisecond value used for device-level performance reporting.
+    /// </summary>
+    private double _perfLastReportMs;
+
+    /// <summary>
+    /// Stores the largest immediate execute time observed in the current device performance window.
+    /// </summary>
+    private double _perfMaxImmediateExecuteMs;
+
+    /// <summary>
+    /// Stores the largest immediate flush time observed in the current device performance window.
+    /// </summary>
+    private double _perfMaxImmediateFlushMs;
+
+    /// <summary>
+    /// Stores the largest immediate record time observed in the current device performance window.
+    /// </summary>
+    private double _perfMaxImmediateRecordMs;
+
+    /// <summary>
+    /// Stores the largest immediate wait time observed in the current device performance window.
+    /// </summary>
+    private double _perfMaxImmediateWaitMs;
+
+    /// <summary>
+    /// Stores the largest submit time observed in the current device performance window.
+    /// </summary>
+    private double _perfMaxSubmitMs;
+
+    /// <summary>
+    /// Stores the largest buffer creation time observed in the current device performance window.
+    /// </summary>
+    private double _perfMaxCreateBufferMs;
+
+    /// <summary>
+    /// Stores the largest pipeline creation time observed in the current device performance window.
+    /// </summary>
+    private double _perfMaxCreatePipelineMs;
+
+    /// <summary>
+    /// Stores the largest resource set creation time observed in the current device performance window.
+    /// </summary>
+    private double _perfMaxCreateResourceSetMs;
+
+    /// <summary>
+    /// Stores the largest shader creation time observed in the current device performance window.
+    /// </summary>
+    private double _perfMaxCreateShaderMs;
+
+    /// <summary>
+    /// Stores the largest texture creation time observed in the current device performance window.
+    /// </summary>
+    private double _perfMaxCreateTextureMs;
+
+    /// <summary>
+    /// Stores the number of command-list submissions observed by device-level performance logging.
+    /// </summary>
+    private ulong _perfSubmissions;
+
+    /// <summary>
+    /// Measures wall-clock time for D3D12 device-level performance reports.
+    /// </summary>
+    private readonly Stopwatch _perfStopwatch = Stopwatch.StartNew();
+
+    /// <summary>
+    /// Stores the next fence value for immediate copy submissions.
+    /// </summary>
+    private ulong _nextImmediateCopyFenceValue = 1;
+
+    /// <summary>
+    /// Stores the currently open batched immediate copy command context.
+    /// </summary>
+    private ImmediateCopyContext _batchedImmediateCopyContext;
+
+    /// <summary>
+    /// Tracks whether the batched immediate copy command list contains work.
+    /// </summary>
+    private bool _batchedImmediateCopyHasWork;
+
+    /// <summary>
+    /// Converts high-resolution stopwatch ticks to milliseconds for D3D12 performance logging.
+    /// </summary>
+    /// <param name="ticks">The elapsed stopwatch ticks.</param>
+    /// <returns>The elapsed time in milliseconds.</returns>
+    private static double TicksToMilliseconds(long ticks) {
+        return ticks * 1000.0 / Stopwatch.Frequency;
+    }
+
+    /// <summary>
+    /// Records CPU time spent creating a backend resource.
+    /// </summary>
+    /// <param name="kind">The kind of resource that was created.</param>
+    /// <param name="elapsedMs">The elapsed creation time in milliseconds.</param>
+    internal void RecordResourceCreationPerf(D3D12ResourceCreationKind kind, double elapsedMs) {
+        if (!_perfLogEnabled) {
+            return;
+        }
+
+        switch (kind) {
+            case D3D12ResourceCreationKind.Buffer:
+                this._perfAccumCreateBufferMs += elapsedMs;
+                this._perfAccumCreateBuffers++;
+                this._perfMaxCreateBufferMs = Math.Max(this._perfMaxCreateBufferMs, elapsedMs);
+                break;
+            case D3D12ResourceCreationKind.Pipeline:
+                this._perfAccumCreatePipelineMs += elapsedMs;
+                this._perfAccumCreatePipelines++;
+                this._perfMaxCreatePipelineMs = Math.Max(this._perfMaxCreatePipelineMs, elapsedMs);
+                break;
+            case D3D12ResourceCreationKind.ResourceSet:
+                this._perfAccumCreateResourceSetMs += elapsedMs;
+                this._perfAccumCreateResourceSets++;
+                this._perfMaxCreateResourceSetMs = Math.Max(this._perfMaxCreateResourceSetMs, elapsedMs);
+                break;
+            case D3D12ResourceCreationKind.Shader:
+                this._perfAccumCreateShaderMs += elapsedMs;
+                this._perfAccumCreateShaders++;
+                this._perfMaxCreateShaderMs = Math.Max(this._perfMaxCreateShaderMs, elapsedMs);
+                break;
+            case D3D12ResourceCreationKind.Texture:
+                this._perfAccumCreateTextureMs += elapsedMs;
+                this._perfAccumCreateTextures++;
+                this._perfMaxCreateTextureMs = Math.Max(this._perfMaxCreateTextureMs, elapsedMs);
+                break;
+        }
+    }
 
     /// <summary>
     /// Stores the next submission fence value state used by this instance.
@@ -130,6 +454,8 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         this.CommandQueue = this._device.CreateCommandQueue(new CommandQueueDescription(CommandListType.Direct));
         this._submissionFence = this._device.CreateFence();
         this._submissionFenceEvent = new AutoResetEvent(false);
+        this._immediateCopyFence = this._device.CreateFence();
+        this._immediateCopyFenceEvent = new AutoResetEvent(false);
         this._resourceFactory = new D3D12ResourceFactory(this, this.Features);
 
         if (swapchainDescription != null) {
@@ -223,6 +549,59 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     internal IDXGIFactory4 DxgiFactory { get; }
 
     /// <summary>
+    /// Emits a periodic device-level performance report when D3D12 performance logging is enabled.
+    /// </summary>
+    /// <param name="submitMs">The CPU time spent in the current submit path.</param>
+    private void ReportDevicePerfIfNeeded(double submitMs) {
+        if (!_perfLogEnabled) {
+            return;
+        }
+
+        this._perfSubmissions++;
+        this._perfAccumSubmitMs += submitMs;
+        this._perfMaxSubmitMs = Math.Max(this._perfMaxSubmitMs, submitMs);
+        if (this._perfSubmissions % PerfReportIntervalSubmissions != 0) {
+            return;
+        }
+
+        double elapsedMs = this._perfStopwatch.Elapsed.TotalMilliseconds;
+        double reportWindowMs = elapsedMs - this._perfLastReportMs;
+        this._perfLastReportMs = elapsedMs;
+        double invSubmissions = 1.0 / PerfReportIntervalSubmissions;
+        Console.WriteLine($"[D3D12 PERF] device {PerfReportIntervalSubmissions} submits/{reportWindowMs:F0}ms avg: " + $"submitMs={this._perfAccumSubmitMs * invSubmissions:F3}, " + $"immRecordMs={this._perfAccumImmediateRecordMs * invSubmissions:F3} ({this._perfAccumImmediateRecordCalls * invSubmissions:F2}x), " + $"immFlushMs={this._perfAccumImmediateFlushMs * invSubmissions:F3} ({this._perfAccumImmediateFlushes * invSubmissions:F2}x), " + $"immExecMs={this._perfAccumImmediateExecuteMs * invSubmissions:F3} ({this._perfAccumImmediateExecutes * invSubmissions:F2}x), " + $"immWaitMs={this._perfAccumImmediateWaitMs * invSubmissions:F3}, " + $"createBuf={this._perfAccumCreateBuffers * invSubmissions:F2}/{this._perfMaxCreateBufferMs:F3}ms, " + $"createTex={this._perfAccumCreateTextures * invSubmissions:F2}/{this._perfMaxCreateTextureMs:F3}ms, " + $"createPipe={this._perfAccumCreatePipelines * invSubmissions:F2}/{this._perfMaxCreatePipelineMs:F3}ms, " + $"createSet={this._perfAccumCreateResourceSets * invSubmissions:F2}/{this._perfMaxCreateResourceSetMs:F3}ms, " + $"createShader={this._perfAccumCreateShaders * invSubmissions:F2}/{this._perfMaxCreateShaderMs:F3}ms, " + $"maxSubmitMs={this._perfMaxSubmitMs:F3}, maxImmRecordMs={this._perfMaxImmediateRecordMs:F3}, maxImmFlushMs={this._perfMaxImmediateFlushMs:F3}, " + $"maxImmExecMs={this._perfMaxImmediateExecuteMs:F3}, maxImmWaitMs={this._perfMaxImmediateWaitMs:F3}, " + $"immUploadBuf={this._perfAccumImmediateUploadBuffers * invSubmissions:F2}");
+
+        this._perfAccumImmediateFlushMs = 0;
+        this._perfAccumImmediateExecuteMs = 0;
+        this._perfAccumImmediateRecordMs = 0;
+        this._perfAccumImmediateWaitMs = 0;
+        this._perfAccumSubmitMs = 0;
+        this._perfAccumCreateBufferMs = 0;
+        this._perfAccumCreatePipelineMs = 0;
+        this._perfAccumCreateResourceSetMs = 0;
+        this._perfAccumCreateShaderMs = 0;
+        this._perfAccumCreateTextureMs = 0;
+        this._perfAccumImmediateFlushes = 0;
+        this._perfAccumCreateBuffers = 0;
+        this._perfAccumCreatePipelines = 0;
+        this._perfAccumCreateResourceSets = 0;
+        this._perfAccumCreateShaders = 0;
+        this._perfAccumCreateTextures = 0;
+        this._perfAccumImmediateExecutes = 0;
+        this._perfAccumImmediateRecordCalls = 0;
+        this._perfAccumImmediateUploadBuffers = 0;
+        this._perfMaxCreateBufferMs = 0;
+        this._perfMaxCreatePipelineMs = 0;
+        this._perfMaxCreateResourceSetMs = 0;
+        this._perfMaxCreateShaderMs = 0;
+        this._perfMaxCreateTextureMs = 0;
+        this._perfMaxImmediateExecuteMs = 0;
+        this._perfMaxImmediateFlushMs = 0;
+        this._perfMaxImmediateRecordMs = 0;
+        this._perfMaxImmediateWaitMs = 0;
+        this._perfMaxSubmitMs = 0;
+    }
+
+    /// <summary>
     /// Executes the is supported logic for this backend.
     /// </summary>
     /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
@@ -258,6 +637,267 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
+    /// Executes a short immediate command list using a reusable allocator and command list context.
+    /// </summary>
+    /// <param name="recordCommands">Records commands into the provided command list.</param>
+    /// <param name="waitForCompletion">When true, waits until the submitted work is completed on the GPU.</param>
+    /// <returns>The fence value signaled for this immediate submission.</returns>
+    internal ulong ExecuteImmediateCommand(Action<ID3D12GraphicsCommandList> recordCommands, bool waitForCompletion = false) {
+        long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
+        this.FlushBatchedImmediateCommands();
+
+        ImmediateCopyContext context = this.AcquireImmediateCopyContext();
+        bool removeContext = false;
+        ulong signalValue = 0;
+        try {
+            PrepareImmediateCopyContext(context);
+
+            recordCommands(context.CommandList);
+            context.CommandList.Close();
+            this.CommandQueue.ExecuteCommandList(context.CommandList);
+            signalValue = this._nextImmediateCopyFenceValue++;
+            this.CommandQueue.Signal(this._immediateCopyFence, signalValue).CheckError();
+            context.FenceValue = signalValue;
+
+            if (waitForCompletion) {
+                long waitStartTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
+                this.WaitForImmediateCopyFence(signalValue);
+                if (_perfLogEnabled) {
+                    double waitMs = TicksToMilliseconds(Stopwatch.GetTimestamp() - waitStartTicks);
+                    this._perfAccumImmediateWaitMs += waitMs;
+                    this._perfMaxImmediateWaitMs = Math.Max(this._perfMaxImmediateWaitMs, waitMs);
+                }
+            }
+
+            this.PumpImmediateDeferredDisposals();
+        }
+        catch {
+            removeContext = true;
+            throw;
+        }
+        finally {
+            if (removeContext) {
+                this.ReleaseImmediateCopyContext(context, remove: true);
+            }
+            else {
+                this.ReleaseImmediateCopyContext(context, remove: false);
+            }
+        }
+
+        if (_perfLogEnabled) {
+            double executeMs = TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
+            this._perfAccumImmediateExecuteMs += executeMs;
+            this._perfMaxImmediateExecuteMs = Math.Max(this._perfMaxImmediateExecuteMs, executeMs);
+            this._perfAccumImmediateExecutes++;
+        }
+
+        return signalValue;
+    }
+
+    /// <summary>
+    /// Records immediate upload work into a command list that is flushed before the next user submission.
+    /// </summary>
+    /// <param name="recordCommands">Records commands into the batched immediate command list.</param>
+    internal void RecordBatchedImmediateCommand(Action<ID3D12GraphicsCommandList> recordCommands) {
+        long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
+        lock (this._batchedImmediateCopyLock) {
+            if (this._batchedImmediateCopyContext == null) {
+                this._batchedImmediateCopyContext = this.AcquireImmediateCopyContext();
+                PrepareImmediateCopyContext(this._batchedImmediateCopyContext);
+            }
+
+            recordCommands(this._batchedImmediateCopyContext.CommandList);
+            this._batchedImmediateCopyHasWork = true;
+        }
+
+        if (_perfLogEnabled) {
+            double recordMs = TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
+            this._perfAccumImmediateRecordMs += recordMs;
+            this._perfMaxImmediateRecordMs = Math.Max(this._perfMaxImmediateRecordMs, recordMs);
+            this._perfAccumImmediateRecordCalls++;
+        }
+    }
+
+    /// <summary>
+    /// Keeps an upload buffer alive until the batched immediate upload work has completed.
+    /// </summary>
+    /// <param name="buffer">The upload buffer to retain.</param>
+    internal void EnqueueBatchedImmediateUploadBuffer(ID3D12Resource buffer) {
+        if (buffer == null) {
+            return;
+        }
+
+        lock (this._batchedImmediateCopyLock) {
+            this._batchedImmediateUploadBuffers.Add(buffer);
+        }
+    }
+
+    /// <summary>
+    /// Submits any batched immediate upload work recorded since the last flush.
+    /// </summary>
+    /// <param name="waitForCompletion">When true, waits until the submitted upload work has completed.</param>
+    /// <returns>The signaled fence value, or zero when there was no batched work.</returns>
+    internal ulong FlushBatchedImmediateCommands(bool waitForCompletion = false) {
+        long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
+        ImmediateCopyContext context;
+        ulong signalValue;
+        int uploadBufferCount;
+
+        lock (this._batchedImmediateCopyLock) {
+            if (!this._batchedImmediateCopyHasWork || this._batchedImmediateCopyContext == null) {
+                return 0;
+            }
+
+            context = this._batchedImmediateCopyContext;
+            this._batchedImmediateCopyContext = null;
+            this._batchedImmediateCopyHasWork = false;
+
+            context.CommandList.Close();
+            this.CommandQueue.ExecuteCommandList(context.CommandList);
+            signalValue = this._nextImmediateCopyFenceValue++;
+            this.CommandQueue.Signal(this._immediateCopyFence, signalValue).CheckError();
+            context.FenceValue = signalValue;
+
+            uploadBufferCount = this._batchedImmediateUploadBuffers.Count;
+            for (int i = 0; i < this._batchedImmediateUploadBuffers.Count; i++) {
+                this.EnqueueImmediateUploadBuffer(this._batchedImmediateUploadBuffers[i], signalValue);
+            }
+
+            this._batchedImmediateUploadBuffers.Clear();
+        }
+
+        if (waitForCompletion) {
+            long waitStartTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
+            this.WaitForImmediateCopyFence(signalValue);
+            if (_perfLogEnabled) {
+                double waitMs = TicksToMilliseconds(Stopwatch.GetTimestamp() - waitStartTicks);
+                this._perfAccumImmediateWaitMs += waitMs;
+                this._perfMaxImmediateWaitMs = Math.Max(this._perfMaxImmediateWaitMs, waitMs);
+            }
+        }
+
+        this.ReleaseImmediateCopyContext(context, remove: false);
+        this.PumpImmediateDeferredDisposals();
+        if (_perfLogEnabled) {
+            double flushMs = TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
+            this._perfAccumImmediateFlushMs += flushMs;
+            this._perfMaxImmediateFlushMs = Math.Max(this._perfMaxImmediateFlushMs, flushMs);
+            this._perfAccumImmediateFlushes++;
+            this._perfAccumImmediateUploadBuffers += (ulong)uploadBufferCount;
+        }
+
+        return signalValue;
+    }
+
+    /// <summary>
+    /// Enqueues a disposable resource to be released after the specified submission fence value has completed.
+    /// </summary>
+    /// <param name="disposable">The resource to dispose.</param>
+    /// <param name="fenceValue">The submission fence value that guards the resource lifetime.</param>
+    internal void EnqueueSubmissionDisposal(IDisposable disposable, ulong fenceValue) {
+        if (disposable == null) {
+            return;
+        }
+
+        lock (this._submissionDeferredDisposalsLock) {
+            this._submissionDeferredDisposals.Enqueue(new DeferredDisposal(disposable, fenceValue));
+        }
+    }
+
+    /// <summary>
+    /// Enqueues a disposable resource to be released after the specified immediate fence value has completed.
+    /// </summary>
+    /// <param name="disposable">The resource to dispose.</param>
+    /// <param name="fenceValue">The immediate fence value that guards the resource lifetime.</param>
+    internal void EnqueueImmediateDisposal(IDisposable disposable, ulong fenceValue) {
+        if (disposable == null) {
+            return;
+        }
+
+        lock (this._immediateDeferredDisposalsLock) {
+            this._immediateDeferredDisposals.Enqueue(new DeferredDisposal(disposable, fenceValue));
+        }
+    }
+
+    /// <summary>
+    /// Rents an upload buffer that is at least the requested size.
+    /// </summary>
+    /// <param name="sizeInBytes">The required upload-buffer size in bytes.</param>
+    /// <returns>An upload heap resource ready for CPU writes.</returns>
+    internal ID3D12Resource RentUploadBuffer(ulong sizeInBytes) {
+        if (sizeInBytes == 0) {
+            sizeInBytes = 1;
+        }
+
+        lock (this._availableUploadBuffersLock) {
+            int bestIndex = -1;
+            ulong bestSize = ulong.MaxValue;
+            for (int i = 0; i < this._availableUploadBuffers.Count; i++) {
+                ID3D12Resource candidate = this._availableUploadBuffers[i];
+                ulong candidateSize = candidate.Description.Width;
+                if (candidateSize >= sizeInBytes && candidateSize < bestSize) {
+                    bestIndex = i;
+                    bestSize = candidateSize;
+                }
+            }
+
+            if (bestIndex >= 0) {
+                ID3D12Resource buffer = this._availableUploadBuffers[bestIndex];
+                this._availableUploadBuffers.RemoveAt(bestIndex);
+                this._availableUploadBufferBytes -= buffer.Description.Width;
+                return buffer;
+            }
+        }
+
+        ulong allocationSize = AlignUp(sizeInBytes, 4096);
+        return this._device.CreateCommittedResource(HeapType.Upload, HeapFlags.None, ResourceDescription.Buffer(allocationSize), ResourceStates.GenericRead);
+    }
+
+    /// <summary>
+    /// Returns an upload buffer to the reusable pool or disposes it when it is too large.
+    /// </summary>
+    /// <param name="buffer">The upload buffer to return.</param>
+    internal void ReturnUploadBuffer(ID3D12Resource buffer) {
+        if (buffer == null) {
+            return;
+        }
+
+        ulong size = buffer.Description.Width;
+        if (size > MaxPooledUploadBufferSize) {
+            buffer.Dispose();
+            return;
+        }
+
+        lock (this._availableUploadBuffersLock) {
+            if (this._availableUploadBufferBytes + size > MaxPooledUploadBufferBytes) {
+                buffer.Dispose();
+                return;
+            }
+
+            this._availableUploadBuffers.Add(buffer);
+            this._availableUploadBufferBytes += size;
+        }
+    }
+
+    /// <summary>
+    /// Returns an upload buffer to the pool after a submission fence has completed.
+    /// </summary>
+    /// <param name="buffer">The upload buffer to return.</param>
+    /// <param name="fenceValue">The submission fence value guarding the buffer.</param>
+    internal void EnqueueSubmissionUploadBuffer(ID3D12Resource buffer, ulong fenceValue) {
+        this.EnqueueSubmissionDisposal(new PooledUploadBuffer(this, buffer), fenceValue);
+    }
+
+    /// <summary>
+    /// Returns an upload buffer to the pool after an immediate-copy fence has completed.
+    /// </summary>
+    /// <param name="buffer">The upload buffer to return.</param>
+    /// <param name="fenceValue">The immediate-copy fence value guarding the buffer.</param>
+    internal void EnqueueImmediateUploadBuffer(ID3D12Resource buffer, ulong fenceValue) {
+        this.EnqueueImmediateDisposal(new PooledUploadBuffer(this, buffer), fenceValue);
+    }
+
+    /// <summary>
     /// Gets the or create root signature value.
     /// </summary>
     /// <param name="cacheKey">The cache key value used by this operation.</param>
@@ -271,6 +911,24 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
 
             ID3D12RootSignature created = this._device.CreateRootSignature(in description, RootSignatureVersion.Version1);
             this._rootSignatureCache.Add(cacheKey, created);
+            return created;
+        }
+    }
+
+    /// <summary>
+    /// Gets a cached D3D12 pipeline state or creates and stores one when it is first requested.
+    /// </summary>
+    /// <param name="cacheKey">The stable pipeline-state key.</param>
+    /// <param name="createPipelineState">Creates the native pipeline state on a cache miss.</param>
+    /// <returns>The cached or newly-created pipeline state.</returns>
+    internal ID3D12PipelineState GetOrCreatePipelineState(string cacheKey, Func<ID3D12PipelineState> createPipelineState) {
+        lock (this._pipelineStateCacheLock) {
+            if (this._pipelineStateCache.TryGetValue(cacheKey, out ID3D12PipelineState cached)) {
+                return cached;
+            }
+
+            ID3D12PipelineState created = createPipelineState();
+            this._pipelineStateCache.Add(cacheKey, created);
             return created;
         }
     }
@@ -483,6 +1141,21 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// Executes the platform dispose logic for this backend.
     /// </summary>
     protected override void PlatformDispose() {
+        this.WaitForQueueIdle();
+        this.PumpSubmissionDeferredDisposals();
+        this.PumpImmediateDeferredDisposals();
+        this.DisposeAllDeferredDisposals();
+        this.DisposeAvailableUploadBuffers();
+
+        lock (this._immediateCopyContextsLock) {
+            foreach (ImmediateCopyContext context in this._immediateCopyContexts) {
+                context.CommandList?.Dispose();
+                context.Allocator?.Dispose();
+            }
+
+            this._immediateCopyContexts.Clear();
+        }
+
         lock (this._rootSignatureCacheLock) {
             foreach (ID3D12RootSignature rootSignature in this._rootSignatureCache.Values) {
                 rootSignature?.Dispose();
@@ -491,8 +1164,18 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
             this._rootSignatureCache.Clear();
         }
 
+        lock (this._pipelineStateCacheLock) {
+            foreach (ID3D12PipelineState pipelineState in this._pipelineStateCache.Values) {
+                pipelineState?.Dispose();
+            }
+
+            this._pipelineStateCache.Clear();
+        }
+
         this._submissionFenceEvent?.Dispose();
         this._submissionFence?.Dispose();
+        this._immediateCopyFenceEvent?.Dispose();
+        this._immediateCopyFence?.Dispose();
         this.MainSwapchain?.Dispose();
         this.CommandQueue?.Dispose();
         this._device?.Dispose();
@@ -505,6 +1188,11 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// <param name="commandList">The command list used by this operation.</param>
     /// <param name="fence">The synchronization fence used by this operation.</param>
     private protected override void SubmitCommandsCore(CommandList commandList, Fence fence) {
+        long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
+        this.FlushBatchedImmediateCommands();
+        this.PumpSubmissionDeferredDisposals();
+        this.PumpImmediateDeferredDisposals();
+
         try {
             if (commandList is D3D12CommandList d3d12CommandList) {
                 d3d12CommandList.ExecuteNoSignal();
@@ -517,10 +1205,17 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
             if (fence is D3D12Fence d3d12Fence) {
                 d3d12Fence.Signal(this.CommandQueue);
             }
+
+            this.PumpSubmissionDeferredDisposals();
+            this.PumpImmediateDeferredDisposals();
         }
         catch (SharpGenException ex) {
             string reason = this.GetDeviceRemovedReasonDescription();
             throw new VeldridException($"D3D12 command submission failed. DeviceRemovedReason={reason}.", ex);
+        }
+
+        if (_perfLogEnabled) {
+            this.ReportDevicePerfIfNeeded(TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks));
         }
     }
 
@@ -542,6 +1237,8 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// </summary>
     private protected override void WaitForIdleCore() {
         this.WaitForQueueIdle();
+        this.PumpSubmissionDeferredDisposals();
+        this.PumpImmediateDeferredDisposals();
     }
 
     /// <summary>
@@ -591,19 +1288,29 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
             throw new VeldridException("Buffer belongs to a different backend.");
         }
 
-        ID3D12CommandAllocator allocator = this._device.CreateCommandAllocator(CommandListType.Direct);
-        ID3D12GraphicsCommandList commandList = this._device.CreateCommandList<ID3D12GraphicsCommandList>(0, CommandListType.Direct, allocator);
+        if (sizeInBytes == 0) {
+            return;
+        }
+
+        if (!d3d12Buffer.CanTransitionState) {
+            d3d12Buffer.Update(null, source, bufferOffsetInBytes, sizeInBytes);
+            return;
+        }
         ID3D12Resource temporaryUpload = null;
         try {
-            temporaryUpload = d3d12Buffer.Update(commandList, source, bufferOffsetInBytes, sizeInBytes);
-            commandList.Close();
-            this.CommandQueue.ExecuteCommandList(commandList);
-            this.WaitForQueueIdle();
+            this.RecordBatchedImmediateCommand(commandList => {
+                temporaryUpload = d3d12Buffer.Update(commandList, source, bufferOffsetInBytes, sizeInBytes);
+            });
+
+            if (temporaryUpload != null) {
+                this.EnqueueBatchedImmediateUploadBuffer(temporaryUpload);
+                temporaryUpload = null;
+            }
         }
         finally {
-            temporaryUpload?.Dispose();
-            commandList.Dispose();
-            allocator.Dispose();
+            if (temporaryUpload != null) {
+                this.ReturnUploadBuffer(temporaryUpload);
+            }
         }
     }
 
@@ -1061,6 +1768,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// Executes the wait for queue idle logic for this backend.
     /// </summary>
     private void WaitForQueueIdle() {
+        this.FlushBatchedImmediateCommands(waitForCompletion: true);
         ID3D12Fence fence = null;
         using AutoResetEvent waitEvent = new(false);
         try {
@@ -1078,6 +1786,176 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         finally {
             fence?.Dispose();
         }
+    }
+
+    /// <summary>
+    /// Waits until an immediate copy fence value has completed.
+    /// </summary>
+    /// <param name="value">The fence value to wait for.</param>
+    private void WaitForImmediateCopyFence(ulong value) {
+        if (this._immediateCopyFence.CompletedValue >= value) {
+            return;
+        }
+
+        this._immediateCopyFence
+            .SetEventOnCompletion(value, this._immediateCopyFenceEvent.SafeWaitHandle.DangerousGetHandle()).CheckError();
+        this._immediateCopyFenceEvent.WaitOne();
+    }
+
+    /// <summary>
+    /// Acquires a reusable immediate copy command context from the pool.
+    /// </summary>
+    /// <returns>The acquired immediate copy command context.</returns>
+    private ImmediateCopyContext AcquireImmediateCopyContext() {
+        lock (this._immediateCopyContextsLock) {
+            ulong completedValue = this._immediateCopyFence.CompletedValue;
+            for (int i = 0; i < this._immediateCopyContexts.Count; i++) {
+                ImmediateCopyContext context = this._immediateCopyContexts[i];
+                if (!context.InUse && completedValue >= context.FenceValue) {
+                    context.InUse = true;
+                    return context;
+                }
+            }
+
+            ID3D12CommandAllocator allocator = this._device.CreateCommandAllocator(CommandListType.Direct);
+            ID3D12GraphicsCommandList commandList = this._device.CreateCommandList<ID3D12GraphicsCommandList>(0, CommandListType.Direct, allocator);
+            ImmediateCopyContext created = new(allocator, commandList) {
+                InUse = true
+            };
+            this._immediateCopyContexts.Add(created);
+            return created;
+        }
+    }
+
+    /// <summary>
+    /// Resets a pooled immediate copy context so it can record a new command list.
+    /// </summary>
+    /// <param name="context">The immediate copy context to prepare.</param>
+    private static void PrepareImmediateCopyContext(ImmediateCopyContext context) {
+        if (context.Initialized) {
+            context.Allocator.Reset();
+            context.CommandList.Reset(context.Allocator);
+            return;
+        }
+
+        context.Initialized = true;
+    }
+
+    /// <summary>
+    /// Releases an immediate copy command context back to the pool.
+    /// </summary>
+    /// <param name="context">The context to release.</param>
+    /// <param name="remove">When true, removes and disposes the context from the pool.</param>
+    private void ReleaseImmediateCopyContext(ImmediateCopyContext context, bool remove) {
+        lock (this._immediateCopyContextsLock) {
+            context.InUse = false;
+            if (!remove) {
+                return;
+            }
+
+            this._immediateCopyContexts.Remove(context);
+            context.CommandList.Dispose();
+            context.Allocator.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Releases resources whose submission-fence lifetime has already completed.
+    /// </summary>
+    private void PumpSubmissionDeferredDisposals() {
+        this.PumpDeferredDisposals(this._submissionDeferredDisposalsLock, this._submissionDeferredDisposals, this._submissionFence.CompletedValue);
+    }
+
+    /// <summary>
+    /// Releases resources whose immediate-copy-fence lifetime has already completed.
+    /// </summary>
+    private void PumpImmediateDeferredDisposals() {
+        this.PumpDeferredDisposals(this._immediateDeferredDisposalsLock, this._immediateDeferredDisposals, this._immediateCopyFence.CompletedValue);
+    }
+
+    /// <summary>
+    /// Disposes all deferred resources, regardless of fence value.
+    /// </summary>
+    private void DisposeAllDeferredDisposals() {
+        this.DisposeDeferredQueue(this._submissionDeferredDisposalsLock, this._submissionDeferredDisposals);
+        this.DisposeDeferredQueue(this._immediateDeferredDisposalsLock, this._immediateDeferredDisposals);
+    }
+
+    /// <summary>
+    /// Disposes queue entries whose fence values are already completed.
+    /// </summary>
+    /// <param name="lockObject">The queue lock object.</param>
+    /// <param name="queue">The deferred disposal queue to process.</param>
+    /// <param name="completedFenceValue">The latest completed fence value.</param>
+    private void PumpDeferredDisposals(object lockObject, Queue<DeferredDisposal> queue, ulong completedFenceValue) {
+        List<IDisposable> disposables = null;
+        lock (lockObject) {
+            while (queue.Count > 0 && queue.Peek().FenceValue <= completedFenceValue) {
+                (disposables ??= new List<IDisposable>(4)).Add(queue.Dequeue().Disposable);
+            }
+        }
+
+        if (disposables == null) {
+            return;
+        }
+
+        for (int i = 0; i < disposables.Count; i++) {
+            disposables[i].Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Disposes all entries in the specified deferred disposal queue.
+    /// </summary>
+    /// <param name="lockObject">The queue lock object.</param>
+    /// <param name="queue">The deferred disposal queue to drain.</param>
+    private void DisposeDeferredQueue(object lockObject, Queue<DeferredDisposal> queue) {
+        List<IDisposable> disposables = null;
+        lock (lockObject) {
+            while (queue.Count > 0) {
+                (disposables ??= new List<IDisposable>(queue.Count)).Add(queue.Dequeue().Disposable);
+            }
+        }
+
+        if (disposables == null) {
+            return;
+        }
+
+        for (int i = 0; i < disposables.Count; i++) {
+            disposables[i].Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Disposes all upload buffers currently retained by the pool.
+    /// </summary>
+    private void DisposeAvailableUploadBuffers() {
+        List<ID3D12Resource> buffers = null;
+        lock (this._availableUploadBuffersLock) {
+            if (this._availableUploadBuffers.Count > 0) {
+                buffers = new List<ID3D12Resource>(this._availableUploadBuffers);
+                this._availableUploadBuffers.Clear();
+                this._availableUploadBufferBytes = 0;
+            }
+        }
+
+        if (buffers == null) {
+            return;
+        }
+
+        for (int i = 0; i < buffers.Count; i++) {
+            buffers[i].Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Aligns a value upward to the specified alignment.
+    /// </summary>
+    /// <param name="value">The value to align.</param>
+    /// <param name="alignment">The alignment boundary.</param>
+    /// <returns>The aligned value.</returns>
+    private static ulong AlignUp(ulong value, ulong alignment) {
+        return (value + alignment - 1) / alignment * alignment;
     }
 
     /// <summary>
@@ -1105,4 +1983,139 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
             this.Support = support;
         }
     }
+
+    /// <summary>
+    /// Represents a disposable resource that must stay alive until a specific fence value completes.
+    /// </summary>
+    private readonly struct DeferredDisposal {
+
+        /// <summary>
+        /// Gets the disposable resource reference.
+        /// </summary>
+        public IDisposable Disposable { get; }
+
+        /// <summary>
+        /// Gets the fence value that guards resource disposal.
+        /// </summary>
+        public ulong FenceValue { get; }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DeferredDisposal"/> struct.
+        /// </summary>
+        /// <param name="disposable">The resource to dispose when the fence completes.</param>
+        /// <param name="fenceValue">The fence value that marks safe disposal.</param>
+        public DeferredDisposal(IDisposable disposable, ulong fenceValue) {
+            this.Disposable = disposable;
+            this.FenceValue = fenceValue;
+        }
+    }
+
+    /// <summary>
+    /// Returns an upload buffer to its owning D3D12 device when a deferred fence completes.
+    /// </summary>
+    private sealed class PooledUploadBuffer : IDisposable {
+
+        /// <summary>
+        /// Stores the owning graphics device.
+        /// </summary>
+        private readonly D3D12GraphicsDevice gd;
+
+        /// <summary>
+        /// Stores the upload buffer being returned.
+        /// </summary>
+        private ID3D12Resource buffer;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PooledUploadBuffer"/> class.
+        /// </summary>
+        /// <param name="gd">The owning graphics device.</param>
+        /// <param name="buffer">The upload buffer to return.</param>
+        public PooledUploadBuffer(D3D12GraphicsDevice gd, ID3D12Resource buffer) {
+            this.gd = gd;
+            this.buffer = buffer;
+        }
+
+        /// <summary>
+        /// Returns the upload buffer to the graphics device pool.
+        /// </summary>
+        public void Dispose() {
+            ID3D12Resource resource = this.buffer;
+            this.buffer = null;
+            if (resource != null) {
+                this.gd.ReturnUploadBuffer(resource);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Represents a reusable command allocator and command list pair for immediate copy workloads.
+    /// </summary>
+    private sealed class ImmediateCopyContext {
+
+        /// <summary>
+        /// Gets the command allocator owned by this context.
+        /// </summary>
+        public ID3D12CommandAllocator Allocator { get; }
+
+        /// <summary>
+        /// Gets the command list owned by this context.
+        /// </summary>
+        public ID3D12GraphicsCommandList CommandList { get; }
+
+        /// <summary>
+        /// Gets or sets the last fence value submitted by this context.
+        /// </summary>
+        public ulong FenceValue { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this context has already been used at least once.
+        /// </summary>
+        public bool Initialized { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this context is currently checked out.
+        /// </summary>
+        public bool InUse { get; set; }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ImmediateCopyContext"/> class.
+        /// </summary>
+        /// <param name="allocator">The command allocator used by this context.</param>
+        /// <param name="commandList">The command list used by this context.</param>
+        public ImmediateCopyContext(ID3D12CommandAllocator allocator, ID3D12GraphicsCommandList commandList) {
+            this.Allocator = allocator;
+            this.CommandList = commandList;
+        }
+    }
+}
+
+/// <summary>
+/// Identifies a D3D12 resource creation category for performance logging.
+/// </summary>
+internal enum D3D12ResourceCreationKind {
+
+    /// <summary>
+    /// A device buffer was created.
+    /// </summary>
+    Buffer,
+
+    /// <summary>
+    /// A pipeline state wrapper was created.
+    /// </summary>
+    Pipeline,
+
+    /// <summary>
+    /// A resource set was created.
+    /// </summary>
+    ResourceSet,
+
+    /// <summary>
+    /// A shader wrapper was created.
+    /// </summary>
+    Shader,
+
+    /// <summary>
+    /// A texture was created.
+    /// </summary>
+    Texture
 }

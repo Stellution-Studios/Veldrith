@@ -131,6 +131,9 @@ DocProject/Help/html
 # Click-Once directory
 publish/
 
+# Click-Once directory
+src/Bliss
+
 # Publish Web Output
 *.[Pp]ublish.xml
 *.azurePubxml
@@ -261,3 +264,4 @@ launchSettings.json
 
 # Generated shaders
 Shaders.Generated
+/src/Bliss.Test
