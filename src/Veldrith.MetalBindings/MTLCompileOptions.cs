@@ -7,20 +7,20 @@ namespace Veldrith.MetalBindings;
 [StructLayout(LayoutKind.Sequential)]
 
 /// <summary>
-/// Defines the data layout and behavior of the MTLCompileOptions struct.
+/// Represents the MTLCompileOptions data structure used by the graphics runtime.
 /// </summary>
 public struct MTLCompileOptions {
 
     /// <summary>
-    /// Stores the value associated with <c>NativePtr</c>.
+    /// Stores the native ptr state used by this instance.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Executes the operator IntPtr operation.
+    /// Executes the int ptr logic for this backend.
     /// </summary>
-    /// <param name="mco">Specifies the value of <paramref name="mco" />.</param>
-    /// <returns>Returns the result produced by the operator IntPtr operation.</returns>
+    /// <param name="mco">The mco value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public static implicit operator IntPtr(MTLCompileOptions mco) {
         return mco.NativePtr;
     }
@@ -28,7 +28,7 @@ public struct MTLCompileOptions {
     /// <summary>
     /// Creates and returns a new instance.
     /// </summary>
-    /// <returns>Returns the result produced by the New operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public static MTLCompileOptions New() {
         return s_class.AllocInit<MTLCompileOptions>();
     }
@@ -50,29 +50,27 @@ public struct MTLCompileOptions {
     }
 
     /// <summary>
-    /// Stores the value associated with <c>name</c>.
+    /// Stores the s class state used by this instance.
     /// </summary>
-    /// <param name="MTLCompileOptions">Specifies the value of <paramref name="MTLCompileOptions" />.</param>
-    /// <returns>Returns the result produced by the new operation.</returns>
     private static readonly ObjCClass s_class = new(nameof(MTLCompileOptions));
 
     /// <summary>
-    /// Stores the value associated with <c>sel_fastMathEnabled</c>.
+    /// Stores the sel fast math enabled state used by this instance.
     /// </summary>
     private static readonly Selector sel_fastMathEnabled = "fastMathEnabled";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setFastMathEnabled</c>.
+    /// Stores the sel set fast math enabled state used by this instance.
     /// </summary>
     private static readonly Selector sel_setFastMathEnabled = "setFastMathEnabled:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_languageVersion</c>.
+    /// Stores the sel language version state used by this instance.
     /// </summary>
     private static readonly Selector sel_languageVersion = "languageVersion";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setLanguageVersion</c>.
+    /// Stores the sel set language version state used by this instance.
     /// </summary>
     private static readonly Selector sel_setLanguageVersion = "setLanguageVersion:";
 }

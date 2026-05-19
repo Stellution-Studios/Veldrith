@@ -7,57 +7,56 @@ using static Vulkan.VulkanNative;
 namespace Veldrith.Vk;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the VkFramebuffer class.
+/// Provides the Vulkan backend implementation for VkFramebuffer.
 /// </summary>
 internal unsafe class VkFramebuffer : VkFramebufferBase {
 
     /// <summary>
-    /// Stores the value associated with <c>_attachmentViews</c>.
+    /// Stores the attachment views state used by this instance.
     /// </summary>
     private readonly List<VkImageView> _attachmentViews = new();
 
     /// <summary>
-    /// Stores the value associated with <c>_deviceFramebuffer</c>.
+    /// Stores the device framebuffer state used by this instance.
     /// </summary>
     private readonly Vulkan.VkFramebuffer _deviceFramebuffer;
 
     /// <summary>
-    /// Stores the value associated with <c>_renderPassClear</c>.
+    /// Stores the render pass clear state used by this instance.
     /// </summary>
     private readonly VkRenderPass _renderPassClear;
 
     /// <summary>
-    /// Stores the value associated with <c>_renderPassNoClear</c>.
+    /// Stores the render pass no clear state used by this instance.
     /// </summary>
     private readonly VkRenderPass _renderPassNoClear;
 
     /// <summary>
-    /// Stores the value associated with <c>_renderPassNoClearLoad</c>.
+    /// Stores the render pass no clear load state used by this instance.
     /// </summary>
     private readonly VkRenderPass _renderPassNoClearLoad;
 
     /// <summary>
-    /// Stores the value associated with <c>gd</c>.
+    /// Stores the gd state used by this instance.
     /// </summary>
     private readonly VkGraphicsDevice gd;
 
     /// <summary>
-    /// Stores the value associated with <c>_destroyed</c>.
+    /// Stores the destroyed state used by this instance.
     /// </summary>
     private bool _destroyed;
 
     /// <summary>
-    /// Stores the value associated with <c>_name</c>.
+    /// Stores the human-readable name associated with this instance.
     /// </summary>
     private string _name;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VkFramebuffer" /> class.
     /// </summary>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
-    /// <param name="isPresented">Specifies the value of <paramref name="isPresented" />.</param>
-    /// <returns>Returns the result produced by the base operation.</returns>
+    /// <param name="gd">The graphics device that owns this operation.</param>
+    /// <param name="description">The description used to configure this operation.</param>
+    /// <param name="isPresented">The is presented value used by this operation.</param>
     public VkFramebuffer(VkGraphicsDevice gd, ref FramebufferDescription description, bool isPresented) : base(description.DepthTarget, description.ColorTargets) {
         this.gd = gd;
 
@@ -306,9 +305,9 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
     }
 
     /// <summary>
-    /// Executes the TransitionToIntermediateLayout operation.
+    /// Executes the transition to intermediate layout logic for this backend.
     /// </summary>
-    /// <param name="cb">Specifies the value of <paramref name="cb" />.</param>
+    /// <param name="cb">The cb value used by this operation.</param>
     public override void TransitionToIntermediateLayout(VkCommandBuffer cb) {
         for (int i = 0; i < this.ColorTargets.Count; i++) {
             FramebufferAttachment ca = this.ColorTargets[i];
@@ -323,9 +322,9 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
     }
 
     /// <summary>
-    /// Executes the TransitionToFinalLayout operation.
+    /// Executes the transition to final layout logic for this backend.
     /// </summary>
-    /// <param name="cb">Specifies the value of <paramref name="cb" />.</param>
+    /// <param name="cb">The cb value used by this operation.</param>
     public override void TransitionToFinalLayout(VkCommandBuffer cb) {
         for (int i = 0; i < this.ColorTargets.Count; i++) {
             FramebufferAttachment ca = this.ColorTargets[i];
@@ -346,7 +345,7 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
     }
 
     /// <summary>
-    /// Executes the DisposeCore operation.
+    /// Executes the dispose core logic for this backend.
     /// </summary>
     protected override void DisposeCore() {
         if (!this._destroyed) {

@@ -6,7 +6,7 @@ namespace Veldrith.MetalBindings;
 public enum MTLLoadAction {
 
     /// <summary>
-    /// Stores the value associated with <c>DontCare</c>.
+    /// Stores the dont care state used by this instance.
     /// </summary>
     DontCare = 0, Load = 1, Clear = 2
 }

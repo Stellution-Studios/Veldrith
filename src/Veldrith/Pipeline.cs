@@ -3,20 +3,19 @@ using System;
 namespace Veldrith;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the Pipeline class.
+/// Represents the Pipeline type used by the graphics runtime.
 /// </summary>
 public abstract class Pipeline : IDeviceResource, IDisposable {
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Pipeline" /> class.
     /// </summary>
+    /// <param name="graphicsDescription">The graphics description value used by this operation.</param>
     internal Pipeline(ref GraphicsPipelineDescription graphicsDescription)
 
         /// <summary>
-        /// Executes the this operation.
+        /// Executes the this logic for this backend.
         /// </summary>
-        /// <param name="ResourceLayouts">Specifies the value of <paramref name="ResourceLayouts" />.</param>
-        /// <returns>Returns the result produced by the this operation.</returns>
         : this(graphicsDescription.ResourceLayouts) {
 #if VALIDATE_USAGE
         this.GraphicsOutputDescription = graphicsDescription.Outputs;
@@ -26,14 +25,14 @@ public abstract class Pipeline : IDeviceResource, IDisposable {
     /// <summary>
     /// Initializes a new instance of the <see cref="Pipeline" /> type.
     /// </summary>
-    /// <param name="computeDescription">Specifies the value of <paramref name="computeDescription" />.</param>
+    /// <param name="computeDescription">The compute description value used by this operation.</param>
     internal Pipeline(ref ComputePipelineDescription computeDescription)
         : this(computeDescription.ResourceLayouts) { }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Pipeline" /> type.
     /// </summary>
-    /// <param name="resourceLayouts">Specifies the value of <paramref name="resourceLayouts" />.</param>
+    /// <param name="resourceLayouts">The resource layout used by this operation.</param>
     internal Pipeline(ResourceLayout[] resourceLayouts) {
 #if VALIDATE_USAGE
         this.ResourceLayouts = Util.ShallowClone(resourceLayouts);
@@ -42,7 +41,6 @@ public abstract class Pipeline : IDeviceResource, IDisposable {
 
     /// <summary>
     /// Gets a value indicating whether this instance represents a compute Pipeline.
-    /// If false, this instance is a graphics pipeline.
     /// </summary>
     public abstract bool IsComputePipeline { get; }
 
@@ -53,14 +51,13 @@ public abstract class Pipeline : IDeviceResource, IDisposable {
 
     /// <summary>
     /// A string identifying this instance. Can be used to differentiate between objects in graphics debuggers and other
-    /// tools.
     /// </summary>
     public abstract string Name { get; set; }
 
     #region Disposal
 
     /// <summary>
-    /// Executes the Dispose operation.
+    /// Releases resources held by this instance.
     /// </summary>
     public abstract void Dispose();
 

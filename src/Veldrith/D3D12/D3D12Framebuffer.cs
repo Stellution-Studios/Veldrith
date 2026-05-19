@@ -4,45 +4,45 @@ using Vortice.Direct3D12;
 namespace Veldrith.D3D12;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the D3D12Framebuffer class.
+/// Provides the Direct3D 12 backend implementation for D3D12Framebuffer.
 /// </summary>
 internal class D3D12Framebuffer : Framebuffer {
 
     /// <summary>
-    /// Stores the value associated with <c>_colorTargetTextures</c>.
+    /// Stores the color target textures collection used by this instance.
     /// </summary>
     private readonly D3D12Texture[] _colorTargetTextures;
 
     /// <summary>
-    /// Stores the value associated with <c>_colorTargetViews</c>.
+    /// Stores the color target views state used by this instance.
     /// </summary>
     private readonly CpuDescriptorHandle[] _colorTargetViews;
 
     /// <summary>
-    /// Stores the value associated with <c>_depthStencilView</c>.
+    /// Stores the depth stencil view value used during command execution.
     /// </summary>
     private readonly CpuDescriptorHandle? _depthStencilView;
 
     /// <summary>
-    /// Stores the value associated with <c>_dsvHeap</c>.
+    /// Stores the dsv heap state used by this instance.
     /// </summary>
     private readonly ID3D12DescriptorHeap _dsvHeap;
 
     /// <summary>
-    /// Stores the value associated with <c>_rtvHeap</c>.
+    /// Stores the rtv heap state used by this instance.
     /// </summary>
     private readonly ID3D12DescriptorHeap _rtvHeap;
 
     /// <summary>
-    /// Stores the value associated with <c>_disposed</c>.
+    /// Stores the disposed state used by this instance.
     /// </summary>
     private bool _disposed;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="D3D12Framebuffer" /> type.
     /// </summary>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <param name="gd">The graphics device that owns this operation.</param>
+    /// <param name="description">The description used to configure this operation.</param>
     public D3D12Framebuffer(D3D12GraphicsDevice gd, ref FramebufferDescription description) : base(description.DepthTarget, description.ColorTargets) {
         this._colorTargetTextures = new D3D12Texture[this.ColorTargets.Count];
         this._colorTargetViews = new CpuDescriptorHandle[this.ColorTargets.Count];
@@ -83,7 +83,7 @@ internal class D3D12Framebuffer : Framebuffer {
     public override bool IsDisposed => this._disposed;
 
     /// <summary>
-    /// Stores the value associated with <c>ColorTargetTextures</c>.
+    /// Stores the color target textures collection used by this instance.
     /// </summary>
     internal ReadOnlySpan<D3D12Texture> ColorTargetTextures => this._colorTargetTextures;
 
@@ -98,11 +98,11 @@ internal class D3D12Framebuffer : Framebuffer {
     public override string Name { get; set; }
 
     /// <summary>
-    /// Executes the TryGetColorTargetView operation.
+    /// Attempts to get color target view and reports whether it succeeded.
     /// </summary>
-    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
-    /// <param name="handle">Specifies the value of <paramref name="handle" />.</param>
-    /// <returns>Returns the result produced by the TryGetColorTargetView operation.</returns>
+    /// <param name="index">The zero-based index of the target item.</param>
+    /// <param name="handle">The handle value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     internal bool TryGetColorTargetView(uint index, out CpuDescriptorHandle handle) {
         if (index >= this._colorTargetViews.Length) {
             handle = default;
@@ -114,10 +114,10 @@ internal class D3D12Framebuffer : Framebuffer {
     }
 
     /// <summary>
-    /// Executes the TryGetColorTargetViews operation.
+    /// Attempts to get color target views and reports whether it succeeded.
     /// </summary>
-    /// <param name="handles">Specifies the value of <paramref name="handles" />.</param>
-    /// <returns>Returns the result produced by the TryGetColorTargetViews operation.</returns>
+    /// <param name="handles">The handles value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     internal bool TryGetColorTargetViews(out CpuDescriptorHandle[] handles) {
         handles = this._colorTargetViews;
         if (this._colorTargetViews.Length == 0) {
@@ -134,10 +134,10 @@ internal class D3D12Framebuffer : Framebuffer {
     }
 
     /// <summary>
-    /// Executes the TryGetDepthStencilView operation.
+    /// Attempts to get depth stencil view and reports whether it succeeded.
     /// </summary>
-    /// <param name="handle">Specifies the value of <paramref name="handle" />.</param>
-    /// <returns>Returns the result produced by the TryGetDepthStencilView operation.</returns>
+    /// <param name="handle">The handle value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     internal bool TryGetDepthStencilView(out CpuDescriptorHandle handle) {
         if (!this._depthStencilView.HasValue || this.DepthTargetTexture?.NativeTexture == null) {
             handle = default;
@@ -149,7 +149,7 @@ internal class D3D12Framebuffer : Framebuffer {
     }
 
     /// <summary>
-    /// Executes the Dispose operation.
+    /// Releases resources held by this instance.
     /// </summary>
     public override void Dispose() {
         if (this._disposed) {
@@ -162,11 +162,11 @@ internal class D3D12Framebuffer : Framebuffer {
     }
 
     /// <summary>
-    /// Executes the CreateRenderTargetViewDescription operation.
+    /// Creates the render target view description instance used by this backend.
     /// </summary>
-    /// <param name="texture">Specifies the value of <paramref name="texture" />.</param>
-    /// <param name="attachment">Specifies the value of <paramref name="attachment" />.</param>
-    /// <returns>Returns the result produced by the CreateRenderTargetViewDescription operation.</returns>
+    /// <param name="texture">The texture resource involved in this operation.</param>
+    /// <param name="attachment">The attachment value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static RenderTargetViewDescription CreateRenderTargetViewDescription(D3D12Texture texture, FramebufferAttachment attachment) {
         RenderTargetViewDescription description = new() {
             Format = D3D12Formats.GetViewFormat(D3D12Formats.ToDxgiFormat(texture.Format))
@@ -238,11 +238,11 @@ internal class D3D12Framebuffer : Framebuffer {
     }
 
     /// <summary>
-    /// Executes the CreateDepthStencilViewDescription operation.
+    /// Creates the depth stencil view description instance used by this backend.
     /// </summary>
-    /// <param name="texture">Specifies the value of <paramref name="texture" />.</param>
-    /// <param name="attachment">Specifies the value of <paramref name="attachment" />.</param>
-    /// <returns>Returns the result produced by the CreateDepthStencilViewDescription operation.</returns>
+    /// <param name="texture">The texture resource involved in this operation.</param>
+    /// <param name="attachment">The attachment value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static DepthStencilViewDescription CreateDepthStencilViewDescription(D3D12Texture texture, FramebufferAttachment attachment) {
         DepthStencilViewDescription description = new() {
             Format = D3D12Formats.ToDepthFormat(texture.Format),

@@ -1,49 +1,49 @@
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Defines the data layout and behavior of the MTLViewport struct.
+/// Represents the MTLViewport data structure used by the graphics runtime.
 /// </summary>
 public struct MTLViewport {
 
     /// <summary>
-    /// Stores the value associated with <c>originX</c>.
+    /// Stores the origin x state used by this instance.
     /// </summary>
     public double originX;
 
     /// <summary>
-    /// Stores the value associated with <c>originY</c>.
+    /// Stores the origin y state used by this instance.
     /// </summary>
     public double originY;
 
     /// <summary>
-    /// Stores the value associated with <c>width</c>.
+    /// Stores the width value used during command execution.
     /// </summary>
     public double width;
 
     /// <summary>
-    /// Stores the value associated with <c>height</c>.
+    /// Stores the height value used during command execution.
     /// </summary>
     public double height;
 
     /// <summary>
-    /// Stores the value associated with <c>znear</c>.
+    /// Stores the znear state used by this instance.
     /// </summary>
     public double znear;
 
     /// <summary>
-    /// Stores the value associated with <c>zfar</c>.
+    /// Stores the zfar state used by this instance.
     /// </summary>
     public double zfar;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MTLViewport" /> type.
     /// </summary>
-    /// <param name="originX">Specifies the value of <paramref name="originX" />.</param>
-    /// <param name="originY">Specifies the value of <paramref name="originY" />.</param>
-    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
-    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
-    /// <param name="znear">Specifies the value of <paramref name="znear" />.</param>
-    /// <param name="zfar">Specifies the value of <paramref name="zfar" />.</param>
+    /// <param name="originX">The origin x value used by this operation.</param>
+    /// <param name="originY">The origin y value used by this operation.</param>
+    /// <param name="width">The width value.</param>
+    /// <param name="height">The height value.</param>
+    /// <param name="znear">The znear value used by this operation.</param>
+    /// <param name="zfar">The zfar value used by this operation.</param>
     public MTLViewport(double originX, double originY, double width, double height, double znear, double zfar) {
         this.originX = originX;
         this.originY = originY;

@@ -4,12 +4,12 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Defines the data layout and behavior of the MTLVertexDescriptor struct.
+/// Represents the MTLVertexDescriptor data structure used by the graphics runtime.
 /// </summary>
 public struct MTLVertexDescriptor {
 
     /// <summary>
-    /// Stores the value associated with <c>NativePtr</c>.
+    /// Stores the native ptr state used by this instance.
     /// </summary>
     public readonly IntPtr NativePtr;
 
@@ -20,12 +20,12 @@ public struct MTLVertexDescriptor {
         => objc_msgSend<MTLVertexAttributeDescriptorArray>(this.NativePtr, sel_attributes);
 
     /// <summary>
-    /// Stores the value associated with <c>sel_layouts</c>.
+    /// Stores the sel layouts state used by this instance.
     /// </summary>
     private static readonly Selector sel_layouts = "layouts";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_attributes</c>.
+    /// Stores the sel attributes state used by this instance.
     /// </summary>
     private static readonly Selector sel_attributes = "attributes";
 }

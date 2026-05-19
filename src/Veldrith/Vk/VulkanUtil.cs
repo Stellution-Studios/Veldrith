@@ -6,30 +6,28 @@ using static Vulkan.VulkanNative;
 namespace Veldrith.Vk;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the VulkanUtil class.
+/// Represents the VulkanUtil type used by the graphics runtime.
 /// </summary>
 internal static unsafe class VulkanUtil {
 
     /// <summary>
-    /// Stores the value associated with <c>name</c>.
+    /// Stores the s is vulkan loaded state used by this instance.
     /// </summary>
-    /// <param name="TryLoadVulkan">Specifies the value of <paramref name="TryLoadVulkan" />.</param>
-    /// <returns>Returns the result produced by the new operation.</returns>
+
     private static readonly Lazy<bool> _s_is_vulkan_loaded = new(TryLoadVulkan);
 
     /// <summary>
-    /// Stores the value associated with <c>name</c>.
+    /// Stores the s instance extensions state used by this instance.
     /// </summary>
-    /// <param name="EnumerateInstanceExtensions">Specifies the value of <paramref name="EnumerateInstanceExtensions" />.</param>
-    /// <returns>Returns the result produced by the new operation.</returns>
+
     private static readonly Lazy<string[]> _s_instance_extensions = new(EnumerateInstanceExtensions);
 
     [Conditional("DEBUG")]
 
     /// <summary>
-    /// Executes the CheckResult operation.
+    /// Executes the check result logic for this backend.
     /// </summary>
-    /// <param name="result">Specifies the value of <paramref name="result" />.</param>
+    /// <param name="result">The result value used by this operation.</param>
     public static void CheckResult(VkResult result) {
         if (result != VkResult.Success) {
             throw new VeldridException("Unsuccessful VkResult: " + result);
@@ -37,13 +35,13 @@ internal static unsafe class VulkanUtil {
     }
 
     /// <summary>
-    /// Executes the TryFindMemoryType operation.
+    /// Attempts to find memory type and reports whether it succeeded.
     /// </summary>
-    /// <param name="memProperties">Specifies the value of <paramref name="memProperties" />.</param>
-    /// <param name="typeFilter">Specifies the value of <paramref name="typeFilter" />.</param>
-    /// <param name="properties">Specifies the value of <paramref name="properties" />.</param>
-    /// <param name="typeIndex">Specifies the value of <paramref name="typeIndex" />.</param>
-    /// <returns>Returns the result produced by the TryFindMemoryType operation.</returns>
+    /// <param name="memProperties">The mem properties value used by this operation.</param>
+    /// <param name="typeFilter">The type filter value used by this operation.</param>
+    /// <param name="properties">The properties value used by this operation.</param>
+    /// <param name="typeIndex">The type index value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public static bool TryFindMemoryType(VkPhysicalDeviceMemoryProperties memProperties, uint typeFilter, VkMemoryPropertyFlags properties, out uint typeIndex) {
         typeIndex = 0;
 
@@ -59,9 +57,9 @@ internal static unsafe class VulkanUtil {
     }
 
     /// <summary>
-    /// Executes the EnumerateInstanceLayers operation.
+    /// Executes the enumerate instance layers logic for this backend.
     /// </summary>
-    /// <returns>Returns the result produced by the EnumerateInstanceLayers operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public static string[] EnumerateInstanceLayers() {
         uint propCount = 0;
         VkResult result = vkEnumerateInstanceLayerProperties(ref propCount, null);
@@ -85,33 +83,33 @@ internal static unsafe class VulkanUtil {
     }
 
     /// <summary>
-    /// Executes the GetInstanceExtensions operation.
+    /// Gets the instance extensions value.
     /// </summary>
-    /// <returns>Returns the result produced by the GetInstanceExtensions operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public static string[] GetInstanceExtensions() {
         return _s_instance_extensions.Value;
     }
 
     /// <summary>
-    /// Executes the IsVulkanLoaded operation.
+    /// Executes the is vulkan loaded logic for this backend.
     /// </summary>
-    /// <returns>Returns the result produced by the IsVulkanLoaded operation.</returns>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public static bool IsVulkanLoaded() {
         return _s_is_vulkan_loaded.Value;
     }
 
     /// <summary>
-    /// Executes the TransitionImageLayout operation.
+    /// Executes the transition image layout logic for this backend.
     /// </summary>
-    /// <param name="cb">Specifies the value of <paramref name="cb" />.</param>
-    /// <param name="image">Specifies the value of <paramref name="image" />.</param>
-    /// <param name="baseMipLevel">Specifies the value of <paramref name="baseMipLevel" />.</param>
-    /// <param name="levelCount">Specifies the value of <paramref name="levelCount" />.</param>
-    /// <param name="baseArrayLayer">Specifies the value of <paramref name="baseArrayLayer" />.</param>
-    /// <param name="layerCount">Specifies the value of <paramref name="layerCount" />.</param>
-    /// <param name="aspectMask">Specifies the value of <paramref name="aspectMask" />.</param>
-    /// <param name="oldLayout">Specifies the value of <paramref name="oldLayout" />.</param>
-    /// <param name="newLayout">Specifies the value of <paramref name="newLayout" />.</param>
+    /// <param name="cb">The cb value used by this operation.</param>
+    /// <param name="image">The image value used by this operation.</param>
+    /// <param name="baseMipLevel">The base mip level value used by this operation.</param>
+    /// <param name="levelCount">The level count value used by this operation.</param>
+    /// <param name="baseArrayLayer">The base array layer value used by this operation.</param>
+    /// <param name="layerCount">The layer count value used by this operation.</param>
+    /// <param name="aspectMask">The aspect mask value used by this operation.</param>
+    /// <param name="oldLayout">The old layout value used by this operation.</param>
+    /// <param name="newLayout">The new layout value used by this operation.</param>
     public static void TransitionImageLayout(VkCommandBuffer cb, VkImage image, uint baseMipLevel, uint levelCount, uint baseArrayLayer, uint layerCount, VkImageAspectFlags aspectMask, VkImageLayout oldLayout, VkImageLayout newLayout) {
         Debug.Assert(oldLayout != newLayout);
         VkImageMemoryBarrier barrier = VkImageMemoryBarrier.New();
@@ -276,9 +274,9 @@ internal static unsafe class VulkanUtil {
     }
 
     /// <summary>
-    /// Executes the EnumerateInstanceExtensions operation.
+    /// Executes the enumerate instance extensions logic for this backend.
     /// </summary>
-    /// <returns>Returns the result produced by the EnumerateInstanceExtensions operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     private static string[] EnumerateInstanceExtensions() {
         if (!IsVulkanLoaded()) {
             return Array.Empty<string>();
@@ -309,9 +307,9 @@ internal static unsafe class VulkanUtil {
     }
 
     /// <summary>
-    /// Executes the TryLoadVulkan operation.
+    /// Attempts to load vulkan and reports whether it succeeded.
     /// </summary>
-    /// <returns>Returns the result produced by the TryLoadVulkan operation.</returns>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     private static bool TryLoadVulkan() {
         try {
             uint propCount;
@@ -325,16 +323,16 @@ internal static unsafe class VulkanUtil {
 }
 
 /// <summary>
-/// Defines the behavior and responsibilities of the VkPhysicalDeviceMemoryPropertiesEx class.
+/// Provides the Vulkan backend implementation for VkPhysicalDeviceMemoryPropertiesEx.
 /// </summary>
 internal static unsafe class VkPhysicalDeviceMemoryPropertiesEx {
 
     /// <summary>
-    /// Executes the GetMemoryType operation.
+    /// Gets the memory type value.
     /// </summary>
-    /// <param name="memoryProperties">Specifies the value of <paramref name="memoryProperties" />.</param>
-    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
-    /// <returns>Returns the result produced by the GetMemoryType operation.</returns>
+    /// <param name="memoryProperties">The memory properties value used by this operation.</param>
+    /// <param name="index">The zero-based index of the target item.</param>
+    /// <returns>The value produced by this operation.</returns>
     public static VkMemoryType GetMemoryType(this VkPhysicalDeviceMemoryProperties memoryProperties, uint index) {
         return (&memoryProperties.memoryTypes_0)[index];
     }

@@ -42,7 +42,6 @@ public enum StencilOperation : byte {
 
     /// <summary>
     /// Decrements the existing value and wraps it to the maximum representable unsigned value if it would be reduced below
-    /// 0.
     /// </summary>
     DecrementAndWrap
 }

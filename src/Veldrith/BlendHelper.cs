@@ -1,15 +1,15 @@
 namespace Veldrith;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the BlendHelper class.
+/// Represents the BlendHelper type used by the graphics runtime.
 /// </summary>
 internal static class BlendHelper {
 
     /// <summary>
-    /// Executes the GetOrDefault operation.
+    /// Gets the or default value.
     /// </summary>
-    /// <param name="mask">Specifies the value of <paramref name="mask" />.</param>
-    /// <returns>Returns the result produced by the GetOrDefault operation.</returns>
+    /// <param name="mask">The mask value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public static ColorWriteMask GetOrDefault(this ColorWriteMask? mask) {
         return mask ?? ColorWriteMask.All;
     }

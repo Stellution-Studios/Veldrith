@@ -3,17 +3,17 @@ using System;
 namespace Veldrith;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the Texture class.
+/// Represents the Texture type used by the graphics runtime.
 /// </summary>
 public abstract class Texture : IDeviceResource, IMappableResource, IDisposable, IBindableResource {
 
     /// <summary>
-    /// Stores the value associated with <c>_fullTextureViewLock</c>.
+    /// Synchronizes access to the full texture view lock state.
     /// </summary>
     private readonly object _fullTextureViewLock = new();
 
     /// <summary>
-    /// Stores the value associated with <c>_fullTextureView</c>.
+    /// Stores the full texture view state used by this instance.
     /// </summary>
     private TextureView _fullTextureView;
 
@@ -49,7 +49,6 @@ public abstract class Texture : IDeviceResource, IMappableResource, IDisposable,
 
     /// <summary>
     /// The usage flags given when this instance was created. This property controls how this instance is permitted to be
-    /// used, and it is an error to attempt to use the Texture outside of those contexts.
     /// </summary>
     public abstract TextureUsage Usage { get; }
 
@@ -60,8 +59,6 @@ public abstract class Texture : IDeviceResource, IMappableResource, IDisposable,
 
     /// <summary>
     /// The number of samples in this instance. If this returns any value other than
-    /// <see cref="TextureSampleCount.Count1" />,
-    /// then this instance is a multipsample texture.
     /// </summary>
     public abstract TextureSampleCount SampleCount { get; }
 
@@ -72,14 +69,13 @@ public abstract class Texture : IDeviceResource, IMappableResource, IDisposable,
 
     /// <summary>
     /// A string identifying this instance. Can be used to differentiate between objects in graphics debuggers and other
-    /// tools.
     /// </summary>
     public abstract string Name { get; set; }
 
     #region Disposal
 
     /// <summary>
-    /// Executes the Dispose operation.
+    /// Releases resources held by this instance.
     /// </summary>
     public virtual void Dispose() {
         lock (this._fullTextureViewLock) {
@@ -92,20 +88,20 @@ public abstract class Texture : IDeviceResource, IMappableResource, IDisposable,
     #endregion
 
     /// <summary>
-    /// Executes the CalculateSubresource operation.
+    /// Executes the calculate subresource logic for this backend.
     /// </summary>
-    /// <param name="mipLevel">Specifies the value of <paramref name="mipLevel" />.</param>
-    /// <param name="arrayLayer">Specifies the value of <paramref name="arrayLayer" />.</param>
-    /// <returns>Returns the result produced by the CalculateSubresource operation.</returns>
+    /// <param name="mipLevel">The mip level index.</param>
+    /// <param name="arrayLayer">The array layer index.</param>
+    /// <returns>The value produced by this operation.</returns>
     public uint CalculateSubresource(uint mipLevel, uint arrayLayer) {
         return arrayLayer * this.MipLevels + mipLevel;
     }
 
     /// <summary>
-    /// Executes the GetFullTextureView operation.
+    /// Gets the full texture view value.
     /// </summary>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
-    /// <returns>Returns the result produced by the GetFullTextureView operation.</returns>
+    /// <param name="gd">The graphics device that owns this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal TextureView GetFullTextureView(GraphicsDevice gd) {
         lock (this._fullTextureViewLock) {
             return this._fullTextureView ??= this.CreateFullTextureView(gd);
@@ -113,16 +109,16 @@ public abstract class Texture : IDeviceResource, IMappableResource, IDisposable,
     }
 
     /// <summary>
-    /// Executes the CreateFullTextureView operation.
+    /// Creates the full texture view instance used by this backend.
     /// </summary>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
-    /// <returns>Returns the result produced by the CreateFullTextureView operation.</returns>
+    /// <param name="gd">The graphics device that owns this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private protected virtual TextureView CreateFullTextureView(GraphicsDevice gd) {
         return gd.ResourceFactory.CreateTextureView(this);
     }
 
     /// <summary>
-    /// Executes the DisposeCore operation.
+    /// Executes the dispose core logic for this backend.
     /// </summary>
     private protected abstract void DisposeCore();
 }

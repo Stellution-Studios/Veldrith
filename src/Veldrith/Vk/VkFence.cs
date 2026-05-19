@@ -4,35 +4,35 @@ using static Vulkan.VulkanNative;
 namespace Veldrith.Vk;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the VkFence class.
+/// Provides the Vulkan backend implementation for VkFence.
 /// </summary>
 internal unsafe class VkFence : Fence {
 
     /// <summary>
-    /// Stores the value associated with <c>_fence</c>.
+    /// Stores the fence state used by this instance.
     /// </summary>
     private readonly Vulkan.VkFence _fence;
 
     /// <summary>
-    /// Stores the value associated with <c>gd</c>.
+    /// Stores the gd state used by this instance.
     /// </summary>
     private readonly VkGraphicsDevice gd;
 
     /// <summary>
-    /// Stores the value associated with <c>_destroyed</c>.
+    /// Stores the destroyed state used by this instance.
     /// </summary>
     private bool _destroyed;
 
     /// <summary>
-    /// Stores the value associated with <c>_name</c>.
+    /// Stores the human-readable name associated with this instance.
     /// </summary>
     private string _name;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VkFence" /> type.
     /// </summary>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
-    /// <param name="signaled">Specifies the value of <paramref name="signaled" />.</param>
+    /// <param name="gd">The graphics device that owns this operation.</param>
+    /// <param name="signaled">The signaled value used by this operation.</param>
     public VkFence(VkGraphicsDevice gd, bool signaled) {
         this.gd = gd;
         VkFenceCreateInfo fenceCi = VkFenceCreateInfo.New();
@@ -42,7 +42,7 @@ internal unsafe class VkFence : Fence {
     }
 
     /// <summary>
-    /// Stores the value associated with <c>DeviceFence</c>.
+    /// Stores the device fence state used by this instance.
     /// </summary>
     public Vulkan.VkFence DeviceFence => this._fence;
 
@@ -70,7 +70,7 @@ internal unsafe class VkFence : Fence {
     #region Disposal
 
     /// <summary>
-    /// Executes the Dispose operation.
+    /// Releases resources held by this instance.
     /// </summary>
     public override void Dispose() {
         if (!this._destroyed) {
@@ -82,7 +82,7 @@ internal unsafe class VkFence : Fence {
     #endregion
 
     /// <summary>
-    /// Executes the Reset operation.
+    /// Resets this instance to its initial state.
     /// </summary>
     public override void Reset() {
         this.gd.ResetFence(this);

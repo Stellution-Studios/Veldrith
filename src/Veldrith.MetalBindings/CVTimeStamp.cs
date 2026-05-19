@@ -1,52 +1,52 @@
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Defines the data layout and behavior of the CVTimeStamp struct.
+/// Represents the CVTimeStamp data structure used by the graphics runtime.
 /// </summary>
 public struct CVTimeStamp {
 
     /// <summary>
-    /// Stores the value associated with <c>flags</c>.
+    /// Stores the flags state used by this instance.
     /// </summary>
     public ulong flags;
 
     /// <summary>
-    /// Stores the value associated with <c>hostTime</c>.
+    /// Stores the host time state used by this instance.
     /// </summary>
     public ulong hostTime;
 
     /// <summary>
-    /// Stores the value associated with <c>rateScalar</c>.
+    /// Stores the rate scalar state used by this instance.
     /// </summary>
     public double rateScalar;
 
     /// <summary>
-    /// Stores the value associated with <c>reserved</c>.
+    /// Stores the reserved state used by this instance.
     /// </summary>
     public ulong reserved;
 
     /// <summary>
-    /// Stores the value associated with <c>smpteTime</c>.
+    /// Stores the smpte time state used by this instance.
     /// </summary>
     public CVSMPTETime smpteTime;
 
     /// <summary>
-    /// Stores the value associated with <c>version</c>.
+    /// Stores the version state used by this instance.
     /// </summary>
     public uint version;
 
     /// <summary>
-    /// Stores the value associated with <c>videoRefreshPeriod</c>.
+    /// Stores the video refresh period state used by this instance.
     /// </summary>
     public long videoRefreshPeriod;
 
     /// <summary>
-    /// Stores the value associated with <c>videoTime</c>.
+    /// Stores the video time state used by this instance.
     /// </summary>
     public long videoTime;
 
     /// <summary>
-    /// Stores the value associated with <c>videoTimeScale</c>.
+    /// Stores the video time scale state used by this instance.
     /// </summary>
     public int videoTimeScale;
 }

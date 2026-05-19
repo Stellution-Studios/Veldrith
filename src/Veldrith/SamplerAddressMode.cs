@@ -22,7 +22,6 @@ public enum SamplerAddressMode : byte {
 
     /// <summary>
     /// Texture coordinates that overflow return the predefined border color defined in
-    /// <see cref="SamplerDescription.BorderColor" />.
     /// </summary>
     Border
 }

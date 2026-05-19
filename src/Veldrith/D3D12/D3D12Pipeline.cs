@@ -7,46 +7,45 @@ using Vortice.DXGI;
 namespace Veldrith.D3D12;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the D3D12Pipeline class.
+/// Provides the Direct3D 12 backend implementation for D3D12Pipeline.
 /// </summary>
 internal sealed class D3D12Pipeline : Pipeline {
 
     /// <summary>
-    /// Stores the value associated with <c>_pipelineResourceLayouts</c>.
+    /// Stores the pipeline resource layouts state used by this instance.
     /// </summary>
     private readonly ResourceLayout[] _pipelineResourceLayouts;
 
     /// <summary>
-    /// Stores the value associated with <c>gd</c>.
+    /// Stores the gd state used by this instance.
     /// </summary>
     private readonly D3D12GraphicsDevice gd;
 
     /// <summary>
-    /// Stores the value associated with <c>_disposed</c>.
+    /// Stores the disposed state used by this instance.
     /// </summary>
     private bool _disposed;
 
     /// <summary>
-    /// Stores the value associated with <c>_rootBindings</c>.
+    /// Executes the value logic for this backend.
     /// </summary>
     private RootBindingInfo[][] _rootBindings = Array.Empty<RootBindingInfo[]>();
 
     /// <summary>
-    /// Stores the value associated with <c>_rootBindingValid</c>.
+    /// Executes the value logic for this backend.
     /// </summary>
     private bool[][] _rootBindingValid = Array.Empty<bool[]>();
 
     /// <summary>
-    /// Stores the value associated with <c>_usingSetRegisterSpaces</c>.
+    /// Stores the using set register spaces state used by this instance.
     /// </summary>
     private bool _usingSetRegisterSpaces;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="D3D12Pipeline" /> class.
     /// </summary>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
-    /// <returns>Returns the result produced by the base operation.</returns>
+    /// <param name="gd">The graphics device that owns this operation.</param>
+    /// <param name="description">The description used to configure this operation.</param>
     public D3D12Pipeline(D3D12GraphicsDevice gd, ref GraphicsPipelineDescription description) : base(ref description) {
         this.gd = gd;
         this.IsComputePipeline = false;
@@ -72,9 +71,8 @@ internal sealed class D3D12Pipeline : Pipeline {
     /// <summary>
     /// Initializes a new instance of the <see cref="D3D12Pipeline" /> class.
     /// </summary>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
-    /// <returns>Returns the result produced by the base operation.</returns>
+    /// <param name="gd">The graphics device that owns this operation.</param>
+    /// <param name="description">The description used to configure this operation.</param>
     public D3D12Pipeline(D3D12GraphicsDevice gd, ref ComputePipelineDescription description) : base(ref description) {
         this.gd = gd;
         this.IsComputePipeline = true;
@@ -130,7 +128,7 @@ internal sealed class D3D12Pipeline : Pipeline {
     public override string Name { get; set; }
 
     /// <summary>
-    /// Executes the Dispose operation.
+    /// Releases resources held by this instance.
     /// </summary>
     public override void Dispose() {
         if (this._disposed) {
@@ -142,32 +140,32 @@ internal sealed class D3D12Pipeline : Pipeline {
     }
 
     /// <summary>
-    /// Executes the TryGetGraphicsRootBinding operation.
+    /// Attempts to get graphics root binding and reports whether it succeeded.
     /// </summary>
-    /// <param name="set">Specifies the value of <paramref name="set" />.</param>
-    /// <param name="element">Specifies the value of <paramref name="element" />.</param>
-    /// <param name="bindingInfo">Specifies the value of <paramref name="bindingInfo" />.</param>
-    /// <returns>Returns the result produced by the TryGetGraphicsRootBinding operation.</returns>
+    /// <param name="set">The set value used by this operation.</param>
+    /// <param name="element">The element value used by this operation.</param>
+    /// <param name="bindingInfo">The binding info value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     internal bool TryGetGraphicsRootBinding(uint set, uint element, out RootBindingInfo bindingInfo) {
         return this.TryGetRootBinding(set, element, out bindingInfo);
     }
 
     /// <summary>
-    /// Executes the TryGetComputeRootBinding operation.
+    /// Attempts to get compute root binding and reports whether it succeeded.
     /// </summary>
-    /// <param name="set">Specifies the value of <paramref name="set" />.</param>
-    /// <param name="element">Specifies the value of <paramref name="element" />.</param>
-    /// <param name="bindingInfo">Specifies the value of <paramref name="bindingInfo" />.</param>
-    /// <returns>Returns the result produced by the TryGetComputeRootBinding operation.</returns>
+    /// <param name="set">The set value used by this operation.</param>
+    /// <param name="element">The element value used by this operation.</param>
+    /// <param name="bindingInfo">The binding info value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     internal bool TryGetComputeRootBinding(uint set, uint element, out RootBindingInfo bindingInfo) {
         return this.TryGetRootBinding(set, element, out bindingInfo);
     }
 
     /// <summary>
-    /// Executes the CreateRootSignature operation.
+    /// Creates the root signature instance used by this backend.
     /// </summary>
-    /// <param name="resourceLayouts">Specifies the value of <paramref name="resourceLayouts" />.</param>
-    /// <param name="useSetRegisterSpaces">Specifies the value of <paramref name="useSetRegisterSpaces" />.</param>
+    /// <param name="resourceLayouts">The resource layout used by this operation.</param>
+    /// <param name="useSetRegisterSpaces">The use set register spaces value used by this operation.</param>
     private void CreateRootSignature(ResourceLayout[] resourceLayouts, bool useSetRegisterSpaces) {
         this._usingSetRegisterSpaces = useSetRegisterSpaces;
         List<RootParameter> rootParameters = new();
@@ -222,7 +220,7 @@ internal sealed class D3D12Pipeline : Pipeline {
     }
 
     /// <summary>
-    /// Executes the RecreateRootSignatureWithoutSetSpaces operation.
+    /// Executes the recreate root signature without set spaces logic for this backend.
     /// </summary>
     private void RecreateRootSignatureWithoutSetSpaces() {
         if (!this._usingSetRegisterSpaces) {
@@ -233,14 +231,14 @@ internal sealed class D3D12Pipeline : Pipeline {
     }
 
     /// <summary>
-    /// Executes the AllocateShaderRegister operation.
+    /// Executes the allocate shader register logic for this backend.
     /// </summary>
-    /// <param name="resourceKind">Specifies the value of <paramref name="resourceKind" />.</param>
-    /// <param name="nextCbvRegister">Specifies the value of <paramref name="nextCbvRegister" />.</param>
-    /// <param name="nextSrvRegister">Specifies the value of <paramref name="nextSrvRegister" />.</param>
-    /// <param name="nextUavRegister">Specifies the value of <paramref name="nextUavRegister" />.</param>
-    /// <param name="nextSamplerRegister">Specifies the value of <paramref name="nextSamplerRegister" />.</param>
-    /// <returns>Returns the result produced by the AllocateShaderRegister operation.</returns>
+    /// <param name="resourceKind">The resource kind value used by this operation.</param>
+    /// <param name="nextCbvRegister">The next cbv register value used by this operation.</param>
+    /// <param name="nextSrvRegister">The next srv register value used by this operation.</param>
+    /// <param name="nextUavRegister">The next uav register value used by this operation.</param>
+    /// <param name="nextSamplerRegister">The next sampler register value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static uint AllocateShaderRegister(ResourceKind resourceKind, ref uint nextCbvRegister, ref uint nextSrvRegister, ref uint nextUavRegister, ref uint nextSamplerRegister) {
         switch (resourceKind) {
             case ResourceKind.UniformBuffer: return nextCbvRegister++;
@@ -252,12 +250,12 @@ internal sealed class D3D12Pipeline : Pipeline {
     }
 
     /// <summary>
-    /// Executes the TryGetRootBinding operation.
+    /// Attempts to get root binding and reports whether it succeeded.
     /// </summary>
-    /// <param name="set">Specifies the value of <paramref name="set" />.</param>
-    /// <param name="element">Specifies the value of <paramref name="element" />.</param>
-    /// <param name="bindingInfo">Specifies the value of <paramref name="bindingInfo" />.</param>
-    /// <returns>Returns the result produced by the TryGetRootBinding operation.</returns>
+    /// <param name="set">The set value used by this operation.</param>
+    /// <param name="element">The element value used by this operation.</param>
+    /// <param name="bindingInfo">The binding info value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     private bool TryGetRootBinding(uint set, uint element, out RootBindingInfo bindingInfo) {
         if (set < (uint)this._rootBindings.Length
             && element < (uint)this._rootBindings[set].Length
@@ -271,9 +269,9 @@ internal sealed class D3D12Pipeline : Pipeline {
     }
 
     /// <summary>
-    /// Executes the InitializeRootBindingTables operation.
+    /// Executes the initialize root binding tables logic for this backend.
     /// </summary>
-    /// <param name="resourceLayouts">Specifies the value of <paramref name="resourceLayouts" />.</param>
+    /// <param name="resourceLayouts">The resource layout used by this operation.</param>
     private void InitializeRootBindingTables(ResourceLayout[] resourceLayouts) {
         if (resourceLayouts == null || resourceLayouts.Length == 0) {
             this._rootBindings = Array.Empty<RootBindingInfo[]>();
@@ -292,12 +290,12 @@ internal sealed class D3D12Pipeline : Pipeline {
     }
 
     /// <summary>
-    /// Executes the BuildRootSignatureCacheKey operation.
+    /// Executes the build root signature cache key logic for this backend.
     /// </summary>
-    /// <param name="resourceLayouts">Specifies the value of <paramref name="resourceLayouts" />.</param>
-    /// <param name="useSetRegisterSpaces">Specifies the value of <paramref name="useSetRegisterSpaces" />.</param>
-    /// <param name="isComputePipeline">Specifies the value of <paramref name="isComputePipeline" />.</param>
-    /// <returns>Returns the result produced by the BuildRootSignatureCacheKey operation.</returns>
+    /// <param name="resourceLayouts">The resource layout used by this operation.</param>
+    /// <param name="useSetRegisterSpaces">The use set register spaces value used by this operation.</param>
+    /// <param name="isComputePipeline">The is compute pipeline value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static string BuildRootSignatureCacheKey(ResourceLayout[] resourceLayouts, bool useSetRegisterSpaces, bool isComputePipeline) {
         StringBuilder sb = new(256);
         sb.Append(isComputePipeline ? 'C' : 'G');
@@ -329,9 +327,9 @@ internal sealed class D3D12Pipeline : Pipeline {
     }
 
     /// <summary>
-    /// Executes the CreateComputePipelineState operation.
+    /// Creates the compute pipeline state instance used by this backend.
     /// </summary>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <param name="description">The description used to configure this operation.</param>
     private void CreateComputePipelineState(ref ComputePipelineDescription description) {
         D3D12Shader d3d12Shader = Util.AssertSubtype<Shader, D3D12Shader>(description.ComputeShader);
         ComputePipelineStateDescription psoDescription = new() {
@@ -343,10 +341,10 @@ internal sealed class D3D12Pipeline : Pipeline {
     }
 
     /// <summary>
-    /// Executes the GetRootParameterType operation.
+    /// Gets the root parameter type value.
     /// </summary>
-    /// <param name="resourceKind">Specifies the value of <paramref name="resourceKind" />.</param>
-    /// <returns>Returns the result produced by the GetRootParameterType operation.</returns>
+    /// <param name="resourceKind">The resource kind value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static RootParameterType GetRootParameterType(ResourceKind resourceKind) {
         switch (resourceKind) {
             case ResourceKind.UniformBuffer: return RootParameterType.ConstantBufferView;
@@ -358,10 +356,10 @@ internal sealed class D3D12Pipeline : Pipeline {
     }
 
     /// <summary>
-    /// Executes the UsesDescriptorTable operation.
+    /// Executes the uses descriptor table logic for this backend.
     /// </summary>
-    /// <param name="resourceKind">Specifies the value of <paramref name="resourceKind" />.</param>
-    /// <returns>Returns the result produced by the UsesDescriptorTable operation.</returns>
+    /// <param name="resourceKind">The resource kind value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     private static bool UsesDescriptorTable(ResourceKind resourceKind) {
         return resourceKind == ResourceKind.TextureReadOnly
                || resourceKind == ResourceKind.TextureReadWrite
@@ -369,10 +367,10 @@ internal sealed class D3D12Pipeline : Pipeline {
     }
 
     /// <summary>
-    /// Executes the GetDescriptorRangeType operation.
+    /// Gets the descriptor range type value.
     /// </summary>
-    /// <param name="resourceKind">Specifies the value of <paramref name="resourceKind" />.</param>
-    /// <returns>Returns the result produced by the GetDescriptorRangeType operation.</returns>
+    /// <param name="resourceKind">The resource kind value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static DescriptorRangeType GetDescriptorRangeType(ResourceKind resourceKind) {
         switch (resourceKind) {
             case ResourceKind.TextureReadOnly: return DescriptorRangeType.ShaderResourceView;
@@ -383,10 +381,10 @@ internal sealed class D3D12Pipeline : Pipeline {
     }
 
     /// <summary>
-    /// Executes the ToShaderVisibility operation.
+    /// Executes the to shader visibility logic for this backend.
     /// </summary>
-    /// <param name="stages">Specifies the value of <paramref name="stages" />.</param>
-    /// <returns>Returns the result produced by the ToShaderVisibility operation.</returns>
+    /// <param name="stages">The stages value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static ShaderVisibility ToShaderVisibility(ShaderStages stages) {
         if (stages == ShaderStages.Vertex) {
             return ShaderVisibility.Vertex;
@@ -412,9 +410,9 @@ internal sealed class D3D12Pipeline : Pipeline {
     }
 
     /// <summary>
-    /// Executes the CreateGraphicsPipelineState operation.
+    /// Creates the graphics pipeline state instance used by this backend.
     /// </summary>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <param name="description">The description used to configure this operation.</param>
     private void CreateGraphicsPipelineState(ref GraphicsPipelineDescription description) {
         ReadOnlyMemory<byte> vertexShader = default;
         ReadOnlyMemory<byte> pixelShader = default;
@@ -483,10 +481,10 @@ internal sealed class D3D12Pipeline : Pipeline {
     }
 
     /// <summary>
-    /// Executes the BuildBlendState operation.
+    /// Executes the build blend state logic for this backend.
     /// </summary>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
-    /// <returns>Returns the result produced by the BuildBlendState operation.</returns>
+    /// <param name="description">The description used to configure this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static BlendDescription BuildBlendState(ref BlendStateDescription description) {
         BlendDescription blendDescription = BlendDescription.Opaque;
         blendDescription.AlphaToCoverageEnable = description.AlphaToCoverageEnabled;
@@ -513,10 +511,10 @@ internal sealed class D3D12Pipeline : Pipeline {
     }
 
     /// <summary>
-    /// Executes the BuildRasterizerState operation.
+    /// Executes the build rasterizer state logic for this backend.
     /// </summary>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
-    /// <returns>Returns the result produced by the BuildRasterizerState operation.</returns>
+    /// <param name="description">The description used to configure this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static RasterizerDescription BuildRasterizerState(ref RasterizerStateDescription description) {
         return new RasterizerDescription {
             FillMode = D3D12Formats.ToFillMode(description.FillMode),
@@ -531,10 +529,10 @@ internal sealed class D3D12Pipeline : Pipeline {
     }
 
     /// <summary>
-    /// Executes the BuildDepthStencilState operation.
+    /// Executes the build depth stencil state logic for this backend.
     /// </summary>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
-    /// <returns>Returns the result produced by the BuildDepthStencilState operation.</returns>
+    /// <param name="description">The description used to configure this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static DepthStencilDescription BuildDepthStencilState(ref DepthStencilStateDescription description) {
         return new DepthStencilDescription {
             DepthEnable = description.DepthTestEnabled,
@@ -549,10 +547,10 @@ internal sealed class D3D12Pipeline : Pipeline {
     }
 
     /// <summary>
-    /// Executes the BuildInputElements operation.
+    /// Executes the build input elements logic for this backend.
     /// </summary>
-    /// <param name="vertexLayouts">Specifies the value of <paramref name="vertexLayouts" />.</param>
-    /// <returns>Returns the result produced by the BuildInputElements operation.</returns>
+    /// <param name="vertexLayouts">The resource layout used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static InputElementDescription[] BuildInputElements(VertexLayoutDescription[] vertexLayouts) {
         if (vertexLayouts == null || vertexLayouts.Length == 0) {
             return Array.Empty<InputElementDescription>();
@@ -581,16 +579,16 @@ internal sealed class D3D12Pipeline : Pipeline {
     }
 
     /// <summary>
-    /// Defines the data layout and behavior of the RootBindingInfo struct.
+    /// Represents the RootBindingInfo data structure used by the graphics runtime.
     /// </summary>
     internal readonly struct RootBindingInfo {
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RootBindingInfo" /> type.
         /// </summary>
-        /// <param name="rootParameterIndex">Specifies the value of <paramref name="rootParameterIndex" />.</param>
-        /// <param name="kind">Specifies the value of <paramref name="kind" />.</param>
-        /// <param name="descriptorTable">Specifies the value of <paramref name="descriptorTable" />.</param>
+        /// <param name="rootParameterIndex">The root parameter index value used by this operation.</param>
+        /// <param name="kind">The kind value used by this operation.</param>
+        /// <param name="descriptorTable">The descriptor table value used by this operation.</param>
         public RootBindingInfo(uint rootParameterIndex, ResourceKind kind, bool descriptorTable) {
             this.RootParameterIndex = rootParameterIndex;
             this.Kind = kind;

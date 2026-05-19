@@ -6,7 +6,7 @@ namespace Veldrith.MetalBindings;
 public enum MTLTriangleFillMode : uint {
 
     /// <summary>
-    /// Stores the value associated with <c>Fill</c>.
+    /// Stores the fill state used by this instance.
     /// </summary>
     Fill = 0, Lines = 1
 }

@@ -3,15 +3,15 @@ using System.Text;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the MTLUtil class.
+/// Provides Objective-C interop bindings for MTLUtil.
 /// </summary>
 public static class MTLUtil {
 
     /// <summary>
-    /// Executes the GetUtf8String operation.
+    /// Gets the utf8 string value.
     /// </summary>
-    /// <param name="stringStart">Specifies the value of <paramref name="stringStart" />.</param>
-    /// <returns>Returns the result produced by the GetUtf8String operation.</returns>
+    /// <param name="stringStart">The string start value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public static unsafe string GetUtf8String(byte* stringStart) {
         int characters = 0;
         while (stringStart[characters] != 0) {

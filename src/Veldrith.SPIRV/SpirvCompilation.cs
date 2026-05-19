@@ -5,41 +5,39 @@ using Silk.NET.Shaderc;
 namespace Veldrith.SPIRV;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the SpirvCompilation class.
+/// Provides SPIR-V compilation support for SpirvCompilation.
 /// </summary>
 public static unsafe class SpirvCompilation {
 
     /// <summary>
-    /// Executes the GetApi operation.
+    /// Gets the api value.
     /// </summary>
-    /// <returns>Returns the result produced by the GetApi operation.</returns>
     private static readonly Shaderc s_shaderc = Shaderc.GetApi();
 
     /// <summary>
-    /// Executes the CompilerInitialize operation.
+    /// Executes the compiler initialize logic for this backend.
     /// </summary>
-    /// <returns>Returns the result produced by the CompilerInitialize operation.</returns>
     private static readonly Compiler* s_compiler = s_shaderc.CompilerInitialize();
 
     /// <summary>
-    /// Executes the CompileVertexFragment operation.
+    /// Executes the compile vertex fragment logic for this backend.
     /// </summary>
-    /// <param name="vsBytes">Specifies the value of <paramref name="vsBytes" />.</param>
-    /// <param name="fsBytes">Specifies the value of <paramref name="fsBytes" />.</param>
-    /// <param name="target">Specifies the value of <paramref name="target" />.</param>
-    /// <returns>Returns the result produced by the CompileVertexFragment operation.</returns>
+    /// <param name="vsBytes">The vs bytes value used by this operation.</param>
+    /// <param name="fsBytes">The fs bytes value used by this operation.</param>
+    /// <param name="target">The target value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public static VertexFragmentCompilationResult CompileVertexFragment(byte[] vsBytes, byte[] fsBytes, CrossCompileTarget target) {
         return CompileVertexFragment(vsBytes, fsBytes, target, new CrossCompileOptions());
     }
 
     /// <summary>
-    /// Executes the CompileVertexFragment operation.
+    /// Executes the compile vertex fragment logic for this backend.
     /// </summary>
-    /// <param name="vsBytes">Specifies the value of <paramref name="vsBytes" />.</param>
-    /// <param name="fsBytes">Specifies the value of <paramref name="fsBytes" />.</param>
-    /// <param name="target">Specifies the value of <paramref name="target" />.</param>
-    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
-    /// <returns>Returns the result produced by the CompileVertexFragment operation.</returns>
+    /// <param name="vsBytes">The vs bytes value used by this operation.</param>
+    /// <param name="fsBytes">The fs bytes value used by this operation.</param>
+    /// <param name="target">The target value used by this operation.</param>
+    /// <param name="options">The options used to configure this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public static VertexFragmentCompilationResult CompileVertexFragment(byte[] vsBytes, byte[] fsBytes, CrossCompileTarget target, CrossCompileOptions options) {
         byte[] vsSpirvBytes = EnsureSpirvBytes(vsBytes, ShaderStages.Vertex, target);
         byte[] fsSpirvBytes = EnsureSpirvBytes(fsBytes, ShaderStages.Fragment, target);
@@ -47,35 +45,35 @@ public static unsafe class SpirvCompilation {
     }
 
     /// <summary>
-    /// Executes the CompileCompute operation.
+    /// Executes the compile compute logic for this backend.
     /// </summary>
-    /// <param name="csBytes">Specifies the value of <paramref name="csBytes" />.</param>
-    /// <param name="target">Specifies the value of <paramref name="target" />.</param>
-    /// <returns>Returns the result produced by the CompileCompute operation.</returns>
+    /// <param name="csBytes">The cs bytes value used by this operation.</param>
+    /// <param name="target">The target value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public static ComputeCompilationResult CompileCompute(byte[] csBytes, CrossCompileTarget target) {
         return CompileCompute(csBytes, target, new CrossCompileOptions());
     }
 
     /// <summary>
-    /// Executes the CompileCompute operation.
+    /// Executes the compile compute logic for this backend.
     /// </summary>
-    /// <param name="csBytes">Specifies the value of <paramref name="csBytes" />.</param>
-    /// <param name="target">Specifies the value of <paramref name="target" />.</param>
-    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
-    /// <returns>Returns the result produced by the CompileCompute operation.</returns>
+    /// <param name="csBytes">The cs bytes value used by this operation.</param>
+    /// <param name="target">The target value used by this operation.</param>
+    /// <param name="options">The options used to configure this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public static ComputeCompilationResult CompileCompute(byte[] csBytes, CrossCompileTarget target, CrossCompileOptions options) {
         byte[] csSpirvBytes = EnsureSpirvBytes(csBytes, ShaderStages.Compute, target);
         return SpirvCrossCompiler.CompileCompute(csSpirvBytes, target, options);
     }
 
     /// <summary>
-    /// Executes the CompileGlslToSpirv operation.
+    /// Executes the compile glsl to spirv logic for this backend.
     /// </summary>
-    /// <param name="sourceText">Specifies the value of <paramref name="sourceText" />.</param>
-    /// <param name="fileName">Specifies the value of <paramref name="fileName" />.</param>
-    /// <param name="stage">Specifies the value of <paramref name="stage" />.</param>
-    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
-    /// <returns>Returns the result produced by the CompileGlslToSpirv operation.</returns>
+    /// <param name="sourceText">The source text value used by this operation.</param>
+    /// <param name="fileName">The file name value used by this operation.</param>
+    /// <param name="stage">The stage value used by this operation.</param>
+    /// <param name="options">The options used to configure this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public static SpirvCompilationResult CompileGlslToSpirv(string sourceText, string fileName, ShaderStages stage, GlslCompileOptions options) {
         Shaderc shaderc = s_shaderc;
         Compiler* compiler = s_compiler;
@@ -157,12 +155,12 @@ public static unsafe class SpirvCompilation {
     }
 
     /// <summary>
-    /// Executes the EnsureSpirvBytes operation.
+    /// Executes the ensure spirv bytes logic for this backend.
     /// </summary>
-    /// <param name="bytes">Specifies the value of <paramref name="bytes" />.</param>
-    /// <param name="stage">Specifies the value of <paramref name="stage" />.</param>
-    /// <param name="target">Specifies the value of <paramref name="target" />.</param>
-    /// <returns>Returns the result produced by the EnsureSpirvBytes operation.</returns>
+    /// <param name="bytes">The bytes value used by this operation.</param>
+    /// <param name="stage">The stage value used by this operation.</param>
+    /// <param name="target">The target value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static byte[] EnsureSpirvBytes(byte[] bytes, ShaderStages stage, CrossCompileTarget target) {
         if (HasSpirvHeader(bytes)) {
             return bytes;
@@ -175,10 +173,10 @@ public static unsafe class SpirvCompilation {
     }
 
     /// <summary>
-    /// Executes the HasSpirvHeader operation.
+    /// Executes the has spirv header logic for this backend.
     /// </summary>
-    /// <param name="bytes">Specifies the value of <paramref name="bytes" />.</param>
-    /// <returns>Returns the result produced by the HasSpirvHeader operation.</returns>
+    /// <param name="bytes">The bytes value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     internal static bool HasSpirvHeader(byte[] bytes) {
         return bytes.Length > 4
                && bytes[0] == 0x03
@@ -188,10 +186,10 @@ public static unsafe class SpirvCompilation {
     }
 
     /// <summary>
-    /// Executes the GetShadercKind operation.
+    /// Gets the shaderc kind value.
     /// </summary>
-    /// <param name="stage">Specifies the value of <paramref name="stage" />.</param>
-    /// <returns>Returns the result produced by the GetShadercKind operation.</returns>
+    /// <param name="stage">The stage value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static ShaderKind GetShadercKind(ShaderStages stage) {
         return stage switch {
             ShaderStages.Vertex => ShaderKind.VertexShader,

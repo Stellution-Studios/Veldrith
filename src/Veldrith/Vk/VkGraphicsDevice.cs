@@ -12,229 +12,228 @@ using static Vulkan.VulkanNative;
 namespace Veldrith.Vk;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the VkGraphicsDevice class.
+/// Provides the Vulkan backend implementation for VkGraphicsDevice.
 /// </summary>
 internal unsafe class VkGraphicsDevice : GraphicsDevice {
 
     /// <summary>
-    /// Stores the value associated with <c>_vk_instance_create_enumerate_portability_bit_khr</c>.
+    /// Stores the vk instance create enumerate portability bit khr state used by this instance.
     /// </summary>
     private const uint _vk_instance_create_enumerate_portability_bit_khr = 0x00000001;
 
     /// <summary>
-    /// Stores the value associated with <c>_shared_command_pool_count</c>.
+    /// Stores the shared command pool count value used during command execution.
     /// </summary>
     private const int _shared_command_pool_count = 4;
 
     // Staging Resources
 
     /// <summary>
-    /// Stores the value associated with <c>_min_staging_buffer_size</c>.
+    /// Stores the min staging buffer size value used during command execution.
     /// </summary>
     private const uint _min_staging_buffer_size = 64;
 
     /// <summary>
-    /// Stores the value associated with <c>_max_staging_buffer_size</c>.
+    /// Stores the max staging buffer size value used during command execution.
     /// </summary>
     private const uint _max_staging_buffer_size = 512;
 
     /// <summary>
-    /// Stores the value associated with <c>_s_name</c>.
+    /// Stores the human-readable name associated with this instance.
     /// </summary>
     private static readonly FixedUtf8String _s_name = "Veldrith-VkGraphicsDevice";
 
     /// <summary>
-    /// Stores the value associated with <c>name</c>.
+    /// Stores the s is supported state used by this instance.
     /// </summary>
-    /// <param name="checkIsSupported">Specifies the value of <paramref name="checkIsSupported" />.</param>
-    /// <param name="true">Specifies the value of <paramref name="true" />.</param>
-    /// <returns>Returns the result produced by the new operation.</returns>
+
+
     private static readonly Lazy<bool> _s_is_supported = new(checkIsSupported, true);
 
     /// <summary>
-    /// Stores the value associated with <c>_availableStagingBuffers</c>.
+    /// Stores the available staging buffers collection used by this instance.
     /// </summary>
     private readonly List<VkBuffer> _availableStagingBuffers = new();
 
     /// <summary>
-    /// Stores the value associated with <c>_availableStagingTextures</c>.
+    /// Stores the available staging textures collection used by this instance.
     /// </summary>
     private readonly List<VkTexture> _availableStagingTextures = new();
 
     /// <summary>
-    /// Stores the value associated with <c>_availableSubmissionFences</c>.
+    /// Stores the available submission fences collection used by this instance.
     /// </summary>
     private readonly ConcurrentQueue<Vulkan.VkFence> _availableSubmissionFences = new();
 
     /// <summary>
-    /// Stores the value associated with <c>_filters</c>.
+    /// Stores the filters state used by this instance.
     /// </summary>
     private readonly ConcurrentDictionary<VkFormat, VkFilter> _filters = new();
 
     /// <summary>
-    /// Stores the value associated with <c>_graphicsCommandPoolLock</c>.
+    /// Synchronizes access to the graphics command pool lock state.
     /// </summary>
     private readonly object _graphicsCommandPoolLock = new();
 
     /// <summary>
-    /// Stores the value associated with <c>_graphicsQueueLock</c>.
+    /// Synchronizes access to the graphics queue lock state.
     /// </summary>
     private readonly object _graphicsQueueLock = new();
 
     /// <summary>
-    /// Stores the value associated with <c>_mainSwapchain</c>.
+    /// Stores the main swapchain state used by this instance.
     /// </summary>
     private readonly VkSwapchain _mainSwapchain;
 
     /// <summary>
-    /// Stores the value associated with <c>_sharedGraphicsCommandPools</c>.
+    /// Stores the shared graphics command pools collection used by this instance.
     /// </summary>
     private readonly Stack<SharedCommandPool> _sharedGraphicsCommandPools = new();
 
     /// <summary>
-    /// Stores the value associated with <c>_stagingResourcesLock</c>.
+    /// Stores the staging resources lock collection used by this instance.
     /// </summary>
     private readonly object _stagingResourcesLock = new();
 
     /// <summary>
-    /// Stores the value associated with <c>_submittedFences</c>.
+    /// Stores the submitted fences collection used by this instance.
     /// </summary>
     private readonly List<FenceSubmissionInfo> _submittedFences = new();
 
     /// <summary>
-    /// Stores the value associated with <c>_submittedFencesLock</c>.
+    /// Synchronizes access to the submitted fences lock state.
     /// </summary>
     private readonly object _submittedFencesLock = new();
 
     /// <summary>
-    /// Stores the value associated with <c>_submittedSharedCommandPools</c>.
+    /// Stores the submitted shared command pools collection used by this instance.
     /// </summary>
     private readonly Dictionary<VkCommandBuffer, SharedCommandPool> _submittedSharedCommandPools = new();
 
     /// <summary>
-    /// Stores the value associated with <c>_submittedStagingBuffers</c>.
+    /// Stores the submitted staging buffers collection used by this instance.
     /// </summary>
     private readonly Dictionary<VkCommandBuffer, VkBuffer> _submittedStagingBuffers = new();
 
     /// <summary>
-    /// Stores the value associated with <c>_submittedStagingTextures</c>.
+    /// Stores the submitted staging textures collection used by this instance.
     /// </summary>
     private readonly Dictionary<VkCommandBuffer, VkTexture> _submittedStagingTextures = new();
 
     /// <summary>
-    /// Stores the value associated with <c>_surfaceExtensions</c>.
+    /// Stores the surface extensions state used by this instance.
     /// </summary>
     private readonly List<FixedUtf8String> _surfaceExtensions = new();
 
     /// <summary>
-    /// Stores the value associated with <c>_vulkanInfo</c>.
+    /// Stores the vulkan info state used by this instance.
     /// </summary>
     private readonly BackendInfoVulkan _vulkanInfo;
 
     /// <summary>
-    /// Stores the value associated with <c>_apiVersion</c>.
+    /// Stores the api version state used by this instance.
     /// </summary>
     private GraphicsApiVersion _apiVersion;
 
     /// <summary>
-    /// Stores the value associated with <c>_debugCallbackFunc</c>.
+    /// Stores the debug callback func state used by this instance.
     /// </summary>
     private PFN_vkDebugReportCallbackEXT _debugCallbackFunc;
 
     /// <summary>
-    /// Stores the value associated with <c>_debugCallbackHandle</c>.
+    /// Stores the debug callback handle state used by this instance.
     /// </summary>
     private VkDebugReportCallbackEXT _debugCallbackHandle;
 
     /// <summary>
-    /// Stores the value associated with <c>_debugMarkerEnabled</c>.
+    /// Stores the debug marker enabled state used by this instance.
     /// </summary>
     private bool _debugMarkerEnabled;
 
     /// <summary>
-    /// Stores the value associated with <c>_deviceName</c>.
+    /// Stores the device name state used by this instance.
     /// </summary>
     private string _deviceName;
 
     /// <summary>
-    /// Stores the value associated with <c>_getPhysicalDeviceProperties2</c>.
+    /// Stores the get physical device properties2 state used by this instance.
     /// </summary>
     private VkGetPhysicalDeviceProperties2T _getPhysicalDeviceProperties2;
 
     /// <summary>
-    /// Stores the value associated with <c>_graphicsCommandPool</c>.
+    /// Stores the graphics command pool state used by this instance.
     /// </summary>
     private VkCommandPool _graphicsCommandPool;
 
     /// <summary>
-    /// Stores the value associated with <c>_graphicsQueue</c>.
+    /// Stores the graphics queue state used by this instance.
     /// </summary>
     private VkQueue _graphicsQueue;
 
     /// <summary>
-    /// Stores the value associated with <c>_khronosValidationSupported</c>.
+    /// Stores the khronos validation supported state used by this instance.
     /// </summary>
     private bool _khronosValidationSupported;
 
     /// <summary>
-    /// Stores the value associated with <c>_physicalDeviceFeatures</c>.
+    /// Stores the physical device features state used by this instance.
     /// </summary>
     private VkPhysicalDeviceFeatures _physicalDeviceFeatures;
 
     /// <summary>
-    /// Stores the value associated with <c>_physicalDeviceMemProperties</c>.
+    /// Stores the physical device mem properties state used by this instance.
     /// </summary>
     private VkPhysicalDeviceMemoryProperties _physicalDeviceMemProperties;
 
     /// <summary>
-    /// Stores the value associated with <c>_physicalDeviceProperties</c>.
+    /// Stores the physical device properties state used by this instance.
     /// </summary>
     private VkPhysicalDeviceProperties _physicalDeviceProperties;
 
     /// <summary>
-    /// Stores the value associated with <c>_setObjectNameDelegate</c>.
+    /// Stores the set object name delegate state used by this instance.
     /// </summary>
     private VkDebugMarkerSetObjectNameExtT _setObjectNameDelegate;
 
     /// <summary>
-    /// Stores the value associated with <c>_standardClipYDirection</c>.
+    /// Stores the standard clip ydirection state used by this instance.
     /// </summary>
     private bool _standardClipYDirection;
 
     /// <summary>
-    /// Stores the value associated with <c>_standardValidationSupported</c>.
+    /// Stores the standard validation supported state used by this instance.
     /// </summary>
     private bool _standardValidationSupported;
 
     /// <summary>
-    /// Stores the value associated with <c>_vendorName</c>.
+    /// Stores the vendor name state used by this instance.
     /// </summary>
     private string _vendorName;
 
     /// <summary>
-    /// Stores the value associated with <c>device</c>.
+    /// Stores the device state used by this instance.
     /// </summary>
     private VkDevice device;
 
     /// <summary>
-    /// Stores the value associated with <c>instance</c>.
+    /// Stores the instance state used by this instance.
     /// </summary>
     private VkInstance instance;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VkGraphicsDevice" /> type.
     /// </summary>
-    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
-    /// <param name="scDesc">Specifies the value of <paramref name="scDesc" />.</param>
+    /// <param name="options">The options used to configure this operation.</param>
+    /// <param name="scDesc">The sc desc value used by this operation.</param>
     public VkGraphicsDevice(GraphicsDeviceOptions options, SwapchainDescription? scDesc)
         : this(options, scDesc, new VulkanDeviceOptions()) { }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VkGraphicsDevice" /> type.
     /// </summary>
-    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
-    /// <param name="scDesc">Specifies the value of <paramref name="scDesc" />.</param>
-    /// <param name="vkOptions">Specifies the value of <paramref name="vkOptions" />.</param>
+    /// <param name="options">The options used to configure this operation.</param>
+    /// <param name="scDesc">The sc desc value used by this operation.</param>
+    /// <param name="vkOptions">The vk options value used by this operation.</param>
     public VkGraphicsDevice(GraphicsDeviceOptions options, SwapchainDescription? scDesc, VulkanDeviceOptions vkOptions) {
         this.createInstance(options.Debug, vkOptions);
 
@@ -322,12 +321,12 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     public override GraphicsDeviceFeatures Features { get; }
 
     /// <summary>
-    /// Stores the value associated with <c>Instance</c>.
+    /// Stores the instance state used by this instance.
     /// </summary>
     public VkInstance Instance => this.instance;
 
     /// <summary>
-    /// Stores the value associated with <c>Device</c>.
+    /// Stores the device state used by this instance.
     /// </summary>
     public VkDevice Device => this.device;
 
@@ -337,12 +336,12 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     public VkPhysicalDevice PhysicalDevice { get; private set; }
 
     /// <summary>
-    /// Stores the value associated with <c>PhysicalDeviceMemProperties</c>.
+    /// Stores the physical device mem properties state used by this instance.
     /// </summary>
     public VkPhysicalDeviceMemoryProperties PhysicalDeviceMemProperties => this._physicalDeviceMemProperties;
 
     /// <summary>
-    /// Stores the value associated with <c>GraphicsQueue</c>.
+    /// Stores the graphics queue state used by this instance.
     /// </summary>
     public VkQueue GraphicsQueue => this._graphicsQueue;
 
@@ -412,28 +411,28 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     public override ResourceFactory ResourceFactory { get; }
 
     /// <summary>
-    /// Executes the GetVulkanInfo operation.
+    /// Gets the vulkan info value.
     /// </summary>
-    /// <param name="info">Specifies the value of <paramref name="info" />.</param>
-    /// <returns>Returns the result produced by the GetVulkanInfo operation.</returns>
+    /// <param name="info">The info value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public override bool GetVulkanInfo(out BackendInfoVulkan info) {
         info = this._vulkanInfo;
         return true;
     }
 
     /// <summary>
-    /// Executes the HasSurfaceExtension operation.
+    /// Executes the has surface extension logic for this backend.
     /// </summary>
-    /// <param name="extension">Specifies the value of <paramref name="extension" />.</param>
-    /// <returns>Returns the result produced by the HasSurfaceExtension operation.</returns>
+    /// <param name="extension">The extension value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public bool HasSurfaceExtension(FixedUtf8String extension) {
         return this._surfaceExtensions.Contains(extension);
     }
 
     /// <summary>
-    /// Executes the EnableDebugCallback operation.
+    /// Executes the enable debug callback logic for this backend.
     /// </summary>
-    /// <param name="flags">Specifies the value of <paramref name="flags" />.</param>
+    /// <param name="flags">The flags value used by this operation.</param>
     public void EnableDebugCallback(VkDebugReportFlagsEXT flags = VkDebugReportFlagsEXT.WarningEXT | VkDebugReportFlagsEXT.ErrorEXT) {
         Debug.WriteLine("Enabling Vulkan Debug callbacks.");
         this._debugCallbackFunc = this.debugCallback;
@@ -456,9 +455,9 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the GetDeviceExtensionProperties operation.
+    /// Gets the device extension properties value.
     /// </summary>
-    /// <returns>Returns the result produced by the GetDeviceExtensionProperties operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public VkExtensionProperties[] GetDeviceExtensionProperties() {
         uint propertyCount = 0;
         VkResult result = vkEnumerateDeviceExtensionProperties(this.PhysicalDevice, (byte*)null, &propertyCount, null);
@@ -474,11 +473,11 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the GetSampleCountLimit operation.
+    /// Gets the sample count limit value.
     /// </summary>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
-    /// <param name="depthFormat">Specifies the value of <paramref name="depthFormat" />.</param>
-    /// <returns>Returns the result produced by the GetSampleCountLimit operation.</returns>
+    /// <param name="format">The format used by this operation.</param>
+    /// <param name="depthFormat">The depth format value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public override TextureSampleCount GetSampleCountLimit(PixelFormat format, bool depthFormat) {
         VkImageUsageFlags usageFlags = VkImageUsageFlags.Sampled;
         usageFlags |= depthFormat ? VkImageUsageFlags.DepthStencilAttachment : VkImageUsageFlags.ColorAttachment;
@@ -510,20 +509,20 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the ResetFence operation.
+    /// Executes the reset fence logic for this backend.
     /// </summary>
-    /// <param name="fence">Specifies the value of <paramref name="fence" />.</param>
+    /// <param name="fence">The synchronization fence used by this operation.</param>
     public override void ResetFence(Fence fence) {
         Vulkan.VkFence vkFence = Util.AssertSubtype<Fence, VkFence>(fence).DeviceFence;
         vkResetFences(this.device, 1, ref vkFence);
     }
 
     /// <summary>
-    /// Executes the WaitForFence operation.
+    /// Executes the wait for fence logic for this backend.
     /// </summary>
-    /// <param name="fence">Specifies the value of <paramref name="fence" />.</param>
-    /// <param name="nanosecondTimeout">Specifies the value of <paramref name="nanosecondTimeout" />.</param>
-    /// <returns>Returns the result produced by the WaitForFence operation.</returns>
+    /// <param name="fence">The synchronization fence used by this operation.</param>
+    /// <param name="nanosecondTimeout">The nanosecond timeout value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public override bool WaitForFence(Fence fence, ulong nanosecondTimeout) {
         Vulkan.VkFence vkFence = Util.AssertSubtype<Fence, VkFence>(fence).DeviceFence;
         VkResult result = vkWaitForFences(this.device, 1, ref vkFence, true, nanosecondTimeout);
@@ -531,12 +530,12 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the WaitForFences operation.
+    /// Executes the wait for fences logic for this backend.
     /// </summary>
-    /// <param name="fences">Specifies the value of <paramref name="fences" />.</param>
-    /// <param name="waitAll">Specifies the value of <paramref name="waitAll" />.</param>
-    /// <param name="nanosecondTimeout">Specifies the value of <paramref name="nanosecondTimeout" />.</param>
-    /// <returns>Returns the result produced by the WaitForFences operation.</returns>
+    /// <param name="fences">The synchronization fence used by this operation.</param>
+    /// <param name="waitAll">The wait all value used by this operation.</param>
+    /// <param name="nanosecondTimeout">The nanosecond timeout value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public override bool WaitForFences(Fence[] fences, bool waitAll, ulong nanosecondTimeout) {
         int fenceCount = fences.Length;
         Vulkan.VkFence* fencesPtr = stackalloc Vulkan.VkFence[fenceCount];
@@ -549,18 +548,18 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the IsSupported operation.
+    /// Executes the is supported logic for this backend.
     /// </summary>
-    /// <returns>Returns the result produced by the IsSupported operation.</returns>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     internal static bool IsSupported() {
         return _s_is_supported.Value;
     }
 
     /// <summary>
-    /// Executes the SetResourceName operation.
+    /// Sets the resource name value.
     /// </summary>
-    /// <param name="resource">Specifies the value of <paramref name="resource" />.</param>
-    /// <param name="name">Specifies the value of <paramref name="name" />.</param>
+    /// <param name="resource">The resource involved in this operation.</param>
+    /// <param name="name">The name used by this operation.</param>
     internal void SetResourceName(IDeviceResource resource, string name) {
         if (this._debugMarkerEnabled) {
             switch (resource) {
@@ -618,10 +617,10 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the GetFormatFilter operation.
+    /// Gets the format filter value.
     /// </summary>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
-    /// <returns>Returns the result produced by the GetFormatFilter operation.</returns>
+    /// <param name="format">The format used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal VkFilter GetFormatFilter(VkFormat format) {
         if (!this._filters.TryGetValue(format, out VkFilter filter)) {
             vkGetPhysicalDeviceFormatProperties(this.PhysicalDevice, format, out VkFormatProperties vkFormatProps);
@@ -635,10 +634,10 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the ClearColorTexture operation.
+    /// Executes the clear color texture logic for this backend.
     /// </summary>
-    /// <param name="texture">Specifies the value of <paramref name="texture" />.</param>
-    /// <param name="color">Specifies the value of <paramref name="color" />.</param>
+    /// <param name="texture">The texture resource involved in this operation.</param>
+    /// <param name="color">The color value used by this operation.</param>
     internal void ClearColorTexture(VkTexture texture, VkClearColorValue color) {
         uint effectiveLayers = texture.ArrayLayers;
         if ((texture.Usage & TextureUsage.Cubemap) != 0) {
@@ -658,10 +657,10 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the ClearDepthTexture operation.
+    /// Executes the clear depth texture logic for this backend.
     /// </summary>
-    /// <param name="texture">Specifies the value of <paramref name="texture" />.</param>
-    /// <param name="clearValue">Specifies the value of <paramref name="clearValue" />.</param>
+    /// <param name="texture">The texture resource involved in this operation.</param>
+    /// <param name="clearValue">The clear value value used by this operation.</param>
     internal void ClearDepthTexture(VkTexture texture, VkClearDepthStencilValue clearValue) {
         uint effectiveLayers = texture.ArrayLayers;
         if ((texture.Usage & TextureUsage.Cubemap) != 0) {
@@ -681,26 +680,26 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the GetUniformBufferMinOffsetAlignmentCore operation.
+    /// Gets the uniform buffer min offset alignment core value.
     /// </summary>
-    /// <returns>Returns the result produced by the GetUniformBufferMinOffsetAlignmentCore operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     internal override uint GetUniformBufferMinOffsetAlignmentCore() {
         return (uint)this._physicalDeviceProperties.limits.minUniformBufferOffsetAlignment;
     }
 
     /// <summary>
-    /// Executes the GetStructuredBufferMinOffsetAlignmentCore operation.
+    /// Gets the structured buffer min offset alignment core value.
     /// </summary>
-    /// <returns>Returns the result produced by the GetStructuredBufferMinOffsetAlignmentCore operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     internal override uint GetStructuredBufferMinOffsetAlignmentCore() {
         return (uint)this._physicalDeviceProperties.limits.minStorageBufferOffsetAlignment;
     }
 
     /// <summary>
-    /// Executes the TransitionImageLayout operation.
+    /// Executes the transition image layout logic for this backend.
     /// </summary>
-    /// <param name="texture">Specifies the value of <paramref name="texture" />.</param>
-    /// <param name="layout">Specifies the value of <paramref name="layout" />.</param>
+    /// <param name="texture">The texture resource involved in this operation.</param>
+    /// <param name="layout">The resource layout used by this operation.</param>
     internal void TransitionImageLayout(VkTexture texture, VkImageLayout layout) {
         SharedCommandPool pool = this.getFreeCommandPool();
         VkCommandBuffer cb = pool.BeginNewCommandBuffer();
@@ -709,12 +708,12 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the MapCore operation.
+    /// Maps the core resource for CPU access.
     /// </summary>
-    /// <param name="resource">Specifies the value of <paramref name="resource" />.</param>
-    /// <param name="mode">Specifies the value of <paramref name="mode" />.</param>
-    /// <param name="subresource">Specifies the value of <paramref name="subresource" />.</param>
-    /// <returns>Returns the result produced by the MapCore operation.</returns>
+    /// <param name="resource">The resource involved in this operation.</param>
+    /// <param name="mode">The mode value used by this operation.</param>
+    /// <param name="subresource">The subresource value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     protected override MappedResource MapCore(IMappableResource resource, MapMode mode, uint subresource) {
         VkMemoryBlock memoryBlock;
         IntPtr mappedPtr = IntPtr.Zero;
@@ -751,10 +750,10 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the UnmapCore operation.
+    /// Unmaps the core resource from CPU access.
     /// </summary>
-    /// <param name="resource">Specifies the value of <paramref name="resource" />.</param>
-    /// <param name="subresource">Specifies the value of <paramref name="subresource" />.</param>
+    /// <param name="resource">The resource involved in this operation.</param>
+    /// <param name="subresource">The subresource value used by this operation.</param>
     protected override void UnmapCore(IMappableResource resource, uint subresource) {
         VkMemoryBlock memoryBlock;
 
@@ -772,7 +771,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the PlatformDispose operation.
+    /// Executes the platform dispose logic for this backend.
     /// </summary>
     protected override void PlatformDispose() {
         Debug.Assert(this._submittedFences.Count == 0);
@@ -820,9 +819,9 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the checkIsSupported operation.
+    /// Executes the check is supported logic for this backend.
     /// </summary>
-    /// <returns>Returns the result produced by the checkIsSupported operation.</returns>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     private static bool checkIsSupported() {
         if (!IsVulkanLoaded()) {
             return false;
@@ -892,14 +891,14 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the submitCommandList operation.
+    /// Executes the submit command list logic for this backend.
     /// </summary>
-    /// <param name="cl">Specifies the value of <paramref name="cl" />.</param>
-    /// <param name="waitSemaphoreCount">Specifies the value of <paramref name="waitSemaphoreCount" />.</param>
-    /// <param name="waitSemaphoresPtr">Specifies the value of <paramref name="waitSemaphoresPtr" />.</param>
-    /// <param name="signalSemaphoreCount">Specifies the value of <paramref name="signalSemaphoreCount" />.</param>
-    /// <param name="signalSemaphoresPtr">Specifies the value of <paramref name="signalSemaphoresPtr" />.</param>
-    /// <param name="fence">Specifies the value of <paramref name="fence" />.</param>
+    /// <param name="cl">The cl value used by this operation.</param>
+    /// <param name="waitSemaphoreCount">The wait semaphore count value used by this operation.</param>
+    /// <param name="waitSemaphoresPtr">The wait semaphores ptr value used by this operation.</param>
+    /// <param name="signalSemaphoreCount">The signal semaphore count value used by this operation.</param>
+    /// <param name="signalSemaphoresPtr">The signal semaphores ptr value used by this operation.</param>
+    /// <param name="fence">The synchronization fence used by this operation.</param>
     private void submitCommandList(CommandList cl, uint waitSemaphoreCount, VkSemaphore* waitSemaphoresPtr, uint signalSemaphoreCount, VkSemaphore* signalSemaphoresPtr, Fence fence) {
         VkCommandList vkCl = Util.AssertSubtype<CommandList, VkCommandList>(cl);
         VkCommandBuffer vkCb = vkCl.CommandBuffer;
@@ -909,15 +908,15 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the submitCommandBuffer operation.
+    /// Executes the submit command buffer logic for this backend.
     /// </summary>
-    /// <param name="vkCl">Specifies the value of <paramref name="vkCl" />.</param>
-    /// <param name="vkCb">Specifies the value of <paramref name="vkCb" />.</param>
-    /// <param name="waitSemaphoreCount">Specifies the value of <paramref name="waitSemaphoreCount" />.</param>
-    /// <param name="waitSemaphoresPtr">Specifies the value of <paramref name="waitSemaphoresPtr" />.</param>
-    /// <param name="signalSemaphoreCount">Specifies the value of <paramref name="signalSemaphoreCount" />.</param>
-    /// <param name="signalSemaphoresPtr">Specifies the value of <paramref name="signalSemaphoresPtr" />.</param>
-    /// <param name="fence">Specifies the value of <paramref name="fence" />.</param>
+    /// <param name="vkCl">The vk cl value used by this operation.</param>
+    /// <param name="vkCb">The vk cb value used by this operation.</param>
+    /// <param name="waitSemaphoreCount">The wait semaphore count value used by this operation.</param>
+    /// <param name="waitSemaphoresPtr">The wait semaphores ptr value used by this operation.</param>
+    /// <param name="signalSemaphoreCount">The signal semaphore count value used by this operation.</param>
+    /// <param name="signalSemaphoresPtr">The signal semaphores ptr value used by this operation.</param>
+    /// <param name="fence">The synchronization fence used by this operation.</param>
     private void submitCommandBuffer(VkCommandList vkCl, VkCommandBuffer vkCb, uint waitSemaphoreCount, VkSemaphore* waitSemaphoresPtr, uint signalSemaphoreCount, VkSemaphore* signalSemaphoresPtr, Fence fence) {
         this.checkSubmittedFences();
 
@@ -961,7 +960,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the checkSubmittedFences operation.
+    /// Executes the check submitted fences logic for this backend.
     /// </summary>
     private void checkSubmittedFences() {
         lock (this._submittedFencesLock) {
@@ -981,9 +980,9 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the completeFenceSubmission operation.
+    /// Executes the complete fence submission logic for this backend.
     /// </summary>
-    /// <param name="fsi">Specifies the value of <paramref name="fsi" />.</param>
+    /// <param name="fsi">The fsi value used by this operation.</param>
     private void completeFenceSubmission(FenceSubmissionInfo fsi) {
         Vulkan.VkFence fence = fsi.Fence;
         VkCommandBuffer completedCb = fsi.CommandBuffer;
@@ -1020,17 +1019,17 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the returnSubmissionFence operation.
+    /// Executes the return submission fence logic for this backend.
     /// </summary>
-    /// <param name="fence">Specifies the value of <paramref name="fence" />.</param>
+    /// <param name="fence">The synchronization fence used by this operation.</param>
     private void returnSubmissionFence(Vulkan.VkFence fence) {
         this._availableSubmissionFences.Enqueue(fence);
     }
 
     /// <summary>
-    /// Executes the getFreeSubmissionFence operation.
+    /// Gets the free submission fence value.
     /// </summary>
-    /// <returns>Returns the result produced by the getFreeSubmissionFence operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     private Vulkan.VkFence getFreeSubmissionFence() {
         if (this._availableSubmissionFences.TryDequeue(out Vulkan.VkFence availableFence)) {
             return availableFence;
@@ -1043,11 +1042,11 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the setDebugMarkerName operation.
+    /// Sets the debug marker name value.
     /// </summary>
-    /// <param name="type">Specifies the value of <paramref name="type" />.</param>
-    /// <param name="target">Specifies the value of <paramref name="target" />.</param>
-    /// <param name="name">Specifies the value of <paramref name="name" />.</param>
+    /// <param name="type">The type value used by this operation.</param>
+    /// <param name="target">The target value used by this operation.</param>
+    /// <param name="name">The name used by this operation.</param>
     private void setDebugMarkerName(VkDebugReportObjectTypeEXT type, ulong target, string name) {
         Debug.Assert(this._setObjectNameDelegate != null);
 
@@ -1069,10 +1068,10 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the createInstance operation.
+    /// Creates the instance instance used by this backend.
     /// </summary>
-    /// <param name="debug">Specifies the value of <paramref name="debug" />.</param>
-    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
+    /// <param name="debug">The debug value used by this operation.</param>
+    /// <param name="options">The options used to configure this operation.</param>
     private void createInstance(bool debug, VulkanDeviceOptions options) {
         HashSet<string> availableInstanceLayers = new(EnumerateInstanceLayers());
         HashSet<string> availableInstanceExtensions = new(GetInstanceExtensions());
@@ -1213,17 +1212,17 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the debugCallback operation.
+    /// Executes the debug callback logic for this backend.
     /// </summary>
-    /// <param name="flags">Specifies the value of <paramref name="flags" />.</param>
-    /// <param name="objectType">Specifies the value of <paramref name="objectType" />.</param>
-    /// <param name="object">Specifies the value of <paramref name="object" />.</param>
-    /// <param name="location">Specifies the value of <paramref name="location" />.</param>
-    /// <param name="messageCode">Specifies the value of <paramref name="messageCode" />.</param>
-    /// <param name="pLayerPrefix">Specifies the value of <paramref name="pLayerPrefix" />.</param>
-    /// <param name="pMessage">Specifies the value of <paramref name="pMessage" />.</param>
-    /// <param name="pUserData">Specifies the value of <paramref name="pUserData" />.</param>
-    /// <returns>Returns the result produced by the debugCallback operation.</returns>
+    /// <param name="flags">The flags value used by this operation.</param>
+    /// <param name="objectType">The object type value used by this operation.</param>
+    /// <param name="object">The object value used by this operation.</param>
+    /// <param name="location">The location value used by this operation.</param>
+    /// <param name="messageCode">The message code value used by this operation.</param>
+    /// <param name="pLayerPrefix">The p layer prefix value used by this operation.</param>
+    /// <param name="pMessage">The p message value used by this operation.</param>
+    /// <param name="pUserData">The p user data value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private uint debugCallback(uint flags, VkDebugReportObjectTypeEXT objectType, ulong @object, UIntPtr location, int messageCode, byte* pLayerPrefix, byte* pMessage, void* pUserData) {
         string message = Util.GetString(pMessage);
         VkDebugReportFlagsEXT debugReportFlags = (VkDebugReportFlagsEXT)flags;
@@ -1243,7 +1242,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the createPhysicalDevice operation.
+    /// Creates the physical device instance used by this backend.
     /// </summary>
     private void createPhysicalDevice() {
         uint deviceCount = 0;
@@ -1272,11 +1271,11 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the createLogicalDevice operation.
+    /// Creates the logical device instance used by this backend.
     /// </summary>
-    /// <param name="surface">Specifies the value of <paramref name="surface" />.</param>
-    /// <param name="preferStandardClipY">Specifies the value of <paramref name="preferStandardClipY" />.</param>
-    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
+    /// <param name="surface">The surface value used by this operation.</param>
+    /// <param name="preferStandardClipY">The prefer standard clip y value used by this operation.</param>
+    /// <param name="options">The options used to configure this operation.</param>
     private void createLogicalDevice(VkSurfaceKHR surface, bool preferStandardClipY, VulkanDeviceOptions options) {
         this.getQueueFamilyIndices(surface);
 
@@ -1417,10 +1416,10 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the getInstanceProcAddr operation.
+    /// Gets the instance proc addr value.
     /// </summary>
-    /// <param name="name">Specifies the value of <paramref name="name" />.</param>
-    /// <returns>Returns the result produced by the getInstanceProcAddr operation.</returns>
+    /// <param name="name">The name used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private IntPtr getInstanceProcAddr(string name) {
         int byteCount = Encoding.UTF8.GetByteCount(name);
         byte* utf8Ptr = stackalloc byte[byteCount + 1];
@@ -1437,9 +1436,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// <summary>
     /// Resolves a Vulkan instance-level function pointer and returns it as a typed delegate.
     /// </summary>
-    /// <param name="name">Specifies the value of <paramref name="name" />.</param>
-    /// <typeparam name="T">The delegate type representing the function signature.</typeparam>
-    /// <returns>The resolved delegate, or <see langword="default" /> if the function is not available.</returns>
+    /// <param name="name">The name used by this operation.</param>
     private T getInstanceProcAddr<T>(string name) {
         IntPtr funcPtr = this.getInstanceProcAddr(name);
         if (funcPtr != IntPtr.Zero) {
@@ -1450,10 +1447,10 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the getDeviceProcAddr operation.
+    /// Gets the device proc addr value.
     /// </summary>
-    /// <param name="name">Specifies the value of <paramref name="name" />.</param>
-    /// <returns>Returns the result produced by the getDeviceProcAddr operation.</returns>
+    /// <param name="name">The name used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private IntPtr getDeviceProcAddr(string name) {
         int byteCount = Encoding.UTF8.GetByteCount(name);
         byte* utf8Ptr = stackalloc byte[byteCount + 1];
@@ -1470,9 +1467,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// <summary>
     /// Resolves a Vulkan device-level function pointer and returns it as a typed delegate.
     /// </summary>
-    /// <param name="name">Specifies the value of <paramref name="name" />.</param>
-    /// <typeparam name="T">The delegate type representing the function signature.</typeparam>
-    /// <returns>The resolved delegate, or <see langword="default" /> if the function is not available.</returns>
+    /// <param name="name">The name used by this operation.</param>
     private T getDeviceProcAddr<T>(string name) {
         IntPtr funcPtr = this.getDeviceProcAddr(name);
         if (funcPtr != IntPtr.Zero) {
@@ -1483,9 +1478,9 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the getQueueFamilyIndices operation.
+    /// Gets the queue family indices value.
     /// </summary>
-    /// <param name="surface">Specifies the value of <paramref name="surface" />.</param>
+    /// <param name="surface">The surface value used by this operation.</param>
     private void getQueueFamilyIndices(VkSurfaceKHR surface) {
         uint queueFamilyCount = 0;
         vkGetPhysicalDeviceQueueFamilyProperties(this.PhysicalDevice, ref queueFamilyCount, null);
@@ -1517,14 +1512,14 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the createDescriptorPool operation.
+    /// Creates the descriptor pool instance used by this backend.
     /// </summary>
     private void createDescriptorPool() {
         this.DescriptorPoolManager = new VkDescriptorPoolManager(this);
     }
 
     /// <summary>
-    /// Executes the createGraphicsCommandPool operation.
+    /// Creates the graphics command pool instance used by this backend.
     /// </summary>
     private void createGraphicsCommandPool() {
         VkCommandPoolCreateInfo commandPoolCi = VkCommandPoolCreateInfo.New();
@@ -1535,9 +1530,9 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the getFreeCommandPool operation.
+    /// Gets the free command pool value.
     /// </summary>
-    /// <returns>Returns the result produced by the getFreeCommandPool operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     private SharedCommandPool getFreeCommandPool() {
         SharedCommandPool sharedPool = null;
 
@@ -1551,11 +1546,11 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the mapBuffer operation.
+    /// Maps the buffer resource for CPU access.
     /// </summary>
-    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
-    /// <param name="numBytes">Specifies the value of <paramref name="numBytes" />.</param>
-    /// <returns>Returns the result produced by the mapBuffer operation.</returns>
+    /// <param name="buffer">The buffer resource involved in this operation.</param>
+    /// <param name="numBytes">The num bytes value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private IntPtr mapBuffer(VkBuffer buffer, uint numBytes) {
         if (buffer.Memory.IsPersistentMapped) {
             return (IntPtr)buffer.Memory.BlockMappedPointer;
@@ -1568,9 +1563,9 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the unmapBuffer operation.
+    /// Unmaps the buffer resource from CPU access.
     /// </summary>
-    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
+    /// <param name="buffer">The buffer resource involved in this operation.</param>
     private void unmapBuffer(VkBuffer buffer) {
         if (!buffer.Memory.IsPersistentMapped) {
             vkUnmapMemory(this.Device, buffer.Memory.DeviceMemory);
@@ -1578,13 +1573,13 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the getFreeStagingTexture operation.
+    /// Gets the free staging texture value.
     /// </summary>
-    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
-    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
-    /// <param name="depth">Specifies the value of <paramref name="depth" />.</param>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
-    /// <returns>Returns the result produced by the getFreeStagingTexture operation.</returns>
+    /// <param name="width">The width value.</param>
+    /// <param name="height">The height value.</param>
+    /// <param name="depth">The depth value.</param>
+    /// <param name="format">The format used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private VkTexture getFreeStagingTexture(uint width, uint height, uint depth, PixelFormat format) {
         uint totalSize = FormatHelpers.GetRegionSize(width, height, depth, format);
 
@@ -1609,10 +1604,10 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the getFreeStagingBuffer operation.
+    /// Gets the free staging buffer value.
     /// </summary>
-    /// <param name="size">Specifies the value of <paramref name="size" />.</param>
-    /// <returns>Returns the result produced by the getFreeStagingBuffer operation.</returns>
+    /// <param name="size">The size, in bytes, used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private VkBuffer getFreeStagingBuffer(uint size) {
         lock (this._stagingResourcesLock) {
             for (int i = 0; i < this._availableStagingBuffers.Count; i++) {
@@ -1631,18 +1626,18 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the SubmitCommandsCore operation.
+    /// Executes the submit commands core logic for this backend.
     /// </summary>
-    /// <param name="cl">Specifies the value of <paramref name="cl" />.</param>
-    /// <param name="fence">Specifies the value of <paramref name="fence" />.</param>
+    /// <param name="cl">The cl value used by this operation.</param>
+    /// <param name="fence">The synchronization fence used by this operation.</param>
     private protected override void SubmitCommandsCore(CommandList cl, Fence fence) {
         this.submitCommandList(cl, 0, null, 0, null, fence);
     }
 
     /// <summary>
-    /// Executes the SwapBuffersCore operation.
+    /// Executes the swap buffers core logic for this backend.
     /// </summary>
-    /// <param name="swapchain">Specifies the value of <paramref name="swapchain" />.</param>
+    /// <param name="swapchain">The swapchain used by this operation.</param>
     private protected override void SwapBuffersCore(Swapchain swapchain) {
         VkSwapchain vkSc = Util.AssertSubtype<Swapchain, VkSwapchain>(swapchain);
         VkSwapchainKHR deviceSwapchain = vkSc.DeviceSwapchain;
@@ -1666,7 +1661,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the WaitForIdleCore operation.
+    /// Executes the wait for idle core logic for this backend.
     /// </summary>
     private protected override void WaitForIdleCore() {
         lock (this._graphicsQueueLock) {
@@ -1677,18 +1672,18 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the WaitForNextFrameReadyCore operation.
+    /// Executes the wait for next frame ready core logic for this backend.
     /// </summary>
     private protected override void WaitForNextFrameReadyCore() { }
 
     /// <summary>
-    /// Executes the GetPixelFormatSupportCore operation.
+    /// Gets the pixel format support core value.
     /// </summary>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
-    /// <param name="type">Specifies the value of <paramref name="type" />.</param>
-    /// <param name="usage">Specifies the value of <paramref name="usage" />.</param>
-    /// <param name="properties">Specifies the value of <paramref name="properties" />.</param>
-    /// <returns>Returns the result produced by the GetPixelFormatSupportCore operation.</returns>
+    /// <param name="format">The format used by this operation.</param>
+    /// <param name="type">The type value used by this operation.</param>
+    /// <param name="usage">The usage value used by this operation.</param>
+    /// <param name="properties">The properties value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     private protected override bool GetPixelFormatSupportCore(PixelFormat format, TextureType type, TextureUsage usage, out PixelFormatProperties properties) {
         VkFormat vkFormat = VkFormats.VdToVkPixelFormat(format, (usage & TextureUsage.DepthStencil) != 0);
         VkImageType vkType = VkFormats.VdToVkTextureType(type);
@@ -1709,12 +1704,12 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the UpdateBufferCore operation.
+    /// Updates the buffer core state for this command sequence.
     /// </summary>
-    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
-    /// <param name="bufferOffsetInBytes">Specifies the value of <paramref name="bufferOffsetInBytes" />.</param>
-    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
-    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
+    /// <param name="buffer">The buffer resource involved in this operation.</param>
+    /// <param name="bufferOffsetInBytes">The byte offset used by this operation.</param>
+    /// <param name="source">The source value or resource.</param>
+    /// <param name="sizeInBytes">The size, in bytes, used by this operation.</param>
     private protected override void UpdateBufferCore(DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes) {
         VkBuffer vkBuffer = Util.AssertSubtype<DeviceBuffer, VkBuffer>(buffer);
         VkBuffer copySrcVkBuffer = null;
@@ -1752,19 +1747,19 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the UpdateTextureCore operation.
+    /// Updates the texture core state for this command sequence.
     /// </summary>
-    /// <param name="texture">Specifies the value of <paramref name="texture" />.</param>
-    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
-    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
-    /// <param name="x">Specifies the value of <paramref name="x" />.</param>
-    /// <param name="y">Specifies the value of <paramref name="y" />.</param>
-    /// <param name="z">Specifies the value of <paramref name="z" />.</param>
-    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
-    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
-    /// <param name="depth">Specifies the value of <paramref name="depth" />.</param>
-    /// <param name="mipLevel">Specifies the value of <paramref name="mipLevel" />.</param>
-    /// <param name="arrayLayer">Specifies the value of <paramref name="arrayLayer" />.</param>
+    /// <param name="texture">The texture resource involved in this operation.</param>
+    /// <param name="source">The source value or resource.</param>
+    /// <param name="sizeInBytes">The size, in bytes, used by this operation.</param>
+    /// <param name="x">The X coordinate.</param>
+    /// <param name="y">The Y coordinate.</param>
+    /// <param name="z">The Z coordinate.</param>
+    /// <param name="width">The width value.</param>
+    /// <param name="height">The height value.</param>
+    /// <param name="depth">The depth value.</param>
+    /// <param name="mipLevel">The mip level index.</param>
+    /// <param name="arrayLayer">The array layer index.</param>
     private protected override void UpdateTextureCore(Texture texture, IntPtr source, uint sizeInBytes, uint x, uint y, uint z, uint width, uint height, uint depth, uint mipLevel, uint arrayLayer) {
         VkTexture vkTex = Util.AssertSubtype<Texture, VkTexture>(texture);
         bool isStaging = (vkTex.Usage & TextureUsage.Staging) != 0;
@@ -1794,30 +1789,30 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Defines the behavior and responsibilities of the SharedCommandPool class.
+    /// Represents the SharedCommandPool type used by the graphics runtime.
     /// </summary>
     private class SharedCommandPool {
 
         /// <summary>
-        /// Stores the value associated with <c>cb</c>.
+        /// Stores the cb state used by this instance.
         /// </summary>
         private readonly VkCommandBuffer cb;
 
         /// <summary>
-        /// Stores the value associated with <c>gd</c>.
+        /// Stores the gd state used by this instance.
         /// </summary>
         private readonly VkGraphicsDevice gd;
 
         /// <summary>
-        /// Stores the value associated with <c>pool</c>.
+        /// Stores the pool state used by this instance.
         /// </summary>
         private readonly VkCommandPool pool;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SharedCommandPool" /> type.
         /// </summary>
-        /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
-        /// <param name="isCached">Specifies the value of <paramref name="isCached" />.</param>
+        /// <param name="gd">The graphics device that owns this operation.</param>
+        /// <param name="isCached">The is cached value used by this operation.</param>
         public SharedCommandPool(VkGraphicsDevice gd, bool isCached) {
             this.gd = gd;
             this.IsCached = isCached;
@@ -1842,9 +1837,9 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
         public bool IsCached { get; }
 
         /// <summary>
-        /// Executes the BeginNewCommandBuffer operation.
+        /// Begins the new command buffer operation.
         /// </summary>
-        /// <returns>Returns the result produced by the BeginNewCommandBuffer operation.</returns>
+        /// <returns>The value produced by this operation.</returns>
         public VkCommandBuffer BeginNewCommandBuffer() {
             VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.New();
             beginInfo.flags = VkCommandBufferUsageFlags.OneTimeSubmit;
@@ -1855,9 +1850,9 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
         }
 
         /// <summary>
-        /// Executes the EndAndSubmit operation.
+        /// Ends the and submit operation.
         /// </summary>
-        /// <param name="cb">Specifies the value of <paramref name="cb" />.</param>
+        /// <param name="cb">The cb value used by this operation.</param>
         public void EndAndSubmit(VkCommandBuffer cb) {
             VkResult result = vkEndCommandBuffer(cb);
             CheckResult(result);
@@ -1868,7 +1863,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
         }
 
         /// <summary>
-        /// Executes the Destroy operation.
+        /// Executes the destroy logic for this backend.
         /// </summary>
         internal void Destroy() {
             vkDestroyCommandPool(this.gd.Device, this.pool, null);
@@ -1876,31 +1871,31 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Defines the data layout and behavior of the FenceSubmissionInfo struct.
+    /// Represents the FenceSubmissionInfo data structure used by the graphics runtime.
     /// </summary>
     private struct FenceSubmissionInfo {
 
         /// <summary>
-        /// Stores the value associated with <c>Fence</c>.
+        /// Stores the fence state used by this instance.
         /// </summary>
         public readonly Vulkan.VkFence Fence;
 
         /// <summary>
-        /// Stores the value associated with <c>CommandList</c>.
+        /// Stores the command list collection used by this instance.
         /// </summary>
         public readonly VkCommandList CommandList;
 
         /// <summary>
-        /// Stores the value associated with <c>CommandBuffer</c>.
+        /// Stores the command buffer state used by this instance.
         /// </summary>
         public readonly VkCommandBuffer CommandBuffer;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FenceSubmissionInfo" /> type.
         /// </summary>
-        /// <param name="fence">Specifies the value of <paramref name="fence" />.</param>
-        /// <param name="commandList">Specifies the value of <paramref name="commandList" />.</param>
-        /// <param name="commandBuffer">Specifies the value of <paramref name="commandBuffer" />.</param>
+        /// <param name="fence">The synchronization fence used by this operation.</param>
+        /// <param name="commandList">The command list used by this operation.</param>
+        /// <param name="commandBuffer">The command buffer value used by this operation.</param>
         public FenceSubmissionInfo(Vulkan.VkFence fence, VkCommandList commandList, VkCommandBuffer commandBuffer) {
             this.Fence = fence;
             this.CommandList = commandList;
@@ -1934,68 +1929,70 @@ internal unsafe delegate VkResult VkCreateMetalSurfaceExtT(VkInstance instance, 
 #pragma warning disable CS0649 // Field is never assigned to, and will always have its default value
 
 /// <summary>
-/// Defines the data layout and behavior of the VkMetalSurfaceCreateInfoExt struct.
+/// Provides the Vulkan backend implementation for VkMetalSurfaceCreateInfoExt.
 /// </summary>
 internal unsafe struct VkMetalSurfaceCreateInfoExt {
 
     /// <summary>
-    /// Stores the value associated with <c>VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT</c>.
+    /// Defines the predefined value for vk structure type metal surface create info ext.
     /// </summary>
+
     public const VkStructureType VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT = (VkStructureType)1000217000;
 
     /// <summary>
-    /// Stores the value associated with <c>SType</c>.
+    /// Stores the stype state used by this instance.
     /// </summary>
     public VkStructureType SType;
 
     /// <summary>
-    /// Stores the value associated with <c>PNext</c>.
+    /// Stores the pnext state used by this instance.
     /// </summary>
     public void* PNext;
 
     /// <summary>
-    /// Stores the value associated with <c>Flags</c>.
+    /// Stores the flags state used by this instance.
     /// </summary>
     public uint Flags;
 
     /// <summary>
-    /// Stores the value associated with <c>PLayer</c>.
+    /// Stores the player state used by this instance.
     /// </summary>
     public void* PLayer;
 }
 
 /// <summary>
-/// Defines the data layout and behavior of the VkPhysicalDeviceDriverProperties struct.
+/// Provides the Vulkan backend implementation for VkPhysicalDeviceDriverProperties.
 /// </summary>
 internal unsafe struct VkPhysicalDeviceDriverProperties {
 
     /// <summary>
-    /// Stores the value associated with <c>DRIVER_NAME_LENGTH</c>.
+    /// Defines the predefined value for driver name length.
     /// </summary>
     public const int DRIVER_NAME_LENGTH = 256;
 
     /// <summary>
-    /// Stores the value associated with <c>DRIVER_INFO_LENGTH</c>.
+    /// Defines the predefined value for driver info length.
     /// </summary>
     public const int DRIVER_INFO_LENGTH = 256;
 
     /// <summary>
-    /// Stores the value associated with <c>VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES</c>.
+    /// Defines the predefined value for vk structure type physical device driver properties.
     /// </summary>
+
     public const VkStructureType VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES = (VkStructureType)1000196000;
 
     /// <summary>
-    /// Stores the value associated with <c>SType</c>.
+    /// Stores the stype state used by this instance.
     /// </summary>
     public VkStructureType SType;
 
     /// <summary>
-    /// Stores the value associated with <c>PNext</c>.
+    /// Stores the pnext state used by this instance.
     /// </summary>
     public void* PNext;
 
     /// <summary>
-    /// Stores the value associated with <c>DriverID</c>.
+    /// Stores the driver id state used by this instance.
     /// </summary>
     public VkDriverId DriverID;
 
@@ -2004,14 +2001,14 @@ internal unsafe struct VkPhysicalDeviceDriverProperties {
     public fixed byte DriverInfo[DRIVER_INFO_LENGTH];
 
     /// <summary>
-    /// Stores the value associated with <c>ConformanceVersion</c>.
+    /// Stores the conformance version state used by this instance.
     /// </summary>
     public VkConformanceVersion ConformanceVersion;
 
     /// <summary>
     /// Creates and returns a new instance.
     /// </summary>
-    /// <returns>Returns the result produced by the New operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public static VkPhysicalDeviceDriverProperties New() {
         return new VkPhysicalDeviceDriverProperties { SType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES };
     }
@@ -2023,27 +2020,27 @@ internal unsafe struct VkPhysicalDeviceDriverProperties {
 internal enum VkDriverId { }
 
 /// <summary>
-/// Defines the data layout and behavior of the VkConformanceVersion struct.
+/// Provides the Vulkan backend implementation for VkConformanceVersion.
 /// </summary>
 internal struct VkConformanceVersion {
 
     /// <summary>
-    /// Stores the value associated with <c>Major</c>.
+    /// Stores the major state used by this instance.
     /// </summary>
     public byte Major;
 
     /// <summary>
-    /// Stores the value associated with <c>Minor</c>.
+    /// Stores the minor state used by this instance.
     /// </summary>
     public byte Minor;
 
     /// <summary>
-    /// Stores the value associated with <c>Subminor</c>.
+    /// Stores the subminor state used by this instance.
     /// </summary>
     public byte Subminor;
 
     /// <summary>
-    /// Stores the value associated with <c>Patch</c>.
+    /// Stores the patch state used by this instance.
     /// </summary>
     public byte Patch;
 }

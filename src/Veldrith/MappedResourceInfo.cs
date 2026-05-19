@@ -1,22 +1,22 @@
 namespace Veldrith;
 
 /// <summary>
-/// Defines the data layout and behavior of the MappedResourceInfo struct.
+/// Represents the MappedResourceInfo data structure used by the graphics runtime.
 /// </summary>
 internal struct MappedResourceInfo {
 
     /// <summary>
-    /// Stores the value associated with <c>RefCount</c>.
+    /// Stores the ref count value used during command execution.
     /// </summary>
     public int RefCount;
 
     /// <summary>
-    /// Stores the value associated with <c>Mode</c>.
+    /// Stores the mode state used by this instance.
     /// </summary>
     public MapMode Mode;
 
     /// <summary>
-    /// Stores the value associated with <c>MappedResource</c>.
+    /// Stores the mapped resource state used by this instance.
     /// </summary>
     public MappedResource MappedResource;
 }

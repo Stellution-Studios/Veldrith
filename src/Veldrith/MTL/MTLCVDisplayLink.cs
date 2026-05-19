@@ -4,18 +4,18 @@ using Veldrith.MetalBindings;
 namespace Veldrith.MTL;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the MtlcvDisplayLink class.
+/// Provides the Metal backend implementation for MtlcvDisplayLink.
 /// </summary>
 internal unsafe class MtlcvDisplayLink : IMtlDisplayLink {
-    // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
 
+    // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
     /// <summary>
-    /// Stores the value associated with <c>_cvDisplayLinkCallbackHandler</c>.
+    /// Stores the cv display link callback handler state used by this instance.
     /// </summary>
     private readonly CVDisplayLinkOutputCallbackDelegate _cvDisplayLinkCallbackHandler;
 
     /// <summary>
-    /// Stores the value associated with <c>_displayLink</c>.
+    /// Stores the display link state used by this instance.
     /// </summary>
     private CVDisplayLink _displayLink;
 
@@ -32,7 +32,7 @@ internal unsafe class MtlcvDisplayLink : IMtlDisplayLink {
     #region Disposal
 
     /// <summary>
-    /// Executes the Dispose operation.
+    /// Releases resources held by this instance.
     /// </summary>
     public void Dispose() {
         this._displayLink.Release();
@@ -41,39 +41,39 @@ internal unsafe class MtlcvDisplayLink : IMtlDisplayLink {
     #endregion
 
     /// <summary>
-    /// Executes the UpdateActiveDisplay operation.
+    /// Updates the active display state for this command sequence.
     /// </summary>
-    /// <param name="x">Specifies the value of <paramref name="x" />.</param>
-    /// <param name="y">Specifies the value of <paramref name="y" />.</param>
-    /// <param name="w">Specifies the value of <paramref name="w" />.</param>
-    /// <param name="h">Specifies the value of <paramref name="h" />.</param>
+    /// <param name="x">The X coordinate.</param>
+    /// <param name="y">The Y coordinate.</param>
+    /// <param name="w">The w value used by this operation.</param>
+    /// <param name="h">The h value used by this operation.</param>
     public void UpdateActiveDisplay(int x, int y, int w, int h) {
         this._displayLink.UpdateActiveMonitor(x, y, w, h);
     }
 
     /// <summary>
-    /// Executes the GetActualOutputVideoRefreshPeriod operation.
+    /// Gets the actual output video refresh period value.
     /// </summary>
-    /// <returns>Returns the result produced by the GetActualOutputVideoRefreshPeriod operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public double GetActualOutputVideoRefreshPeriod() {
         return this._displayLink.GetActualOutputVideoRefreshPeriod();
     }
 
     /// <summary>
-    /// Stores the value associated with <c>Callback</c>.
+    /// Stores the callback state used by this instance.
     /// </summary>
     public event Action Callback;
 
     /// <summary>
-    /// Executes the OnCallback operation.
+    /// Executes the on callback logic for this backend.
     /// </summary>
-    /// <param name="displaylink">Specifies the value of <paramref name="displaylink" />.</param>
-    /// <param name="innow">Specifies the value of <paramref name="innow" />.</param>
-    /// <param name="inoutputtime">Specifies the value of <paramref name="inoutputtime" />.</param>
-    /// <param name="flagsin">Specifies the value of <paramref name="flagsin" />.</param>
-    /// <param name="flagsout">Specifies the value of <paramref name="flagsout" />.</param>
-    /// <param name="userdata">Specifies the value of <paramref name="userdata" />.</param>
-    /// <returns>Returns the result produced by the OnCallback operation.</returns>
+    /// <param name="displaylink">The displaylink value used by this operation.</param>
+    /// <param name="innow">The innow value used by this operation.</param>
+    /// <param name="inoutputtime">The inoutputtime value used by this operation.</param>
+    /// <param name="flagsin">The flagsin value used by this operation.</param>
+    /// <param name="flagsout">The flagsout value used by this operation.</param>
+    /// <param name="userdata">The userdata value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private int OnCallback(CVDisplayLink displaylink, CVTimeStamp* innow, CVTimeStamp* inoutputtime, long flagsin, long flagsout, IntPtr userdata) {
         this.Callback?.Invoke();
         return 0;

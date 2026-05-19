@@ -4,19 +4,19 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Defines the data layout and behavior of the CAMetalLayer struct.
+/// Represents the CAMetalLayer data structure used by the graphics runtime.
 /// </summary>
 public struct CAMetalLayer {
 
     /// <summary>
-    /// Stores the value associated with <c>NativePtr</c>.
+    /// Stores the native ptr state used by this instance.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CAMetalLayer" /> type.
     /// </summary>
-    /// <param name="ptr">Specifies the value of <paramref name="ptr" />.</param>
+    /// <param name="ptr">The ptr value used by this operation.</param>
     public CAMetalLayer(IntPtr ptr) {
         this.NativePtr = ptr;
     }
@@ -24,17 +24,17 @@ public struct CAMetalLayer {
     /// <summary>
     /// Creates and returns a new instance.
     /// </summary>
-    /// <returns>Returns the result produced by the New operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public static CAMetalLayer New() {
         return s_class.AllocInit<CAMetalLayer>();
     }
 
     /// <summary>
-    /// Executes the TryCast operation.
+    /// Attempts to cast and reports whether it succeeded.
     /// </summary>
-    /// <param name="layerPointer">Specifies the value of <paramref name="layerPointer" />.</param>
-    /// <param name="metalLayer">Specifies the value of <paramref name="metalLayer" />.</param>
-    /// <returns>Returns the result produced by the TryCast operation.</returns>
+    /// <param name="layerPointer">The layer pointer value used by this operation.</param>
+    /// <param name="metalLayer">The metal layer value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public static bool TryCast(IntPtr layerPointer, out CAMetalLayer metalLayer) {
         NSObject layerObject = new(layerPointer);
 
@@ -96,9 +96,9 @@ public struct CAMetalLayer {
     }
 
     /// <summary>
-    /// Executes the nextDrawable operation.
+    /// Executes the next drawable logic for this backend.
     /// </summary>
-    /// <returns>Returns the result produced by the nextDrawable operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public CAMetalDrawable nextDrawable() {
         return objc_msgSend<CAMetalDrawable>(this.NativePtr, sel_nextDrawable);
     }
@@ -112,84 +112,82 @@ public struct CAMetalLayer {
     }
 
     /// <summary>
-    /// Stores the value associated with <c>name</c>.
+    /// Stores the s class state used by this instance.
     /// </summary>
-    /// <param name="CAMetalLayer">Specifies the value of <paramref name="CAMetalLayer" />.</param>
-    /// <returns>Returns the result produced by the new operation.</returns>
     private static readonly ObjCClass s_class = new(nameof(CAMetalLayer));
 
     /// <summary>
-    /// Stores the value associated with <c>sel_device</c>.
+    /// Stores the sel device state used by this instance.
     /// </summary>
     private static readonly Selector sel_device = "device";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setDevice</c>.
+    /// Stores the sel set device state used by this instance.
     /// </summary>
     private static readonly Selector sel_setDevice = "setDevice:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_pixelFormat</c>.
+    /// Stores the sel pixel format state used by this instance.
     /// </summary>
     private static readonly Selector sel_pixelFormat = "pixelFormat";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setPixelFormat</c>.
+    /// Stores the sel set pixel format state used by this instance.
     /// </summary>
     private static readonly Selector sel_setPixelFormat = "setPixelFormat:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_framebufferOnly</c>.
+    /// Stores the sel framebuffer only state used by this instance.
     /// </summary>
     private static readonly Selector sel_framebufferOnly = "framebufferOnly";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setFramebufferOnly</c>.
+    /// Stores the sel set framebuffer only state used by this instance.
     /// </summary>
     private static readonly Selector sel_setFramebufferOnly = "setFramebufferOnly:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_drawableSize</c>.
+    /// Stores the sel drawable size value used during command execution.
     /// </summary>
     private static readonly Selector sel_drawableSize = "drawableSize";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setDrawableSize</c>.
+    /// Stores the sel set drawable size value used during command execution.
     /// </summary>
     private static readonly Selector sel_setDrawableSize = "setDrawableSize:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_frame</c>.
+    /// Stores the sel frame state used by this instance.
     /// </summary>
     private static readonly Selector sel_frame = "frame";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setFrame</c>.
+    /// Stores the sel set frame state used by this instance.
     /// </summary>
     private static readonly Selector sel_setFrame = "setFrame:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_isOpaque</c>.
+    /// Stores the sel is opaque state used by this instance.
     /// </summary>
     private static readonly Selector sel_isOpaque = "isOpaque";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setOpaque</c>.
+    /// Stores the sel set opaque state used by this instance.
     /// </summary>
     private static readonly Selector sel_setOpaque = "setOpaque:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_displaySyncEnabled</c>.
+    /// Stores the sel display sync enabled state used by this instance.
     /// </summary>
     private static readonly Selector sel_displaySyncEnabled = "displaySyncEnabled";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setDisplaySyncEnabled</c>.
+    /// Stores the sel set display sync enabled state used by this instance.
     /// </summary>
     private static readonly Selector sel_setDisplaySyncEnabled = "setDisplaySyncEnabled:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_nextDrawable</c>.
+    /// Stores the sel next drawable state used by this instance.
     /// </summary>
     private static readonly Selector sel_nextDrawable = "nextDrawable";
 }

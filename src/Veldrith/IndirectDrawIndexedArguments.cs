@@ -2,7 +2,6 @@ namespace Veldrith;
 
 /// <summary>
 /// A structure describing the format expected by indirect, indexed draw commands contained in an indirect
-/// <see cref="DeviceBuffer" />.
 /// </summary>
 public struct IndirectDrawIndexedArguments {
 

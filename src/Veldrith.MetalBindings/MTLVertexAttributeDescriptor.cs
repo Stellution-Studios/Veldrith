@@ -4,19 +4,19 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Defines the data layout and behavior of the MTLVertexAttributeDescriptor struct.
+/// Represents the MTLVertexAttributeDescriptor data structure used by the graphics runtime.
 /// </summary>
 public struct MTLVertexAttributeDescriptor {
 
     /// <summary>
-    /// Stores the value associated with <c>NativePtr</c>.
+    /// Stores the native ptr state used by this instance.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MTLVertexAttributeDescriptor" /> type.
     /// </summary>
-    /// <param name="ptr">Specifies the value of <paramref name="ptr" />.</param>
+    /// <param name="ptr">The ptr value used by this operation.</param>
     public MTLVertexAttributeDescriptor(IntPtr ptr) {
         this.NativePtr = ptr;
     }
@@ -46,32 +46,32 @@ public struct MTLVertexAttributeDescriptor {
     }
 
     /// <summary>
-    /// Stores the value associated with <c>sel_format</c>.
+    /// Stores the sel format state used by this instance.
     /// </summary>
     private static readonly Selector sel_format = "format";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setFormat</c>.
+    /// Stores the sel set format state used by this instance.
     /// </summary>
     private static readonly Selector sel_setFormat = "setFormat:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_offset</c>.
+    /// Stores the sel offset value used during command execution.
     /// </summary>
     private static readonly Selector sel_offset = "offset";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setOffset</c>.
+    /// Stores the sel set offset value used during command execution.
     /// </summary>
     private static readonly Selector sel_setOffset = "setOffset:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_bufferIndex</c>.
+    /// Stores the sel buffer index value used during command execution.
     /// </summary>
     private static readonly Selector sel_bufferIndex = "bufferIndex";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setBufferIndex</c>.
+    /// Stores the sel set buffer index value used during command execution.
     /// </summary>
     private static readonly Selector sel_setBufferIndex = "setBufferIndex:";
 }

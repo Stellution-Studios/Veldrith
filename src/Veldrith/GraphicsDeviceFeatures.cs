@@ -1,32 +1,32 @@
 namespace Veldrith;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the GraphicsDeviceFeatures class.
+/// Represents the GraphicsDeviceFeatures type used by the graphics runtime.
 /// </summary>
 public class GraphicsDeviceFeatures {
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GraphicsDeviceFeatures" /> type.
     /// </summary>
-    /// <param name="computeShader">Specifies the value of <paramref name="computeShader" />.</param>
-    /// <param name="geometryShader">Specifies the value of <paramref name="geometryShader" />.</param>
-    /// <param name="tessellationShaders">Specifies the value of <paramref name="tessellationShaders" />.</param>
-    /// <param name="multipleViewports">Specifies the value of <paramref name="multipleViewports" />.</param>
-    /// <param name="samplerLodBias">Specifies the value of <paramref name="samplerLodBias" />.</param>
-    /// <param name="drawBaseVertex">Specifies the value of <paramref name="drawBaseVertex" />.</param>
-    /// <param name="drawBaseInstance">Specifies the value of <paramref name="drawBaseInstance" />.</param>
-    /// <param name="drawIndirect">Specifies the value of <paramref name="drawIndirect" />.</param>
-    /// <param name="drawIndirectBaseInstance">Specifies the value of <paramref name="drawIndirectBaseInstance" />.</param>
-    /// <param name="fillModeWireframe">Specifies the value of <paramref name="fillModeWireframe" />.</param>
-    /// <param name="samplerAnisotropy">Specifies the value of <paramref name="samplerAnisotropy" />.</param>
-    /// <param name="depthClipDisable">Specifies the value of <paramref name="depthClipDisable" />.</param>
-    /// <param name="texture1D">Specifies the value of <paramref name="texture1D" />.</param>
-    /// <param name="independentBlend">Specifies the value of <paramref name="independentBlend" />.</param>
-    /// <param name="structuredBuffer">Specifies the value of <paramref name="structuredBuffer" />.</param>
-    /// <param name="subsetTextureView">Specifies the value of <paramref name="subsetTextureView" />.</param>
-    /// <param name="commandListDebugMarkers">Specifies the value of <paramref name="commandListDebugMarkers" />.</param>
-    /// <param name="bufferRangeBinding">Specifies the value of <paramref name="bufferRangeBinding" />.</param>
-    /// <param name="shaderFloat64">Specifies the value of <paramref name="shaderFloat64" />.</param>
+    /// <param name="computeShader">The compute shader value used by this operation.</param>
+    /// <param name="geometryShader">The geometry shader value used by this operation.</param>
+    /// <param name="tessellationShaders">The tessellation shaders value used by this operation.</param>
+    /// <param name="multipleViewports">The multiple viewports value used by this operation.</param>
+    /// <param name="samplerLodBias">The sampler lod bias value used by this operation.</param>
+    /// <param name="drawBaseVertex">The draw base vertex value used by this operation.</param>
+    /// <param name="drawBaseInstance">The draw base instance value used by this operation.</param>
+    /// <param name="drawIndirect">The draw indirect value used by this operation.</param>
+    /// <param name="drawIndirectBaseInstance">The draw indirect base instance value used by this operation.</param>
+    /// <param name="fillModeWireframe">The fill mode wireframe value used by this operation.</param>
+    /// <param name="samplerAnisotropy">The sampler anisotropy value used by this operation.</param>
+    /// <param name="depthClipDisable">The depth clip disable value used by this operation.</param>
+    /// <param name="texture1D">The texture1 d value used by this operation.</param>
+    /// <param name="independentBlend">The independent blend value used by this operation.</param>
+    /// <param name="structuredBuffer">The structured buffer value used by this operation.</param>
+    /// <param name="subsetTextureView">The subset texture view value used by this operation.</param>
+    /// <param name="commandListDebugMarkers">The command list debug markers value used by this operation.</param>
+    /// <param name="bufferRangeBinding">The buffer range binding value used by this operation.</param>
+    /// <param name="shaderFloat64">The shader float64 value used by this operation.</param>
     internal GraphicsDeviceFeatures(bool computeShader, bool geometryShader, bool tessellationShaders, bool multipleViewports, bool samplerLodBias, bool drawBaseVertex, bool drawBaseInstance, bool drawIndirect, bool drawIndirectBaseInstance, bool fillModeWireframe, bool samplerAnisotropy, bool depthClipDisable, bool texture1D, bool independentBlend, bool structuredBuffer, bool subsetTextureView, bool commandListDebugMarkers, bool bufferRangeBinding, bool shaderFloat64) {
         this.ComputeShader = computeShader;
         this.GeometryShader = geometryShader;
@@ -66,27 +66,21 @@ public class GraphicsDeviceFeatures {
 
     /// <summary>
     /// Indicates whether multiple independent viewports can be set simultaneously.
-    /// If this is not supported, then only the first Viewport index will be used for all render outputs.
     /// </summary>
     public bool MultipleViewports { get; }
 
     /// <summary>
     /// Indicates whether <see cref="SamplerDescription.LodBias" /> can be non-zero.
-    /// If false, it is an error to attempt to use a non-zero bias value.
     /// </summary>
     public bool SamplerLodBias { get; }
 
     /// <summary>
     /// Indicates whether a non-zero "vertexStart" value can be used in
-    /// <see cref="CommandList.Draw(uint, uint, uint, uint)" /> and
-    /// <see cref="CommandList.DrawIndexed(uint, uint, uint, int, uint)" />.
     /// </summary>
     public bool DrawBaseVertex { get; }
 
     /// <summary>
     /// Indicates whether a non-zero "instanceStart" value can be used in
-    /// <see cref="CommandList.Draw(uint, uint, uint, uint)" /> and
-    /// <see cref="CommandList.DrawIndexed(uint, uint, uint, int, uint)" />.
     /// </summary>
     public bool DrawBaseInstance { get; }
 
@@ -97,7 +91,6 @@ public class GraphicsDeviceFeatures {
 
     /// <summary>
     /// Indicates whether indirect draw structures stored in an Indirect DeviceBuffer can contain
-    /// a non-zero FirstInstance value.
     /// </summary>
     public bool DrawIndirectBaseInstance { get; }
 
@@ -123,34 +116,26 @@ public class GraphicsDeviceFeatures {
 
     /// <summary>
     /// Indicates whether a <see cref="BlendStateDescription" /> can be used which has multiple different
-    /// <see cref="BlendAttachmentDescription" /> values for each attachment. If false, all attachments must have the same
-    /// blend state.
     /// </summary>
     public bool IndependentBlend { get; }
 
     /// <summary>
     /// Indicates whether <see cref="BufferUsage.StructuredBufferReadOnly" /> and
-    /// <see cref="BufferUsage.StructuredBufferReadWrite" /> can be used. If false, structured buffers cannot be created.
     /// </summary>
     public bool StructuredBuffer { get; }
 
     /// <summary>
     /// Indicates whether a <see cref="TextureView" /> can be created which does not view the full set of mip levels and
-    /// array
-    /// layers contained in its target Texture, or uses a different <see cref="PixelFormat" /> from the underlying Texture.
     /// </summary>
     public bool SubsetTextureView { get; }
 
     /// <summary>
     /// Indicates whether <see cref="CommandList" /> instances created with this device support the
-    /// <see cref="CommandList.PushDebugGroup(string)" />, <see cref="CommandList.PopDebugGroup" />, and
-    /// <see cref="CommandList.InsertDebugMarker(string)" /> methods. If not, these methods will have no effect.
     /// </summary>
     public bool CommandListDebugMarkers { get; }
 
     /// <summary>
     /// Indicates whether uniform and structured buffers can be bound with an offset and a size. If false, buffer resources
-    /// must be bound with their full range.
     /// </summary>
     public bool BufferRangeBinding { get; }
 

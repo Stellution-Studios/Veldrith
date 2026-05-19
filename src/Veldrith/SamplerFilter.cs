@@ -17,7 +17,6 @@ public enum SamplerFilter : byte {
 
     /// <summary>
     /// Point sampling is used for minification and mip-level sampling; linear interpolation is used for mip-level
-    /// sampling.
     /// </summary>
     MinPointMagLinearMipPoint,
 
@@ -48,7 +47,6 @@ public enum SamplerFilter : byte {
 
     /// <summary>
     /// Anisotropic filtering is used. The maximum anisotropy is controlled by
-    /// <see cref="SamplerDescription.MaximumAnisotropy" />.
     /// </summary>
     Anisotropic
 }

@@ -1,112 +1,112 @@
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the Selectors class.
+/// Represents the Selectors type used by the graphics runtime.
 /// </summary>
 internal static class Selectors {
 
     /// <summary>
-    /// Stores the value associated with <c>texture</c>.
+    /// Stores the texture state used by this instance.
     /// </summary>
     internal static readonly Selector texture = "texture";
 
     /// <summary>
-    /// Stores the value associated with <c>setTexture</c>.
+    /// Stores the set texture state used by this instance.
     /// </summary>
     internal static readonly Selector setTexture = "setTexture:";
 
     /// <summary>
-    /// Stores the value associated with <c>loadAction</c>.
+    /// Stores the load action state used by this instance.
     /// </summary>
     internal static readonly Selector loadAction = "loadAction";
 
     /// <summary>
-    /// Stores the value associated with <c>setLoadAction</c>.
+    /// Stores the set load action state used by this instance.
     /// </summary>
     internal static readonly Selector setLoadAction = "setLoadAction:";
 
     /// <summary>
-    /// Stores the value associated with <c>storeAction</c>.
+    /// Stores the store action state used by this instance.
     /// </summary>
     internal static readonly Selector storeAction = "storeAction";
 
     /// <summary>
-    /// Stores the value associated with <c>setStoreAction</c>.
+    /// Stores the set store action state used by this instance.
     /// </summary>
     internal static readonly Selector setStoreAction = "setStoreAction:";
 
     /// <summary>
-    /// Stores the value associated with <c>resolveTexture</c>.
+    /// Stores the resolve texture state used by this instance.
     /// </summary>
     internal static readonly Selector resolveTexture = "resolveTexture";
 
     /// <summary>
-    /// Stores the value associated with <c>setResolveTexture</c>.
+    /// Stores the set resolve texture state used by this instance.
     /// </summary>
     internal static readonly Selector setResolveTexture = "setResolveTexture:";
 
     /// <summary>
-    /// Stores the value associated with <c>slice</c>.
+    /// Stores the slice state used by this instance.
     /// </summary>
     internal static readonly Selector slice = "slice";
 
     /// <summary>
-    /// Stores the value associated with <c>setSlice</c>.
+    /// Stores the set slice state used by this instance.
     /// </summary>
     internal static readonly Selector setSlice = "setSlice:";
 
     /// <summary>
-    /// Stores the value associated with <c>level</c>.
+    /// Stores the level state used by this instance.
     /// </summary>
     internal static readonly Selector level = "level";
 
     /// <summary>
-    /// Stores the value associated with <c>setLevel</c>.
+    /// Stores the set level state used by this instance.
     /// </summary>
     internal static readonly Selector setLevel = "setLevel:";
 
     /// <summary>
-    /// Stores the value associated with <c>objectAtIndexedSubscript</c>.
+    /// Stores the object at indexed subscript value used during command execution.
     /// </summary>
     internal static readonly Selector objectAtIndexedSubscript = "objectAtIndexedSubscript:";
 
     /// <summary>
-    /// Stores the value associated with <c>setObjectAtIndexedSubscript</c>.
+    /// Stores the set object at indexed subscript value used during command execution.
     /// </summary>
     internal static readonly Selector setObjectAtIndexedSubscript = "setObject:atIndexedSubscript:";
 
     /// <summary>
-    /// Stores the value associated with <c>pixelFormat</c>.
+    /// Stores the pixel format state used by this instance.
     /// </summary>
     internal static readonly Selector pixelFormat = "pixelFormat";
 
     /// <summary>
-    /// Stores the value associated with <c>setPixelFormat</c>.
+    /// Stores the set pixel format state used by this instance.
     /// </summary>
     internal static readonly Selector setPixelFormat = "setPixelFormat:";
 
     /// <summary>
-    /// Stores the value associated with <c>alloc</c>.
+    /// Stores the alloc state used by this instance.
     /// </summary>
     internal static readonly Selector alloc = "alloc";
 
     /// <summary>
-    /// Stores the value associated with <c>init</c>.
+    /// Stores the init state used by this instance.
     /// </summary>
     internal static readonly Selector init = "init";
 
     /// <summary>
-    /// Stores the value associated with <c>pushDebugGroup</c>.
+    /// Stores the push debug group state used by this instance.
     /// </summary>
     internal static readonly Selector pushDebugGroup = "pushDebugGroup:";
 
     /// <summary>
-    /// Stores the value associated with <c>popDebugGroup</c>.
+    /// Stores the pop debug group state used by this instance.
     /// </summary>
     internal static readonly Selector popDebugGroup = "popDebugGroup";
 
     /// <summary>
-    /// Stores the value associated with <c>insertDebugSignpost</c>.
+    /// Stores the insert debug signpost state used by this instance.
     /// </summary>
     internal static readonly Selector insertDebugSignpost = "insertDebugSignpost:";
 }

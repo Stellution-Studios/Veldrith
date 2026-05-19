@@ -4,12 +4,12 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Defines the data layout and behavior of the MTLComputePipelineDescriptor struct.
+/// Represents the MTLComputePipelineDescriptor data structure used by the graphics runtime.
 /// </summary>
 public struct MTLComputePipelineDescriptor {
 
     /// <summary>
-    /// Stores the value associated with <c>NativePtr</c>.
+    /// Stores the native ptr state used by this instance.
     /// </summary>
     public readonly IntPtr NativePtr;
 
@@ -25,17 +25,17 @@ public struct MTLComputePipelineDescriptor {
         => objc_msgSend<MTLPipelineBufferDescriptorArray>(this.NativePtr, sel_buffers);
 
     /// <summary>
-    /// Stores the value associated with <c>sel_computeFunction</c>.
+    /// Stores the sel compute function state used by this instance.
     /// </summary>
     private static readonly Selector sel_computeFunction = "computeFunction";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setComputeFunction</c>.
+    /// Stores the sel set compute function state used by this instance.
     /// </summary>
     private static readonly Selector sel_setComputeFunction = "setComputeFunction:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_buffers</c>.
+    /// Stores the sel buffers collection used by this instance.
     /// </summary>
     private static readonly Selector sel_buffers = "buffers";
 }

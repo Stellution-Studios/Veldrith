@@ -6,7 +6,7 @@ namespace Veldrith.MetalBindings;
 public enum MTLCPUCacheMode {
 
     /// <summary>
-    /// Stores the value associated with <c>DefaultCache</c>.
+    /// Caches default cache to reduce repeated allocations and lookups.
     /// </summary>
     DefaultCache = 0, WriteCombined = 1
 }

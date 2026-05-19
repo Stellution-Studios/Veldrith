@@ -25,8 +25,8 @@ public struct OutputDescription : IEquatable<OutputDescription> {
     /// <summary>
     /// Initializes a new instance of the <see cref="OutputDescription" /> type.
     /// </summary>
-    /// <param name="depthAttachment">Specifies the value of <paramref name="depthAttachment" />.</param>
-    /// <param name="colorAttachments">Specifies the value of <paramref name="colorAttachments" />.</param>
+    /// <param name="depthAttachment">The depth attachment value used by this operation.</param>
+    /// <param name="colorAttachments">The color attachments value used by this operation.</param>
     public OutputDescription(OutputAttachmentDescription? depthAttachment, params OutputAttachmentDescription[] colorAttachments) {
         this.DepthAttachment = depthAttachment;
         this.ColorAttachments = colorAttachments ?? Array.Empty<OutputAttachmentDescription>();
@@ -36,9 +36,9 @@ public struct OutputDescription : IEquatable<OutputDescription> {
     /// <summary>
     /// Initializes a new instance of the <see cref="OutputDescription" /> type.
     /// </summary>
-    /// <param name="depthAttachment">Specifies the value of <paramref name="depthAttachment" />.</param>
-    /// <param name="colorAttachments">Specifies the value of <paramref name="colorAttachments" />.</param>
-    /// <param name="sampleCount">Specifies the value of <paramref name="sampleCount" />.</param>
+    /// <param name="depthAttachment">The depth attachment value used by this operation.</param>
+    /// <param name="colorAttachments">The color attachments value used by this operation.</param>
+    /// <param name="sampleCount">The sample count value used by this operation.</param>
     public OutputDescription(OutputAttachmentDescription? depthAttachment, OutputAttachmentDescription[] colorAttachments, TextureSampleCount sampleCount) {
         this.DepthAttachment = depthAttachment;
         this.ColorAttachments = colorAttachments ?? Array.Empty<OutputAttachmentDescription>();
@@ -46,10 +46,10 @@ public struct OutputDescription : IEquatable<OutputDescription> {
     }
 
     /// <summary>
-    /// Executes the CreateFromFramebuffer operation.
+    /// Creates the from framebuffer instance used by this backend.
     /// </summary>
-    /// <param name="fb">Specifies the value of <paramref name="fb" />.</param>
-    /// <returns>Returns the result produced by the CreateFromFramebuffer operation.</returns>
+    /// <param name="fb">The fb value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal static OutputDescription CreateFromFramebuffer(Framebuffer fb) {
         TextureSampleCount sampleCount = 0;
         OutputAttachmentDescription? depthAttachment = null;
@@ -70,10 +70,10 @@ public struct OutputDescription : IEquatable<OutputDescription> {
     }
 
     /// <summary>
-    /// Executes the Equals operation.
+    /// Determines whether this instance is equal to the specified value.
     /// </summary>
-    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
-    /// <returns>Returns the result produced by the Equals operation.</returns>
+    /// <param name="other">The value to compare against.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public bool Equals(OutputDescription other) {
         return this.DepthAttachment.GetValueOrDefault().Equals(other.DepthAttachment.GetValueOrDefault())
                && Util.ArrayEqualsEquatable(this.ColorAttachments, other.ColorAttachments)
@@ -81,9 +81,9 @@ public struct OutputDescription : IEquatable<OutputDescription> {
     }
 
     /// <summary>
-    /// Executes the GetHashCode operation.
+    /// Computes a hash code for this instance.
     /// </summary>
-    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(this.DepthAttachment.GetHashCode(), HashHelper.Array(this.ColorAttachments), (int)this.SampleCount);
     }

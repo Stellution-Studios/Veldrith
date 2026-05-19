@@ -1,22 +1,22 @@
 namespace Veldrith.MTL;
 
 /// <summary>
-/// Defines the data layout and behavior of the MtlUnalignedBufferCopyInfo struct.
+/// Provides the Metal backend implementation for MtlUnalignedBufferCopyInfo.
 /// </summary>
 internal struct MtlUnalignedBufferCopyInfo {
 
     /// <summary>
-    /// Stores the value associated with <c>SourceOffset</c>.
+    /// Stores the source offset value used during command execution.
     /// </summary>
     public uint SourceOffset;
 
     /// <summary>
-    /// Stores the value associated with <c>DestinationOffset</c>.
+    /// Stores the destination offset value used during command execution.
     /// </summary>
     public uint DestinationOffset;
 
     /// <summary>
-    /// Stores the value associated with <c>CopySize</c>.
+    /// Stores the copy size value used during command execution.
     /// </summary>
     public uint CopySize;
 }

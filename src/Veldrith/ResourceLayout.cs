@@ -3,14 +3,14 @@ using System;
 namespace Veldrith;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the ResourceLayout class.
+/// Represents the ResourceLayout type used by the graphics runtime.
 /// </summary>
 public abstract class ResourceLayout : IDeviceResource, IDisposable {
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ResourceLayout" /> type.
     /// </summary>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <param name="description">The description used to configure this operation.</param>
     internal ResourceLayout(ref ResourceLayoutDescription description) {
 #if VALIDATE_USAGE
         this.Description = description;
@@ -30,14 +30,13 @@ public abstract class ResourceLayout : IDeviceResource, IDisposable {
 
     /// <summary>
     /// A string identifying this instance. Can be used to differentiate between objects in graphics debuggers and other
-    /// tools.
     /// </summary>
     public abstract string Name { get; set; }
 
     #region Disposal
 
     /// <summary>
-    /// Executes the Dispose operation.
+    /// Releases resources held by this instance.
     /// </summary>
     public abstract void Dispose();
 
@@ -46,12 +45,12 @@ public abstract class ResourceLayout : IDeviceResource, IDisposable {
 #if VALIDATE_USAGE
 
     /// <summary>
-    /// Stores the value associated with <c>Description</c>.
+    /// Stores the description state used by this instance.
     /// </summary>
     internal readonly ResourceLayoutDescription Description;
 
     /// <summary>
-    /// Stores the value associated with <c>DynamicBufferCount</c>.
+    /// Stores the dynamic buffer count value used during command execution.
     /// </summary>
     internal readonly uint DynamicBufferCount;
 #endif

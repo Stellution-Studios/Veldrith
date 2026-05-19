@@ -1,7 +1,7 @@
 namespace Veldrith.SPIRV;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the CrossCompileOptions class.
+/// Represents the CrossCompileOptions type used by the graphics runtime.
 /// </summary>
 public class CrossCompileOptions {
 
@@ -15,24 +15,24 @@ public class CrossCompileOptions {
     /// <summary>
     /// Initializes a new instance of the <see cref="CrossCompileOptions" /> type.
     /// </summary>
-    /// <param name="fixClipSpaceZ">Specifies the value of <paramref name="fixClipSpaceZ" />.</param>
-    /// <param name="invertVertexOutputY">Specifies the value of <paramref name="invertVertexOutputY" />.</param>
+    /// <param name="fixClipSpaceZ">The fix clip space z value used by this operation.</param>
+    /// <param name="invertVertexOutputY">The invert vertex output y value used by this operation.</param>
     public CrossCompileOptions(bool fixClipSpaceZ, bool invertVertexOutputY) : this(fixClipSpaceZ, invertVertexOutputY, Array.Empty<SpecializationConstant>()) { }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CrossCompileOptions" /> type.
     /// </summary>
-    /// <param name="fixClipSpaceZ">Specifies the value of <paramref name="fixClipSpaceZ" />.</param>
-    /// <param name="invertVertexOutputY">Specifies the value of <paramref name="invertVertexOutputY" />.</param>
-    /// <param name="normalizeResourceNames">Specifies the value of <paramref name="normalizeResourceNames" />.</param>
+    /// <param name="fixClipSpaceZ">The fix clip space z value used by this operation.</param>
+    /// <param name="invertVertexOutputY">The invert vertex output y value used by this operation.</param>
+    /// <param name="normalizeResourceNames">The normalize resource names value used by this operation.</param>
     public CrossCompileOptions(bool fixClipSpaceZ, bool invertVertexOutputY, bool normalizeResourceNames) : this(fixClipSpaceZ, invertVertexOutputY, normalizeResourceNames, Array.Empty<SpecializationConstant>()) { }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CrossCompileOptions" /> type.
     /// </summary>
-    /// <param name="fixClipSpaceZ">Specifies the value of <paramref name="fixClipSpaceZ" />.</param>
-    /// <param name="invertVertexOutputY">Specifies the value of <paramref name="invertVertexOutputY" />.</param>
-    /// <param name="specializations">Specifies the value of <paramref name="specializations" />.</param>
+    /// <param name="fixClipSpaceZ">The fix clip space z value used by this operation.</param>
+    /// <param name="invertVertexOutputY">The invert vertex output y value used by this operation.</param>
+    /// <param name="specializations">The specializations value used by this operation.</param>
     public CrossCompileOptions(bool fixClipSpaceZ, bool invertVertexOutputY, params SpecializationConstant[] specializations) {
         this.FixClipSpaceZ = fixClipSpaceZ;
         this.InvertVertexOutputY = invertVertexOutputY;
@@ -42,10 +42,10 @@ public class CrossCompileOptions {
     /// <summary>
     /// Initializes a new instance of the <see cref="CrossCompileOptions" /> type.
     /// </summary>
-    /// <param name="fixClipSpaceZ">Specifies the value of <paramref name="fixClipSpaceZ" />.</param>
-    /// <param name="invertVertexOutputY">Specifies the value of <paramref name="invertVertexOutputY" />.</param>
-    /// <param name="normalizeResourceNames">Specifies the value of <paramref name="normalizeResourceNames" />.</param>
-    /// <param name="specializations">Specifies the value of <paramref name="specializations" />.</param>
+    /// <param name="fixClipSpaceZ">The fix clip space z value used by this operation.</param>
+    /// <param name="invertVertexOutputY">The invert vertex output y value used by this operation.</param>
+    /// <param name="normalizeResourceNames">The normalize resource names value used by this operation.</param>
+    /// <param name="specializations">The specializations value used by this operation.</param>
     public CrossCompileOptions(bool fixClipSpaceZ, bool invertVertexOutputY, bool normalizeResourceNames, params SpecializationConstant[] specializations) {
         this.FixClipSpaceZ = fixClipSpaceZ;
         this.InvertVertexOutputY = invertVertexOutputY;
@@ -55,19 +55,16 @@ public class CrossCompileOptions {
 
     /// <summary>
     /// Indicates whether or not the compiled shader output should include a clip-space Z-range fixup at the end of the
-    /// vertex shader.
     /// </summary>
     public bool FixClipSpaceZ { get; set; }
 
     /// <summary>
     /// Indicates whether or not the compiled shader output should include a fixup at the end of the vertex shader which
-    /// inverts the clip-space Y value.
     /// </summary>
     public bool InvertVertexOutputY { get; set; }
 
     /// <summary>
     /// Indicates whether all resource names should be forced into a normalized form. This has functional impact
-    /// on compilation targets where resource names are meaningful, like GLSL.
     /// </summary>
     public bool NormalizeResourceNames { get; set; }
 

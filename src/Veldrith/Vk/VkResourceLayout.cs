@@ -5,36 +5,35 @@ using static Vulkan.VulkanNative;
 namespace Veldrith.Vk;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the VkResourceLayout class.
+/// Provides the Vulkan backend implementation for VkResourceLayout.
 /// </summary>
 internal unsafe class VkResourceLayout : ResourceLayout {
 
     /// <summary>
-    /// Stores the value associated with <c>_dsl</c>.
+    /// Stores the dsl state used by this instance.
     /// </summary>
     private readonly VkDescriptorSetLayout _dsl;
 
     /// <summary>
-    /// Stores the value associated with <c>gd</c>.
+    /// Stores the gd state used by this instance.
     /// </summary>
     private readonly VkGraphicsDevice gd;
 
     /// <summary>
-    /// Stores the value associated with <c>_disposed</c>.
+    /// Stores the disposed state used by this instance.
     /// </summary>
     private bool _disposed;
 
     /// <summary>
-    /// Stores the value associated with <c>_name</c>.
+    /// Stores the human-readable name associated with this instance.
     /// </summary>
     private string _name;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VkResourceLayout" /> class.
     /// </summary>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
-    /// <returns>Returns the result produced by the base operation.</returns>
+    /// <param name="gd">The graphics device that owns this operation.</param>
+    /// <param name="description">The description used to configure this operation.</param>
     public VkResourceLayout(VkGraphicsDevice gd, ref ResourceLayoutDescription description) : base(ref description) {
         this.gd = gd;
         VkDescriptorSetLayoutCreateInfo dslCi = VkDescriptorSetLayoutCreateInfo.New();
@@ -103,7 +102,7 @@ internal unsafe class VkResourceLayout : ResourceLayout {
     }
 
     /// <summary>
-    /// Stores the value associated with <c>DescriptorSetLayout</c>.
+    /// Stores the descriptor set layout state used by this instance.
     /// </summary>
     public VkDescriptorSetLayout DescriptorSetLayout => this._dsl;
 
@@ -141,7 +140,7 @@ internal unsafe class VkResourceLayout : ResourceLayout {
     #region Disposal
 
     /// <summary>
-    /// Executes the Dispose operation.
+    /// Releases resources held by this instance.
     /// </summary>
     public override void Dispose() {
         if (!this._disposed) {

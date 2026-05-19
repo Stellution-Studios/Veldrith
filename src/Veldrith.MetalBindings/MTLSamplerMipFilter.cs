@@ -6,7 +6,7 @@ namespace Veldrith.MetalBindings;
 public enum MTLSamplerMipFilter {
 
     /// <summary>
-    /// Stores the value associated with <c>NotMipmapped</c>.
+    /// Stores the not mipmapped state used by this instance.
     /// </summary>
     NotMipmapped = 0, Nearest = 1, Linear = 2
 }

@@ -3,27 +3,27 @@ using Veldrith.MetalBindings;
 namespace Veldrith.MTL;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the MtlSwapchainTexture class.
+/// Provides the Metal backend implementation for MtlSwapchainTexture.
 /// </summary>
 internal class MtlSwapchainTexture : MtlTexture {
 
     /// <summary>
-    /// Stores the value associated with <c>_deviceTexture</c>.
+    /// Stores the device texture state used by this instance.
     /// </summary>
     private MTLTexture _deviceTexture;
 
     /// <summary>
-    /// Stores the value associated with <c>_height</c>.
+    /// Stores the height value used during command execution.
     /// </summary>
     private uint _height;
 
     /// <summary>
-    /// Stores the value associated with <c>_mtlPixelFormat</c>.
+    /// Stores the mtl pixel format state used by this instance.
     /// </summary>
     private MTLPixelFormat _mtlPixelFormat;
 
     /// <summary>
-    /// Stores the value associated with <c>_width</c>.
+    /// Stores the width value used during command execution.
     /// </summary>
     private uint _width;
 
@@ -83,11 +83,11 @@ internal class MtlSwapchainTexture : MtlTexture {
     public override MTLTextureType MtlTextureType => MTLTextureType.Type2D;
 
     /// <summary>
-    /// Executes the SetDrawable operation.
+    /// Sets the drawable value.
     /// </summary>
-    /// <param name="drawable">Specifies the value of <paramref name="drawable" />.</param>
-    /// <param name="size">Specifies the value of <paramref name="size" />.</param>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
+    /// <param name="drawable">The drawable value used by this operation.</param>
+    /// <param name="size">The size, in bytes, used by this operation.</param>
+    /// <param name="format">The format used by this operation.</param>
     public void SetDrawable(CAMetalDrawable drawable, CGSize size, PixelFormat format) {
         this._deviceTexture = drawable.texture;
         this._width = (uint)size.width;

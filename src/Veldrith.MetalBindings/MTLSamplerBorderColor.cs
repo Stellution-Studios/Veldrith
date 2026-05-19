@@ -6,7 +6,7 @@ namespace Veldrith.MetalBindings;
 public enum MTLSamplerBorderColor {
 
     /// <summary>
-    /// Stores the value associated with <c>TransparentBlack</c>.
+    /// Stores the transparent black state used by this instance.
     /// </summary>
     TransparentBlack = 0, OpaqueBlack = 1, OpaqueWhite = 2
 }

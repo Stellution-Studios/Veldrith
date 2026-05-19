@@ -4,19 +4,19 @@ using System.Text;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Defines the data layout and behavior of the Selector struct.
+/// Represents the Selector data structure used by the graphics runtime.
 /// </summary>
 public unsafe struct Selector {
 
     /// <summary>
-    /// Stores the value associated with <c>NativePtr</c>.
+    /// Stores the native ptr state used by this instance.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Selector" /> type.
     /// </summary>
-    /// <param name="ptr">Specifies the value of <paramref name="ptr" />.</param>
+    /// <param name="ptr">The ptr value used by this operation.</param>
     public Selector(IntPtr ptr) {
         this.NativePtr = ptr;
     }
@@ -24,7 +24,7 @@ public unsafe struct Selector {
     /// <summary>
     /// Initializes a new instance of the <see cref="Selector" /> type.
     /// </summary>
-    /// <param name="name">Specifies the value of <paramref name="name" />.</param>
+    /// <param name="name">The name used by this operation.</param>
     public Selector(string name) {
         int byteCount = Encoding.UTF8.GetMaxByteCount(name.Length);
         byte* utf8BytesPtr = stackalloc byte[byteCount];
@@ -46,10 +46,9 @@ public unsafe struct Selector {
     }
 
     /// <summary>
-    /// Executes the operator Selector operation.
+    /// Initializes a new instance of the <see cref="Selector" /> class.
     /// </summary>
-    /// <param name="s">Specifies the value of <paramref name="s" />.</param>
-    /// <returns>Returns the result produced by the operator Selector operation.</returns>
+    /// <param name="s">The s value used by this operation.</param>
     public static implicit operator Selector(string s) {
         return new Selector(s);
     }

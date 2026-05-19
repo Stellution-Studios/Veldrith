@@ -1,16 +1,16 @@
 namespace Veldrith.SPIRV;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the VertexFragmentCompilationResult class.
+/// Represents the VertexFragmentCompilationResult type used by the graphics runtime.
 /// </summary>
 public class VertexFragmentCompilationResult {
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VertexFragmentCompilationResult" /> type.
     /// </summary>
-    /// <param name="vertexCode">Specifies the value of <paramref name="vertexCode" />.</param>
-    /// <param name="fragmentCode">Specifies the value of <paramref name="fragmentCode" />.</param>
-    /// <param name="reflection">Specifies the value of <paramref name="reflection" />.</param>
+    /// <param name="vertexCode">The vertex code value used by this operation.</param>
+    /// <param name="fragmentCode">The fragment code value used by this operation.</param>
+    /// <param name="reflection">The reflection value used by this operation.</param>
     internal VertexFragmentCompilationResult(string vertexCode, string fragmentCode, SpirvReflection reflection) {
         this.VertexShader = vertexCode;
         this.FragmentShader = fragmentCode;

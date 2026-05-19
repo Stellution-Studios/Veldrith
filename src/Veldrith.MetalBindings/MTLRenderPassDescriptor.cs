@@ -7,26 +7,24 @@ namespace Veldrith.MetalBindings;
 [StructLayout(LayoutKind.Sequential)]
 
 /// <summary>
-/// Defines the data layout and behavior of the MTLRenderPassDescriptor struct.
+/// Represents the MTLRenderPassDescriptor data structure used by the graphics runtime.
 /// </summary>
 public struct MTLRenderPassDescriptor {
 
     /// <summary>
-    /// Stores the value associated with <c>name</c>.
+    /// Stores the s class state used by this instance.
     /// </summary>
-    /// <param name="MTLRenderPassDescriptor">Specifies the value of <paramref name="MTLRenderPassDescriptor" />.</param>
-    /// <returns>Returns the result produced by the new operation.</returns>
     private static readonly ObjCClass s_class = new(nameof(MTLRenderPassDescriptor));
 
     /// <summary>
-    /// Stores the value associated with <c>NativePtr</c>.
+    /// Stores the native ptr state used by this instance.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
     /// Creates and returns a new instance.
     /// </summary>
-    /// <returns>Returns the result produced by the New operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public static MTLRenderPassDescriptor New() {
         return s_class.AllocInit<MTLRenderPassDescriptor>();
     }
@@ -41,17 +39,17 @@ public struct MTLRenderPassDescriptor {
         => objc_msgSend<MTLRenderPassStencilAttachmentDescriptor>(this.NativePtr, sel_stencilAttachment);
 
     /// <summary>
-    /// Stores the value associated with <c>sel_colorAttachments</c>.
+    /// Stores the sel color attachments state used by this instance.
     /// </summary>
     private static readonly Selector sel_colorAttachments = "colorAttachments";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_depthAttachment</c>.
+    /// Stores the sel depth attachment value used during command execution.
     /// </summary>
     private static readonly Selector sel_depthAttachment = "depthAttachment";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_stencilAttachment</c>.
+    /// Stores the sel stencil attachment state used by this instance.
     /// </summary>
     private static readonly Selector sel_stencilAttachment = "stencilAttachment";
 }

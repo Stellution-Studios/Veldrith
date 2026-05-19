@@ -8,39 +8,39 @@ namespace Veldrith.MetalBindings;
 [StructLayout(LayoutKind.Sequential)]
 
 /// <summary>
-/// Defines the data layout and behavior of the MTLCommandQueue struct.
+/// Represents the MTLCommandQueue data structure used by the graphics runtime.
 /// </summary>
 public struct MTLCommandQueue {
 
     /// <summary>
-    /// Stores the value associated with <c>NativePtr</c>.
+    /// Stores the native ptr state used by this instance.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     [Pure]
 
     /// <summary>
-    /// Executes the commandBuffer operation.
+    /// Executes the command buffer logic for this backend.
     /// </summary>
-    /// <returns>Returns the result produced by the commandBuffer operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public MTLCommandBuffer commandBuffer() {
         return objc_msgSend<MTLCommandBuffer>(this.NativePtr, sel_commandBuffer);
     }
 
     /// <summary>
-    /// Executes the insertDebugCaptureBoundary operation.
+    /// Executes the insert debug capture boundary logic for this backend.
     /// </summary>
     public void insertDebugCaptureBoundary() {
         objc_msgSend(this.NativePtr, sel_insertDebugCaptureBoundary);
     }
 
     /// <summary>
-    /// Stores the value associated with <c>sel_commandBuffer</c>.
+    /// Stores the sel command buffer state used by this instance.
     /// </summary>
     private static readonly Selector sel_commandBuffer = "commandBuffer";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_insertDebugCaptureBoundary</c>.
+    /// Stores the sel insert debug capture boundary state used by this instance.
     /// </summary>
     private static readonly Selector sel_insertDebugCaptureBoundary = "insertDebugCaptureBoundary";
 }

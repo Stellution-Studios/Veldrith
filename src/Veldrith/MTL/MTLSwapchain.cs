@@ -4,50 +4,50 @@ using Veldrith.MetalBindings;
 namespace Veldrith.MTL;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the MtlSwapchain class.
+/// Provides the Metal backend implementation for MtlSwapchain.
 /// </summary>
 internal class MtlSwapchain : Swapchain {
 
     /// <summary>
-    /// Stores the value associated with <c>_framebuffer</c>.
+    /// Stores the framebuffer state used by this instance.
     /// </summary>
     private readonly MtlSwapchainFramebuffer _framebuffer;
 
     /// <summary>
-    /// Stores the value associated with <c>gd</c>.
+    /// Stores the gd state used by this instance.
     /// </summary>
     private readonly MtlGraphicsDevice gd;
 
     /// <summary>
-    /// Stores the value associated with <c>_disposed</c>.
+    /// Stores the disposed state used by this instance.
     /// </summary>
     private bool _disposed;
 
     /// <summary>
-    /// Stores the value associated with <c>_drawable</c>.
+    /// Stores the drawable state used by this instance.
     /// </summary>
     private CAMetalDrawable _drawable;
 
     /// <summary>
-    /// Stores the value associated with <c>_metalLayer</c>.
+    /// Stores the metal layer state used by this instance.
     /// </summary>
     private CAMetalLayer _metalLayer;
 
     /// <summary>
-    /// Stores the value associated with <c>_syncToVerticalBlank</c>.
+    /// Stores the sync to vertical blank state used by this instance.
     /// </summary>
     private bool _syncToVerticalBlank;
 
     /// <summary>
-    /// Stores the value associated with <c>_uiView</c>.
+    /// Stores the ui view state used by this instance.
     /// </summary>
     private UIView _uiView; // Valid only when a UIViewSwapchainSource is used.
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MtlSwapchain" /> type.
     /// </summary>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <param name="gd">The graphics device that owns this operation.</param>
+    /// <param name="description">The description used to configure this operation.</param>
     public MtlSwapchain(MtlGraphicsDevice gd, ref SwapchainDescription description) {
         this.gd = gd;
         this._syncToVerticalBlank = description.SyncToVerticalBlank;
@@ -126,7 +126,7 @@ internal class MtlSwapchain : Swapchain {
     public override bool IsDisposed => this._disposed;
 
     /// <summary>
-    /// Stores the value associated with <c>CurrentDrawable</c>.
+    /// Stores the current drawable state used by this instance.
     /// </summary>
     public CAMetalDrawable CurrentDrawable => this._drawable;
 
@@ -150,7 +150,7 @@ internal class MtlSwapchain : Swapchain {
     #region Disposal
 
     /// <summary>
-    /// Executes the Dispose operation.
+    /// Releases resources held by this instance.
     /// </summary>
     public override void Dispose() {
         if (this._drawable.NativePtr != IntPtr.Zero) {
@@ -166,10 +166,10 @@ internal class MtlSwapchain : Swapchain {
     #endregion
 
     /// <summary>
-    /// Executes the Resize operation.
+    /// Executes the resize logic for this backend.
     /// </summary>
-    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
-    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
+    /// <param name="width">The width value.</param>
+    /// <param name="height">The height value.</param>
     public override void Resize(uint width, uint height) {
         if (this._uiView.NativePtr != IntPtr.Zero) {
             this._metalLayer.frame = this._uiView.frame;
@@ -181,15 +181,15 @@ internal class MtlSwapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes the EnsureDrawableAvailable operation.
+    /// Executes the ensure drawable available logic for this backend.
     /// </summary>
-    /// <returns>Returns the result produced by the EnsureDrawableAvailable operation.</returns>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public bool EnsureDrawableAvailable() {
         return !this._drawable.IsNull || this.GetNextDrawable();
     }
 
     /// <summary>
-    /// Executes the InvalidateDrawable operation.
+    /// Executes the invalidate drawable logic for this backend.
     /// </summary>
     public void InvalidateDrawable() {
         ObjectiveCRuntime.release(this._drawable.NativePtr);
@@ -197,9 +197,9 @@ internal class MtlSwapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes the GetNextDrawable operation.
+    /// Gets the next drawable value.
     /// </summary>
-    /// <returns>Returns the result produced by the GetNextDrawable operation.</returns>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     private bool GetNextDrawable() {
         if (!this._drawable.IsNull) {
             ObjectiveCRuntime.release(this._drawable.NativePtr);
@@ -219,9 +219,9 @@ internal class MtlSwapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes the SetSyncToVerticalBlank operation.
+    /// Sets the sync to vertical blank value.
     /// </summary>
-    /// <param name="value">Specifies the value of <paramref name="value" />.</param>
+    /// <param name="value">The value used by this operation.</param>
     private void SetSyncToVerticalBlank(bool value) {
         this._syncToVerticalBlank = value;
 

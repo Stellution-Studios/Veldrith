@@ -19,18 +19,14 @@ public struct VertexLayoutDescription : IEquatable<VertexLayoutDescription> {
 
     /// <summary>
     /// A value controlling how often data for instances is advanced for this layout. For per-vertex elements, this value
-    /// should be 0.
-    /// For example, an InstanceStepRate of 3 indicates that 3 instances will be drawn with the same value for this layout.
-    /// The
-    /// next 3 instances will be drawn with the next value, and so on.
     /// </summary>
     public uint InstanceStepRate;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VertexLayoutDescription" /> type.
     /// </summary>
-    /// <param name="stride">Specifies the value of <paramref name="stride" />.</param>
-    /// <param name="elements">Specifies the value of <paramref name="elements" />.</param>
+    /// <param name="stride">The stride value used by this operation.</param>
+    /// <param name="elements">The elements value used by this operation.</param>
     public VertexLayoutDescription(uint stride, params VertexElementDescription[] elements) {
         this.Stride = stride;
         this.Elements = elements;
@@ -40,9 +36,9 @@ public struct VertexLayoutDescription : IEquatable<VertexLayoutDescription> {
     /// <summary>
     /// Initializes a new instance of the <see cref="VertexLayoutDescription" /> type.
     /// </summary>
-    /// <param name="stride">Specifies the value of <paramref name="stride" />.</param>
-    /// <param name="instanceStepRate">Specifies the value of <paramref name="instanceStepRate" />.</param>
-    /// <param name="elements">Specifies the value of <paramref name="elements" />.</param>
+    /// <param name="stride">The stride value used by this operation.</param>
+    /// <param name="instanceStepRate">The instance step rate value used by this operation.</param>
+    /// <param name="elements">The elements value used by this operation.</param>
     public VertexLayoutDescription(uint stride, uint instanceStepRate, params VertexElementDescription[] elements) {
         this.Stride = stride;
         this.Elements = elements;
@@ -52,7 +48,7 @@ public struct VertexLayoutDescription : IEquatable<VertexLayoutDescription> {
     /// <summary>
     /// Initializes a new instance of the <see cref="VertexLayoutDescription" /> type.
     /// </summary>
-    /// <param name="elements">Specifies the value of <paramref name="elements" />.</param>
+    /// <param name="elements">The elements value used by this operation.</param>
     public VertexLayoutDescription(params VertexElementDescription[] elements) {
         this.Elements = elements;
         uint computedStride = 0;
@@ -72,10 +68,10 @@ public struct VertexLayoutDescription : IEquatable<VertexLayoutDescription> {
     }
 
     /// <summary>
-    /// Executes the Equals operation.
+    /// Determines whether this instance is equal to the specified value.
     /// </summary>
-    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
-    /// <returns>Returns the result produced by the Equals operation.</returns>
+    /// <param name="other">The value to compare against.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public bool Equals(VertexLayoutDescription other) {
         return this.Stride.Equals(other.Stride)
                && Util.ArrayEqualsEquatable(this.Elements, other.Elements)
@@ -83,9 +79,9 @@ public struct VertexLayoutDescription : IEquatable<VertexLayoutDescription> {
     }
 
     /// <summary>
-    /// Executes the GetHashCode operation.
+    /// Computes a hash code for this instance.
     /// </summary>
-    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(this.Stride.GetHashCode(), HashHelper.Array(this.Elements), this.InstanceStepRate.GetHashCode());
     }

@@ -4,95 +4,95 @@ using Vortice.DXGI;
 namespace Veldrith.D3D12;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the D3D12Swapchain class.
+/// Provides the Direct3D 12 backend implementation for D3D12Swapchain.
 /// </summary>
 internal sealed class D3D12Swapchain : Swapchain {
 
     /// <summary>
-    /// Stores the value associated with <c>_bufferCount</c>.
+    /// Stores the buffer count value used during command execution.
     /// </summary>
     private readonly int _bufferCount = 3;
 
     /// <summary>
-    /// Stores the value associated with <c>_canTear</c>.
+    /// Tracks whether can tear is currently enabled.
     /// </summary>
     private readonly bool _canTear;
 
     /// <summary>
-    /// Stores the value associated with <c>_hasNativeSwapchain</c>.
+    /// Tracks whether has native swapchain is currently enabled.
     /// </summary>
     private readonly bool _hasNativeSwapchain;
 
     /// <summary>
-    /// Stores the value associated with <c>_nativeColorFormat</c>.
+    /// Stores the native color format state used by this instance.
     /// </summary>
     private readonly Format _nativeColorFormat;
 
     /// <summary>
-    /// Stores the value associated with <c>gd</c>.
+    /// Stores the gd state used by this instance.
     /// </summary>
     private readonly D3D12GraphicsDevice gd;
 
     /// <summary>
-    /// Stores the value associated with <c>_allowTearing</c>.
+    /// Stores the allow tearing state used by this instance.
     /// </summary>
     private bool _allowTearing;
 
     /// <summary>
-    /// Stores the value associated with <c>_backBufferResources</c>.
+    /// Stores the back buffer resources collection used by this instance.
     /// </summary>
     private ID3D12Resource[] _backBufferResources;
 
     /// <summary>
-    /// Stores the value associated with <c>_backBufferRtvs</c>.
+    /// Stores the back buffer rtvs state used by this instance.
     /// </summary>
     private CpuDescriptorHandle[] _backBufferRtvs;
 
     /// <summary>
-    /// Stores the value associated with <c>_backBufferStates</c>.
+    /// Stores the back buffer states collection used by this instance.
     /// </summary>
     private ResourceStates[] _backBufferStates;
 
     /// <summary>
-    /// Stores the value associated with <c>_colorTexture</c>.
+    /// Stores the color texture state used by this instance.
     /// </summary>
     private Texture _colorTexture;
 
     /// <summary>
-    /// Stores the value associated with <c>_depthTexture</c>.
+    /// Stores the depth texture value used during command execution.
     /// </summary>
     private Texture _depthTexture;
 
     /// <summary>
-    /// Stores the value associated with <c>_disposed</c>.
+    /// Stores the disposed state used by this instance.
     /// </summary>
     private bool _disposed;
 
     /// <summary>
-    /// Stores the value associated with <c>_dxgiSwapChain</c>.
+    /// Stores the dxgi swap chain state used by this instance.
     /// </summary>
     private IDXGISwapChain3 _dxgiSwapChain;
 
     /// <summary>
-    /// Stores the value associated with <c>_framebuffer</c>.
+    /// Stores the framebuffer state used by this instance.
     /// </summary>
     private Framebuffer _framebuffer;
 
     /// <summary>
-    /// Stores the value associated with <c>_rtvDescriptorSize</c>.
+    /// Stores the rtv descriptor size value used during command execution.
     /// </summary>
     private int _rtvDescriptorSize;
 
     /// <summary>
-    /// Stores the value associated with <c>_rtvHeap</c>.
+    /// Stores the rtv heap state used by this instance.
     /// </summary>
     private ID3D12DescriptorHeap _rtvHeap;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="D3D12Swapchain" /> type.
     /// </summary>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <param name="gd">The graphics device that owns this operation.</param>
+    /// <param name="description">The description used to configure this operation.</param>
     public D3D12Swapchain(D3D12GraphicsDevice gd, ref SwapchainDescription description) {
         this.gd = gd;
         this.SyncToVerticalBlank = description.SyncToVerticalBlank;
@@ -147,7 +147,7 @@ internal sealed class D3D12Swapchain : Swapchain {
     public override string Name { get; set; }
 
     /// <summary>
-    /// Executes the Dispose operation.
+    /// Releases resources held by this instance.
     /// </summary>
     public override void Dispose() {
         if (this._disposed) {
@@ -163,10 +163,10 @@ internal sealed class D3D12Swapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes the Resize operation.
+    /// Executes the resize logic for this backend.
     /// </summary>
-    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
-    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
+    /// <param name="width">The width value.</param>
+    /// <param name="height">The height value.</param>
     public override void Resize(uint width, uint height) {
         if (width == 0 || height == 0) {
             return;
@@ -189,7 +189,7 @@ internal sealed class D3D12Swapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes the Present operation.
+    /// Executes the present logic for this backend.
     /// </summary>
     internal void Present() {
         if (this._hasNativeSwapchain) {
@@ -203,12 +203,12 @@ internal sealed class D3D12Swapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes the CreateAttachments operation.
+    /// Creates the attachments instance used by this backend.
     /// </summary>
-    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
-    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
-    /// <param name="depthFormat">Specifies the value of <paramref name="depthFormat" />.</param>
-    /// <param name="srgb">Specifies the value of <paramref name="srgb" />.</param>
+    /// <param name="width">The width value.</param>
+    /// <param name="height">The height value.</param>
+    /// <param name="depthFormat">The depth format value used by this operation.</param>
+    /// <param name="srgb">The srgb value used by this operation.</param>
     private void CreateAttachments(uint width, uint height, PixelFormat? depthFormat, bool srgb) {
         PixelFormat colorFormat = srgb ? PixelFormat.B8G8R8A8UNormSRgb : PixelFormat.B8G8R8A8UNorm;
         TextureDescription colorDesc = TextureDescription.Texture2D(width, height, 1, 1, colorFormat, TextureUsage.RenderTarget | TextureUsage.Sampled);
@@ -232,10 +232,10 @@ internal sealed class D3D12Swapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes the TryCreateNativeSwapchain operation.
+    /// Attempts to create native swapchain and reports whether it succeeded.
     /// </summary>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
-    /// <returns>Returns the result produced by the TryCreateNativeSwapchain operation.</returns>
+    /// <param name="description">The description used to configure this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     private bool TryCreateNativeSwapchain(ref SwapchainDescription description) {
         if (description.Source is not Win32SwapchainSource win32Source) {
             return false;
@@ -264,13 +264,13 @@ internal sealed class D3D12Swapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes the TryGetCurrentBackBuffer operation.
+    /// Attempts to get current back buffer and reports whether it succeeded.
     /// </summary>
-    /// <param name="resource">Specifies the value of <paramref name="resource" />.</param>
-    /// <param name="rtv">Specifies the value of <paramref name="rtv" />.</param>
-    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
-    /// <param name="state">Specifies the value of <paramref name="state" />.</param>
-    /// <returns>Returns the result produced by the TryGetCurrentBackBuffer operation.</returns>
+    /// <param name="resource">The resource involved in this operation.</param>
+    /// <param name="rtv">The rtv value used by this operation.</param>
+    /// <param name="index">The zero-based index of the target item.</param>
+    /// <param name="state">The state value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     internal bool TryGetCurrentBackBuffer(out ID3D12Resource resource, out CpuDescriptorHandle rtv, out int index, out ResourceStates state) {
         if (!this._hasNativeSwapchain || this._dxgiSwapChain == null) {
             resource = null;
@@ -288,16 +288,16 @@ internal sealed class D3D12Swapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes the SetBackBufferState operation.
+    /// Sets the back buffer state value.
     /// </summary>
-    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
-    /// <param name="state">Specifies the value of <paramref name="state" />.</param>
+    /// <param name="index">The zero-based index of the target item.</param>
+    /// <param name="state">The state value used by this operation.</param>
     internal void SetBackBufferState(int index, ResourceStates state) {
         this._backBufferStates[index] = state;
     }
 
     /// <summary>
-    /// Executes the CreateNativeRenderTargets operation.
+    /// Creates the native render targets instance used by this backend.
     /// </summary>
     private void CreateNativeRenderTargets() {
         this._rtvDescriptorSize = (int)this.gd.Device.GetDescriptorHandleIncrementSize(DescriptorHeapType.RenderTargetView);
@@ -317,10 +317,10 @@ internal sealed class D3D12Swapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes the RecreateNativeSwapchain operation.
+    /// Executes the recreate native swapchain logic for this backend.
     /// </summary>
-    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
-    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
+    /// <param name="width">The width value.</param>
+    /// <param name="height">The height value.</param>
     private void RecreateNativeSwapchain(uint width, uint height) {
         if (!this._hasNativeSwapchain || this._dxgiSwapChain == null) {
             return;
@@ -332,9 +332,9 @@ internal sealed class D3D12Swapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes the GetSwapChainFlags operation.
+    /// Gets the swap chain flags value.
     /// </summary>
-    /// <returns>Returns the result produced by the GetSwapChainFlags operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     private SwapChainFlags GetSwapChainFlags() {
         if (this._allowTearing && this._canTear) {
             return SwapChainFlags.AllowTearing;
@@ -344,7 +344,7 @@ internal sealed class D3D12Swapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes the DisposeNativeResources operation.
+    /// Executes the dispose native resources logic for this backend.
     /// </summary>
     private void DisposeNativeResources() {
         if (this._backBufferResources != null) {

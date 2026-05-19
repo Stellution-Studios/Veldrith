@@ -14,8 +14,6 @@ public struct VertexElementDescription : IEquatable<VertexElementDescription> {
 
     /// <summary>
     /// The semantic type of the element.
-    /// NOTE: When using Veldrith.SPIRV, all vertex elements will use
-    /// <see cref="VertexElementSemantic.TextureCoordinate" />.
     /// </summary>
     public VertexElementSemantic Semantic;
 
@@ -32,18 +30,18 @@ public struct VertexElementDescription : IEquatable<VertexElementDescription> {
     /// <summary>
     /// Initializes a new instance of the <see cref="VertexElementDescription" /> type.
     /// </summary>
-    /// <param name="name">Specifies the value of <paramref name="name" />.</param>
-    /// <param name="semantic">Specifies the value of <paramref name="semantic" />.</param>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
+    /// <param name="name">The name used by this operation.</param>
+    /// <param name="semantic">The semantic value used by this operation.</param>
+    /// <param name="format">The format used by this operation.</param>
     public VertexElementDescription(string name, VertexElementSemantic semantic, VertexElementFormat format)
         : this(name, format, semantic) { }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VertexElementDescription" /> type.
     /// </summary>
-    /// <param name="name">Specifies the value of <paramref name="name" />.</param>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
-    /// <param name="semantic">Specifies the value of <paramref name="semantic" />.</param>
+    /// <param name="name">The name used by this operation.</param>
+    /// <param name="format">The format used by this operation.</param>
+    /// <param name="semantic">The semantic value used by this operation.</param>
     public VertexElementDescription(string name, VertexElementFormat format, VertexElementSemantic semantic) {
         this.Name = name;
         this.Format = format;
@@ -54,10 +52,10 @@ public struct VertexElementDescription : IEquatable<VertexElementDescription> {
     /// <summary>
     /// Initializes a new instance of the <see cref="VertexElementDescription" /> type.
     /// </summary>
-    /// <param name="name">Specifies the value of <paramref name="name" />.</param>
-    /// <param name="semantic">Specifies the value of <paramref name="semantic" />.</param>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
-    /// <param name="offset">Specifies the value of <paramref name="offset" />.</param>
+    /// <param name="name">The name used by this operation.</param>
+    /// <param name="semantic">The semantic value used by this operation.</param>
+    /// <param name="format">The format used by this operation.</param>
+    /// <param name="offset">The byte offset used by this operation.</param>
     public VertexElementDescription(string name, VertexElementSemantic semantic, VertexElementFormat format, uint offset) {
         this.Name = name;
         this.Format = format;
@@ -66,10 +64,10 @@ public struct VertexElementDescription : IEquatable<VertexElementDescription> {
     }
 
     /// <summary>
-    /// Executes the Equals operation.
+    /// Determines whether this instance is equal to the specified value.
     /// </summary>
-    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
-    /// <returns>Returns the result produced by the Equals operation.</returns>
+    /// <param name="other">The value to compare against.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public bool Equals(VertexElementDescription other) {
         return this.Name.Equals(other.Name)
                && this.Format == other.Format
@@ -78,9 +76,9 @@ public struct VertexElementDescription : IEquatable<VertexElementDescription> {
     }
 
     /// <summary>
-    /// Executes the GetHashCode operation.
+    /// Computes a hash code for this instance.
     /// </summary>
-    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(this.Name.GetHashCode(), (int)this.Format, (int)this.Semantic, (int)this.Offset);
     }

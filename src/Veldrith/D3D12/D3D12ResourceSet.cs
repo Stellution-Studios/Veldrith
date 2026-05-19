@@ -1,20 +1,19 @@
 namespace Veldrith.D3D12;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the D3D12ResourceSet class.
+/// Provides the Direct3D 12 backend implementation for D3D12ResourceSet.
 /// </summary>
 internal sealed class D3D12ResourceSet : ResourceSet {
 
     /// <summary>
-    /// Stores the value associated with <c>_disposed</c>.
+    /// Stores the disposed state used by this instance.
     /// </summary>
     private bool _disposed;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="D3D12ResourceSet" /> class.
     /// </summary>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
-    /// <returns>Returns the result produced by the base operation.</returns>
+    /// <param name="description">The description used to configure this operation.</param>
     public D3D12ResourceSet(ref ResourceSetDescription description) : base(ref description) {
         this.ResourceLayoutInfo = Util.AssertSubtype<ResourceLayout, D3D12ResourceLayout>(description.Layout);
         this.BoundResources = Util.ShallowClone(description.BoundResources);
@@ -41,7 +40,7 @@ internal sealed class D3D12ResourceSet : ResourceSet {
     public override string Name { get; set; }
 
     /// <summary>
-    /// Executes the Dispose operation.
+    /// Releases resources held by this instance.
     /// </summary>
     public override void Dispose() {
         this._disposed = true;

@@ -6,17 +6,18 @@ namespace Veldrith.MetalBindings;
 public enum MTLResourceOptions : ulong {
 
     /// <summary>
-    /// Stores the value associated with <c>CPUCacheModeDefaultCache</c>.
+    /// Caches cpucache mode default cache to reduce repeated allocations and lookups.
     /// </summary>
     CPUCacheModeDefaultCache = MTLCPUCacheMode.DefaultCache, CPUCacheModeWriteCombined = MTLCPUCacheMode.WriteCombined,
 
     /// <summary>
-    /// Stores the value associated with <c>StorageModeShared</c>.
+    /// Stores the storage mode shared state used by this instance.
     /// </summary>
     StorageModeShared = MTLStorageMode.Shared << 4, StorageModeManaged = MTLStorageMode.Managed << 4, StorageModePrivate = MTLStorageMode.Private << 4, StorageModeMemoryless = MTLStorageMode.Memoryless << 4,
 
     /// <summary>
-    /// Stores the value associated with <c>HazardTrackingModeUntracked</c>.
+    /// Executes the value logic for this backend.
     /// </summary>
+
     HazardTrackingModeUntracked = (uint)(0x1UL << 8)
 }

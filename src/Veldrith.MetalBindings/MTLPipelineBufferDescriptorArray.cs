@@ -4,12 +4,12 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Defines the data layout and behavior of the MTLPipelineBufferDescriptorArray struct.
+/// Represents the MTLPipelineBufferDescriptorArray data structure used by the graphics runtime.
 /// </summary>
 public struct MTLPipelineBufferDescriptorArray {
 
     /// <summary>
-    /// Stores the value associated with <c>NativePtr</c>.
+    /// Stores the native ptr state used by this instance.
     /// </summary>
     public readonly IntPtr NativePtr;
 

@@ -4,19 +4,19 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Defines the data layout and behavior of the MTLRenderPassColorAttachmentDescriptor struct.
+/// Represents the MTLRenderPassColorAttachmentDescriptor data structure used by the graphics runtime.
 /// </summary>
 public struct MTLRenderPassColorAttachmentDescriptor {
 
     /// <summary>
-    /// Stores the value associated with <c>NativePtr</c>.
+    /// Stores the native ptr state used by this instance.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MTLRenderPassColorAttachmentDescriptor" /> type.
     /// </summary>
-    /// <param name="ptr">Specifies the value of <paramref name="ptr" />.</param>
+    /// <param name="ptr">The ptr value used by this operation.</param>
     public MTLRenderPassColorAttachmentDescriptor(IntPtr ptr) {
         this.NativePtr = ptr;
     }
@@ -84,12 +84,12 @@ public struct MTLRenderPassColorAttachmentDescriptor {
     }
 
     /// <summary>
-    /// Stores the value associated with <c>sel_clearColor</c>.
+    /// Stores the sel clear color state used by this instance.
     /// </summary>
     private static readonly Selector sel_clearColor = "clearColor";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setClearColor</c>.
+    /// Stores the sel set clear color state used by this instance.
     /// </summary>
     private static readonly Selector sel_setClearColor = "setClearColor:";
 }

@@ -30,32 +30,29 @@ public struct MappedResource {
 
     /// <summary>
     /// For mapped <see cref="Texture" /> resources, this is the subresource which is mapped.
-    /// For <see cref="DeviceBuffer" /> resources, this field has no meaning.
     /// </summary>
     public readonly uint Subresource;
 
     /// <summary>
     /// For mapped <see cref="Texture" /> resources, this is the number of bytes between each row of texels.
-    /// For <see cref="DeviceBuffer" /> resources, this field has no meaning.
     /// </summary>
     public readonly uint RowPitch;
 
     /// <summary>
     /// For mapped <see cref="Texture" /> resources, this is the number of bytes between each depth slice of a 3D Texture.
-    /// For <see cref="DeviceBuffer" /> resources or 2D Textures, this field has no meaning.
     /// </summary>
     public readonly uint DepthPitch;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MappedResource" /> type.
     /// </summary>
-    /// <param name="resource">Specifies the value of <paramref name="resource" />.</param>
-    /// <param name="mode">Specifies the value of <paramref name="mode" />.</param>
-    /// <param name="data">Specifies the value of <paramref name="data" />.</param>
-    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
-    /// <param name="subresource">Specifies the value of <paramref name="subresource" />.</param>
-    /// <param name="rowPitch">Specifies the value of <paramref name="rowPitch" />.</param>
-    /// <param name="depthPitch">Specifies the value of <paramref name="depthPitch" />.</param>
+    /// <param name="resource">The resource involved in this operation.</param>
+    /// <param name="mode">The mode value used by this operation.</param>
+    /// <param name="data">The data value used by this operation.</param>
+    /// <param name="sizeInBytes">The size, in bytes, used by this operation.</param>
+    /// <param name="subresource">The subresource value used by this operation.</param>
+    /// <param name="rowPitch">The row pitch value used by this operation.</param>
+    /// <param name="depthPitch">The depth pitch value used by this operation.</param>
     internal MappedResource(IMappableResource resource, MapMode mode, IntPtr data, uint sizeInBytes, uint subresource, uint rowPitch, uint depthPitch) {
         this.Resource = resource;
         this.Mode = mode;
@@ -69,10 +66,10 @@ public struct MappedResource {
     /// <summary>
     /// Initializes a new instance of the <see cref="MappedResource" /> type.
     /// </summary>
-    /// <param name="resource">Specifies the value of <paramref name="resource" />.</param>
-    /// <param name="mode">Specifies the value of <paramref name="mode" />.</param>
-    /// <param name="data">Specifies the value of <paramref name="data" />.</param>
-    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
+    /// <param name="resource">The resource involved in this operation.</param>
+    /// <param name="mode">The mode value used by this operation.</param>
+    /// <param name="data">The data value used by this operation.</param>
+    /// <param name="sizeInBytes">The size, in bytes, used by this operation.</param>
     internal MappedResource(IMappableResource resource, MapMode mode, IntPtr data, uint sizeInBytes) {
         this.Resource = resource;
         this.Mode = mode;
@@ -87,14 +84,11 @@ public struct MappedResource {
 
 /// <summary>
 /// A typed view of a <see cref="MappedResource" />. Provides by-reference structured access to individual elements in
-/// the
-/// mapped resource.
 /// </summary>
-/// <typeparam name="T">The blittable value type which mapped data is viewed as.</typeparam>
 public unsafe struct MappedResourceView<T> where T : struct {
 
     /// <summary>
-    /// Stores the value associated with <c>_s_sizeof_t</c>.
+    /// Stores the s sizeof t value used during command execution.
     /// </summary>
     private static readonly int _s_sizeof_t = Unsafe.SizeOf<T>();
 
@@ -110,14 +104,13 @@ public unsafe struct MappedResourceView<T> where T : struct {
 
     /// <summary>
     /// The total number of structures that is contained in the resource. This is effectively the total number of bytes
-    /// divided by the size of the structure type.
     /// </summary>
     public readonly int Count;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MappedResourceView" /> type.
     /// </summary>
-    /// <param name="rawResource">Specifies the value of <paramref name="rawResource" />.</param>
+    /// <param name="rawResource">The raw resource value used by this operation.</param>
     public MappedResourceView(MappedResource rawResource) {
         this.MappedResource = rawResource;
         this.SizeInBytes = rawResource.SizeInBytes;
@@ -127,8 +120,6 @@ public unsafe struct MappedResourceView<T> where T : struct {
     /// <summary>
     /// Gets a reference to the structure value at the given index.
     /// </summary>
-    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
-    /// <returns>A reference to the value at the given index.</returns>
     public ref T this[int index] {
         get {
             if (index >= this.Count || index < 0) {
@@ -143,8 +134,6 @@ public unsafe struct MappedResourceView<T> where T : struct {
     /// <summary>
     /// Gets a reference to the structure value at the given index.
     /// </summary>
-    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
-    /// <returns>A reference to the value at the given index.</returns>
     public ref T this[uint index] {
         get {
             if (index >= this.Count) {
@@ -159,9 +148,6 @@ public unsafe struct MappedResourceView<T> where T : struct {
     /// <summary>
     /// Gets a reference to the structure at the given 2-dimensional texture coordinates.
     /// </summary>
-    /// <param name="x">Specifies the value of <paramref name="x" />.</param>
-    /// <param name="y">Specifies the value of <paramref name="y" />.</param>
-    /// <returns>A reference to the value at the given coordinates.</returns>
     public ref T this[int x, int y] {
         get {
             byte* ptr = (byte*)this.MappedResource.Data + y * this.MappedResource.RowPitch + x * _s_sizeof_t;
@@ -172,9 +158,6 @@ public unsafe struct MappedResourceView<T> where T : struct {
     /// <summary>
     /// Gets a reference to the structure at the given 2-dimensional texture coordinates.
     /// </summary>
-    /// <param name="x">Specifies the value of <paramref name="x" />.</param>
-    /// <param name="y">Specifies the value of <paramref name="y" />.</param>
-    /// <returns>A reference to the value at the given coordinates.</returns>
     public ref T this[uint x, uint y] {
         get {
             byte* ptr = (byte*)this.MappedResource.Data + y * this.MappedResource.RowPitch + x * _s_sizeof_t;
@@ -185,10 +168,6 @@ public unsafe struct MappedResourceView<T> where T : struct {
     /// <summary>
     /// Gets a reference to the structure at the given 3-dimensional texture coordinates.
     /// </summary>
-    /// <param name="x">Specifies the value of <paramref name="x" />.</param>
-    /// <param name="y">Specifies the value of <paramref name="y" />.</param>
-    /// <param name="z">Specifies the value of <paramref name="z" />.</param>
-    /// <returns>A reference to the value at the given coordinates.</returns>
     public ref T this[int x, int y, int z] {
         get {
             byte* ptr = (byte*)this.MappedResource.Data
@@ -202,10 +181,6 @@ public unsafe struct MappedResourceView<T> where T : struct {
     /// <summary>
     /// Gets a reference to the structure at the given 3-dimensional texture coordinates.
     /// </summary>
-    /// <param name="x">Specifies the value of <paramref name="x" />.</param>
-    /// <param name="y">Specifies the value of <paramref name="y" />.</param>
-    /// <param name="z">Specifies the value of <paramref name="z" />.</param>
-    /// <returns>A reference to the value at the given coordinates.</returns>
     public ref T this[uint x, uint y, uint z] {
         get {
             byte* ptr = (byte*)this.MappedResource.Data

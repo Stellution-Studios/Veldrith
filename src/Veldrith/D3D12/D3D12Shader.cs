@@ -5,20 +5,19 @@ using System.Text;
 namespace Veldrith.D3D12;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the D3D12Shader class.
+/// Provides the Direct3D 12 backend implementation for D3D12Shader.
 /// </summary>
 internal sealed class D3D12Shader : Shader {
 
     /// <summary>
-    /// Stores the value associated with <c>_disposed</c>.
+    /// Stores the disposed state used by this instance.
     /// </summary>
     private bool _disposed;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="D3D12Shader" /> class.
     /// </summary>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
-    /// <returns>Returns the result produced by the base operation.</returns>
+    /// <param name="description">The description used to configure this operation.</param>
     public D3D12Shader(ref ShaderDescription description) : base(description.Stage, description.EntryPoint) {
         this.ShaderBytes = EnsureDxbcBytecode(description);
         this.Debug = description.Debug;
@@ -45,17 +44,17 @@ internal sealed class D3D12Shader : Shader {
     public override string Name { get; set; }
 
     /// <summary>
-    /// Executes the Dispose operation.
+    /// Releases resources held by this instance.
     /// </summary>
     public override void Dispose() {
         this._disposed = true;
     }
 
     /// <summary>
-    /// Executes the EnsureDxbcBytecode operation.
+    /// Executes the ensure dxbc bytecode logic for this backend.
     /// </summary>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
-    /// <returns>Returns the result produced by the EnsureDxbcBytecode operation.</returns>
+    /// <param name="description">The description used to configure this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static byte[] EnsureDxbcBytecode(ShaderDescription description) {
         byte[] source = description.ShaderBytes ?? Array.Empty<byte>();
         if (source.Length >= 4
@@ -72,10 +71,10 @@ internal sealed class D3D12Shader : Shader {
     }
 
     /// <summary>
-    /// Executes the GetTargetProfile operation.
+    /// Gets the target profile value.
     /// </summary>
-    /// <param name="stage">Specifies the value of <paramref name="stage" />.</param>
-    /// <returns>Returns the result produced by the GetTargetProfile operation.</returns>
+    /// <param name="stage">The stage value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static string GetTargetProfile(ShaderStages stage) {
         switch (stage) {
             case ShaderStages.Vertex: return "vs_5_0";
@@ -89,12 +88,12 @@ internal sealed class D3D12Shader : Shader {
     }
 
     /// <summary>
-    /// Executes the CompileHlsl operation.
+    /// Executes the compile hlsl logic for this backend.
     /// </summary>
-    /// <param name="sourceCode">Specifies the value of <paramref name="sourceCode" />.</param>
-    /// <param name="entryPoint">Specifies the value of <paramref name="entryPoint" />.</param>
-    /// <param name="target">Specifies the value of <paramref name="target" />.</param>
-    /// <returns>Returns the result produced by the CompileHlsl operation.</returns>
+    /// <param name="sourceCode">The source code value used by this operation.</param>
+    /// <param name="entryPoint">The entry point value used by this operation.</param>
+    /// <param name="target">The target value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static byte[] CompileHlsl(string sourceCode, string entryPoint, string target) {
         byte[] sourceBytes = Encoding.UTF8.GetBytes(sourceCode ?? string.Empty);
         int result = D3DCompile(sourceBytes, (nuint)sourceBytes.Length, null, IntPtr.Zero, IntPtr.Zero, entryPoint, target, 0, 0, out IntPtr codeBlobPtr, out IntPtr errorBlobPtr);
@@ -136,20 +135,20 @@ internal sealed class D3D12Shader : Shader {
     [DllImport("d3dcompiler_47.dll", CharSet = CharSet.Ansi)]
 
     /// <summary>
-    /// Executes the D3DCompile operation.
+    /// Executes the d3 dcompile logic for this backend.
     /// </summary>
-    /// <param name="srcData">Specifies the value of <paramref name="srcData" />.</param>
-    /// <param name="srcDataSize">Specifies the value of <paramref name="srcDataSize" />.</param>
-    /// <param name="sourceName">Specifies the value of <paramref name="sourceName" />.</param>
-    /// <param name="defines">Specifies the value of <paramref name="defines" />.</param>
-    /// <param name="include">Specifies the value of <paramref name="include" />.</param>
-    /// <param name="entryPoint">Specifies the value of <paramref name="entryPoint" />.</param>
-    /// <param name="target">Specifies the value of <paramref name="target" />.</param>
-    /// <param name="flags1">Specifies the value of <paramref name="flags1" />.</param>
-    /// <param name="flags2">Specifies the value of <paramref name="flags2" />.</param>
-    /// <param name="code">Specifies the value of <paramref name="code" />.</param>
-    /// <param name="errorMsgs">Specifies the value of <paramref name="errorMsgs" />.</param>
-    /// <returns>Returns the result produced by the D3DCompile operation.</returns>
+    /// <param name="srcData">The src data value used by this operation.</param>
+    /// <param name="srcDataSize">The src data size value used by this operation.</param>
+    /// <param name="sourceName">The source name value used by this operation.</param>
+    /// <param name="defines">The defines value used by this operation.</param>
+    /// <param name="include">The include value used by this operation.</param>
+    /// <param name="entryPoint">The entry point value used by this operation.</param>
+    /// <param name="target">The target value used by this operation.</param>
+    /// <param name="flags1">The flags1 value used by this operation.</param>
+    /// <param name="flags2">The flags2 value used by this operation.</param>
+    /// <param name="code">The code value used by this operation.</param>
+    /// <param name="errorMsgs">The error msgs value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static extern int D3DCompile(byte[] srcData, nuint srcDataSize, string sourceName, IntPtr defines, IntPtr include, string entryPoint, string target, uint flags1, uint flags2, out IntPtr code, out IntPtr errorMsgs);
 
     [ComImport]
@@ -163,17 +162,17 @@ internal sealed class D3D12Shader : Shader {
         [PreserveSig]
 
         /// <summary>
-        /// Executes the GetBufferPointer operation.
+        /// Gets the buffer pointer value.
         /// </summary>
-        /// <returns>Returns the result produced by the GetBufferPointer operation.</returns>
+        /// <returns>The value produced by this operation.</returns>
         IntPtr GetBufferPointer();
 
         [PreserveSig]
 
         /// <summary>
-        /// Executes the GetBufferSize operation.
+        /// Gets the buffer size value.
         /// </summary>
-        /// <returns>Returns the result produced by the GetBufferSize operation.</returns>
+        /// <returns>The value produced by this operation.</returns>
         nuint GetBufferSize();
     }
 }

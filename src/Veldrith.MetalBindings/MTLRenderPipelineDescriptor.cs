@@ -7,19 +7,19 @@ namespace Veldrith.MetalBindings;
 [StructLayout(LayoutKind.Sequential)]
 
 /// <summary>
-/// Defines the data layout and behavior of the MTLRenderPipelineDescriptor struct.
+/// Represents the MTLRenderPipelineDescriptor data structure used by the graphics runtime.
 /// </summary>
 public struct MTLRenderPipelineDescriptor {
 
     /// <summary>
-    /// Stores the value associated with <c>NativePtr</c>.
+    /// Stores the native ptr state used by this instance.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MTLRenderPipelineDescriptor" /> type.
     /// </summary>
-    /// <param name="ptr">Specifies the value of <paramref name="ptr" />.</param>
+    /// <param name="ptr">The ptr value used by this operation.</param>
     public MTLRenderPipelineDescriptor(IntPtr ptr) {
         this.NativePtr = ptr;
     }
@@ -27,7 +27,7 @@ public struct MTLRenderPipelineDescriptor {
     /// <summary>
     /// Creates and returns a new instance.
     /// </summary>
-    /// <returns>Returns the result produced by the New operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public static MTLRenderPipelineDescriptor New() {
         ObjCClass cls = new("MTLRenderPipelineDescriptor");
         MTLRenderPipelineDescriptor ret = cls.AllocInit<MTLRenderPipelineDescriptor>();
@@ -80,6 +80,7 @@ public struct MTLRenderPipelineDescriptor {
     /// <summary>
     /// Gets or sets vertexDescriptor.
     /// </summary>
+
     public MTLVertexDescriptor vertexDescriptor => objc_msgSend<MTLVertexDescriptor>(this.NativePtr, sel_vertexDescriptor);
 
     /// <summary>
@@ -91,72 +92,72 @@ public struct MTLRenderPipelineDescriptor {
     }
 
     /// <summary>
-    /// Stores the value associated with <c>sel_vertexFunction</c>.
+    /// Stores the sel vertex function state used by this instance.
     /// </summary>
     private static readonly Selector sel_vertexFunction = "vertexFunction";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setVertexFunction</c>.
+    /// Stores the sel set vertex function state used by this instance.
     /// </summary>
     private static readonly Selector sel_setVertexFunction = "setVertexFunction:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_fragmentFunction</c>.
+    /// Stores the sel fragment function state used by this instance.
     /// </summary>
     private static readonly Selector sel_fragmentFunction = "fragmentFunction";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setFragmentFunction</c>.
+    /// Stores the sel set fragment function state used by this instance.
     /// </summary>
     private static readonly Selector sel_setFragmentFunction = "setFragmentFunction:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_colorAttachments</c>.
+    /// Stores the sel color attachments state used by this instance.
     /// </summary>
     private static readonly Selector sel_colorAttachments = "colorAttachments";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_depthAttachmentPixelFormat</c>.
+    /// Stores the sel depth attachment pixel format value used during command execution.
     /// </summary>
     private static readonly Selector sel_depthAttachmentPixelFormat = "depthAttachmentPixelFormat";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setDepthAttachmentPixelFormat</c>.
+    /// Stores the sel set depth attachment pixel format value used during command execution.
     /// </summary>
     private static readonly Selector sel_setDepthAttachmentPixelFormat = "setDepthAttachmentPixelFormat:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_stencilAttachmentPixelFormat</c>.
+    /// Stores the sel stencil attachment pixel format state used by this instance.
     /// </summary>
     private static readonly Selector sel_stencilAttachmentPixelFormat = "stencilAttachmentPixelFormat";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setStencilAttachmentPixelFormat</c>.
+    /// Stores the sel set stencil attachment pixel format state used by this instance.
     /// </summary>
     private static readonly Selector sel_setStencilAttachmentPixelFormat = "setStencilAttachmentPixelFormat:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_sampleCount</c>.
+    /// Stores the sel sample count value used during command execution.
     /// </summary>
     private static readonly Selector sel_sampleCount = "sampleCount";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setSampleCount</c>.
+    /// Stores the sel set sample count value used during command execution.
     /// </summary>
     private static readonly Selector sel_setSampleCount = "setSampleCount:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_vertexDescriptor</c>.
+    /// Stores the sel vertex descriptor state used by this instance.
     /// </summary>
     private static readonly Selector sel_vertexDescriptor = "vertexDescriptor";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_isAlphaToCoverageEnabled</c>.
+    /// Stores the sel is alpha to coverage enabled state used by this instance.
     /// </summary>
     private static readonly Selector sel_isAlphaToCoverageEnabled = "isAlphaToCoverageEnabled";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setAlphaToCoverageEnabled</c>.
+    /// Stores the sel set alpha to coverage enabled state used by this instance.
     /// </summary>
     private static readonly Selector sel_setAlphaToCoverageEnabled = "setAlphaToCoverageEnabled:";
 }

@@ -9,14 +9,11 @@ public struct BlendStateDescription : IEquatable<BlendStateDescription> {
 
     /// <summary>
     /// A constant blend color used in <see cref="BlendFactor.BlendFactor" /> and
-    /// <see cref="BlendFactor.InverseBlendFactor" />,
-    /// or otherwise ignored.
     /// </summary>
     public RgbaFloat BlendFactor;
 
     /// <summary>
     /// An array of <see cref="BlendAttachmentDescription" /> describing how blending is performed for each color target
-    /// used in the <see cref="Pipeline" />.
     /// </summary>
     public BlendAttachmentDescription[] AttachmentStates;
 
@@ -28,8 +25,8 @@ public struct BlendStateDescription : IEquatable<BlendStateDescription> {
     /// <summary>
     /// Initializes a new instance of the <see cref="BlendStateDescription" /> type.
     /// </summary>
-    /// <param name="blendFactor">Specifies the value of <paramref name="blendFactor" />.</param>
-    /// <param name="attachmentStates">Specifies the value of <paramref name="attachmentStates" />.</param>
+    /// <param name="blendFactor">The blend factor value used by this operation.</param>
+    /// <param name="attachmentStates">The attachment states value used by this operation.</param>
     public BlendStateDescription(RgbaFloat blendFactor, params BlendAttachmentDescription[] attachmentStates) {
         this.BlendFactor = blendFactor;
         this.AttachmentStates = attachmentStates;
@@ -39,9 +36,9 @@ public struct BlendStateDescription : IEquatable<BlendStateDescription> {
     /// <summary>
     /// Initializes a new instance of the <see cref="BlendStateDescription" /> type.
     /// </summary>
-    /// <param name="blendFactor">Specifies the value of <paramref name="blendFactor" />.</param>
-    /// <param name="alphaToCoverageEnabled">Specifies the value of <paramref name="alphaToCoverageEnabled" />.</param>
-    /// <param name="attachmentStates">Specifies the value of <paramref name="attachmentStates" />.</param>
+    /// <param name="blendFactor">The blend factor value used by this operation.</param>
+    /// <param name="alphaToCoverageEnabled">The alpha to coverage enabled value used by this operation.</param>
+    /// <param name="attachmentStates">The attachment states value used by this operation.</param>
     public BlendStateDescription(RgbaFloat blendFactor, bool alphaToCoverageEnabled, params BlendAttachmentDescription[] attachmentStates) {
         this.BlendFactor = blendFactor;
         this.AttachmentStates = attachmentStates;
@@ -84,10 +81,10 @@ public struct BlendStateDescription : IEquatable<BlendStateDescription> {
     };
 
     /// <summary>
-    /// Executes the Equals operation.
+    /// Determines whether this instance is equal to the specified value.
     /// </summary>
-    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
-    /// <returns>Returns the result produced by the Equals operation.</returns>
+    /// <param name="other">The value to compare against.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public bool Equals(BlendStateDescription other) {
         return this.BlendFactor.Equals(other.BlendFactor)
                && this.AlphaToCoverageEnabled.Equals(other.AlphaToCoverageEnabled)
@@ -95,17 +92,17 @@ public struct BlendStateDescription : IEquatable<BlendStateDescription> {
     }
 
     /// <summary>
-    /// Executes the GetHashCode operation.
+    /// Computes a hash code for this instance.
     /// </summary>
-    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(this.BlendFactor.GetHashCode(), this.AlphaToCoverageEnabled.GetHashCode(), HashHelper.Array(this.AttachmentStates));
     }
 
     /// <summary>
-    /// Executes the ShallowClone operation.
+    /// Executes the shallow clone logic for this backend.
     /// </summary>
-    /// <returns>Returns the result produced by the ShallowClone operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     internal BlendStateDescription ShallowClone() {
         BlendStateDescription result = this;
         result.AttachmentStates = Util.ShallowClone(result.AttachmentStates);

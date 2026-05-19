@@ -6,25 +6,25 @@ using Veldrith.MetalBindings;
 namespace Veldrith.MTL;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the MtlPipeline class.
+/// Provides the Metal backend implementation for MtlPipeline.
 /// </summary>
 internal class MtlPipeline : Pipeline {
 
     /// <summary>
-    /// Stores the value associated with <c>_disposed</c>.
+    /// Stores the disposed state used by this instance.
     /// </summary>
     private bool _disposed;
 
     /// <summary>
-    /// Stores the value associated with <c>_specializedFunctions</c>.
+    /// Stores the specialized functions state used by this instance.
     /// </summary>
     private List<MTLFunction> _specializedFunctions;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MtlPipeline" /> class.
     /// </summary>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
-    /// <returns>Returns the result produced by the base operation.</returns>
+    /// <param name="description">The description used to configure this operation.</param>
+    /// <param name="gd">The graphics device that owns this operation.</param>
     public MtlPipeline(ref GraphicsPipelineDescription description, MtlGraphicsDevice gd) : base(ref description) {
         this.PrimitiveType = MtlFormats.VdToMtlPrimitiveTopology(description.PrimitiveTopology);
         this.ResourceLayouts = new MtlResourceLayout[description.ResourceLayouts.Length];
@@ -196,9 +196,8 @@ internal class MtlPipeline : Pipeline {
     /// <summary>
     /// Initializes a new instance of the <see cref="MtlPipeline" /> class.
     /// </summary>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
-    /// <returns>Returns the result produced by the base operation.</returns>
+    /// <param name="description">The description used to configure this operation.</param>
+    /// <param name="gd">The graphics device that owns this operation.</param>
     public MtlPipeline(ref ComputePipelineDescription description, MtlGraphicsDevice gd) : base(ref description) {
         this.IsComputePipeline = true;
         this.ResourceLayouts = new MtlResourceLayout[description.ResourceLayouts.Length];
@@ -323,7 +322,7 @@ internal class MtlPipeline : Pipeline {
     public bool ScissorTestEnabled { get; }
 
     /// <summary>
-    /// Stores the value associated with <c>get</c>.
+    /// Stores the threads per threadgroup state used by this instance.
     /// </summary>
     public MTLSize ThreadsPerThreadgroup { get; } = new(1, 1, 1);
 
@@ -355,7 +354,7 @@ internal class MtlPipeline : Pipeline {
     #region Disposal
 
     /// <summary>
-    /// Executes the Dispose operation.
+    /// Releases resources held by this instance.
     /// </summary>
     public override void Dispose() {
         if (!this._disposed) {
@@ -386,10 +385,10 @@ internal class MtlPipeline : Pipeline {
     #endregion
 
     /// <summary>
-    /// Executes the CreateConstantValues operation.
+    /// Creates the constant values instance used by this backend.
     /// </summary>
-    /// <param name="specializations">Specifies the value of <paramref name="specializations" />.</param>
-    /// <returns>Returns the result produced by the CreateConstantValues operation.</returns>
+    /// <param name="specializations">The specializations value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private unsafe MTLFunctionConstantValues CreateConstantValues(SpecializationConstant[] specializations) {
         MTLFunctionConstantValues ret = MTLFunctionConstantValues.New();
 
@@ -404,9 +403,9 @@ internal class MtlPipeline : Pipeline {
     }
 
     /// <summary>
-    /// Executes the AddSpecializedFunction operation.
+    /// Executes the add specialized function logic for this backend.
     /// </summary>
-    /// <param name="function">Specifies the value of <paramref name="function" />.</param>
+    /// <param name="function">The function value used by this operation.</param>
     private void AddSpecializedFunction(MTLFunction function) {
         this._specializedFunctions ??= new List<MTLFunction>();
         this._specializedFunctions.Add(function);

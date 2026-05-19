@@ -6,7 +6,7 @@ namespace Veldrith.MetalBindings;
 public enum MTLCullMode {
 
     /// <summary>
-    /// Stores the value associated with <c>None</c>.
+    /// Stores the none state used by this instance.
     /// </summary>
     None = 0, Front = 1, Back = 2
 }

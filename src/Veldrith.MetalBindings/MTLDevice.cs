@@ -6,25 +6,25 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Defines the data layout and behavior of the MTLDevice struct.
+/// Provides Objective-C interop bindings for MTLDevice.
 /// </summary>
 public unsafe struct MTLDevice {
 
     /// <summary>
-    /// Stores the value associated with <c>MetalFramework</c>.
+    /// Stores the metal framework state used by this instance.
     /// </summary>
     private const string MetalFramework = "/System/Library/Frameworks/Metal.framework/Metal";
 
     /// <summary>
-    /// Stores the value associated with <c>NativePtr</c>.
+    /// Stores the native ptr state used by this instance.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Executes the operator IntPtr operation.
+    /// Executes the int ptr logic for this backend.
     /// </summary>
-    /// <param name="device">Specifies the value of <paramref name="device" />.</param>
-    /// <returns>Returns the result produced by the operator IntPtr operation.</returns>
+    /// <param name="device">The device value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public static implicit operator IntPtr(MTLDevice device) {
         return device.NativePtr;
     }
@@ -32,17 +32,15 @@ public unsafe struct MTLDevice {
     /// <summary>
     /// Initializes a new instance of the <see cref="MTLDevice" /> type.
     /// </summary>
-    /// <param name="nativePtr">Specifies the value of <paramref name="nativePtr" />.</param>
+    /// <param name="nativePtr">The native ptr value used by this operation.</param>
     public MTLDevice(IntPtr nativePtr) {
         this.NativePtr = nativePtr;
     }
 
     /// <summary>
-    /// Executes the string_objc_msgSend operation.
+    /// Executes the string objc msg send logic for this backend.
     /// </summary>
-    /// <param name="NativePtr">Specifies the value of <paramref name="NativePtr" />.</param>
-    /// <param name="sel_name">Specifies the value of <paramref name="sel_name" />.</param>
-    /// <returns>Returns the result produced by the string_objc_msgSend operation.</returns>
+
     public string name => string_objc_msgSend(this.NativePtr, sel_name);
 
     /// <summary>
@@ -59,11 +57,11 @@ public unsafe struct MTLDevice {
     }
 
     /// <summary>
-    /// Executes the newLibraryWithSource operation.
+    /// Executes the new library with source logic for this backend.
     /// </summary>
-    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
-    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
-    /// <returns>Returns the result produced by the newLibraryWithSource operation.</returns>
+    /// <param name="source">The source value or resource.</param>
+    /// <param name="options">The options used to configure this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public MTLLibrary newLibraryWithSource(string source, MTLCompileOptions options) {
         NSString sourceNSS = NSString.New(source);
 
@@ -79,10 +77,10 @@ public unsafe struct MTLDevice {
     }
 
     /// <summary>
-    /// Executes the newLibraryWithData operation.
+    /// Executes the new library with data logic for this backend.
     /// </summary>
-    /// <param name="data">Specifies the value of <paramref name="data" />.</param>
-    /// <returns>Returns the result produced by the newLibraryWithData operation.</returns>
+    /// <param name="data">The data value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public MTLLibrary newLibraryWithData(DispatchData data) {
         IntPtr library = IntPtr_objc_msgSend(this.NativePtr, sel_newLibraryWithData, data.NativePtr, out NSError error);
 
@@ -94,10 +92,10 @@ public unsafe struct MTLDevice {
     }
 
     /// <summary>
-    /// Executes the newRenderPipelineStateWithDescriptor operation.
+    /// Executes the new render pipeline state with descriptor logic for this backend.
     /// </summary>
-    /// <param name="desc">Specifies the value of <paramref name="desc" />.</param>
-    /// <returns>Returns the result produced by the newRenderPipelineStateWithDescriptor operation.</returns>
+    /// <param name="desc">The description used to configure this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public MTLRenderPipelineState newRenderPipelineStateWithDescriptor(MTLRenderPipelineDescriptor desc) {
         IntPtr ret = IntPtr_objc_msgSend(this.NativePtr, sel_newRenderPipelineStateWithDescriptor, desc.NativePtr, out NSError error);
 
@@ -111,10 +109,10 @@ public unsafe struct MTLDevice {
     [Pure]
 
     /// <summary>
-    /// Executes the newComputePipelineStateWithDescriptor operation.
+    /// Executes the new compute pipeline state with descriptor logic for this backend.
     /// </summary>
-    /// <param name="descriptor">Specifies the value of <paramref name="descriptor" />.</param>
-    /// <returns>Returns the result produced by the newComputePipelineStateWithDescriptor operation.</returns>
+    /// <param name="descriptor">The descriptor value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public MTLComputePipelineState newComputePipelineStateWithDescriptor(MTLComputePipelineDescriptor descriptor) {
         IntPtr ret = IntPtr_objc_msgSend(this.NativePtr, sel_newComputePipelineStateWithDescriptor, descriptor, 0, IntPtr.Zero, out NSError error);
 
@@ -126,77 +124,77 @@ public unsafe struct MTLDevice {
     }
 
     /// <summary>
-    /// Executes the newCommandQueue operation.
+    /// Executes the new command queue logic for this backend.
     /// </summary>
-    /// <returns>Returns the result produced by the newCommandQueue operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public MTLCommandQueue newCommandQueue() {
         return objc_msgSend<MTLCommandQueue>(this.NativePtr, sel_newCommandQueue);
     }
 
     /// <summary>
-    /// Executes the newBuffer operation.
+    /// Executes the new buffer logic for this backend.
     /// </summary>
-    /// <param name="pointer">Specifies the value of <paramref name="pointer" />.</param>
-    /// <param name="length">Specifies the value of <paramref name="length" />.</param>
-    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
-    /// <returns>Returns the result produced by the newBuffer operation.</returns>
+    /// <param name="pointer">The pointer value used by this operation.</param>
+    /// <param name="length">The number of items involved in this operation.</param>
+    /// <param name="options">The options used to configure this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public MTLBuffer newBuffer(void* pointer, UIntPtr length, MTLResourceOptions options) {
         IntPtr buffer = IntPtr_objc_msgSend(this.NativePtr, sel_newBufferWithBytes, pointer, length, options);
         return new MTLBuffer(buffer);
     }
 
     /// <summary>
-    /// Executes the newBufferWithLengthOptions operation.
+    /// Executes the new buffer with length options logic for this backend.
     /// </summary>
-    /// <param name="length">Specifies the value of <paramref name="length" />.</param>
-    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
-    /// <returns>Returns the result produced by the newBufferWithLengthOptions operation.</returns>
+    /// <param name="length">The number of items involved in this operation.</param>
+    /// <param name="options">The options used to configure this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public MTLBuffer newBufferWithLengthOptions(UIntPtr length, MTLResourceOptions options) {
         IntPtr buffer = IntPtr_objc_msgSend(this.NativePtr, sel_newBufferWithLength, length, options);
         return new MTLBuffer(buffer);
     }
 
     /// <summary>
-    /// Executes the newTextureWithDescriptor operation.
+    /// Executes the new texture with descriptor logic for this backend.
     /// </summary>
-    /// <param name="descriptor">Specifies the value of <paramref name="descriptor" />.</param>
-    /// <returns>Returns the result produced by the newTextureWithDescriptor operation.</returns>
+    /// <param name="descriptor">The descriptor value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public MTLTexture newTextureWithDescriptor(MTLTextureDescriptor descriptor) {
         return objc_msgSend<MTLTexture>(this.NativePtr, sel_newTextureWithDescriptor, descriptor.NativePtr);
     }
 
     /// <summary>
-    /// Executes the newSamplerStateWithDescriptor operation.
+    /// Executes the new sampler state with descriptor logic for this backend.
     /// </summary>
-    /// <param name="descriptor">Specifies the value of <paramref name="descriptor" />.</param>
-    /// <returns>Returns the result produced by the newSamplerStateWithDescriptor operation.</returns>
+    /// <param name="descriptor">The descriptor value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public MTLSamplerState newSamplerStateWithDescriptor(MTLSamplerDescriptor descriptor) {
         return objc_msgSend<MTLSamplerState>(this.NativePtr, sel_newSamplerStateWithDescriptor, descriptor.NativePtr);
     }
 
     /// <summary>
-    /// Executes the newDepthStencilStateWithDescriptor operation.
+    /// Executes the new depth stencil state with descriptor logic for this backend.
     /// </summary>
-    /// <param name="descriptor">Specifies the value of <paramref name="descriptor" />.</param>
-    /// <returns>Returns the result produced by the newDepthStencilStateWithDescriptor operation.</returns>
+    /// <param name="descriptor">The descriptor value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public MTLDepthStencilState newDepthStencilStateWithDescriptor(MTLDepthStencilDescriptor descriptor) {
         return objc_msgSend<MTLDepthStencilState>(this.NativePtr, sel_newDepthStencilStateWithDescriptor, descriptor.NativePtr);
     }
 
     /// <summary>
-    /// Executes the supportsTextureSampleCount operation.
+    /// Executes the supports texture sample count logic for this backend.
     /// </summary>
-    /// <param name="sampleCount">Specifies the value of <paramref name="sampleCount" />.</param>
-    /// <returns>Returns the result produced by the supportsTextureSampleCount operation.</returns>
+    /// <param name="sampleCount">The sample count value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public Bool8 supportsTextureSampleCount(UIntPtr sampleCount) {
         return bool8_objc_msgSend(this.NativePtr, sel_supportsTextureSampleCount, sampleCount);
     }
 
     /// <summary>
-    /// Executes the supportsFeatureSet operation.
+    /// Executes the supports feature set logic for this backend.
     /// </summary>
-    /// <param name="featureSet">Specifies the value of <paramref name="featureSet" />.</param>
-    /// <returns>Returns the result produced by the supportsFeatureSet operation.</returns>
+    /// <param name="featureSet">The feature set value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public Bool8 supportsFeatureSet(MTLFeatureSet featureSet) {
         return bool8_objc_msgSend(this.NativePtr, sel_supportsFeatureSet, (uint)featureSet);
     }
@@ -204,96 +202,97 @@ public unsafe struct MTLDevice {
     /// <summary>
     /// Gets a value indicating whether the device supports <c>Depth24Stencil8</c> pixel format.
     /// </summary>
+
     public Bool8 isDepth24Stencil8PixelFormatSupported => bool8_objc_msgSend(this.NativePtr, sel_isDepth24Stencil8PixelFormatSupported);
 
     [DllImport(MetalFramework)]
 
     /// <summary>
-    /// Executes the MTLCreateSystemDefaultDevice operation.
+    /// Executes the mtlcreate system default device logic for this backend.
     /// </summary>
-    /// <returns>Returns the result produced by the MTLCreateSystemDefaultDevice operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public static extern MTLDevice MTLCreateSystemDefaultDevice();
 
     [DllImport(MetalFramework)]
 
     /// <summary>
-    /// Executes the MTLCopyAllDevices operation.
+    /// Executes the mtlcopy all devices logic for this backend.
     /// </summary>
-    /// <returns>Returns the result produced by the MTLCopyAllDevices operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public static extern NSArray MTLCopyAllDevices();
 
     /// <summary>
-    /// Stores the value associated with <c>sel_name</c>.
+    /// Stores the sel name state used by this instance.
     /// </summary>
     private static readonly Selector sel_name = "name";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_maxThreadsPerThreadgroup</c>.
+    /// Stores the sel max threads per threadgroup state used by this instance.
     /// </summary>
     private static readonly Selector sel_maxThreadsPerThreadgroup = "maxThreadsPerThreadgroup";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_newLibraryWithSource</c>.
+    /// Stores the sel new library with source state used by this instance.
     /// </summary>
     private static readonly Selector sel_newLibraryWithSource = "newLibraryWithSource:options:error:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_newLibraryWithData</c>.
+    /// Stores the sel new library with data state used by this instance.
     /// </summary>
     private static readonly Selector sel_newLibraryWithData = "newLibraryWithData:error:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_newRenderPipelineStateWithDescriptor</c>.
+    /// Stores the sel new render pipeline state with descriptor state used by this instance.
     /// </summary>
     private static readonly Selector sel_newRenderPipelineStateWithDescriptor = "newRenderPipelineStateWithDescriptor:error:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_newComputePipelineStateWithDescriptor</c>.
+    /// Stores the sel new compute pipeline state with descriptor state used by this instance.
     /// </summary>
     private static readonly Selector sel_newComputePipelineStateWithDescriptor = "newComputePipelineStateWithDescriptor:options:reflection:error:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_newCommandQueue</c>.
+    /// Stores the sel new command queue state used by this instance.
     /// </summary>
     private static readonly Selector sel_newCommandQueue = "newCommandQueue";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_newBufferWithBytes</c>.
+    /// Stores the sel new buffer with bytes state used by this instance.
     /// </summary>
     private static readonly Selector sel_newBufferWithBytes = "newBufferWithBytes:length:options:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_newBufferWithLength</c>.
+    /// Stores the sel new buffer with length state used by this instance.
     /// </summary>
     private static readonly Selector sel_newBufferWithLength = "newBufferWithLength:options:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_newTextureWithDescriptor</c>.
+    /// Stores the sel new texture with descriptor state used by this instance.
     /// </summary>
     private static readonly Selector sel_newTextureWithDescriptor = "newTextureWithDescriptor:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_newSamplerStateWithDescriptor</c>.
+    /// Stores the sel new sampler state with descriptor collection used by this instance.
     /// </summary>
     private static readonly Selector sel_newSamplerStateWithDescriptor = "newSamplerStateWithDescriptor:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_newDepthStencilStateWithDescriptor</c>.
+    /// Stores the sel new depth stencil state with descriptor value used during command execution.
     /// </summary>
     private static readonly Selector sel_newDepthStencilStateWithDescriptor = "newDepthStencilStateWithDescriptor:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_supportsTextureSampleCount</c>.
+    /// Stores the sel supports texture sample count collection used by this instance.
     /// </summary>
     private static readonly Selector sel_supportsTextureSampleCount = "supportsTextureSampleCount:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_supportsFeatureSet</c>.
+    /// Stores the sel supports feature set state used by this instance.
     /// </summary>
     private static readonly Selector sel_supportsFeatureSet = "supportsFeatureSet:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_isDepth24Stencil8PixelFormatSupported</c>.
+    /// Stores the sel is depth24 stencil8 pixel format supported value used during command execution.
     /// </summary>
     private static readonly Selector sel_isDepth24Stencil8PixelFormatSupported = "isDepth24Stencil8PixelFormatSupported";
 }

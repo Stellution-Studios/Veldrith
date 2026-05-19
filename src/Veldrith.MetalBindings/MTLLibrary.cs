@@ -7,28 +7,28 @@ namespace Veldrith.MetalBindings;
 [StructLayout(LayoutKind.Sequential)]
 
 /// <summary>
-/// Defines the data layout and behavior of the MTLLibrary struct.
+/// Represents the MTLLibrary data structure used by the graphics runtime.
 /// </summary>
 public struct MTLLibrary {
 
     /// <summary>
-    /// Stores the value associated with <c>NativePtr</c>.
+    /// Stores the native ptr state used by this instance.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MTLLibrary" /> type.
     /// </summary>
-    /// <param name="ptr">Specifies the value of <paramref name="ptr" />.</param>
+    /// <param name="ptr">The ptr value used by this operation.</param>
     public MTLLibrary(IntPtr ptr) {
         this.NativePtr = ptr;
     }
 
     /// <summary>
-    /// Executes the newFunctionWithName operation.
+    /// Executes the new function with name logic for this backend.
     /// </summary>
-    /// <param name="name">Specifies the value of <paramref name="name" />.</param>
-    /// <returns>Returns the result produced by the newFunctionWithName operation.</returns>
+    /// <param name="name">The name used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public MTLFunction newFunctionWithName(string name) {
         NSString nameNSS = NSString.New(name);
         IntPtr function = IntPtr_objc_msgSend(this.NativePtr, sel_newFunctionWithName, nameNSS);
@@ -37,11 +37,11 @@ public struct MTLLibrary {
     }
 
     /// <summary>
-    /// Executes the newFunctionWithNameConstantValues operation.
+    /// Executes the new function with name constant values logic for this backend.
     /// </summary>
-    /// <param name="name">Specifies the value of <paramref name="name" />.</param>
-    /// <param name="constantValues">Specifies the value of <paramref name="constantValues" />.</param>
-    /// <returns>Returns the result produced by the newFunctionWithNameConstantValues operation.</returns>
+    /// <param name="name">The name used by this operation.</param>
+    /// <param name="constantValues">The constant values value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public MTLFunction newFunctionWithNameConstantValues(string name, MTLFunctionConstantValues constantValues) {
         NSString nameNSS = NSString.New(name);
         IntPtr function = IntPtr_objc_msgSend(this.NativePtr, sel_newFunctionWithNameConstantValues, nameNSS.NativePtr, constantValues.NativePtr, out NSError error);
@@ -55,12 +55,12 @@ public struct MTLLibrary {
     }
 
     /// <summary>
-    /// Stores the value associated with <c>sel_newFunctionWithName</c>.
+    /// Stores the sel new function with name state used by this instance.
     /// </summary>
     private static readonly Selector sel_newFunctionWithName = "newFunctionWithName:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_newFunctionWithNameConstantValues</c>.
+    /// Stores the sel new function with name constant values state used by this instance.
     /// </summary>
     private static readonly Selector sel_newFunctionWithNameConstantValues = "newFunctionWithName:constantValues:error:";
 }

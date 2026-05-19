@@ -7,19 +7,19 @@ namespace Veldrith.MetalBindings;
 [StructLayout(LayoutKind.Sequential)]
 
 /// <summary>
-/// Defines the data layout and behavior of the MTLRenderPipelineColorAttachmentDescriptor struct.
+/// Represents the MTLRenderPipelineColorAttachmentDescriptor data structure used by the graphics runtime.
 /// </summary>
 public struct MTLRenderPipelineColorAttachmentDescriptor {
 
     /// <summary>
-    /// Stores the value associated with <c>NativePtr</c>.
+    /// Stores the native ptr state used by this instance.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MTLRenderPipelineColorAttachmentDescriptor" /> type.
     /// </summary>
-    /// <param name="ptr">Specifies the value of <paramref name="ptr" />.</param>
+    /// <param name="ptr">The ptr value used by this operation.</param>
     public MTLRenderPipelineColorAttachmentDescriptor(IntPtr ptr) {
         this.NativePtr = ptr;
     }
@@ -97,82 +97,82 @@ public struct MTLRenderPipelineColorAttachmentDescriptor {
     }
 
     /// <summary>
-    /// Stores the value associated with <c>sel_isBlendingEnabled</c>.
+    /// Stores the sel is blending enabled state used by this instance.
     /// </summary>
     private static readonly Selector sel_isBlendingEnabled = "isBlendingEnabled";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setBlendingEnabled</c>.
+    /// Stores the sel set blending enabled state used by this instance.
     /// </summary>
     private static readonly Selector sel_setBlendingEnabled = "setBlendingEnabled:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_writeMask</c>.
+    /// Stores the sel write mask state used by this instance.
     /// </summary>
     private static readonly Selector sel_writeMask = "writeMask";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setWriteMask</c>.
+    /// Stores the sel set write mask state used by this instance.
     /// </summary>
     private static readonly Selector sel_setWriteMask = "setWriteMask:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_alphaBlendOperation</c>.
+    /// Stores the sel alpha blend operation state used by this instance.
     /// </summary>
     private static readonly Selector sel_alphaBlendOperation = "alphaBlendOperation";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setAlphaBlendOperation</c>.
+    /// Stores the sel set alpha blend operation state used by this instance.
     /// </summary>
     private static readonly Selector sel_setAlphaBlendOperation = "setAlphaBlendOperation:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_rgbBlendOperation</c>.
+    /// Stores the sel rgb blend operation state used by this instance.
     /// </summary>
     private static readonly Selector sel_rgbBlendOperation = "rgbBlendOperation";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setRGBBlendOperation</c>.
+    /// Stores the sel set rgbblend operation state used by this instance.
     /// </summary>
     private static readonly Selector sel_setRGBBlendOperation = "setRgbBlendOperation:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_destinationAlphaBlendFactor</c>.
+    /// Stores the sel destination alpha blend factor state used by this instance.
     /// </summary>
     private static readonly Selector sel_destinationAlphaBlendFactor = "destinationAlphaBlendFactor";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setDestinationAlphaBlendFactor</c>.
+    /// Stores the sel set destination alpha blend factor state used by this instance.
     /// </summary>
     private static readonly Selector sel_setDestinationAlphaBlendFactor = "setDestinationAlphaBlendFactor:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_destinationRGBBlendFactor</c>.
+    /// Stores the sel destination rgbblend factor state used by this instance.
     /// </summary>
     private static readonly Selector sel_destinationRGBBlendFactor = "destinationRGBBlendFactor";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setDestinationRGBBlendFactor</c>.
+    /// Stores the sel set destination rgbblend factor state used by this instance.
     /// </summary>
     private static readonly Selector sel_setDestinationRGBBlendFactor = "setDestinationRGBBlendFactor:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_sourceAlphaBlendFactor</c>.
+    /// Stores the sel source alpha blend factor state used by this instance.
     /// </summary>
     private static readonly Selector sel_sourceAlphaBlendFactor = "sourceAlphaBlendFactor";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setSourceAlphaBlendFactor</c>.
+    /// Stores the sel set source alpha blend factor state used by this instance.
     /// </summary>
     private static readonly Selector sel_setSourceAlphaBlendFactor = "setSourceAlphaBlendFactor:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_sourceRGBBlendFactor</c>.
+    /// Stores the sel source rgbblend factor state used by this instance.
     /// </summary>
     private static readonly Selector sel_sourceRGBBlendFactor = "sourceRGBBlendFactor";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setSourceRGBBlendFactor</c>.
+    /// Stores the sel set source rgbblend factor state used by this instance.
     /// </summary>
     private static readonly Selector sel_setSourceRGBBlendFactor = "setSourceRGBBlendFactor:";
 }

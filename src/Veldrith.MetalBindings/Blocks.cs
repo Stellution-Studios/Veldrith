@@ -3,48 +3,48 @@ using System;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Defines the data layout and behavior of the BlockLiteral struct.
+/// Represents the BlockLiteral data structure used by the graphics runtime.
 /// </summary>
 public unsafe struct BlockLiteral {
 
     /// <summary>
-    /// Stores the value associated with <c>isa</c>.
+    /// Stores the isa state used by this instance.
     /// </summary>
     public IntPtr isa;
 
     /// <summary>
-    /// Stores the value associated with <c>flags</c>.
+    /// Stores the flags state used by this instance.
     /// </summary>
     public int flags;
 
     /// <summary>
-    /// Stores the value associated with <c>reserved</c>.
+    /// Stores the reserved state used by this instance.
     /// </summary>
     public int reserved;
 
     /// <summary>
-    /// Stores the value associated with <c>invoke</c>.
+    /// Stores the invoke state used by this instance.
     /// </summary>
     public IntPtr invoke;
 
     /// <summary>
-    /// Stores the value associated with <c>descriptor</c>.
+    /// Stores the descriptor state used by this instance.
     /// </summary>
     public BlockDescriptor* descriptor;
 }
 
 /// <summary>
-/// Defines the data layout and behavior of the BlockDescriptor struct.
+/// Represents the BlockDescriptor data structure used by the graphics runtime.
 /// </summary>
 public struct BlockDescriptor {
 
     /// <summary>
-    /// Stores the value associated with <c>reserved</c>.
+    /// Stores the reserved state used by this instance.
     /// </summary>
     public ulong reserved;
 
     /// <summary>
-    /// Stores the value associated with <c>Block_size</c>.
+    /// Stores the block size value used during command execution.
     /// </summary>
     public ulong Block_size;
 }

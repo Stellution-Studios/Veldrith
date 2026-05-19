@@ -6,7 +6,7 @@ namespace Veldrith.MetalBindings;
 public enum MTLPrimitiveType : uint {
 
     /// <summary>
-    /// Stores the value associated with <c>Point</c>.
+    /// Stores the point state used by this instance.
     /// </summary>
     Point = 0, Line = 1, LineStrip = 2, Triangle = 3, TriangleStrip = 4
 }

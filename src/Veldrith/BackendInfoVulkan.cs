@@ -7,29 +7,29 @@ using Vulkan;
 namespace Veldrith;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the BackendInfoVulkan class.
+/// Exposes backend-specific native handles and metadata for BackendInfoVulkan.
 /// </summary>
 public class BackendInfoVulkan {
 
     /// <summary>
-    /// Stores the value associated with <c>_deviceExtensions</c>.
+    /// Stores the device extensions state used by this instance.
     /// </summary>
     private readonly Lazy<ReadOnlyCollection<ExtensionProperties>> _deviceExtensions;
 
     /// <summary>
-    /// Stores the value associated with <c>_instanceLayers</c>.
+    /// Stores the instance layers state used by this instance.
     /// </summary>
     private readonly Lazy<ReadOnlyCollection<string>> _instanceLayers;
 
     /// <summary>
-    /// Stores the value associated with <c>gd</c>.
+    /// Stores the gd state used by this instance.
     /// </summary>
     private readonly VkGraphicsDevice gd;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BackendInfoVulkan" /> type.
     /// </summary>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
+    /// <param name="gd">The graphics device that owns this operation.</param>
     internal BackendInfoVulkan(VkGraphicsDevice gd) {
         this.gd = gd;
         this._instanceLayers = new Lazy<ReadOnlyCollection<string>>(() =>
@@ -74,7 +74,7 @@ public class BackendInfoVulkan {
     public string DriverInfo => this.gd.DriverInfo;
 
     /// <summary>
-    /// Stores the value associated with <c>AvailableInstanceLayers</c>.
+    /// Stores the available instance layers state used by this instance.
     /// </summary>
     public ReadOnlyCollection<string> AvailableInstanceLayers => this._instanceLayers.Value;
 
@@ -84,15 +84,15 @@ public class BackendInfoVulkan {
     public ReadOnlyCollection<string> AvailableInstanceExtensions { get; }
 
     /// <summary>
-    /// Stores the value associated with <c>AvailableDeviceExtensions</c>.
+    /// Stores the available device extensions state used by this instance.
     /// </summary>
     public ReadOnlyCollection<ExtensionProperties> AvailableDeviceExtensions => this._deviceExtensions.Value;
 
     /// <summary>
-    /// Executes the OverrideImageLayout operation.
+    /// Executes the override image layout logic for this backend.
     /// </summary>
-    /// <param name="texture">Specifies the value of <paramref name="texture" />.</param>
-    /// <param name="layout">Specifies the value of <paramref name="layout" />.</param>
+    /// <param name="texture">The texture resource involved in this operation.</param>
+    /// <param name="layout">The resource layout used by this operation.</param>
     public void OverrideImageLayout(Texture texture, uint layout) {
         VkTexture vkTex = Util.AssertSubtype<Texture, VkTexture>(texture);
 
@@ -104,10 +104,10 @@ public class BackendInfoVulkan {
     }
 
     /// <summary>
-    /// Executes the GetVkImage operation.
+    /// Gets the vk image value.
     /// </summary>
-    /// <param name="texture">Specifies the value of <paramref name="texture" />.</param>
-    /// <returns>Returns the result produced by the GetVkImage operation.</returns>
+    /// <param name="texture">The texture resource involved in this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public ulong GetVkImage(Texture texture) {
         VkTexture vkTexture = Util.AssertSubtype<Texture, VkTexture>(texture);
 
@@ -119,18 +119,18 @@ public class BackendInfoVulkan {
     }
 
     /// <summary>
-    /// Executes the TransitionImageLayout operation.
+    /// Executes the transition image layout logic for this backend.
     /// </summary>
-    /// <param name="texture">Specifies the value of <paramref name="texture" />.</param>
-    /// <param name="layout">Specifies the value of <paramref name="layout" />.</param>
+    /// <param name="texture">The texture resource involved in this operation.</param>
+    /// <param name="layout">The resource layout used by this operation.</param>
     public void TransitionImageLayout(Texture texture, uint layout) {
         this.gd.TransitionImageLayout(Util.AssertSubtype<Texture, VkTexture>(texture), (VkImageLayout)layout);
     }
 
     /// <summary>
-    /// Executes the EnumerateDeviceExtensions operation.
+    /// Executes the enumerate device extensions logic for this backend.
     /// </summary>
-    /// <returns>Returns the result produced by the EnumerateDeviceExtensions operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     private unsafe ReadOnlyCollection<ExtensionProperties> EnumerateDeviceExtensions() {
         VkExtensionProperties[] vkProps = this.gd.GetDeviceExtensionProperties();
         ExtensionProperties[] veldridProps = new ExtensionProperties[vkProps.Length];
@@ -144,34 +144,34 @@ public class BackendInfoVulkan {
     }
 
     /// <summary>
-    /// Defines the data layout and behavior of the ExtensionProperties struct.
+    /// Exposes backend-specific native handles and metadata for BackendInfoVulkan.
     /// </summary>
     public readonly struct ExtensionProperties {
 
         /// <summary>
-        /// Stores the value associated with <c>Name</c>.
+        /// Stores the human-readable name associated with this instance.
         /// </summary>
         public readonly string Name;
 
         /// <summary>
-        /// Stores the value associated with <c>SpecVersion</c>.
+        /// Stores the spec version state used by this instance.
         /// </summary>
         public readonly uint SpecVersion;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ExtensionProperties" /> type.
         /// </summary>
-        /// <param name="name">Specifies the value of <paramref name="name" />.</param>
-        /// <param name="specVersion">Specifies the value of <paramref name="specVersion" />.</param>
+        /// <param name="name">The name used by this operation.</param>
+        /// <param name="specVersion">The spec version value used by this operation.</param>
         public ExtensionProperties(string name, uint specVersion) {
             this.Name = name ?? throw new ArgumentNullException(nameof(name));
             this.SpecVersion = specVersion;
         }
 
         /// <summary>
-        /// Executes the ToString operation.
+        /// Builds a string representation of this instance.
         /// </summary>
-        /// <returns>Returns the result produced by the ToString operation.</returns>
+        /// <returns>The value produced by this operation.</returns>
         public override string ToString() {
             return this.Name;
         }

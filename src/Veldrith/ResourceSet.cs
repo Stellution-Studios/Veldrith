@@ -3,14 +3,14 @@ using System;
 namespace Veldrith;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the ResourceSet class.
+/// Represents the ResourceSet type used by the graphics runtime.
 /// </summary>
 public abstract class ResourceSet : IDeviceResource, IDisposable {
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ResourceSet" /> type.
     /// </summary>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <param name="description">The description used to configure this operation.</param>
     internal ResourceSet(ref ResourceSetDescription description) {
 #if VALIDATE_USAGE
         this.Layout = description.Layout;
@@ -25,14 +25,13 @@ public abstract class ResourceSet : IDeviceResource, IDisposable {
 
     /// <summary>
     /// A string identifying this instance. Can be used to differentiate between objects in graphics debuggers and other
-    /// tools.
     /// </summary>
     public abstract string Name { get; set; }
 
     #region Disposal
 
     /// <summary>
-    /// Executes the Dispose operation.
+    /// Releases resources held by this instance.
     /// </summary>
     public abstract void Dispose();
 

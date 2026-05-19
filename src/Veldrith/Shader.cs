@@ -3,15 +3,15 @@ using System;
 namespace Veldrith;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the Shader class.
+/// Represents the Shader type used by the graphics runtime.
 /// </summary>
 public abstract class Shader : IDeviceResource, IDisposable {
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Shader" /> type.
     /// </summary>
-    /// <param name="stage">Specifies the value of <paramref name="stage" />.</param>
-    /// <param name="entryPoint">Specifies the value of <paramref name="entryPoint" />.</param>
+    /// <param name="stage">The stage value used by this operation.</param>
+    /// <param name="entryPoint">The entry point value used by this operation.</param>
     internal Shader(ShaderStages stage, string entryPoint) {
         this.Stage = stage;
         this.EntryPoint = entryPoint;
@@ -34,14 +34,13 @@ public abstract class Shader : IDeviceResource, IDisposable {
 
     /// <summary>
     /// A string identifying this instance. Can be used to differentiate between objects in graphics debuggers and other
-    /// tools.
     /// </summary>
     public abstract string Name { get; set; }
 
     #region Disposal
 
     /// <summary>
-    /// Executes the Dispose operation.
+    /// Releases resources held by this instance.
     /// </summary>
     public abstract void Dispose();
 

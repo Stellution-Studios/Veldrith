@@ -6,7 +6,7 @@ namespace Veldrith.MetalBindings;
 public enum MTLWinding {
 
     /// <summary>
-    /// Stores the value associated with <c>Clockwise</c>.
+    /// Stores the clockwise state used by this instance.
     /// </summary>
     Clockwise = 0, CounterClockwise = 1
 }

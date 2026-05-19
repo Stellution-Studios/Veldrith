@@ -6,7 +6,7 @@ namespace Veldrith.MetalBindings;
 public enum MTLBlendOperation {
 
     /// <summary>
-    /// Stores the value associated with <c>Add</c>.
+    /// Stores the add state used by this instance.
     /// </summary>
     Add = 0, Subtract = 1, ReverseSubtract = 2, Min = 3, Max = 4
 }

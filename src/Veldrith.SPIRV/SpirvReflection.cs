@@ -4,12 +4,12 @@ using System.Text.Json.Serialization;
 namespace Veldrith.SPIRV;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the SpirvReflection class.
+/// Provides SPIR-V compilation support for SpirvReflection.
 /// </summary>
 public class SpirvReflection {
 
     /// <summary>
-    /// Stores the value associated with <c>s_jsonOptions</c>.
+    /// Stores the s json options state used by this instance.
     /// </summary>
     private static readonly JsonSerializerOptions s_jsonOptions = new() {
         WriteIndented = true,
@@ -22,8 +22,8 @@ public class SpirvReflection {
     /// <summary>
     /// Initializes a new instance of the <see cref="SpirvReflection" /> type.
     /// </summary>
-    /// <param name="vertexElements">Specifies the value of <paramref name="vertexElements" />.</param>
-    /// <param name="resourceLayouts">Specifies the value of <paramref name="resourceLayouts" />.</param>
+    /// <param name="vertexElements">The vertex elements value used by this operation.</param>
+    /// <param name="resourceLayouts">The resource layout used by this operation.</param>
     public SpirvReflection(VertexElementDescription[] vertexElements, ResourceLayoutDescription[] resourceLayouts) {
         this.VertexElements = vertexElements;
         this.ResourceLayouts = resourceLayouts;
@@ -31,7 +31,6 @@ public class SpirvReflection {
 
     /// <summary>
     /// An array containing a description of each vertex element that is used by the compiled shader set.
-    /// This array will be empty for compute shaders.
     /// </summary>
     public VertexElementDescription[] VertexElements { get; }
 
@@ -41,20 +40,20 @@ public class SpirvReflection {
     public ResourceLayoutDescription[] ResourceLayouts { get; }
 
     /// <summary>
-    /// Executes the LoadFromJson operation.
+    /// Executes the load from json logic for this backend.
     /// </summary>
-    /// <param name="jsonPath">Specifies the value of <paramref name="jsonPath" />.</param>
-    /// <returns>Returns the result produced by the LoadFromJson operation.</returns>
+    /// <param name="jsonPath">The json path value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public static SpirvReflection LoadFromJson(string jsonPath) {
         using FileStream jsonStream = File.OpenRead(jsonPath);
         return LoadFromJson(jsonStream);
     }
 
     /// <summary>
-    /// Executes the LoadFromJson operation.
+    /// Executes the load from json logic for this backend.
     /// </summary>
-    /// <param name="jsonStream">Specifies the value of <paramref name="jsonStream" />.</param>
-    /// <returns>Returns the result produced by the LoadFromJson operation.</returns>
+    /// <param name="jsonStream">The json stream value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public static SpirvReflection LoadFromJson(Stream jsonStream) {
         return JsonSerializer.Deserialize<SpirvReflection>(jsonStream, s_jsonOptions);
     }

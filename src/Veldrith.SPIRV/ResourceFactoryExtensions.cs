@@ -3,29 +3,29 @@ using System.Text;
 namespace Veldrith.SPIRV;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the ResourceFactoryExtensions class.
+/// Represents the ResourceFactoryExtensions type used by the graphics runtime.
 /// </summary>
 public static class ResourceFactoryExtensions {
 
     /// <summary>
-    /// Executes the CreateFromSpirv operation.
+    /// Creates the from spirv instance used by this backend.
     /// </summary>
-    /// <param name="factory">Specifies the value of <paramref name="factory" />.</param>
-    /// <param name="vertexShaderDescription">Specifies the value of <paramref name="vertexShaderDescription" />.</param>
-    /// <param name="fragmentShaderDescription">Specifies the value of <paramref name="fragmentShaderDescription" />.</param>
-    /// <returns>Returns the result produced by the CreateFromSpirv operation.</returns>
+    /// <param name="factory">The factory value used by this operation.</param>
+    /// <param name="vertexShaderDescription">The vertex shader description value used by this operation.</param>
+    /// <param name="fragmentShaderDescription">The fragment shader description value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public static Shader[] CreateFromSpirv(this ResourceFactory factory, ShaderDescription vertexShaderDescription, ShaderDescription fragmentShaderDescription) {
         return factory.CreateFromSpirv(vertexShaderDescription, fragmentShaderDescription, new CrossCompileOptions());
     }
 
     /// <summary>
-    /// Executes the CreateFromSpirv operation.
+    /// Creates the from spirv instance used by this backend.
     /// </summary>
-    /// <param name="factory">Specifies the value of <paramref name="factory" />.</param>
-    /// <param name="vertexShaderDescription">Specifies the value of <paramref name="vertexShaderDescription" />.</param>
-    /// <param name="fragmentShaderDescription">Specifies the value of <paramref name="fragmentShaderDescription" />.</param>
-    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
-    /// <returns>Returns the result produced by the CreateFromSpirv operation.</returns>
+    /// <param name="factory">The factory value used by this operation.</param>
+    /// <param name="vertexShaderDescription">The vertex shader description value used by this operation.</param>
+    /// <param name="fragmentShaderDescription">The fragment shader description value used by this operation.</param>
+    /// <param name="options">The options used to configure this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public static Shader[] CreateFromSpirv(this ResourceFactory factory, ShaderDescription vertexShaderDescription, ShaderDescription fragmentShaderDescription, CrossCompileOptions options) {
         GraphicsBackend backend = factory.BackendType;
         if (backend == GraphicsBackend.Vulkan) {
@@ -50,22 +50,22 @@ public static class ResourceFactoryExtensions {
     }
 
     /// <summary>
-    /// Executes the CreateFromSpirv operation.
+    /// Creates the from spirv instance used by this backend.
     /// </summary>
-    /// <param name="factory">Specifies the value of <paramref name="factory" />.</param>
-    /// <param name="computeShaderDescription">Specifies the value of <paramref name="computeShaderDescription" />.</param>
-    /// <returns>Returns the result produced by the CreateFromSpirv operation.</returns>
+    /// <param name="factory">The factory value used by this operation.</param>
+    /// <param name="computeShaderDescription">The compute shader description value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public static Shader CreateFromSpirv(this ResourceFactory factory, ShaderDescription computeShaderDescription) {
         return factory.CreateFromSpirv(computeShaderDescription, new CrossCompileOptions());
     }
 
     /// <summary>
-    /// Executes the CreateFromSpirv operation.
+    /// Creates the from spirv instance used by this backend.
     /// </summary>
-    /// <param name="factory">Specifies the value of <paramref name="factory" />.</param>
-    /// <param name="computeShaderDescription">Specifies the value of <paramref name="computeShaderDescription" />.</param>
-    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
-    /// <returns>Returns the result produced by the CreateFromSpirv operation.</returns>
+    /// <param name="factory">The factory value used by this operation.</param>
+    /// <param name="computeShaderDescription">The compute shader description value used by this operation.</param>
+    /// <param name="options">The options used to configure this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public static Shader CreateFromSpirv(this ResourceFactory factory, ShaderDescription computeShaderDescription, CrossCompileOptions options) {
         GraphicsBackend backend = factory.BackendType;
         if (backend == GraphicsBackend.Vulkan) {
@@ -81,10 +81,10 @@ public static class ResourceFactoryExtensions {
     }
 
     /// <summary>
-    /// Executes the EnsureSpirv operation.
+    /// Executes the ensure spirv logic for this backend.
     /// </summary>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
-    /// <returns>Returns the result produced by the EnsureSpirv operation.</returns>
+    /// <param name="description">The description used to configure this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static byte[] EnsureSpirv(ShaderDescription description) {
         if (SpirvCompilation.HasSpirvHeader(description.ShaderBytes)) {
             return description.ShaderBytes;
@@ -95,11 +95,11 @@ public static class ResourceFactoryExtensions {
     }
 
     /// <summary>
-    /// Executes the GetBytes operation.
+    /// Gets the bytes value.
     /// </summary>
-    /// <param name="backend">Specifies the value of <paramref name="backend" />.</param>
-    /// <param name="code">Specifies the value of <paramref name="code" />.</param>
-    /// <returns>Returns the result produced by the GetBytes operation.</returns>
+    /// <param name="backend">The backend value used by this operation.</param>
+    /// <param name="code">The code value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static byte[] GetBytes(GraphicsBackend backend, string code) {
         switch (backend) {
             case GraphicsBackend.Direct3D12: case GraphicsBackend.Metal: return Encoding.ASCII.GetBytes(code);
@@ -108,10 +108,10 @@ public static class ResourceFactoryExtensions {
     }
 
     /// <summary>
-    /// Executes the GetCompilationTarget operation.
+    /// Gets the compilation target value.
     /// </summary>
-    /// <param name="backend">Specifies the value of <paramref name="backend" />.</param>
-    /// <returns>Returns the result produced by the GetCompilationTarget operation.</returns>
+    /// <param name="backend">The backend value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static CrossCompileTarget GetCompilationTarget(GraphicsBackend backend) {
         switch (backend) {
             case GraphicsBackend.Direct3D12: return CrossCompileTarget.HLSL;

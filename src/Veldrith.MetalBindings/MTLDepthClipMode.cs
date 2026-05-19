@@ -6,7 +6,7 @@ namespace Veldrith.MetalBindings;
 public enum MTLDepthClipMode {
 
     /// <summary>
-    /// Stores the value associated with <c>Clip</c>.
+    /// Stores the clip state used by this instance.
     /// </summary>
     Clip = 0, Clamp = 1
 }

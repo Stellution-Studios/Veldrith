@@ -4,34 +4,34 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Defines the data layout and behavior of the NSObject struct.
+/// Represents the NSObject data structure used by the graphics runtime.
 /// </summary>
 public struct NSObject {
 
     /// <summary>
-    /// Stores the value associated with <c>NativePtr</c>.
+    /// Stores the native ptr state used by this instance.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="NSObject" /> type.
     /// </summary>
-    /// <param name="ptr">Specifies the value of <paramref name="ptr" />.</param>
+    /// <param name="ptr">The ptr value used by this operation.</param>
     public NSObject(IntPtr ptr) {
         this.NativePtr = ptr;
     }
 
     /// <summary>
-    /// Executes the IsKindOfClass operation.
+    /// Executes the is kind of class logic for this backend.
     /// </summary>
-    /// <param name="class">Specifies the value of <paramref name="class" />.</param>
-    /// <returns>Returns the result produced by the IsKindOfClass operation.</returns>
+    /// <param name="class">The class value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public Bool8 IsKindOfClass(IntPtr @class) {
         return bool8_objc_msgSend(this.NativePtr, sel_isKindOfClass, @class);
     }
 
     /// <summary>
-    /// Stores the value associated with <c>sel_isKindOfClass</c>.
+    /// Stores the sel is kind of class state used by this instance.
     /// </summary>
     private static readonly Selector sel_isKindOfClass = "isKindOfClass:";
 }

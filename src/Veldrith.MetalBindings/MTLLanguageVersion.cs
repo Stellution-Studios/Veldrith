@@ -6,7 +6,7 @@ namespace Veldrith.MetalBindings;
 public enum MTLLanguageVersion : uint {
 
     /// <summary>
-    /// Stores the value associated with <c>Version1_0</c>.
+    /// Executes the value logic for this backend.
     /// </summary>
     Version1_0 = 1 << 16, Version1_1 = (1 << 16) + 1, Version1_2 = (1 << 16) + 2
 }

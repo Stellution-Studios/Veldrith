@@ -3,16 +3,16 @@ using Vulkan;
 namespace Veldrith.Vk;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the VkFormats class.
+/// Provides the Vulkan backend implementation for VkFormats.
 /// </summary>
 internal static partial class VkFormats {
 
     /// <summary>
-    /// Executes the VdToVkPixelFormat operation.
+    /// Executes the vd to vk pixel format logic for this backend.
     /// </summary>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
-    /// <param name="toDepthFormat">Specifies the value of <paramref name="toDepthFormat" />.</param>
-    /// <returns>Returns the result produced by the VdToVkPixelFormat operation.</returns>
+    /// <param name="format">The format used by this operation.</param>
+    /// <param name="toDepthFormat">The to depth format value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal static VkFormat VdToVkPixelFormat(PixelFormat format, bool toDepthFormat = false) {
         switch (format) {
             case PixelFormat.R8UNorm: return VkFormat.R8Unorm;

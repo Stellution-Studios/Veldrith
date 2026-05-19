@@ -4,20 +4,20 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Defines the data layout and behavior of the CALayer struct.
+/// Represents the CALayer data structure used by the graphics runtime.
 /// </summary>
 public struct CALayer {
 
     /// <summary>
-    /// Stores the value associated with <c>NativePtr</c>.
+    /// Stores the native ptr state used by this instance.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Executes the operator IntPtr operation.
+    /// Executes the int ptr logic for this backend.
     /// </summary>
-    /// <param name="c">Specifies the value of <paramref name="c" />.</param>
-    /// <returns>Returns the result produced by the operator IntPtr operation.</returns>
+    /// <param name="c">The c value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public static implicit operator IntPtr(CALayer c) {
         return c.NativePtr;
     }
@@ -25,21 +25,21 @@ public struct CALayer {
     /// <summary>
     /// Initializes a new instance of the <see cref="CALayer" /> type.
     /// </summary>
-    /// <param name="ptr">Specifies the value of <paramref name="ptr" />.</param>
+    /// <param name="ptr">The ptr value used by this operation.</param>
     public CALayer(IntPtr ptr) {
         this.NativePtr = ptr;
     }
 
     /// <summary>
-    /// Executes the addSublayer operation.
+    /// Executes the add sublayer logic for this backend.
     /// </summary>
-    /// <param name="layer">Specifies the value of <paramref name="layer" />.</param>
+    /// <param name="layer">The layer value used by this operation.</param>
     public void addSublayer(IntPtr layer) {
         objc_msgSend(this.NativePtr, sel_addSublayer, layer);
     }
 
     /// <summary>
-    /// Stores the value associated with <c>sel_addSublayer</c>.
+    /// Stores the sel add sublayer state used by this instance.
     /// </summary>
     private static readonly Selector sel_addSublayer = "addSublayer:";
 }

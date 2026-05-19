@@ -6,7 +6,7 @@ namespace Veldrith.MetalBindings;
 public enum MTLIndexType {
 
     /// <summary>
-    /// Stores the value associated with <c>UInt16</c>.
+    /// Stores the uint16 state used by this instance.
     /// </summary>
     UInt16 = 0, UInt32 = 1
 }

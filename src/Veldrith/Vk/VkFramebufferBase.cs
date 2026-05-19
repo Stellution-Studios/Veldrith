@@ -4,16 +4,15 @@ using Vulkan;
 namespace Veldrith.Vk;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the VkFramebufferBase class.
+/// Provides the Vulkan backend implementation for VkFramebufferBase.
 /// </summary>
 internal abstract class VkFramebufferBase : Framebuffer {
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VkFramebufferBase" /> class.
     /// </summary>
-    /// <param name="depthTexture">Specifies the value of <paramref name="depthTexture" />.</param>
-    /// <param name="colorTextures">Specifies the value of <paramref name="colorTextures" />.</param>
-    /// <returns>Returns the result produced by the base operation.</returns>
+    /// <param name="depthTexture">The depth texture value used by this operation.</param>
+    /// <param name="colorTextures">The texture resource involved in this operation.</param>
     protected VkFramebufferBase(FramebufferAttachmentDescription? depthTexture, IReadOnlyList<FramebufferAttachmentDescription> colorTextures) : base(depthTexture, colorTextures) {
         this.RefCount = new ResourceRefCount(this.DisposeCore);
     }
@@ -68,7 +67,7 @@ internal abstract class VkFramebufferBase : Framebuffer {
     #region Disposal
 
     /// <summary>
-    /// Executes the Dispose operation.
+    /// Releases resources held by this instance.
     /// </summary>
     public override void Dispose() {
         this.RefCount.Decrement();
@@ -77,19 +76,19 @@ internal abstract class VkFramebufferBase : Framebuffer {
     #endregion
 
     /// <summary>
-    /// Executes the TransitionToIntermediateLayout operation.
+    /// Executes the transition to intermediate layout logic for this backend.
     /// </summary>
-    /// <param name="cb">Specifies the value of <paramref name="cb" />.</param>
+    /// <param name="cb">The cb value used by this operation.</param>
     public abstract void TransitionToIntermediateLayout(VkCommandBuffer cb);
 
     /// <summary>
-    /// Executes the TransitionToFinalLayout operation.
+    /// Executes the transition to final layout logic for this backend.
     /// </summary>
-    /// <param name="cb">Specifies the value of <paramref name="cb" />.</param>
+    /// <param name="cb">The cb value used by this operation.</param>
     public abstract void TransitionToFinalLayout(VkCommandBuffer cb);
 
     /// <summary>
-    /// Executes the DisposeCore operation.
+    /// Executes the dispose core logic for this backend.
     /// </summary>
     protected abstract void DisposeCore();
 }

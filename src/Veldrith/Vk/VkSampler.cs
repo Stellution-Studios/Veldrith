@@ -4,35 +4,35 @@ using static Vulkan.VulkanNative;
 namespace Veldrith.Vk;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the VkSampler class.
+/// Provides the Vulkan backend implementation for VkSampler.
 /// </summary>
 internal unsafe class VkSampler : Sampler {
 
     /// <summary>
-    /// Stores the value associated with <c>_sampler</c>.
+    /// Stores the sampler state used by this instance.
     /// </summary>
     private readonly Vulkan.VkSampler _sampler;
 
     /// <summary>
-    /// Stores the value associated with <c>gd</c>.
+    /// Stores the gd state used by this instance.
     /// </summary>
     private readonly VkGraphicsDevice gd;
 
     /// <summary>
-    /// Stores the value associated with <c>_disposed</c>.
+    /// Stores the disposed state used by this instance.
     /// </summary>
     private bool _disposed;
 
     /// <summary>
-    /// Stores the value associated with <c>_name</c>.
+    /// Stores the human-readable name associated with this instance.
     /// </summary>
     private string _name;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VkSampler" /> type.
     /// </summary>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <param name="gd">The graphics device that owns this operation.</param>
+    /// <param name="description">The description used to configure this operation.</param>
     public VkSampler(VkGraphicsDevice gd, ref SamplerDescription description) {
         this.gd = gd;
         VkFormats.GetFilterParams(description.Filter, out VkFilter minFilter, out VkFilter magFilter, out VkSamplerMipmapMode mipmapMode);
@@ -62,7 +62,7 @@ internal unsafe class VkSampler : Sampler {
     }
 
     /// <summary>
-    /// Stores the value associated with <c>DeviceSampler</c>.
+    /// Stores the device sampler state used by this instance.
     /// </summary>
     public Vulkan.VkSampler DeviceSampler => this._sampler;
 
@@ -90,7 +90,7 @@ internal unsafe class VkSampler : Sampler {
     #region Disposal
 
     /// <summary>
-    /// Executes the Dispose operation.
+    /// Releases resources held by this instance.
     /// </summary>
     public override void Dispose() {
         this.RefCount.Decrement();
@@ -99,7 +99,7 @@ internal unsafe class VkSampler : Sampler {
     #endregion
 
     /// <summary>
-    /// Executes the DisposeCore operation.
+    /// Executes the dispose core logic for this backend.
     /// </summary>
     private void DisposeCore() {
         if (!this._disposed) {

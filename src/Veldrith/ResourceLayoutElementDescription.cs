@@ -30,9 +30,9 @@ public struct ResourceLayoutElementDescription : IEquatable<ResourceLayoutElemen
     /// <summary>
     /// Initializes a new instance of the <see cref="ResourceLayoutElementDescription" /> type.
     /// </summary>
-    /// <param name="name">Specifies the value of <paramref name="name" />.</param>
-    /// <param name="kind">Specifies the value of <paramref name="kind" />.</param>
-    /// <param name="stages">Specifies the value of <paramref name="stages" />.</param>
+    /// <param name="name">The name used by this operation.</param>
+    /// <param name="kind">The kind value used by this operation.</param>
+    /// <param name="stages">The stages value used by this operation.</param>
     public ResourceLayoutElementDescription(string name, ResourceKind kind, ShaderStages stages) {
         this.Name = name;
         this.Kind = kind;
@@ -43,10 +43,10 @@ public struct ResourceLayoutElementDescription : IEquatable<ResourceLayoutElemen
     /// <summary>
     /// Initializes a new instance of the <see cref="ResourceLayoutElementDescription" /> type.
     /// </summary>
-    /// <param name="name">Specifies the value of <paramref name="name" />.</param>
-    /// <param name="kind">Specifies the value of <paramref name="kind" />.</param>
-    /// <param name="stages">Specifies the value of <paramref name="stages" />.</param>
-    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
+    /// <param name="name">The name used by this operation.</param>
+    /// <param name="kind">The kind value used by this operation.</param>
+    /// <param name="stages">The stages value used by this operation.</param>
+    /// <param name="options">The options used to configure this operation.</param>
     public ResourceLayoutElementDescription(string name, ResourceKind kind, ShaderStages stages, ResourceLayoutElementOptions options) {
         this.Name = name;
         this.Kind = kind;
@@ -55,18 +55,18 @@ public struct ResourceLayoutElementDescription : IEquatable<ResourceLayoutElemen
     }
 
     /// <summary>
-    /// Executes the Equals operation.
+    /// Determines whether this instance is equal to the specified value.
     /// </summary>
-    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
-    /// <returns>Returns the result produced by the Equals operation.</returns>
+    /// <param name="other">The value to compare against.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public bool Equals(ResourceLayoutElementDescription other) {
         return this.Name == other.Name && this.Kind == other.Kind && this.Stages == other.Stages && this.Options == other.Options;
     }
 
     /// <summary>
-    /// Executes the GetHashCode operation.
+    /// Computes a hash code for this instance.
     /// </summary>
-    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(this.Name.GetHashCode(), (int)this.Kind, (int)this.Stages, (int)this.Options);
     }
@@ -85,11 +85,6 @@ public enum ResourceLayoutElementOptions {
 
     /// <summary>
     /// Can be applied to a buffer type resource (<see cref="ResourceKind.StructuredBufferReadOnly" />,
-    /// <see cref="ResourceKind.StructuredBufferReadWrite" />, or <see cref="ResourceKind.UniformBuffer" />), allowing it
-    /// to be
-    /// bound with a dynamic offset using <see cref="CommandList.SetGraphicsResourceSet(uint, ResourceSet, uint[])" />.
-    /// Offsets specified this way must be a multiple of <see cref="GraphicsDevice.UniformBufferMinOffsetAlignment" /> or
-    /// <see cref="GraphicsDevice.StructuredBufferMinOffsetAlignment" />.
     /// </summary>
     DynamicBinding = 1 << 0
 }

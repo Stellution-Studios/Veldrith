@@ -4,38 +4,38 @@ using System.Runtime.CompilerServices;
 namespace Veldrith;
 
 /// <summary>
-/// Defines the data layout and behavior of the BoundResourceSetInfo struct.
+/// Represents the BoundResourceSetInfo data structure used by the graphics runtime.
 /// </summary>
 internal struct BoundResourceSetInfo : IEquatable<BoundResourceSetInfo> {
 
     /// <summary>
-    /// Stores the value associated with <c>Set</c>.
+    /// Stores the set state used by this instance.
     /// </summary>
     public ResourceSet Set;
 
     /// <summary>
-    /// Stores the value associated with <c>Offsets</c>.
+    /// Stores the offsets value used during command execution.
     /// </summary>
     public SmallFixedOrDynamicArray Offsets;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BoundResourceSetInfo" /> type.
     /// </summary>
-    /// <param name="set">Specifies the value of <paramref name="set" />.</param>
-    /// <param name="offsetsCount">Specifies the value of <paramref name="offsetsCount" />.</param>
-    /// <param name="offsets">Specifies the value of <paramref name="offsets" />.</param>
+    /// <param name="set">The set value used by this operation.</param>
+    /// <param name="offsetsCount">The offsets count value used by this operation.</param>
+    /// <param name="offsets">The offsets value used by this operation.</param>
     public BoundResourceSetInfo(ResourceSet set, uint offsetsCount, ref uint offsets) {
         this.Set = set;
         this.Offsets = new SmallFixedOrDynamicArray(offsetsCount, ref offsets);
     }
 
     /// <summary>
-    /// Executes the Equals operation.
+    /// Determines whether this instance is equal to the specified value.
     /// </summary>
-    /// <param name="set">Specifies the value of <paramref name="set" />.</param>
-    /// <param name="offsetsCount">Specifies the value of <paramref name="offsetsCount" />.</param>
-    /// <param name="offsets">Specifies the value of <paramref name="offsets" />.</param>
-    /// <returns>Returns the result produced by the Equals operation.</returns>
+    /// <param name="set">The set value used by this operation.</param>
+    /// <param name="offsetsCount">The offsets count value used by this operation.</param>
+    /// <param name="offsets">The offsets value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public bool Equals(ResourceSet set, uint offsetsCount, ref uint offsets) {
         if (set != this.Set || offsetsCount != this.Offsets.Count) {
             return false;
@@ -51,10 +51,10 @@ internal struct BoundResourceSetInfo : IEquatable<BoundResourceSetInfo> {
     }
 
     /// <summary>
-    /// Executes the Equals operation.
+    /// Determines whether this instance is equal to the specified value.
     /// </summary>
-    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
-    /// <returns>Returns the result produced by the Equals operation.</returns>
+    /// <param name="other">The value to compare against.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public bool Equals(BoundResourceSetInfo other) {
         if (this.Set != other.Set || this.Offsets.Count != other.Offsets.Count) {
             return false;

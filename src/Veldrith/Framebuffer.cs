@@ -5,7 +5,7 @@ using System.Diagnostics;
 namespace Veldrith;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the Framebuffer class.
+/// Represents the Framebuffer type used by the graphics runtime.
 /// </summary>
 public abstract class Framebuffer : IDeviceResource, IDisposable {
 
@@ -17,8 +17,8 @@ public abstract class Framebuffer : IDeviceResource, IDisposable {
     /// <summary>
     /// Initializes a new instance of the <see cref="Framebuffer" /> type.
     /// </summary>
-    /// <param name="depthTargetDesc">Specifies the value of <paramref name="depthTargetDesc" />.</param>
-    /// <param name="colorTargetDescs">Specifies the value of <paramref name="colorTargetDescs" />.</param>
+    /// <param name="depthTargetDesc">The depth target desc value used by this operation.</param>
+    /// <param name="colorTargetDescs">The color target descs value used by this operation.</param>
     internal Framebuffer(FramebufferAttachmentDescription? depthTargetDesc, IReadOnlyList<FramebufferAttachmentDescription> colorTargetDescs) {
 
         if (depthTargetDesc != null) {
@@ -66,8 +66,6 @@ public abstract class Framebuffer : IDeviceResource, IDisposable {
 
     /// <summary>
     /// Gets an <see cref="Veldrith.OutputDescription" /> which describes the number and formats of the depth and color
-    /// targets
-    /// in this instance.
     /// </summary>
     public virtual OutputDescription OutputDescription { get; }
 
@@ -88,14 +86,13 @@ public abstract class Framebuffer : IDeviceResource, IDisposable {
 
     /// <summary>
     /// A string identifying this instance. Can be used to differentiate between objects in graphics debuggers and other
-    /// tools.
     /// </summary>
     public abstract string Name { get; set; }
 
     #region Disposal
 
     /// <summary>
-    /// Executes the Dispose operation.
+    /// Releases resources held by this instance.
     /// </summary>
     public abstract void Dispose();
 

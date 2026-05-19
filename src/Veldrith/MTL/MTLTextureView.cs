@@ -3,26 +3,25 @@ using Veldrith.MetalBindings;
 namespace Veldrith.MTL;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the MtlTextureView class.
+/// Provides the Metal backend implementation for MtlTextureView.
 /// </summary>
 internal class MtlTextureView : TextureView {
 
     /// <summary>
-    /// Stores the value associated with <c>_hasTextureView</c>.
+    /// Tracks whether has texture view is currently enabled.
     /// </summary>
     private readonly bool _hasTextureView;
 
     /// <summary>
-    /// Stores the value associated with <c>_disposed</c>.
+    /// Stores the disposed state used by this instance.
     /// </summary>
     private bool _disposed;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MtlTextureView" /> class.
     /// </summary>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
-    /// <returns>Returns the result produced by the base operation.</returns>
+    /// <param name="description">The description used to configure this operation.</param>
+    /// <param name="gd">The graphics device that owns this operation.</param>
     public MtlTextureView(ref TextureViewDescription description, MtlGraphicsDevice gd) : base(ref description) {
         MtlTexture targetMtlTexture = Util.AssertSubtype<Texture, MtlTexture>(description.Target);
 
@@ -58,7 +57,7 @@ internal class MtlTextureView : TextureView {
     #region Disposal
 
     /// <summary>
-    /// Executes the Dispose operation.
+    /// Releases resources held by this instance.
     /// </summary>
     public override void Dispose() {
         if (this._hasTextureView && !this._disposed) {

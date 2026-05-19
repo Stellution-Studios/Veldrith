@@ -4,12 +4,12 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Defines the data layout and behavior of the MTLStencilDescriptor struct.
+/// Represents the MTLStencilDescriptor data structure used by the graphics runtime.
 /// </summary>
 public struct MTLStencilDescriptor {
 
     /// <summary>
-    /// Stores the value associated with <c>NativePtr</c>.
+    /// Stores the native ptr state used by this instance.
     /// </summary>
     public readonly IntPtr NativePtr;
 
@@ -62,62 +62,62 @@ public struct MTLStencilDescriptor {
     }
 
     /// <summary>
-    /// Stores the value associated with <c>sel_depthFailureOperation</c>.
+    /// Stores the sel depth failure operation value used during command execution.
     /// </summary>
     private static readonly Selector sel_depthFailureOperation = "depthFailureOperation";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_stencilFailureOperation</c>.
+    /// Stores the sel stencil failure operation state used by this instance.
     /// </summary>
     private static readonly Selector sel_stencilFailureOperation = "stencilFailureOperation";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setStencilFailureOperation</c>.
+    /// Stores the sel set stencil failure operation state used by this instance.
     /// </summary>
     private static readonly Selector sel_setStencilFailureOperation = "setStencilFailureOperation:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setDepthFailureOperation</c>.
+    /// Stores the sel set depth failure operation value used during command execution.
     /// </summary>
     private static readonly Selector sel_setDepthFailureOperation = "setDepthFailureOperation:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_depthStencilPassOperation</c>.
+    /// Stores the sel depth stencil pass operation value used during command execution.
     /// </summary>
     private static readonly Selector sel_depthStencilPassOperation = "depthStencilPassOperation";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setDepthStencilPassOperation</c>.
+    /// Stores the sel set depth stencil pass operation value used during command execution.
     /// </summary>
     private static readonly Selector sel_setDepthStencilPassOperation = "setDepthStencilPassOperation:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_stencilCompareFunction</c>.
+    /// Stores the sel stencil compare function state used by this instance.
     /// </summary>
     private static readonly Selector sel_stencilCompareFunction = "stencilCompareFunction";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setStencilCompareFunction</c>.
+    /// Stores the sel set stencil compare function state used by this instance.
     /// </summary>
     private static readonly Selector sel_setStencilCompareFunction = "setStencilCompareFunction:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_readMask</c>.
+    /// Stores the sel read mask state used by this instance.
     /// </summary>
     private static readonly Selector sel_readMask = "readMask";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setReadMask</c>.
+    /// Stores the sel set read mask state used by this instance.
     /// </summary>
     private static readonly Selector sel_setReadMask = "setReadMask:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_writeMask</c>.
+    /// Stores the sel write mask state used by this instance.
     /// </summary>
     private static readonly Selector sel_writeMask = "writeMask";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setWriteMask</c>.
+    /// Stores the sel set write mask state used by this instance.
     /// </summary>
     private static readonly Selector sel_setWriteMask = "setWriteMask:";
 }

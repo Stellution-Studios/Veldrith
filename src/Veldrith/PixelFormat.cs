@@ -2,12 +2,6 @@ namespace Veldrith;
 
 /// <summary>
 /// The format of data stored in a <see cref="Texture" />.
-/// Each name is a compound identifier, where each component denotes a name and a number of bits used to store that
-/// component. The final component identifies the storage type of each component. "Float" identifies a signed,
-/// floating-point
-/// type, UNorm identifies an unsigned integer type which is normalized, meaning it occupies the full space of the
-/// integer
-/// type. The SRgb suffix for normalized integer formats indicates that the RGB components are stored in sRGB format.
 /// </summary>
 public enum PixelFormat : byte {
 
@@ -48,13 +42,11 @@ public enum PixelFormat : byte {
 
     /// <summary>
     /// A depth-stencil format where the depth is stored in a 24-bit unsigned normalized integer, and the stencil is stored
-    /// in an 8-bit unsigned integer.
     /// </summary>
     D24UNormS8UInt,
 
     /// <summary>
     /// A depth-stencil format where the depth is stored in a 32-bit signed floating-point value, and the stencil is stored
-    /// in an 8-bit unsigned integer.
     /// </summary>
     D32FloatS8UInt,
 
@@ -85,21 +77,16 @@ public enum PixelFormat : byte {
 
     /// <summary>
     /// A 32-bit packed format. The 10-bit R component occupies bits 0..9, the 10-bit G component occupies bits 10..19,
-    /// the 10-bit A component occupies 20..29, and the 2-bit A component occupies bits 30..31. Each value is an unsigned,
-    /// normalized integer.
     /// </summary>
     R10G10B10A2UNorm,
 
     /// <summary>
     /// A 32-bit packed format. The 10-bit R component occupies bits 0..9, the 10-bit G component occupies bits 10..19,
-    /// the 10-bit A component occupies 20..29, and the 2-bit A component occupies bits 30..31. Each value is an unsigned
-    /// integer.
     /// </summary>
     R10G10B10A2UInt,
 
     /// <summary>
     /// A 32-bit packed format. The 11-bit R componnent occupies bits 0..10, the 11-bit G component occupies bits 11..21,
-    /// and the 10-bit B component occupies bits 22..31. Each value is an unsigned floating point value.
     /// </summary>
     R11G11B10Float,
 
@@ -260,7 +247,6 @@ public enum PixelFormat : byte {
 
     /// <summary>
     /// A 128-bit, 4x4 block-compressed format storing 64 bits of unsigned normalized RGB data, as well as 64 bits of alpha
-    /// data.
     /// </summary>
     Etc2R8G8B8A8UNorm,
 
@@ -291,43 +277,36 @@ public enum PixelFormat : byte {
 
     /// <summary>
     /// RGBA component order. Each component is an 8-bit unsigned normalized integer.
-    /// This is an sRGB format.
     /// </summary>
     R8G8B8A8UNormSRgb,
 
     /// <summary>
     /// BGRA component order. Each component is an 8-bit unsigned normalized integer.
-    /// This is an sRGB format.
     /// </summary>
     B8G8R8A8UNormSRgb,
 
     /// <summary>
     /// BC1 block compressed format with no alpha.
-    /// This is an sRGB format.
     /// </summary>
     Bc1RgbUNormSRgb,
 
     /// <summary>
     /// BC1 block compressed format with a single-bit alpha channel.
-    /// This is an sRGB format.
     /// </summary>
     Bc1RgbaUNormSRgb,
 
     /// <summary>
     /// BC2 block compressed format.
-    /// This is an sRGB format.
     /// </summary>
     Bc2UNormSRgb,
 
     /// <summary>
     /// BC3 block compressed format.
-    /// This is an sRGB format.
     /// </summary>
     Bc3UNormSRgb,
 
     /// <summary>
     /// BC7 block compressed format.
-    /// This is an sRGB format.
     /// </summary>
     Bc7UNormSRgb
 }

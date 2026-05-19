@@ -4,20 +4,20 @@ using Veldrith.MetalBindings;
 namespace Veldrith.MTL;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the MtlTexture class.
+/// Provides the Metal backend implementation for MtlTexture.
 /// </summary>
 internal class MtlTexture : Texture {
 
     /// <summary>
-    /// Stores the value associated with <c>_disposed</c>.
+    /// Stores the disposed state used by this instance.
     /// </summary>
     private bool _disposed;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MtlTexture" /> type.
     /// </summary>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
+    /// <param name="description">The description used to configure this operation.</param>
+    /// <param name="gd">The graphics device that owns this operation.</param>
     public MtlTexture(ref TextureDescription description, MtlGraphicsDevice gd) {
         this.Width = description.Width;
         this.Height = description.Height;
@@ -74,8 +74,8 @@ internal class MtlTexture : Texture {
     /// <summary>
     /// Initializes a new instance of the <see cref="MtlTexture" /> type.
     /// </summary>
-    /// <param name="nativeTexture">Specifies the value of <paramref name="nativeTexture" />.</param>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <param name="nativeTexture">The native texture value used by this operation.</param>
+    /// <param name="description">The description used to configure this operation.</param>
     public MtlTexture(ulong nativeTexture, ref TextureDescription description) {
         this.DeviceTexture = new MTLTexture((IntPtr)nativeTexture);
         this.Width = description.Width;
@@ -184,11 +184,11 @@ internal class MtlTexture : Texture {
     public override string Name { get; set; }
 
     /// <summary>
-    /// Executes the GetSubresourceSize operation.
+    /// Gets the subresource size value.
     /// </summary>
-    /// <param name="mipLevel">Specifies the value of <paramref name="mipLevel" />.</param>
-    /// <param name="arrayLayer">Specifies the value of <paramref name="arrayLayer" />.</param>
-    /// <returns>Returns the result produced by the GetSubresourceSize operation.</returns>
+    /// <param name="mipLevel">The mip level index.</param>
+    /// <param name="arrayLayer">The array layer index.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal uint GetSubresourceSize(uint mipLevel, uint arrayLayer) {
         uint blockSize = FormatHelpers.IsCompressedFormat(this.Format) ? 4u : 1u;
         Util.GetMipDimensions(this, mipLevel, out uint width, out uint height, out uint depth);
@@ -198,12 +198,12 @@ internal class MtlTexture : Texture {
     }
 
     /// <summary>
-    /// Executes the GetSubresourceLayout operation.
+    /// Gets the subresource layout value.
     /// </summary>
-    /// <param name="mipLevel">Specifies the value of <paramref name="mipLevel" />.</param>
-    /// <param name="arrayLayer">Specifies the value of <paramref name="arrayLayer" />.</param>
-    /// <param name="rowPitch">Specifies the value of <paramref name="rowPitch" />.</param>
-    /// <param name="depthPitch">Specifies the value of <paramref name="depthPitch" />.</param>
+    /// <param name="mipLevel">The mip level index.</param>
+    /// <param name="arrayLayer">The array layer index.</param>
+    /// <param name="rowPitch">The row pitch value used by this operation.</param>
+    /// <param name="depthPitch">The depth pitch value used by this operation.</param>
     internal void GetSubresourceLayout(uint mipLevel, uint arrayLayer, out uint rowPitch, out uint depthPitch) {
         uint blockSize = FormatHelpers.IsCompressedFormat(this.Format) ? 4u : 1u;
         Util.GetMipDimensions(this, mipLevel, out uint mipWidth, out uint mipHeight, out uint _);
@@ -214,7 +214,7 @@ internal class MtlTexture : Texture {
     }
 
     /// <summary>
-    /// Executes the DisposeCore operation.
+    /// Executes the dispose core logic for this backend.
     /// </summary>
     private protected override void DisposeCore() {
         if (!this._disposed) {

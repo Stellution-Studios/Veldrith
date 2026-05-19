@@ -6,19 +6,19 @@ using Veldrith.MetalBindings;
 namespace Veldrith.MTL;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the MtlFeatureSupport class.
+/// Provides the Metal backend implementation for MtlFeatureSupport.
 /// </summary>
 internal class MtlFeatureSupport : IReadOnlyCollection<MTLFeatureSet> {
 
     /// <summary>
-    /// Stores the value associated with <c>_supportedFeatureSets</c>.
+    /// Stores the supported feature sets state used by this instance.
     /// </summary>
     private readonly HashSet<MTLFeatureSet> _supportedFeatureSets = new();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MtlFeatureSupport" /> type.
     /// </summary>
-    /// <param name="device">Specifies the value of <paramref name="device" />.</param>
+    /// <param name="device">The device value used by this operation.</param>
     public MtlFeatureSupport(MTLDevice device) {
         foreach (MTLFeatureSet set in Enum.GetValues(typeof(MTLFeatureSet))) {
             if (device.supportsFeatureSet(set)) {
@@ -43,39 +43,38 @@ internal class MtlFeatureSupport : IReadOnlyCollection<MTLFeatureSet> {
     public MTLFeatureSet MaxFeatureSet { get; }
 
     /// <summary>
-    /// Stores the value associated with <c>Count</c>.
+    /// Stores the count value used during command execution.
     /// </summary>
     public int Count => this._supportedFeatureSets.Count;
 
     /// <summary>
-    /// Executes the GetEnumerator operation.
+    /// Gets the enumerator value.
     /// </summary>
-    /// <returns>Returns the result produced by the GetEnumerator operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public IEnumerator<MTLFeatureSet> GetEnumerator() {
         return this._supportedFeatureSets.GetEnumerator();
     }
 
     /// <summary>
-    /// Executes the GetEnumerator operation.
+    /// Gets the enumerator value.
     /// </summary>
-    /// <returns>Returns the result produced by the GetEnumerator operation.</returns>
     IEnumerator IEnumerable.GetEnumerator() {
         return this.GetEnumerator();
     }
 
     /// <summary>
-    /// Executes the IsSupported operation.
+    /// Executes the is supported logic for this backend.
     /// </summary>
-    /// <param name="featureSet">Specifies the value of <paramref name="featureSet" />.</param>
-    /// <returns>Returns the result produced by the IsSupported operation.</returns>
+    /// <param name="featureSet">The feature set value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public bool IsSupported(MTLFeatureSet featureSet) {
         return this._supportedFeatureSets.Contains(featureSet);
     }
 
     /// <summary>
-    /// Executes the IsDrawBaseVertexInstanceSupported operation.
+    /// Executes the is draw base vertex instance supported logic for this backend.
     /// </summary>
-    /// <returns>Returns the result produced by the IsDrawBaseVertexInstanceSupported operation.</returns>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public bool IsDrawBaseVertexInstanceSupported() {
         return this.IsSupported(MTLFeatureSet.iOS_GPUFamily3_v1)
                || this.IsSupported(MTLFeatureSet.iOS_GPUFamily3_v2)

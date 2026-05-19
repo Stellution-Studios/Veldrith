@@ -11,24 +11,23 @@ using SpvcResult = Silk.NET.SPIRV.Cross.Result;
 namespace Veldrith.SPIRV;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the SpirvCrossCompiler class.
+/// Provides SPIR-V compilation support for SpirvCrossCompiler.
 /// </summary>
 internal static unsafe class SpirvCrossCompiler {
 
     /// <summary>
-    /// Executes the GetApi operation.
+    /// Gets the api value.
     /// </summary>
-    /// <returns>Returns the result produced by the GetApi operation.</returns>
     private static readonly Cross s_cross = Cross.GetApi();
 
     /// <summary>
-    /// Executes the CompileVertexFragment operation.
+    /// Executes the compile vertex fragment logic for this backend.
     /// </summary>
-    /// <param name="vsSpirv">Specifies the value of <paramref name="vsSpirv" />.</param>
-    /// <param name="fsSpirv">Specifies the value of <paramref name="fsSpirv" />.</param>
-    /// <param name="target">Specifies the value of <paramref name="target" />.</param>
-    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
-    /// <returns>Returns the result produced by the CompileVertexFragment operation.</returns>
+    /// <param name="vsSpirv">The vs spirv value used by this operation.</param>
+    /// <param name="fsSpirv">The fs spirv value used by this operation.</param>
+    /// <param name="target">The target value used by this operation.</param>
+    /// <param name="options">The options used to configure this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal static VertexFragmentCompilationResult CompileVertexFragment(byte[] vsSpirv, byte[] fsSpirv, CrossCompileTarget target, CrossCompileOptions options) {
         Cross cross = s_cross;
         SpvcContext* ctx = null;
@@ -96,12 +95,12 @@ internal static unsafe class SpirvCrossCompiler {
     }
 
     /// <summary>
-    /// Executes the CompileCompute operation.
+    /// Executes the compile compute logic for this backend.
     /// </summary>
-    /// <param name="csSpirv">Specifies the value of <paramref name="csSpirv" />.</param>
-    /// <param name="target">Specifies the value of <paramref name="target" />.</param>
-    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
-    /// <returns>Returns the result produced by the CompileCompute operation.</returns>
+    /// <param name="csSpirv">The cs spirv value used by this operation.</param>
+    /// <param name="target">The target value used by this operation.</param>
+    /// <param name="options">The options used to configure this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal static ComputeCompilationResult CompileCompute(byte[] csSpirv, CrossCompileTarget target, CrossCompileOptions options) {
         Cross cross = s_cross;
         SpvcContext* ctx = null;
@@ -154,23 +153,26 @@ internal static unsafe class SpirvCrossCompiler {
     /// <summary>
     /// Executes BindingKey.
     /// </summary>
+    /// <param name="set">The set value used by this operation.</param>
+    /// <param name="binding">The binding value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private readonly struct BindingKey(uint set, uint binding) : IComparable<BindingKey> {
 
         /// <summary>
-        /// Stores the value associated with <c>Set</c>.
+        /// Stores the set state used by this instance.
         /// </summary>
         public readonly uint Set = set;
 
         /// <summary>
-        /// Stores the value associated with <c>Binding</c>.
+        /// Stores the binding state used by this instance.
         /// </summary>
         public readonly uint Binding = binding;
 
         /// <summary>
-        /// Executes the CompareTo operation.
+        /// Executes the compare to logic for this backend.
         /// </summary>
-        /// <param name="other">Specifies the value of <paramref name="other" />.</param>
-        /// <returns>Returns the result produced by the CompareTo operation.</returns>
+        /// <param name="other">The value to compare against.</param>
+        /// <returns>The value produced by this operation.</returns>
         public int CompareTo(BindingKey other) {
             int c = this.Set.CompareTo(other.Set);
             return c != 0 ? c : this.Binding.CompareTo(other.Binding);
@@ -178,22 +180,22 @@ internal static unsafe class SpirvCrossCompiler {
     }
 
     /// <summary>
-    /// Defines the behavior and responsibilities of the ResourceInfo class.
+    /// Represents the ResourceInfo type used by the graphics runtime.
     /// </summary>
     private class ResourceInfo {
 
         /// <summary>
-        /// Stores the value associated with <c>IDs</c>.
+        /// Stores the ids state used by this instance.
         /// </summary>
         public readonly uint[] IDs = new uint[2]; // 0 = VS/CS, 1 = FS
 
         /// <summary>
-        /// Stores the value associated with <c>Kind</c>.
+        /// Stores the kind state used by this instance.
         /// </summary>
         public ResourceKind Kind;
 
         /// <summary>
-        /// Stores the value associated with <c>Name</c>.
+        /// Stores the human-readable name associated with this instance.
         /// </summary>
         public string Name;
     }
@@ -203,11 +205,11 @@ internal static unsafe class SpirvCrossCompiler {
     #region Compiler Setup
 
     /// <summary>
-    /// Executes the Check operation.
+    /// Executes the check logic for this backend.
     /// </summary>
-    /// <param name="cross">Specifies the value of <paramref name="cross" />.</param>
-    /// <param name="ctx">Specifies the value of <paramref name="ctx" />.</param>
-    /// <param name="result">Specifies the value of <paramref name="result" />.</param>
+    /// <param name="cross">The cross value used by this operation.</param>
+    /// <param name="ctx">The ctx value used by this operation.</param>
+    /// <param name="result">The result value used by this operation.</param>
     private static void Check(Cross cross, SpvcContext* ctx, SpvcResult result) {
         if (result != SpvcResult.Success) {
             string msg = "SPIRV-Cross error";
@@ -223,10 +225,10 @@ internal static unsafe class SpirvCrossCompiler {
     }
 
     /// <summary>
-    /// Executes the GetSpvcBackend operation.
+    /// Gets the spvc backend value.
     /// </summary>
-    /// <param name="target">Specifies the value of <paramref name="target" />.</param>
-    /// <returns>Returns the result produced by the GetSpvcBackend operation.</returns>
+    /// <param name="target">The target value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static SpvcBackend GetSpvcBackend(CrossCompileTarget target) {
         return target switch {
             CrossCompileTarget.HLSL => SpvcBackend.Hlsl,
@@ -237,14 +239,14 @@ internal static unsafe class SpirvCrossCompiler {
     }
 
     /// <summary>
-    /// Executes the SetCompilerOptions operation.
+    /// Sets the compiler options value.
     /// </summary>
-    /// <param name="cross">Specifies the value of <paramref name="cross" />.</param>
-    /// <param name="compiler">Specifies the value of <paramref name="compiler" />.</param>
-    /// <param name="target">Specifies the value of <paramref name="target" />.</param>
-    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
-    /// <param name="isCompute">Specifies the value of <paramref name="isCompute" />.</param>
-    /// <param name="hasStorageResources">Specifies the value of <paramref name="hasStorageResources" />.</param>
+    /// <param name="cross">The cross value used by this operation.</param>
+    /// <param name="compiler">The compiler value used by this operation.</param>
+    /// <param name="target">The target value used by this operation.</param>
+    /// <param name="options">The options used to configure this operation.</param>
+    /// <param name="isCompute">The is compute value used by this operation.</param>
+    /// <param name="hasStorageResources">The resource involved in this operation.</param>
     private static void SetCompilerOptions(Cross cross, SpvcCompiler* compiler, CrossCompileTarget target, CrossCompileOptions options, bool isCompute, bool hasStorageResources) {
         CompilerOptions* opts = null;
         Check(cross, null, cross.CompilerCreateCompilerOptions(compiler, &opts));
@@ -278,11 +280,11 @@ internal static unsafe class SpirvCrossCompiler {
     }
 
     /// <summary>
-    /// Executes the SetSpecializations operation.
+    /// Sets the specializations value.
     /// </summary>
-    /// <param name="cross">Specifies the value of <paramref name="cross" />.</param>
-    /// <param name="compiler">Specifies the value of <paramref name="compiler" />.</param>
-    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
+    /// <param name="cross">The cross value used by this operation.</param>
+    /// <param name="compiler">The compiler value used by this operation.</param>
+    /// <param name="options">The options used to configure this operation.</param>
     private static void SetSpecializations(Cross cross, SpvcCompiler* compiler, CrossCompileOptions options) {
         if (options.Specializations.Length == 0) {
             return;
@@ -316,14 +318,14 @@ internal static unsafe class SpirvCrossCompiler {
     #region Resource Collection
 
     /// <summary>
-    /// Executes the CollectResources operation.
+    /// Executes the collect resources logic for this backend.
     /// </summary>
-    /// <param name="cross">Specifies the value of <paramref name="cross" />.</param>
-    /// <param name="compiler">Specifies the value of <paramref name="compiler" />.</param>
-    /// <param name="allResources">Specifies the value of <paramref name="allResources" />.</param>
-    /// <param name="idIndex">Specifies the value of <paramref name="idIndex" />.</param>
-    /// <param name="normalizeResourceNames">Specifies the value of <paramref name="normalizeResourceNames" />.</param>
-    /// <returns>Returns the result produced by the CollectResources operation.</returns>
+    /// <param name="cross">The cross value used by this operation.</param>
+    /// <param name="compiler">The compiler value used by this operation.</param>
+    /// <param name="allResources">The resource involved in this operation.</param>
+    /// <param name="idIndex">The id index value used by this operation.</param>
+    /// <param name="normalizeResourceNames">The normalize resource names value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     private static bool CollectResources(Cross cross, SpvcCompiler* compiler, SortedDictionary<BindingKey, ResourceInfo> allResources, uint idIndex, bool normalizeResourceNames) {
         SpvcResources* resources = null;
         Check(cross, null, cross.CompilerCreateShaderResources(compiler, &resources));
@@ -344,17 +346,17 @@ internal static unsafe class SpirvCrossCompiler {
     }
 
     /// <summary>
-    /// Executes the AddResourcesOfType operation.
+    /// Executes the add resources of type logic for this backend.
     /// </summary>
-    /// <param name="cross">Specifies the value of <paramref name="cross" />.</param>
-    /// <param name="compiler">Specifies the value of <paramref name="compiler" />.</param>
-    /// <param name="resources">Specifies the value of <paramref name="resources" />.</param>
-    /// <param name="resourceType">Specifies the value of <paramref name="resourceType" />.</param>
-    /// <param name="allResources">Specifies the value of <paramref name="allResources" />.</param>
-    /// <param name="idIndex">Specifies the value of <paramref name="idIndex" />.</param>
-    /// <param name="normalizeResourceNames">Specifies the value of <paramref name="normalizeResourceNames" />.</param>
-    /// <param name="kind">Specifies the value of <paramref name="kind" />.</param>
-    /// <returns>Returns the result produced by the AddResourcesOfType operation.</returns>
+    /// <param name="cross">The cross value used by this operation.</param>
+    /// <param name="compiler">The compiler value used by this operation.</param>
+    /// <param name="resources">The resource involved in this operation.</param>
+    /// <param name="resourceType">The resource type value used by this operation.</param>
+    /// <param name="allResources">The resource involved in this operation.</param>
+    /// <param name="idIndex">The id index value used by this operation.</param>
+    /// <param name="normalizeResourceNames">The normalize resource names value used by this operation.</param>
+    /// <param name="kind">The kind value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     private static bool AddResourcesOfType(Cross cross, SpvcCompiler* compiler, SpvcResources* resources, ResourceType resourceType, SortedDictionary<BindingKey, ResourceInfo> allResources, uint idIndex, bool normalizeResourceNames, ResourceKind kind) {
         ReflectedResource* resourceList = null;
         nuint resourceCount = 0;
@@ -376,15 +378,15 @@ internal static unsafe class SpirvCrossCompiler {
     }
 
     /// <summary>
-    /// Executes the AddStorageBuffers operation.
+    /// Executes the add storage buffers logic for this backend.
     /// </summary>
-    /// <param name="cross">Specifies the value of <paramref name="cross" />.</param>
-    /// <param name="compiler">Specifies the value of <paramref name="compiler" />.</param>
-    /// <param name="resources">Specifies the value of <paramref name="resources" />.</param>
-    /// <param name="allResources">Specifies the value of <paramref name="allResources" />.</param>
-    /// <param name="idIndex">Specifies the value of <paramref name="idIndex" />.</param>
-    /// <param name="normalizeResourceNames">Specifies the value of <paramref name="normalizeResourceNames" />.</param>
-    /// <returns>Returns the result produced by the AddStorageBuffers operation.</returns>
+    /// <param name="cross">The cross value used by this operation.</param>
+    /// <param name="compiler">The compiler value used by this operation.</param>
+    /// <param name="resources">The resource involved in this operation.</param>
+    /// <param name="allResources">The resource involved in this operation.</param>
+    /// <param name="idIndex">The id index value used by this operation.</param>
+    /// <param name="normalizeResourceNames">The normalize resource names value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     private static bool AddStorageBuffers(Cross cross, SpvcCompiler* compiler, SpvcResources* resources, SortedDictionary<BindingKey, ResourceInfo> allResources, uint idIndex, bool normalizeResourceNames) {
         ReflectedResource* resourceList = null;
         nuint resourceCount = 0;
@@ -419,16 +421,16 @@ internal static unsafe class SpirvCrossCompiler {
     }
 
     /// <summary>
-    /// Executes the GetOrSetResourceName operation.
+    /// Gets the or set resource name value.
     /// </summary>
-    /// <param name="cross">Specifies the value of <paramref name="cross" />.</param>
-    /// <param name="compiler">Specifies the value of <paramref name="compiler" />.</param>
-    /// <param name="resource">Specifies the value of <paramref name="resource" />.</param>
-    /// <param name="kind">Specifies the value of <paramref name="kind" />.</param>
-    /// <param name="set">Specifies the value of <paramref name="set" />.</param>
-    /// <param name="binding">Specifies the value of <paramref name="binding" />.</param>
-    /// <param name="normalizeResourceNames">Specifies the value of <paramref name="normalizeResourceNames" />.</param>
-    /// <returns>Returns the result produced by the GetOrSetResourceName operation.</returns>
+    /// <param name="cross">The cross value used by this operation.</param>
+    /// <param name="compiler">The compiler value used by this operation.</param>
+    /// <param name="resource">The resource involved in this operation.</param>
+    /// <param name="kind">The kind value used by this operation.</param>
+    /// <param name="set">The set value used by this operation.</param>
+    /// <param name="binding">The binding value used by this operation.</param>
+    /// <param name="normalizeResourceNames">The normalize resource names value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static string GetOrSetResourceName(Cross cross, SpvcCompiler* compiler, ref ReflectedResource resource, ResourceKind kind, uint set, uint binding, bool normalizeResourceNames) {
         if (normalizeResourceNames) {
             string name = $"vdspv_{set}_{binding}";
@@ -441,15 +443,15 @@ internal static unsafe class SpirvCrossCompiler {
     }
 
     /// <summary>
-    /// Executes the InsertResource operation.
+    /// Executes the insert resource logic for this backend.
     /// </summary>
-    /// <param name="allResources">Specifies the value of <paramref name="allResources" />.</param>
-    /// <param name="set">Specifies the value of <paramref name="set" />.</param>
-    /// <param name="binding">Specifies the value of <paramref name="binding" />.</param>
-    /// <param name="resourceId">Specifies the value of <paramref name="resourceId" />.</param>
-    /// <param name="idIndex">Specifies the value of <paramref name="idIndex" />.</param>
-    /// <param name="name">Specifies the value of <paramref name="name" />.</param>
-    /// <param name="kind">Specifies the value of <paramref name="kind" />.</param>
+    /// <param name="allResources">The resource involved in this operation.</param>
+    /// <param name="set">The set value used by this operation.</param>
+    /// <param name="binding">The binding value used by this operation.</param>
+    /// <param name="resourceId">The resource id value used by this operation.</param>
+    /// <param name="idIndex">The id index value used by this operation.</param>
+    /// <param name="name">The name used by this operation.</param>
+    /// <param name="kind">The kind value used by this operation.</param>
     private static void InsertResource(SortedDictionary<BindingKey, ResourceInfo> allResources, uint set, uint binding, uint resourceId, uint idIndex, string name, ResourceKind kind) {
         BindingKey key = new(set, binding);
         if (allResources.TryGetValue(key, out ResourceInfo? existing)) {
@@ -475,15 +477,15 @@ internal static unsafe class SpirvCrossCompiler {
     #region Binding Remapping
 
     /// <summary>
-    /// Executes the GetResourceIndex operation.
+    /// Gets the resource index value.
     /// </summary>
-    /// <param name="target">Specifies the value of <paramref name="target" />.</param>
-    /// <param name="kind">Specifies the value of <paramref name="kind" />.</param>
-    /// <param name="bufferIndex">Specifies the value of <paramref name="bufferIndex" />.</param>
-    /// <param name="textureIndex">Specifies the value of <paramref name="textureIndex" />.</param>
-    /// <param name="uavIndex">Specifies the value of <paramref name="uavIndex" />.</param>
-    /// <param name="samplerIndex">Specifies the value of <paramref name="samplerIndex" />.</param>
-    /// <returns>Returns the result produced by the GetResourceIndex operation.</returns>
+    /// <param name="target">The target value used by this operation.</param>
+    /// <param name="kind">The kind value used by this operation.</param>
+    /// <param name="bufferIndex">The buffer index value used by this operation.</param>
+    /// <param name="textureIndex">The texture index value used by this operation.</param>
+    /// <param name="uavIndex">The uav index value used by this operation.</param>
+    /// <param name="samplerIndex">The sampler index value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static uint GetResourceIndex(CrossCompileTarget target, ResourceKind kind, ref uint bufferIndex, ref uint textureIndex, ref uint uavIndex, ref uint samplerIndex) {
         switch (kind) {
             case ResourceKind.UniformBuffer: return bufferIndex++;
@@ -497,13 +499,13 @@ internal static unsafe class SpirvCrossCompiler {
     }
 
     /// <summary>
-    /// Executes the RemapBindingsHlslMsl operation.
+    /// Executes the remap bindings hlsl msl logic for this backend.
     /// </summary>
-    /// <param name="cross">Specifies the value of <paramref name="cross" />.</param>
-    /// <param name="allResources">Specifies the value of <paramref name="allResources" />.</param>
-    /// <param name="compiler0">Specifies the value of <paramref name="compiler0" />.</param>
-    /// <param name="compiler1">Specifies the value of <paramref name="compiler1" />.</param>
-    /// <param name="target">Specifies the value of <paramref name="target" />.</param>
+    /// <param name="cross">The cross value used by this operation.</param>
+    /// <param name="allResources">The resource involved in this operation.</param>
+    /// <param name="compiler0">The compiler0 value used by this operation.</param>
+    /// <param name="compiler1">The compiler1 value used by this operation.</param>
+    /// <param name="target">The target value used by this operation.</param>
     private static void RemapBindingsHlslMsl(Cross cross, SortedDictionary<BindingKey, ResourceInfo> allResources, SpvcCompiler* compiler0, SpvcCompiler* compiler1, CrossCompileTarget target) {
         uint bufferIndex = 0, textureIndex = 0, uavIndex = 0, samplerIndex = 0;
 
@@ -529,10 +531,10 @@ internal static unsafe class SpirvCrossCompiler {
     #region GLSL Specific
 
     /// <summary>
-    /// Executes the BuildCombinedImageSamplers operation.
+    /// Executes the build combined image samplers logic for this backend.
     /// </summary>
-    /// <param name="cross">Specifies the value of <paramref name="cross" />.</param>
-    /// <param name="compiler">Specifies the value of <paramref name="compiler" />.</param>
+    /// <param name="cross">The cross value used by this operation.</param>
+    /// <param name="compiler">The compiler value used by this operation.</param>
     private static void BuildCombinedImageSamplers(Cross cross, SpvcCompiler* compiler) {
         uint dummySamplerId = 0;
         Check(cross, null, cross.CompilerBuildDummySamplerForCombinedImages(compiler, &dummySamplerId));
@@ -551,11 +553,11 @@ internal static unsafe class SpirvCrossCompiler {
     }
 
     /// <summary>
-    /// Executes the RenameStageIO operation.
+    /// Executes the rename stage io logic for this backend.
     /// </summary>
-    /// <param name="cross">Specifies the value of <paramref name="cross" />.</param>
-    /// <param name="vsCompiler">Specifies the value of <paramref name="vsCompiler" />.</param>
-    /// <param name="fsCompiler">Specifies the value of <paramref name="fsCompiler" />.</param>
+    /// <param name="cross">The cross value used by this operation.</param>
+    /// <param name="vsCompiler">The vs compiler value used by this operation.</param>
+    /// <param name="fsCompiler">The fs compiler value used by this operation.</param>
     private static void RenameStageIO(Cross cross, SpvcCompiler* vsCompiler, SpvcCompiler* fsCompiler) {
         // Rename vertex outputs to vdspv_fsinN
         SpvcResources* vsResources = null;
@@ -587,11 +589,11 @@ internal static unsafe class SpirvCrossCompiler {
     #region Reflection
 
     /// <summary>
-    /// Executes the ReflectVertexInputs operation.
+    /// Executes the reflect vertex inputs logic for this backend.
     /// </summary>
-    /// <param name="cross">Specifies the value of <paramref name="cross" />.</param>
-    /// <param name="compiler">Specifies the value of <paramref name="compiler" />.</param>
-    /// <returns>Returns the result produced by the ReflectVertexInputs operation.</returns>
+    /// <param name="cross">The cross value used by this operation.</param>
+    /// <param name="compiler">The compiler value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static VertexElementDescription[] ReflectVertexInputs(Cross cross, SpvcCompiler* compiler) {
         SpvcResources* resources = null;
         Check(cross, null, cross.CompilerCreateShaderResources(compiler, &resources));
@@ -651,11 +653,11 @@ internal static unsafe class SpirvCrossCompiler {
     }
 
     /// <summary>
-    /// Executes the BuildResourceLayouts operation.
+    /// Executes the build resource layouts logic for this backend.
     /// </summary>
-    /// <param name="allResources">Specifies the value of <paramref name="allResources" />.</param>
-    /// <param name="isCompute">Specifies the value of <paramref name="isCompute" />.</param>
-    /// <returns>Returns the result produced by the BuildResourceLayouts operation.</returns>
+    /// <param name="allResources">The resource involved in this operation.</param>
+    /// <param name="isCompute">The is compute value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static ResourceLayoutDescription[] BuildResourceLayouts(SortedDictionary<BindingKey, ResourceInfo> allResources, bool isCompute) {
         uint setCount = 0;
         Dictionary<uint, uint> setSizes = new();
@@ -709,13 +711,13 @@ internal static unsafe class SpirvCrossCompiler {
     #region Native String Helpers
 
     /// <summary>
-    /// Executes the GetNativeName operation.
+    /// Gets the native name value.
     /// </summary>
-    /// <param name="cross">Specifies the value of <paramref name="cross" />.</param>
-    /// <param name="compiler">Specifies the value of <paramref name="compiler" />.</param>
-    /// <param name="id">Specifies the value of <paramref name="id" />.</param>
-    /// <param name="fallbackId">Specifies the value of <paramref name="fallbackId" />.</param>
-    /// <returns>Returns the result produced by the GetNativeName operation.</returns>
+    /// <param name="cross">The cross value used by this operation.</param>
+    /// <param name="compiler">The compiler value used by this operation.</param>
+    /// <param name="id">The id value used by this operation.</param>
+    /// <param name="fallbackId">The fallback id value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static string GetNativeName(Cross cross, SpvcCompiler* compiler, uint id, uint fallbackId) {
         byte* namePtr = cross.CompilerGetName(compiler, id);
         string name = namePtr != null ? Marshal.PtrToStringUTF8((nint)namePtr) ?? "" : "";
@@ -728,12 +730,12 @@ internal static unsafe class SpirvCrossCompiler {
     }
 
     /// <summary>
-    /// Executes the SetNativeName operation.
+    /// Sets the native name value.
     /// </summary>
-    /// <param name="cross">Specifies the value of <paramref name="cross" />.</param>
-    /// <param name="compiler">Specifies the value of <paramref name="compiler" />.</param>
-    /// <param name="id">Specifies the value of <paramref name="id" />.</param>
-    /// <param name="name">Specifies the value of <paramref name="name" />.</param>
+    /// <param name="cross">The cross value used by this operation.</param>
+    /// <param name="compiler">The compiler value used by this operation.</param>
+    /// <param name="id">The id value used by this operation.</param>
+    /// <param name="name">The name used by this operation.</param>
     private static void SetNativeName(Cross cross, SpvcCompiler* compiler, uint id, string name) {
         byte[] nameBytes = Encoding.UTF8.GetBytes(name + '\0');
         fixed (byte* namePtr = nameBytes) {
@@ -742,13 +744,13 @@ internal static unsafe class SpirvCrossCompiler {
     }
 
     /// <summary>
-    /// Executes the HasBufferBlockDecoration operation.
+    /// Executes the has buffer block decoration logic for this backend.
     /// </summary>
-    /// <param name="cross">Specifies the value of <paramref name="cross" />.</param>
-    /// <param name="compiler">Specifies the value of <paramref name="compiler" />.</param>
-    /// <param name="id">Specifies the value of <paramref name="id" />.</param>
-    /// <param name="decoration">Specifies the value of <paramref name="decoration" />.</param>
-    /// <returns>Returns the result produced by the HasBufferBlockDecoration operation.</returns>
+    /// <param name="cross">The cross value used by this operation.</param>
+    /// <param name="compiler">The compiler value used by this operation.</param>
+    /// <param name="id">The id value used by this operation.</param>
+    /// <param name="decoration">The decoration value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     private static bool HasBufferBlockDecoration(Cross cross, SpvcCompiler* compiler, uint id, Decoration decoration) {
         Decoration* decorations = null;
         nuint count = 0;

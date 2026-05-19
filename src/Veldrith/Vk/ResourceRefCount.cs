@@ -4,33 +4,33 @@ using System.Threading;
 namespace Veldrith.Vk;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the ResourceRefCount class.
+/// Represents the ResourceRefCount type used by the graphics runtime.
 /// </summary>
 internal class ResourceRefCount {
 
     /// <summary>
-    /// Stores the value associated with <c>disposeAction</c>.
+    /// Stores the dispose action state used by this instance.
     /// </summary>
     private readonly Action disposeAction;
 
     /// <summary>
-    /// Stores the value associated with <c>_refCount</c>.
+    /// Stores the ref count value used during command execution.
     /// </summary>
     private int _refCount;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ResourceRefCount" /> type.
     /// </summary>
-    /// <param name="disposeAction">Specifies the value of <paramref name="disposeAction" />.</param>
+    /// <param name="disposeAction">The dispose action value used by this operation.</param>
     public ResourceRefCount(Action disposeAction) {
         this.disposeAction = disposeAction;
         this._refCount = 1;
     }
 
     /// <summary>
-    /// Executes the Increment operation.
+    /// Executes the increment logic for this backend.
     /// </summary>
-    /// <returns>Returns the result produced by the Increment operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public int Increment() {
         int ret = Interlocked.Increment(ref this._refCount);
 #if VALIDATE_USAGE
@@ -42,9 +42,9 @@ internal class ResourceRefCount {
     }
 
     /// <summary>
-    /// Executes the Decrement operation.
+    /// Executes the decrement logic for this backend.
     /// </summary>
-    /// <returns>Returns the result produced by the Decrement operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public int Decrement() {
         int ret = Interlocked.Decrement(ref this._refCount);
         if (ret == 0) {

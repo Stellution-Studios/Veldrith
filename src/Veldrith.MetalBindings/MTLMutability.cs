@@ -6,7 +6,7 @@ namespace Veldrith.MetalBindings;
 public enum MTLMutability {
 
     /// <summary>
-    /// Stores the value associated with <c>Default</c>.
+    /// Stores the default state used by this instance.
     /// </summary>
     Default = 0, Mutable = 1, Immutable = 2
 }

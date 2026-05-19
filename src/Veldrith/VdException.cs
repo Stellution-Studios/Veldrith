@@ -3,7 +3,7 @@ using System;
 namespace Veldrith;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the VeldridException class.
+/// Represents the VeldridException type used by the graphics runtime.
 /// </summary>
 public class VeldridException : Exception {
 
@@ -15,15 +15,15 @@ public class VeldridException : Exception {
     /// <summary>
     /// Initializes a new instance of the <see cref="VeldridException" /> type.
     /// </summary>
-    /// <param name="message">Specifies the value of <paramref name="message" />.</param>
+    /// <param name="message">The message value used by this operation.</param>
     public VeldridException(string message)
         : base(message) { }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VeldridException" /> type.
     /// </summary>
-    /// <param name="message">Specifies the value of <paramref name="message" />.</param>
-    /// <param name="innerException">Specifies the value of <paramref name="innerException" />.</param>
+    /// <param name="message">The message value used by this operation.</param>
+    /// <param name="innerException">The inner exception value used by this operation.</param>
     public VeldridException(string message, Exception innerException)
         : base(message, innerException) { }
 }

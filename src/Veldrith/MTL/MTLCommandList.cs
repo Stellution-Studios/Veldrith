@@ -6,257 +6,258 @@ using Veldrith.MetalBindings;
 namespace Veldrith.MTL;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the MtlCommandList class.
+/// Provides the Metal backend implementation for MtlCommandList.
 /// </summary>
 internal unsafe class MtlCommandList : CommandList {
 
     /// <summary>
-    /// Stores the value associated with <c>_availableStagingBuffers</c>.
+    /// Stores the available staging buffers collection used by this instance.
     /// </summary>
     private readonly List<MtlBuffer> _availableStagingBuffers = new();
 
     /// <summary>
-    /// Stores the value associated with <c>_boundComputeBuffers</c>.
+    /// Stores the bound compute buffers collection used by this instance.
     /// </summary>
     private readonly Dictionary<UIntPtr, DeviceBufferRange> _boundComputeBuffers = new();
 
     /// <summary>
-    /// Stores the value associated with <c>_boundComputeSamplers</c>.
+    /// Stores the bound compute samplers collection used by this instance.
     /// </summary>
     private readonly Dictionary<UIntPtr, MTLSamplerState> _boundComputeSamplers = new();
 
     /// <summary>
-    /// Stores the value associated with <c>_boundComputeTextures</c>.
+    /// Stores the bound compute textures collection used by this instance.
     /// </summary>
     private readonly Dictionary<UIntPtr, MTLTexture> _boundComputeTextures = new();
 
     /// <summary>
-    /// Stores the value associated with <c>_boundFragmentBuffers</c>.
+    /// Stores the bound fragment buffers collection used by this instance.
     /// </summary>
     private readonly Dictionary<UIntPtr, DeviceBufferRange> _boundFragmentBuffers = new();
 
     /// <summary>
-    /// Stores the value associated with <c>_boundFragmentSamplers</c>.
+    /// Stores the bound fragment samplers collection used by this instance.
     /// </summary>
     private readonly Dictionary<UIntPtr, MTLSamplerState> _boundFragmentSamplers = new();
 
     /// <summary>
-    /// Stores the value associated with <c>_boundFragmentTextures</c>.
+    /// Stores the bound fragment textures collection used by this instance.
     /// </summary>
     private readonly Dictionary<UIntPtr, MTLTexture> _boundFragmentTextures = new();
 
     /// <summary>
-    /// Stores the value associated with <c>_boundVertexBuffers</c>.
+    /// Stores the bound vertex buffers collection used by this instance.
     /// </summary>
     private readonly Dictionary<UIntPtr, DeviceBufferRange> _boundVertexBuffers = new();
 
     /// <summary>
-    /// Stores the value associated with <c>_boundVertexSamplers</c>.
+    /// Stores the bound vertex samplers collection used by this instance.
     /// </summary>
     private readonly Dictionary<UIntPtr, MTLSamplerState> _boundVertexSamplers = new();
 
     /// <summary>
-    /// Stores the value associated with <c>_boundVertexTextures</c>.
+    /// Stores the bound vertex textures collection used by this instance.
     /// </summary>
     private readonly Dictionary<UIntPtr, MTLTexture> _boundVertexTextures = new();
 
     /// <summary>
-    /// Stores the value associated with <c>_completionFences</c>.
+    /// Stores the completion fences collection used by this instance.
     /// </summary>
     private readonly CommandBufferUsageList<MtlFence> _completionFences = new();
 
     /// <summary>
-    /// Stores the value associated with <c>_submittedCommandsLock</c>.
+    /// Synchronizes access to the submitted commands lock state.
     /// </summary>
     private readonly object _submittedCommandsLock = new();
 
     /// <summary>
-    /// Stores the value associated with <c>_submittedStagingBuffers</c>.
+    /// Stores the submitted staging buffers collection used by this instance.
     /// </summary>
     private readonly CommandBufferUsageList<MtlBuffer> _submittedStagingBuffers = new();
 
     /// <summary>
-    /// Stores the value associated with <c>gd</c>.
+    /// Stores the gd state used by this instance.
     /// </summary>
     private readonly MtlGraphicsDevice gd;
 
     /// <summary>
-    /// Stores the value associated with <c>_activeScissorRects</c>.
+    /// Executes the empty logic for this backend.
     /// </summary>
     private MTLScissorRect[] _activeScissorRects = Array.Empty<MTLScissorRect>();
 
     /// <summary>
-    /// Stores the value associated with <c>_bce</c>.
+    /// Stores the bce state used by this instance.
     /// </summary>
     private MTLBlitCommandEncoder _bce;
 
     /// <summary>
-    /// Stores the value associated with <c>_cce</c>.
+    /// Stores the cce state used by this instance.
     /// </summary>
     private MTLComputeCommandEncoder _cce;
 
     /// <summary>
-    /// Stores the value associated with <c>_clearColors</c>.
+    /// Executes the value logic for this backend.
     /// </summary>
     private RgbaFloat?[] _clearColors = Array.Empty<RgbaFloat?>();
 
     /// <summary>
-    /// Stores the value associated with <c>_clearDepth</c>.
+    /// Stores the clear depth value used during command execution.
     /// </summary>
+    /// <param name="depth">The depth value.</param>
+    /// <param name="stencil">The stencil value used by this operation.</param>
     private (float depth, byte stencil)? _clearDepth;
 
     /// <summary>
-    /// Stores the value associated with <c>_computePipeline</c>.
+    /// Stores the compute pipeline state used by this instance.
     /// </summary>
     private MtlPipeline _computePipeline;
 
     /// <summary>
-    /// Stores the value associated with <c>_computeResourceSetCount</c>.
+    /// Stores the compute resource set count collection used by this instance.
     /// </summary>
     private uint _computeResourceSetCount;
 
     /// <summary>
-    /// Stores the value associated with <c>_computeResourceSets</c>.
+    /// Stores the compute resource sets collection used by this instance.
     /// </summary>
     private BoundResourceSetInfo[] _computeResourceSets;
 
     /// <summary>
-    /// Stores the value associated with <c>_computeResourceSetsActive</c>.
+    /// Stores the compute resource sets active collection used by this instance.
     /// </summary>
     private bool[] _computeResourceSetsActive;
 
     /// <summary>
-    /// Stores the value associated with <c>_currentFramebufferEverActive</c>.
+    /// Stores the current framebuffer ever active state used by this instance.
     /// </summary>
     private bool _currentFramebufferEverActive;
 
     /// <summary>
-    /// Stores the value associated with <c>_disposed</c>.
+    /// Stores the disposed state used by this instance.
     /// </summary>
     private bool _disposed;
 
     /// <summary>
-    /// Stores the value associated with <c>_graphicsPipeline</c>.
+    /// Stores the graphics pipeline state used by this instance.
     /// </summary>
     private MtlPipeline _graphicsPipeline;
 
     /// <summary>
-    /// Stores the value associated with <c>_graphicsResourceSetCount</c>.
+    /// Stores the graphics resource set count collection used by this instance.
     /// </summary>
     private uint _graphicsResourceSetCount;
 
     /// <summary>
-    /// Stores the value associated with <c>_graphicsResourceSets</c>.
+    /// Stores the graphics resource sets collection used by this instance.
     /// </summary>
     private BoundResourceSetInfo[] _graphicsResourceSets;
 
     /// <summary>
-    /// Stores the value associated with <c>_graphicsResourceSetsActive</c>.
+    /// Stores the graphics resource sets active collection used by this instance.
     /// </summary>
     private bool[] _graphicsResourceSetsActive;
 
     /// <summary>
-    /// Stores the value associated with <c>_ibOffset</c>.
+    /// Stores the ib offset value used during command execution.
     /// </summary>
     private uint _ibOffset;
 
     /// <summary>
-    /// Stores the value associated with <c>_indexBuffer</c>.
+    /// Stores the index buffer value used during command execution.
     /// </summary>
     private MtlBuffer _indexBuffer;
 
     /// <summary>
-    /// Stores the value associated with <c>_indexType</c>.
+    /// Stores the index type value used during command execution.
     /// </summary>
     private MTLIndexType _indexType;
 
     /// <summary>
-    /// Stores the value associated with <c>_lastComputePipeline</c>.
+    /// Stores the last compute pipeline state used by this instance.
     /// </summary>
     private MtlPipeline _lastComputePipeline;
 
     /// <summary>
-    /// Stores the value associated with <c>_lastGraphicsPipeline</c>.
+    /// Stores the last graphics pipeline state used by this instance.
     /// </summary>
     private MtlPipeline _lastGraphicsPipeline;
 
     /// <summary>
-    /// Stores the value associated with <c>_mtlFramebuffer</c>.
+    /// Stores the mtl framebuffer state used by this instance.
     /// </summary>
     private MtlFramebuffer _mtlFramebuffer;
 
     /// <summary>
-    /// Stores the value associated with <c>_nonVertexBufferCount</c>.
+    /// Stores the non vertex buffer count value used during command execution.
     /// </summary>
     private uint _nonVertexBufferCount;
 
     /// <summary>
-    /// Stores the value associated with <c>_rce</c>.
+    /// Stores the rce state used by this instance.
     /// </summary>
     private MTLRenderCommandEncoder _rce;
 
     /// <summary>
-    /// Stores the value associated with <c>_scissorRects</c>.
+    /// Executes the empty logic for this backend.
     /// </summary>
     private MTLScissorRect[] _scissorRects = Array.Empty<MTLScissorRect>();
 
     /// <summary>
-    /// Stores the value associated with <c>_vbOffsets</c>.
+    /// Stores the vb offsets value used during command execution.
     /// </summary>
     private uint[] _vbOffsets;
 
     /// <summary>
-    /// Stores the value associated with <c>_vbOffsetsActive</c>.
+    /// Stores the vb offsets active value used during command execution.
     /// </summary>
     private bool[] _vbOffsetsActive;
 
     /// <summary>
-    /// Stores the value associated with <c>_vertexBufferCount</c>.
+    /// Stores the vertex buffer count value used during command execution.
     /// </summary>
     private uint _vertexBufferCount;
 
     /// <summary>
-    /// Stores the value associated with <c>_vertexBuffers</c>.
+    /// Stores the vertex buffers collection used by this instance.
     /// </summary>
     private MtlBuffer[] _vertexBuffers;
 
     /// <summary>
-    /// Stores the value associated with <c>_vertexBuffersActive</c>.
+    /// Stores the vertex buffers active collection used by this instance.
     /// </summary>
     private bool[] _vertexBuffersActive;
 
     /// <summary>
-    /// Stores the value associated with <c>_viewportCount</c>.
+    /// Stores the viewport count value used during command execution.
     /// </summary>
     private uint _viewportCount;
 
     /// <summary>
-    /// Stores the value associated with <c>_viewports</c>.
+    /// Executes the empty logic for this backend.
     /// </summary>
     private MTLViewport[] _viewports = Array.Empty<MTLViewport>();
 
     /// <summary>
-    /// Stores the value associated with <c>_viewportsChanged</c>.
+    /// Stores the viewports changed state used by this instance.
     /// </summary>
     private bool _viewportsChanged;
 
     /// <summary>
-    /// Stores the value associated with <c>cb</c>.
+    /// Stores the cb state used by this instance.
     /// </summary>
     private MTLCommandBuffer cb;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MtlCommandList" /> class.
     /// </summary>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
-    /// <returns>Returns the result produced by the base operation.</returns>
+    /// <param name="description">The description used to configure this operation.</param>
+    /// <param name="gd">The graphics device that owns this operation.</param>
     public MtlCommandList(ref CommandListDescription description, MtlGraphicsDevice gd) : base(ref description, gd.Features, gd.UniformBufferMinOffsetAlignment, gd.StructuredBufferMinOffsetAlignment) {
         this.gd = gd;
     }
 
     /// <summary>
-    /// Stores the value associated with <c>CommandBuffer</c>.
+    /// Stores the command buffer state used by this instance.
     /// </summary>
     public MTLCommandBuffer CommandBuffer => this.cb;
 
@@ -271,24 +272,24 @@ internal unsafe class MtlCommandList : CommandList {
     public override string Name { get; set; }
 
     /// <summary>
-    /// Stores the value associated with <c>renderEncoderActive</c>.
+    /// Stores the render encoder active state used by this instance.
     /// </summary>
     private bool renderEncoderActive => !this._rce.IsNull;
 
     /// <summary>
-    /// Stores the value associated with <c>blitEncoderActive</c>.
+    /// Stores the blit encoder active state used by this instance.
     /// </summary>
     private bool blitEncoderActive => !this._bce.IsNull;
 
     /// <summary>
-    /// Stores the value associated with <c>computeEncoderActive</c>.
+    /// Stores the compute encoder active state used by this instance.
     /// </summary>
     private bool computeEncoderActive => !this._cce.IsNull;
 
     #region Disposal
 
     /// <summary>
-    /// Executes the Dispose operation.
+    /// Releases resources held by this instance.
     /// </summary>
     public override void Dispose() {
         if (!this._disposed) {
@@ -316,9 +317,9 @@ internal unsafe class MtlCommandList : CommandList {
     #endregion
 
     /// <summary>
-    /// Executes the Commit operation.
+    /// Executes the commit logic for this backend.
     /// </summary>
-    /// <returns>Returns the result produced by the Commit operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public MTLCommandBuffer Commit() {
         this.cb.commit();
         MTLCommandBuffer ret = this.cb;
@@ -327,7 +328,7 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the Begin operation.
+    /// Begins the value operation.
     /// </summary>
     public override void Begin() {
         if (this.cb.NativePtr != IntPtr.Zero) {
@@ -343,18 +344,18 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the Dispatch operation.
+    /// Executes the dispatch logic for this backend.
     /// </summary>
-    /// <param name="groupCountX">Specifies the value of <paramref name="groupCountX" />.</param>
-    /// <param name="groupCountY">Specifies the value of <paramref name="groupCountY" />.</param>
-    /// <param name="groupCountZ">Specifies the value of <paramref name="groupCountZ" />.</param>
+    /// <param name="groupCountX">The group count x value used by this operation.</param>
+    /// <param name="groupCountY">The group count y value used by this operation.</param>
+    /// <param name="groupCountZ">The group count z value used by this operation.</param>
     public override void Dispatch(uint groupCountX, uint groupCountY, uint groupCountZ) {
         this.PreComputeCommand();
         this._cce.dispatchThreadGroups(new MTLSize(groupCountX, groupCountY, groupCountZ), this._computePipeline.ThreadsPerThreadgroup);
     }
 
     /// <summary>
-    /// Executes the End operation.
+    /// Ends the value operation.
     /// </summary>
     public override void End() {
         this.EnsureNoBlitEncoder();
@@ -368,32 +369,32 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the SetScissorRect operation.
+    /// Sets the scissor rect value.
     /// </summary>
-    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
-    /// <param name="x">Specifies the value of <paramref name="x" />.</param>
-    /// <param name="y">Specifies the value of <paramref name="y" />.</param>
-    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
-    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
+    /// <param name="index">The zero-based index of the target item.</param>
+    /// <param name="x">The X coordinate.</param>
+    /// <param name="y">The Y coordinate.</param>
+    /// <param name="width">The width value.</param>
+    /// <param name="height">The height value.</param>
     public override void SetScissorRect(uint index, uint x, uint y, uint width, uint height) {
         this._scissorRects[index] = new MTLScissorRect(x, y, width, height);
     }
 
     /// <summary>
-    /// Executes the SetViewport operation.
+    /// Sets the viewport value.
     /// </summary>
-    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
-    /// <param name="viewport">Specifies the value of <paramref name="viewport" />.</param>
+    /// <param name="index">The zero-based index of the target item.</param>
+    /// <param name="viewport">The viewport value used by this operation.</param>
     public override void SetViewport(uint index, ref Viewport viewport) {
         this._viewportsChanged = true;
         this._viewports[index] = new MTLViewport(viewport.X, viewport.Y, viewport.Width, viewport.Height, viewport.MinDepth, viewport.MaxDepth);
     }
 
     /// <summary>
-    /// Executes the SetCompletionFence operation.
+    /// Sets the completion fence value.
     /// </summary>
-    /// <param name="cb">Specifies the value of <paramref name="cb" />.</param>
-    /// <param name="fence">Specifies the value of <paramref name="fence" />.</param>
+    /// <param name="cb">The cb value used by this operation.</param>
+    /// <param name="fence">The synchronization fence used by this operation.</param>
     public void SetCompletionFence(MTLCommandBuffer cb, MtlFence fence) {
         lock (this._submittedCommandsLock) {
             Debug.Assert(!this._completionFences.Contains(cb));
@@ -402,9 +403,9 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the OnCompleted operation.
+    /// Executes the on completed logic for this backend.
     /// </summary>
-    /// <param name="cb">Specifies the value of <paramref name="cb" />.</param>
+    /// <param name="cb">The cb value used by this operation.</param>
     public void OnCompleted(MTLCommandBuffer cb) {
         lock (this._submittedCommandsLock) {
             foreach (MtlFence fence in this._completionFences.EnumerateAndRemove(cb)) {
@@ -418,13 +419,13 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the CopyBufferCore operation.
+    /// Copies buffer core data between resources.
     /// </summary>
-    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
-    /// <param name="sourceOffset">Specifies the value of <paramref name="sourceOffset" />.</param>
-    /// <param name="destination">Specifies the value of <paramref name="destination" />.</param>
-    /// <param name="destinationOffset">Specifies the value of <paramref name="destinationOffset" />.</param>
-    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
+    /// <param name="source">The source value or resource.</param>
+    /// <param name="sourceOffset">The source offset value used by this operation.</param>
+    /// <param name="destination">The destination value or resource.</param>
+    /// <param name="destinationOffset">The destination offset value used by this operation.</param>
+    /// <param name="sizeInBytes">The size, in bytes, used by this operation.</param>
     protected override void CopyBufferCore(DeviceBuffer source, uint sourceOffset, DeviceBuffer destination, uint destinationOffset, uint sizeInBytes) {
         MtlBuffer mtlSrc = Util.AssertSubtype<DeviceBuffer, MtlBuffer>(source);
         MtlBuffer mtlDst = Util.AssertSubtype<DeviceBuffer, MtlBuffer>(destination);
@@ -451,24 +452,24 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the CopyTextureCore operation.
+    /// Copies texture core data between resources.
     /// </summary>
-    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
-    /// <param name="srcX">Specifies the value of <paramref name="srcX" />.</param>
-    /// <param name="srcY">Specifies the value of <paramref name="srcY" />.</param>
-    /// <param name="srcZ">Specifies the value of <paramref name="srcZ" />.</param>
-    /// <param name="srcMipLevel">Specifies the value of <paramref name="srcMipLevel" />.</param>
-    /// <param name="srcBaseArrayLayer">Specifies the value of <paramref name="srcBaseArrayLayer" />.</param>
-    /// <param name="destination">Specifies the value of <paramref name="destination" />.</param>
-    /// <param name="dstX">Specifies the value of <paramref name="dstX" />.</param>
-    /// <param name="dstY">Specifies the value of <paramref name="dstY" />.</param>
-    /// <param name="dstZ">Specifies the value of <paramref name="dstZ" />.</param>
-    /// <param name="dstMipLevel">Specifies the value of <paramref name="dstMipLevel" />.</param>
-    /// <param name="dstBaseArrayLayer">Specifies the value of <paramref name="dstBaseArrayLayer" />.</param>
-    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
-    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
-    /// <param name="depth">Specifies the value of <paramref name="depth" />.</param>
-    /// <param name="layerCount">Specifies the value of <paramref name="layerCount" />.</param>
+    /// <param name="source">The source value or resource.</param>
+    /// <param name="srcX">The src x value used by this operation.</param>
+    /// <param name="srcY">The src y value used by this operation.</param>
+    /// <param name="srcZ">The src z value used by this operation.</param>
+    /// <param name="srcMipLevel">The src mip level value used by this operation.</param>
+    /// <param name="srcBaseArrayLayer">The src base array layer value used by this operation.</param>
+    /// <param name="destination">The destination value or resource.</param>
+    /// <param name="dstX">The dst x value used by this operation.</param>
+    /// <param name="dstY">The dst y value used by this operation.</param>
+    /// <param name="dstZ">The dst z value used by this operation.</param>
+    /// <param name="dstMipLevel">The dst mip level value used by this operation.</param>
+    /// <param name="dstBaseArrayLayer">The dst base array layer value used by this operation.</param>
+    /// <param name="width">The width value.</param>
+    /// <param name="height">The height value.</param>
+    /// <param name="depth">The depth value.</param>
+    /// <param name="layerCount">The layer count value used by this operation.</param>
     protected override void CopyTextureCore(Texture source, uint srcX, uint srcY, uint srcZ, uint srcMipLevel, uint srcBaseArrayLayer, Texture destination, uint dstX, uint dstY, uint dstZ, uint dstMipLevel, uint dstBaseArrayLayer, uint width, uint height, uint depth, uint layerCount) {
         this.EnsureBlitEncoder();
         MtlTexture srcMtlTexture = Util.AssertSubtype<Texture, MtlTexture>(source);
@@ -610,10 +611,10 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the DispatchIndirectCore operation.
+    /// Executes the dispatch indirect core logic for this backend.
     /// </summary>
-    /// <param name="indirectBuffer">Specifies the value of <paramref name="indirectBuffer" />.</param>
-    /// <param name="offset">Specifies the value of <paramref name="offset" />.</param>
+    /// <param name="indirectBuffer">The indirect buffer value used by this operation.</param>
+    /// <param name="offset">The byte offset used by this operation.</param>
     protected override void DispatchIndirectCore(DeviceBuffer indirectBuffer, uint offset) {
         MtlBuffer mtlBuffer = Util.AssertSubtype<DeviceBuffer, MtlBuffer>(indirectBuffer);
         this.PreComputeCommand();
@@ -621,12 +622,12 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the DrawIndexedIndirectCore operation.
+    /// Executes the draw indexed indirect core logic for this backend.
     /// </summary>
-    /// <param name="indirectBuffer">Specifies the value of <paramref name="indirectBuffer" />.</param>
-    /// <param name="offset">Specifies the value of <paramref name="offset" />.</param>
-    /// <param name="drawCount">Specifies the value of <paramref name="drawCount" />.</param>
-    /// <param name="stride">Specifies the value of <paramref name="stride" />.</param>
+    /// <param name="indirectBuffer">The indirect buffer value used by this operation.</param>
+    /// <param name="offset">The byte offset used by this operation.</param>
+    /// <param name="drawCount">The draw count value used by this operation.</param>
+    /// <param name="stride">The stride value used by this operation.</param>
     protected override void DrawIndexedIndirectCore(DeviceBuffer indirectBuffer, uint offset, uint drawCount, uint stride) {
         if (this.PreDrawCommand()) {
             MtlBuffer mtlBuffer = Util.AssertSubtype<DeviceBuffer, MtlBuffer>(indirectBuffer);
@@ -639,12 +640,12 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the DrawIndirectCore operation.
+    /// Executes the draw indirect core logic for this backend.
     /// </summary>
-    /// <param name="indirectBuffer">Specifies the value of <paramref name="indirectBuffer" />.</param>
-    /// <param name="offset">Specifies the value of <paramref name="offset" />.</param>
-    /// <param name="drawCount">Specifies the value of <paramref name="drawCount" />.</param>
-    /// <param name="stride">Specifies the value of <paramref name="stride" />.</param>
+    /// <param name="indirectBuffer">The indirect buffer value used by this operation.</param>
+    /// <param name="offset">The byte offset used by this operation.</param>
+    /// <param name="drawCount">The draw count value used by this operation.</param>
+    /// <param name="stride">The stride value used by this operation.</param>
     protected override void DrawIndirectCore(DeviceBuffer indirectBuffer, uint offset, uint drawCount, uint stride) {
         if (this.PreDrawCommand()) {
             MtlBuffer mtlBuffer = Util.AssertSubtype<DeviceBuffer, MtlBuffer>(indirectBuffer);
@@ -657,10 +658,10 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the ResolveTextureCore operation.
+    /// Executes the resolve texture core logic for this backend.
     /// </summary>
-    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
-    /// <param name="destination">Specifies the value of <paramref name="destination" />.</param>
+    /// <param name="source">The source value or resource.</param>
+    /// <param name="destination">The destination value or resource.</param>
     protected override void ResolveTextureCore(Texture source, Texture destination) {
         // TODO: This approach destroys the contents of the source Texture (according to the docs).
         this.EnsureNoBlitEncoder();
@@ -685,12 +686,12 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the SetComputeResourceSetCore operation.
+    /// Sets the compute resource set core value.
     /// </summary>
-    /// <param name="slot">Specifies the value of <paramref name="slot" />.</param>
-    /// <param name="set">Specifies the value of <paramref name="set" />.</param>
-    /// <param name="dynamicOffsetCount">Specifies the value of <paramref name="dynamicOffsetCount" />.</param>
-    /// <param name="dynamicOffsets">Specifies the value of <paramref name="dynamicOffsets" />.</param>
+    /// <param name="slot">The slot value used by this operation.</param>
+    /// <param name="set">The set value used by this operation.</param>
+    /// <param name="dynamicOffsetCount">The dynamic offset count value used by this operation.</param>
+    /// <param name="dynamicOffsets">The dynamic offsets value used by this operation.</param>
     protected override void SetComputeResourceSetCore(uint slot, ResourceSet set, uint dynamicOffsetCount, ref uint dynamicOffsets) {
         if (!this._computeResourceSets[slot].Equals(set, dynamicOffsetCount, ref dynamicOffsets)) {
             this._computeResourceSets[slot].Offsets.Dispose();
@@ -700,9 +701,9 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the SetFramebufferCore operation.
+    /// Sets the framebuffer core value.
     /// </summary>
-    /// <param name="fb">Specifies the value of <paramref name="fb" />.</param>
+    /// <param name="fb">The fb value used by this operation.</param>
     protected override void SetFramebufferCore(Framebuffer fb) {
         if (!this._currentFramebufferEverActive && this._mtlFramebuffer != null) {
             // This ensures that any submitted clear values will be used even if nothing has been drawn.
@@ -726,12 +727,12 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the SetGraphicsResourceSetCore operation.
+    /// Sets the graphics resource set core value.
     /// </summary>
-    /// <param name="slot">Specifies the value of <paramref name="slot" />.</param>
-    /// <param name="rs">Specifies the value of <paramref name="rs" />.</param>
-    /// <param name="dynamicOffsetCount">Specifies the value of <paramref name="dynamicOffsetCount" />.</param>
-    /// <param name="dynamicOffsets">Specifies the value of <paramref name="dynamicOffsets" />.</param>
+    /// <param name="slot">The slot value used by this operation.</param>
+    /// <param name="rs">The rs value used by this operation.</param>
+    /// <param name="dynamicOffsetCount">The dynamic offset count value used by this operation.</param>
+    /// <param name="dynamicOffsets">The dynamic offsets value used by this operation.</param>
     protected override void SetGraphicsResourceSetCore(uint slot, ResourceSet rs, uint dynamicOffsetCount, ref uint dynamicOffsets) {
         if (!this._graphicsResourceSets[slot].Equals(rs, dynamicOffsetCount, ref dynamicOffsets)) {
             this._graphicsResourceSets[slot].Offsets.Dispose();
@@ -741,9 +742,9 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the PreDrawCommand operation.
+    /// Executes the pre draw command logic for this backend.
     /// </summary>
-    /// <returns>Returns the result produced by the PreDrawCommand operation.</returns>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     private bool PreDrawCommand() {
         if (this.EnsureRenderPass()) {
             if (this._viewportsChanged) {
@@ -830,7 +831,7 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the FlushViewports operation.
+    /// Executes the flush viewports logic for this backend.
     /// </summary>
     private void FlushViewports() {
         if (this.gd.MetalFeatures.IsSupported(MTLFeatureSet.macOS_GPUFamily1_v3)) {
@@ -844,7 +845,7 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the FlushScissorRects operation.
+    /// Executes the flush scissor rects logic for this backend.
     /// </summary>
     private void FlushScissorRects() {
         if (this.gd.MetalFeatures.IsSupported(MTLFeatureSet.macOS_GPUFamily1_v3)) {
@@ -871,7 +872,7 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the PreComputeCommand operation.
+    /// Executes the pre compute command logic for this backend.
     /// </summary>
     private void PreComputeCommand() {
         this.EnsureComputeEncoder();
@@ -891,10 +892,10 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the GetFreeStagingBuffer operation.
+    /// Gets the free staging buffer value.
     /// </summary>
-    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
-    /// <returns>Returns the result produced by the GetFreeStagingBuffer operation.</returns>
+    /// <param name="sizeInBytes">The size, in bytes, used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private MtlBuffer GetFreeStagingBuffer(uint sizeInBytes) {
         lock (this._submittedCommandsLock) {
             foreach (MtlBuffer buffer in this._availableStagingBuffers) {
@@ -911,10 +912,10 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the ActivateGraphicsResourceSet operation.
+    /// Executes the activate graphics resource set logic for this backend.
     /// </summary>
-    /// <param name="slot">Specifies the value of <paramref name="slot" />.</param>
-    /// <param name="brsi">Specifies the value of <paramref name="brsi" />.</param>
+    /// <param name="slot">The slot value used by this operation.</param>
+    /// <param name="brsi">The brsi value used by this operation.</param>
     private void ActivateGraphicsResourceSet(uint slot, BoundResourceSetInfo brsi) {
         Debug.Assert(this.renderEncoderActive);
         MtlResourceSet mtlRs = Util.AssertSubtype<ResourceSet, MtlResourceSet>(brsi.Set);
@@ -973,10 +974,10 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the ActivateComputeResourceSet operation.
+    /// Executes the activate compute resource set logic for this backend.
     /// </summary>
-    /// <param name="slot">Specifies the value of <paramref name="slot" />.</param>
-    /// <param name="brsi">Specifies the value of <paramref name="brsi" />.</param>
+    /// <param name="slot">The slot value used by this operation.</param>
+    /// <param name="brsi">The brsi value used by this operation.</param>
     private void ActivateComputeResourceSet(uint slot, BoundResourceSetInfo brsi) {
         Debug.Assert(this.computeEncoderActive);
         MtlResourceSet mtlRs = Util.AssertSubtype<ResourceSet, MtlResourceSet>(brsi.Set);
@@ -1035,12 +1036,12 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the BindBuffer operation.
+    /// Binds the buffer resources for subsequent commands.
     /// </summary>
-    /// <param name="range">Specifies the value of <paramref name="range" />.</param>
-    /// <param name="set">Specifies the value of <paramref name="set" />.</param>
-    /// <param name="slot">Specifies the value of <paramref name="slot" />.</param>
-    /// <param name="stages">Specifies the value of <paramref name="stages" />.</param>
+    /// <param name="range">The range value used by this operation.</param>
+    /// <param name="set">The set value used by this operation.</param>
+    /// <param name="slot">The slot value used by this operation.</param>
+    /// <param name="stages">The stages value used by this operation.</param>
     private void BindBuffer(DeviceBufferRange range, uint set, uint slot, ShaderStages stages) {
         MtlBuffer mtlBuffer = Util.AssertSubtype<DeviceBuffer, MtlBuffer>(range.Buffer);
         uint baseBuffer = this.GetBufferBase(set, stages != ShaderStages.Compute);
@@ -1085,12 +1086,12 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the BindTexture operation.
+    /// Binds the texture resources for subsequent commands.
     /// </summary>
-    /// <param name="mtlTexView">Specifies the value of <paramref name="mtlTexView" />.</param>
-    /// <param name="set">Specifies the value of <paramref name="set" />.</param>
-    /// <param name="slot">Specifies the value of <paramref name="slot" />.</param>
-    /// <param name="stages">Specifies the value of <paramref name="stages" />.</param>
+    /// <param name="mtlTexView">The mtl tex view value used by this operation.</param>
+    /// <param name="set">The set value used by this operation.</param>
+    /// <param name="slot">The slot value used by this operation.</param>
+    /// <param name="stages">The stages value used by this operation.</param>
     private void BindTexture(MtlTextureView mtlTexView, uint set, uint slot, ShaderStages stages) {
         uint baseTexture = this.GetTextureBase(set, stages != ShaderStages.Compute);
         UIntPtr index = slot + baseTexture;
@@ -1114,12 +1115,12 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the BindSampler operation.
+    /// Binds the sampler resources for subsequent commands.
     /// </summary>
-    /// <param name="mtlSampler">Specifies the value of <paramref name="mtlSampler" />.</param>
-    /// <param name="set">Specifies the value of <paramref name="set" />.</param>
-    /// <param name="slot">Specifies the value of <paramref name="slot" />.</param>
-    /// <param name="stages">Specifies the value of <paramref name="stages" />.</param>
+    /// <param name="mtlSampler">The mtl sampler value used by this operation.</param>
+    /// <param name="set">The set value used by this operation.</param>
+    /// <param name="slot">The slot value used by this operation.</param>
+    /// <param name="stages">The stages value used by this operation.</param>
     private void BindSampler(MtlSampler mtlSampler, uint set, uint slot, ShaderStages stages) {
         uint baseSampler = this.GetSamplerBase(set, stages != ShaderStages.Compute);
         UIntPtr index = slot + baseSampler;
@@ -1143,11 +1144,11 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the GetBufferBase operation.
+    /// Gets the buffer base value.
     /// </summary>
-    /// <param name="set">Specifies the value of <paramref name="set" />.</param>
-    /// <param name="graphics">Specifies the value of <paramref name="graphics" />.</param>
-    /// <returns>Returns the result produced by the GetBufferBase operation.</returns>
+    /// <param name="set">The set value used by this operation.</param>
+    /// <param name="graphics">The graphics value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private uint GetBufferBase(uint set, bool graphics) {
         MtlResourceLayout[] layouts = graphics ? this._graphicsPipeline.ResourceLayouts : this._computePipeline.ResourceLayouts;
         uint ret = 0;
@@ -1161,11 +1162,11 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the GetTextureBase operation.
+    /// Gets the texture base value.
     /// </summary>
-    /// <param name="set">Specifies the value of <paramref name="set" />.</param>
-    /// <param name="graphics">Specifies the value of <paramref name="graphics" />.</param>
-    /// <returns>Returns the result produced by the GetTextureBase operation.</returns>
+    /// <param name="set">The set value used by this operation.</param>
+    /// <param name="graphics">The graphics value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private uint GetTextureBase(uint set, bool graphics) {
         MtlResourceLayout[] layouts = graphics ? this._graphicsPipeline.ResourceLayouts : this._computePipeline.ResourceLayouts;
         uint ret = 0;
@@ -1179,11 +1180,11 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the GetSamplerBase operation.
+    /// Gets the sampler base value.
     /// </summary>
-    /// <param name="set">Specifies the value of <paramref name="set" />.</param>
-    /// <param name="graphics">Specifies the value of <paramref name="graphics" />.</param>
-    /// <returns>Returns the result produced by the GetSamplerBase operation.</returns>
+    /// <param name="set">The set value used by this operation.</param>
+    /// <param name="graphics">The graphics value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private uint GetSamplerBase(uint set, bool graphics) {
         MtlResourceLayout[] layouts = graphics ? this._graphicsPipeline.ResourceLayouts : this._computePipeline.ResourceLayouts;
         uint ret = 0;
@@ -1197,9 +1198,9 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the EnsureRenderPass operation.
+    /// Executes the ensure render pass logic for this backend.
     /// </summary>
-    /// <returns>Returns the result produced by the EnsureRenderPass operation.</returns>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     private bool EnsureRenderPass() {
         Debug.Assert(this._mtlFramebuffer != null);
         this.EnsureNoBlitEncoder();
@@ -1208,9 +1209,9 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the BeginCurrentRenderPass operation.
+    /// Begins the current render pass operation.
     /// </summary>
-    /// <returns>Returns the result produced by the BeginCurrentRenderPass operation.</returns>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     private bool BeginCurrentRenderPass() {
         if (this._mtlFramebuffer is MtlSwapchainFramebuffer swapchainFramebuffer && !swapchainFramebuffer.EnsureDrawableAvailable()) {
             return false;
@@ -1254,7 +1255,7 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the EnsureNoRenderPass operation.
+    /// Executes the ensure no render pass logic for this backend.
     /// </summary>
     private void EnsureNoRenderPass() {
         if (this.renderEncoderActive) {
@@ -1265,7 +1266,7 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the EndCurrentRenderPass operation.
+    /// Ends the current render pass operation.
     /// </summary>
     private void EndCurrentRenderPass() {
         this._rce.endEncoding();
@@ -1289,7 +1290,7 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the EnsureBlitEncoder operation.
+    /// Executes the ensure blit encoder logic for this backend.
     /// </summary>
     private void EnsureBlitEncoder() {
         if (!this.blitEncoderActive) {
@@ -1308,7 +1309,7 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the EnsureNoBlitEncoder operation.
+    /// Executes the ensure no blit encoder logic for this backend.
     /// </summary>
     private void EnsureNoBlitEncoder() {
         if (this.blitEncoderActive) {
@@ -1321,7 +1322,7 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the EnsureComputeEncoder operation.
+    /// Executes the ensure compute encoder logic for this backend.
     /// </summary>
     private void EnsureComputeEncoder() {
         if (!this.computeEncoderActive) {
@@ -1340,7 +1341,7 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the EnsureNoComputeEncoder operation.
+    /// Executes the ensure no compute encoder logic for this backend.
     /// </summary>
     private void EnsureNoComputeEncoder() {
         if (this.computeEncoderActive) {
@@ -1360,32 +1361,32 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the ClearColorTargetCore operation.
+    /// Executes the clear color target core logic for this backend.
     /// </summary>
-    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
-    /// <param name="clearColor">Specifies the value of <paramref name="clearColor" />.</param>
+    /// <param name="index">The zero-based index of the target item.</param>
+    /// <param name="clearColor">The clear color value used by this operation.</param>
     private protected override void ClearColorTargetCore(uint index, RgbaFloat clearColor) {
         this.EnsureNoRenderPass();
         this._clearColors[index] = clearColor;
     }
 
     /// <summary>
-    /// Executes the ClearDepthStencilCore operation.
+    /// Executes the clear depth stencil core logic for this backend.
     /// </summary>
-    /// <param name="depth">Specifies the value of <paramref name="depth" />.</param>
-    /// <param name="stencil">Specifies the value of <paramref name="stencil" />.</param>
+    /// <param name="depth">The depth value.</param>
+    /// <param name="stencil">The stencil value used by this operation.</param>
     private protected override void ClearDepthStencilCore(float depth, byte stencil) {
         this.EnsureNoRenderPass();
         this._clearDepth = (depth, stencil);
     }
 
     /// <summary>
-    /// Executes the DrawCore operation.
+    /// Executes the draw core logic for this backend.
     /// </summary>
-    /// <param name="vertexCount">Specifies the value of <paramref name="vertexCount" />.</param>
-    /// <param name="instanceCount">Specifies the value of <paramref name="instanceCount" />.</param>
-    /// <param name="vertexStart">Specifies the value of <paramref name="vertexStart" />.</param>
-    /// <param name="instanceStart">Specifies the value of <paramref name="instanceStart" />.</param>
+    /// <param name="vertexCount">The vertex count value used by this operation.</param>
+    /// <param name="instanceCount">The instance count value used by this operation.</param>
+    /// <param name="vertexStart">The vertex start value used by this operation.</param>
+    /// <param name="instanceStart">The instance start value used by this operation.</param>
     private protected override void DrawCore(uint vertexCount, uint instanceCount, uint vertexStart, uint instanceStart) {
         if (this.PreDrawCommand()) {
             if (instanceStart == 0) {
@@ -1398,13 +1399,13 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the DrawIndexedCore operation.
+    /// Executes the draw indexed core logic for this backend.
     /// </summary>
-    /// <param name="indexCount">Specifies the value of <paramref name="indexCount" />.</param>
-    /// <param name="instanceCount">Specifies the value of <paramref name="instanceCount" />.</param>
-    /// <param name="indexStart">Specifies the value of <paramref name="indexStart" />.</param>
-    /// <param name="vertexOffset">Specifies the value of <paramref name="vertexOffset" />.</param>
-    /// <param name="instanceStart">Specifies the value of <paramref name="instanceStart" />.</param>
+    /// <param name="indexCount">The index count value used by this operation.</param>
+    /// <param name="instanceCount">The instance count value used by this operation.</param>
+    /// <param name="indexStart">The index start value used by this operation.</param>
+    /// <param name="vertexOffset">The vertex offset value used by this operation.</param>
+    /// <param name="instanceStart">The instance start value used by this operation.</param>
     private protected override void DrawIndexedCore(uint indexCount, uint instanceCount, uint indexStart, int vertexOffset, uint instanceStart) {
         if (this.PreDrawCommand()) {
             uint indexSize = this._indexType == MTLIndexType.UInt16 ? 2u : 4u;
@@ -1420,9 +1421,9 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the SetPipelineCore operation.
+    /// Sets the pipeline core value.
     /// </summary>
-    /// <param name="pipeline">Specifies the value of <paramref name="pipeline" />.</param>
+    /// <param name="pipeline">The pipeline value used by this operation.</param>
     private protected override void SetPipelineCore(Pipeline pipeline) {
         if (pipeline.IsComputePipeline && this._computePipeline != pipeline) {
             this._computePipeline = Util.AssertSubtype<Pipeline, MtlPipeline>(pipeline);
@@ -1451,12 +1452,12 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the UpdateBufferCore operation.
+    /// Updates the buffer core state for this command sequence.
     /// </summary>
-    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
-    /// <param name="bufferOffsetInBytes">Specifies the value of <paramref name="bufferOffsetInBytes" />.</param>
-    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
-    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
+    /// <param name="buffer">The buffer resource involved in this operation.</param>
+    /// <param name="bufferOffsetInBytes">The byte offset used by this operation.</param>
+    /// <param name="source">The source value or resource.</param>
+    /// <param name="sizeInBytes">The size, in bytes, used by this operation.</param>
     private protected override void UpdateBufferCore(DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes) {
         bool useComputeCopy = bufferOffsetInBytes % 4 != 0
                               || (sizeInBytes % 4 != 0 && bufferOffsetInBytes != 0 && sizeInBytes != buffer.SizeInBytes);
@@ -1482,9 +1483,9 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the GenerateMipmapsCore operation.
+    /// Executes the generate mipmaps core logic for this backend.
     /// </summary>
-    /// <param name="texture">Specifies the value of <paramref name="texture" />.</param>
+    /// <param name="texture">The texture resource involved in this operation.</param>
     private protected override void GenerateMipmapsCore(Texture texture) {
         Debug.Assert(texture.MipLevels > 1);
         this.EnsureBlitEncoder();
@@ -1493,11 +1494,11 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the SetIndexBufferCore operation.
+    /// Sets the index buffer core value.
     /// </summary>
-    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
-    /// <param name="offset">Specifies the value of <paramref name="offset" />.</param>
+    /// <param name="buffer">The buffer resource involved in this operation.</param>
+    /// <param name="format">The format used by this operation.</param>
+    /// <param name="offset">The byte offset used by this operation.</param>
     private protected override void SetIndexBufferCore(DeviceBuffer buffer, IndexFormat format, uint offset) {
         this._indexBuffer = Util.AssertSubtype<DeviceBuffer, MtlBuffer>(buffer);
         this._ibOffset = offset;
@@ -1505,11 +1506,11 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the SetVertexBufferCore operation.
+    /// Sets the vertex buffer core value.
     /// </summary>
-    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
-    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
-    /// <param name="offset">Specifies the value of <paramref name="offset" />.</param>
+    /// <param name="index">The zero-based index of the target item.</param>
+    /// <param name="buffer">The buffer resource involved in this operation.</param>
+    /// <param name="offset">The byte offset used by this operation.</param>
     private protected override void SetVertexBufferCore(uint index, DeviceBuffer buffer, uint offset) {
         Util.EnsureArrayMinimumSize(ref this._vertexBuffers, index + 1);
         Util.EnsureArrayMinimumSize(ref this._vbOffsets, index + 1);
@@ -1529,9 +1530,9 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the PushDebugGroupCore operation.
+    /// Executes the push debug group core logic for this backend.
     /// </summary>
-    /// <param name="name">Specifies the value of <paramref name="name" />.</param>
+    /// <param name="name">The name used by this operation.</param>
     private protected override void PushDebugGroupCore(string name) {
         NSString nsName = NSString.New(name);
         if (!this._bce.IsNull) {
@@ -1548,7 +1549,7 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the PopDebugGroupCore operation.
+    /// Executes the pop debug group core logic for this backend.
     /// </summary>
     private protected override void PopDebugGroupCore() {
         if (!this._bce.IsNull) {
@@ -1563,9 +1564,9 @@ internal unsafe class MtlCommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes the InsertDebugMarkerCore operation.
+    /// Executes the insert debug marker core logic for this backend.
     /// </summary>
-    /// <param name="name">Specifies the value of <paramref name="name" />.</param>
+    /// <param name="name">The name used by this operation.</param>
     private protected override void InsertDebugMarkerCore(string name) {
         NSString nsName = NSString.New(name);
         if (!this._bce.IsNull) {

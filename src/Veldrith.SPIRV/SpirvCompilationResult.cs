@@ -1,14 +1,14 @@
 namespace Veldrith.SPIRV;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the SpirvCompilationResult class.
+/// Provides SPIR-V compilation support for SpirvCompilationResult.
 /// </summary>
 public class SpirvCompilationResult {
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SpirvCompilationResult" /> type.
     /// </summary>
-    /// <param name="spirvBytes">Specifies the value of <paramref name="spirvBytes" />.</param>
+    /// <param name="spirvBytes">The spirv bytes value used by this operation.</param>
     public SpirvCompilationResult(byte[] spirvBytes) {
         this.SpirvBytes = spirvBytes;
     }

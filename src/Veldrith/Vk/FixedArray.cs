@@ -3,25 +3,25 @@ namespace Veldrith.Vk;
 // to some Vulkan functions without allocating and pinning a real array.
 
 /// <summary>
-/// Defines the data layout and behavior of the FixedArray2 struct.
+/// Represents the FixedArray2 data structure used by the graphics runtime.
 /// </summary>
 internal struct FixedArray2<T> where T : struct {
 
     /// <summary>
-    /// Stores the value associated with <c>First</c>.
+    /// Stores the first state used by this instance.
     /// </summary>
     public T First;
 
     /// <summary>
-    /// Stores the value associated with <c>Second</c>.
+    /// Stores the second state used by this instance.
     /// </summary>
     public T Second;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FixedArray2" /> type.
     /// </summary>
-    /// <param name="first">Specifies the value of <paramref name="first" />.</param>
-    /// <param name="second">Specifies the value of <paramref name="second" />.</param>
+    /// <param name="first">The first value used by this operation.</param>
+    /// <param name="second">The second value used by this operation.</param>
     public FixedArray2(T first, T second) {
         this.First = first;
         this.Second = second;
@@ -34,31 +34,31 @@ internal struct FixedArray2<T> where T : struct {
 }
 
 /// <summary>
-/// Defines the data layout and behavior of the FixedArray3 struct.
+/// Represents the FixedArray3 data structure used by the graphics runtime.
 /// </summary>
 internal struct FixedArray3<T> where T : struct {
 
     /// <summary>
-    /// Stores the value associated with <c>First</c>.
+    /// Stores the first state used by this instance.
     /// </summary>
     public T First;
 
     /// <summary>
-    /// Stores the value associated with <c>Second</c>.
+    /// Stores the second state used by this instance.
     /// </summary>
     public T Second;
 
     /// <summary>
-    /// Stores the value associated with <c>Third</c>.
+    /// Stores the third state used by this instance.
     /// </summary>
     public T Third;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FixedArray3" /> type.
     /// </summary>
-    /// <param name="first">Specifies the value of <paramref name="first" />.</param>
-    /// <param name="second">Specifies the value of <paramref name="second" />.</param>
-    /// <param name="third">Specifies the value of <paramref name="third" />.</param>
+    /// <param name="first">The first value used by this operation.</param>
+    /// <param name="second">The second value used by this operation.</param>
+    /// <param name="third">The third value used by this operation.</param>
     public FixedArray3(T first, T second, T third) {
         this.First = first;
         this.Second = second;
@@ -72,37 +72,37 @@ internal struct FixedArray3<T> where T : struct {
 }
 
 /// <summary>
-/// Defines the data layout and behavior of the FixedArray4 struct.
+/// Represents the FixedArray4 data structure used by the graphics runtime.
 /// </summary>
 internal struct FixedArray4<T> where T : struct {
 
     /// <summary>
-    /// Stores the value associated with <c>First</c>.
+    /// Stores the first state used by this instance.
     /// </summary>
     public T First;
 
     /// <summary>
-    /// Stores the value associated with <c>Second</c>.
+    /// Stores the second state used by this instance.
     /// </summary>
     public T Second;
 
     /// <summary>
-    /// Stores the value associated with <c>Third</c>.
+    /// Stores the third state used by this instance.
     /// </summary>
     public T Third;
 
     /// <summary>
-    /// Stores the value associated with <c>Fourth</c>.
+    /// Stores the fourth state used by this instance.
     /// </summary>
     public T Fourth;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FixedArray4" /> type.
     /// </summary>
-    /// <param name="first">Specifies the value of <paramref name="first" />.</param>
-    /// <param name="second">Specifies the value of <paramref name="second" />.</param>
-    /// <param name="third">Specifies the value of <paramref name="third" />.</param>
-    /// <param name="fourth">Specifies the value of <paramref name="fourth" />.</param>
+    /// <param name="first">The first value used by this operation.</param>
+    /// <param name="second">The second value used by this operation.</param>
+    /// <param name="third">The third value used by this operation.</param>
+    /// <param name="fourth">The fourth value used by this operation.</param>
     public FixedArray4(T first, T second, T third, T fourth) {
         this.First = first;
         this.Second = second;
@@ -117,43 +117,43 @@ internal struct FixedArray4<T> where T : struct {
 }
 
 /// <summary>
-/// Defines the data layout and behavior of the FixedArray5 struct.
+/// Represents the FixedArray5 data structure used by the graphics runtime.
 /// </summary>
 internal struct FixedArray5<T> where T : struct {
 
     /// <summary>
-    /// Stores the value associated with <c>First</c>.
+    /// Stores the first state used by this instance.
     /// </summary>
     public T First;
 
     /// <summary>
-    /// Stores the value associated with <c>Second</c>.
+    /// Stores the second state used by this instance.
     /// </summary>
     public T Second;
 
     /// <summary>
-    /// Stores the value associated with <c>Third</c>.
+    /// Stores the third state used by this instance.
     /// </summary>
     public T Third;
 
     /// <summary>
-    /// Stores the value associated with <c>Fourth</c>.
+    /// Stores the fourth state used by this instance.
     /// </summary>
     public T Fourth;
 
     /// <summary>
-    /// Stores the value associated with <c>Fifth</c>.
+    /// Stores the fifth state used by this instance.
     /// </summary>
     public T Fifth;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FixedArray5" /> type.
     /// </summary>
-    /// <param name="first">Specifies the value of <paramref name="first" />.</param>
-    /// <param name="second">Specifies the value of <paramref name="second" />.</param>
-    /// <param name="third">Specifies the value of <paramref name="third" />.</param>
-    /// <param name="fourth">Specifies the value of <paramref name="fourth" />.</param>
-    /// <param name="fifth">Specifies the value of <paramref name="fifth" />.</param>
+    /// <param name="first">The first value used by this operation.</param>
+    /// <param name="second">The second value used by this operation.</param>
+    /// <param name="third">The third value used by this operation.</param>
+    /// <param name="fourth">The fourth value used by this operation.</param>
+    /// <param name="fifth">The fifth value used by this operation.</param>
     public FixedArray5(T first, T second, T third, T fourth, T fifth) {
         this.First = first;
         this.Second = second;
@@ -169,49 +169,49 @@ internal struct FixedArray5<T> where T : struct {
 }
 
 /// <summary>
-/// Defines the data layout and behavior of the FixedArray6 struct.
+/// Represents the FixedArray6 data structure used by the graphics runtime.
 /// </summary>
 internal struct FixedArray6<T> where T : struct {
 
     /// <summary>
-    /// Stores the value associated with <c>First</c>.
+    /// Stores the first state used by this instance.
     /// </summary>
     public T First;
 
     /// <summary>
-    /// Stores the value associated with <c>Second</c>.
+    /// Stores the second state used by this instance.
     /// </summary>
     public T Second;
 
     /// <summary>
-    /// Stores the value associated with <c>Third</c>.
+    /// Stores the third state used by this instance.
     /// </summary>
     public T Third;
 
     /// <summary>
-    /// Stores the value associated with <c>Fourth</c>.
+    /// Stores the fourth state used by this instance.
     /// </summary>
     public T Fourth;
 
     /// <summary>
-    /// Stores the value associated with <c>Fifth</c>.
+    /// Stores the fifth state used by this instance.
     /// </summary>
     public T Fifth;
 
     /// <summary>
-    /// Stores the value associated with <c>Sixth</c>.
+    /// Stores the sixth state used by this instance.
     /// </summary>
     public T Sixth;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FixedArray6" /> type.
     /// </summary>
-    /// <param name="first">Specifies the value of <paramref name="first" />.</param>
-    /// <param name="second">Specifies the value of <paramref name="second" />.</param>
-    /// <param name="third">Specifies the value of <paramref name="third" />.</param>
-    /// <param name="fourth">Specifies the value of <paramref name="fourth" />.</param>
-    /// <param name="fifth">Specifies the value of <paramref name="fifth" />.</param>
-    /// <param name="sixth">Specifies the value of <paramref name="sixth" />.</param>
+    /// <param name="first">The first value used by this operation.</param>
+    /// <param name="second">The second value used by this operation.</param>
+    /// <param name="third">The third value used by this operation.</param>
+    /// <param name="fourth">The fourth value used by this operation.</param>
+    /// <param name="fifth">The fifth value used by this operation.</param>
+    /// <param name="sixth">The sixth value used by this operation.</param>
     public FixedArray6(T first, T second, T third, T fourth, T fifth, T sixth) {
         this.First = first;
         this.Second = second;

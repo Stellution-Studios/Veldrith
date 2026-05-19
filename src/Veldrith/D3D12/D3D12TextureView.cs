@@ -4,36 +4,35 @@ using Vortice.Direct3D12;
 namespace Veldrith.D3D12;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the D3D12TextureView class.
+/// Provides the Direct3D 12 backend implementation for D3D12TextureView.
 /// </summary>
 internal sealed class D3D12TextureView : TextureView {
 
     /// <summary>
-    /// Stores the value associated with <c>gd</c>.
+    /// Stores the gd state used by this instance.
     /// </summary>
     private readonly D3D12GraphicsDevice gd;
 
     /// <summary>
-    /// Stores the value associated with <c>_disposed</c>.
+    /// Stores the disposed state used by this instance.
     /// </summary>
     private bool _disposed;
 
     /// <summary>
-    /// Stores the value associated with <c>_srvDescriptorHeap</c>.
+    /// Stores the srv descriptor heap state used by this instance.
     /// </summary>
     private ID3D12DescriptorHeap _srvDescriptorHeap;
 
     /// <summary>
-    /// Stores the value associated with <c>_uavDescriptorHeap</c>.
+    /// Stores the uav descriptor heap state used by this instance.
     /// </summary>
     private ID3D12DescriptorHeap _uavDescriptorHeap;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="D3D12TextureView" /> class.
     /// </summary>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
-    /// <returns>Returns the result produced by the base operation.</returns>
+    /// <param name="gd">The graphics device that owns this operation.</param>
+    /// <param name="description">The description used to configure this operation.</param>
     public D3D12TextureView(D3D12GraphicsDevice gd, ref TextureViewDescription description) : base(ref description) {
         this.gd = gd;
         this.TargetTexture = Util.AssertSubtype<Texture, D3D12Texture>(description.Target);
@@ -55,9 +54,9 @@ internal sealed class D3D12TextureView : TextureView {
     public override string Name { get; set; }
 
     /// <summary>
-    /// Executes the GetOrCreateShaderResourceViewDescriptor operation.
+    /// Gets the or create shader resource view descriptor value.
     /// </summary>
-    /// <returns>Returns the result produced by the GetOrCreateShaderResourceViewDescriptor operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     internal CpuDescriptorHandle GetOrCreateShaderResourceViewDescriptor() {
         if (this._srvDescriptorHeap == null) {
             this._srvDescriptorHeap = this.gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView, 1));
@@ -71,9 +70,9 @@ internal sealed class D3D12TextureView : TextureView {
     }
 
     /// <summary>
-    /// Executes the GetOrCreateUnorderedAccessViewDescriptor operation.
+    /// Gets the or create unordered access view descriptor value.
     /// </summary>
-    /// <returns>Returns the result produced by the GetOrCreateUnorderedAccessViewDescriptor operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     internal CpuDescriptorHandle GetOrCreateUnorderedAccessViewDescriptor() {
         if (this._uavDescriptorHeap == null) {
             this._uavDescriptorHeap = this.gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView, 1));
@@ -87,9 +86,9 @@ internal sealed class D3D12TextureView : TextureView {
     }
 
     /// <summary>
-    /// Executes the GetShaderResourceViewDescription operation.
+    /// Gets the shader resource view description value.
     /// </summary>
-    /// <returns>Returns the result produced by the GetShaderResourceViewDescription operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     internal ShaderResourceViewDescription GetShaderResourceViewDescription() {
         ShaderResourceViewDescription description = new() {
             Format = D3D12Formats.GetViewFormat(D3D12Formats.ToDxgiFormat(this.Format)),
@@ -174,9 +173,9 @@ internal sealed class D3D12TextureView : TextureView {
     }
 
     /// <summary>
-    /// Executes the GetUnorderedAccessViewDescription operation.
+    /// Gets the unordered access view description value.
     /// </summary>
-    /// <returns>Returns the result produced by the GetUnorderedAccessViewDescription operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     internal UnorderedAccessViewDescription GetUnorderedAccessViewDescription() {
         if (this.TargetTexture.SampleCount != TextureSampleCount.Count1) {
             throw new PlatformNotSupportedException("Multisampled UAV textures are not supported.");
@@ -217,7 +216,7 @@ internal sealed class D3D12TextureView : TextureView {
     }
 
     /// <summary>
-    /// Executes the Dispose operation.
+    /// Releases resources held by this instance.
     /// </summary>
     public override void Dispose() {
         this._srvDescriptorHeap?.Dispose();

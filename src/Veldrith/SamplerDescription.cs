@@ -29,7 +29,6 @@ public struct SamplerDescription : IEquatable<SamplerDescription> {
 
     /// <summary>
     /// An optional value controlling the kind of comparison to use when sampling. If null, comparison sampling is not
-    /// used.
     /// </summary>
     public ComparisonKind? ComparisonKind;
 
@@ -61,16 +60,16 @@ public struct SamplerDescription : IEquatable<SamplerDescription> {
     /// <summary>
     /// Initializes a new instance of the <see cref="SamplerDescription" /> type.
     /// </summary>
-    /// <param name="addressModeU">Specifies the value of <paramref name="addressModeU" />.</param>
-    /// <param name="addressModeV">Specifies the value of <paramref name="addressModeV" />.</param>
-    /// <param name="addressModeW">Specifies the value of <paramref name="addressModeW" />.</param>
-    /// <param name="filter">Specifies the value of <paramref name="filter" />.</param>
-    /// <param name="comparisonKind">Specifies the value of <paramref name="comparisonKind" />.</param>
-    /// <param name="maximumAnisotropy">Specifies the value of <paramref name="maximumAnisotropy" />.</param>
-    /// <param name="minimumLod">Specifies the value of <paramref name="minimumLod" />.</param>
-    /// <param name="maximumLod">Specifies the value of <paramref name="maximumLod" />.</param>
-    /// <param name="lodBias">Specifies the value of <paramref name="lodBias" />.</param>
-    /// <param name="borderColor">Specifies the value of <paramref name="borderColor" />.</param>
+    /// <param name="addressModeU">The address mode u value used by this operation.</param>
+    /// <param name="addressModeV">The address mode v value used by this operation.</param>
+    /// <param name="addressModeW">The address mode w value used by this operation.</param>
+    /// <param name="filter">The filter value used by this operation.</param>
+    /// <param name="comparisonKind">The comparison kind value used by this operation.</param>
+    /// <param name="maximumAnisotropy">The maximum anisotropy value used by this operation.</param>
+    /// <param name="minimumLod">The minimum lod value used by this operation.</param>
+    /// <param name="maximumLod">The maximum lod value used by this operation.</param>
+    /// <param name="lodBias">The lod bias value used by this operation.</param>
+    /// <param name="borderColor">The border color value used by this operation.</param>
     public SamplerDescription(SamplerAddressMode addressModeU, SamplerAddressMode addressModeV, SamplerAddressMode addressModeW, SamplerFilter filter, ComparisonKind? comparisonKind, uint maximumAnisotropy, uint minimumLod, uint maximumLod, int lodBias, SamplerBorderColor borderColor) {
         this.AddressModeU = addressModeU;
         this.AddressModeV = addressModeV;
@@ -127,10 +126,10 @@ public struct SamplerDescription : IEquatable<SamplerDescription> {
     };
 
     /// <summary>
-    /// Executes the Equals operation.
+    /// Determines whether this instance is equal to the specified value.
     /// </summary>
-    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
-    /// <returns>Returns the result produced by the Equals operation.</returns>
+    /// <param name="other">The value to compare against.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public bool Equals(SamplerDescription other) {
         return this.AddressModeU == other.AddressModeU
                && this.AddressModeV == other.AddressModeV
@@ -145,9 +144,9 @@ public struct SamplerDescription : IEquatable<SamplerDescription> {
     }
 
     /// <summary>
-    /// Executes the GetHashCode operation.
+    /// Computes a hash code for this instance.
     /// </summary>
-    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine((int)this.AddressModeU, (int)this.AddressModeV, (int)this.AddressModeW, (int)this.Filter, this.ComparisonKind.GetHashCode(), this.MaximumAnisotropy.GetHashCode(), this.MinimumLod.GetHashCode(), this.MaximumLod.GetHashCode(), this.LodBias.GetHashCode(), (int)this.BorderColor);
     }

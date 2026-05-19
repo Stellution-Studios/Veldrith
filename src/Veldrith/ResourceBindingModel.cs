@@ -2,8 +2,6 @@ namespace Veldrith;
 
 /// <summary>
 /// Identifies a particular binding model used when connecting elements in a <see cref="ResourceLayout" /> with
-/// resources
-/// defined in API-specific shader code.
 /// </summary>
 public enum ResourceBindingModel {
 

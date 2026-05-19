@@ -4,19 +4,19 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Defines the data layout and behavior of the MTLPipelineBufferDescriptor struct.
+/// Represents the MTLPipelineBufferDescriptor data structure used by the graphics runtime.
 /// </summary>
 public struct MTLPipelineBufferDescriptor {
 
     /// <summary>
-    /// Stores the value associated with <c>NativePtr</c>.
+    /// Stores the native ptr state used by this instance.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MTLPipelineBufferDescriptor" /> type.
     /// </summary>
-    /// <param name="ptr">Specifies the value of <paramref name="ptr" />.</param>
+    /// <param name="ptr">The ptr value used by this operation.</param>
     public MTLPipelineBufferDescriptor(IntPtr ptr) {
         this.NativePtr = ptr;
     }
@@ -30,12 +30,12 @@ public struct MTLPipelineBufferDescriptor {
     }
 
     /// <summary>
-    /// Stores the value associated with <c>sel_mutability</c>.
+    /// Stores the sel mutability state used by this instance.
     /// </summary>
     private static readonly Selector sel_mutability = "mutability";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setMutability</c>.
+    /// Stores the sel set mutability state used by this instance.
     /// </summary>
     private static readonly Selector sel_setMutability = "setMutability:";
 }

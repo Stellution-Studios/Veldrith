@@ -3,7 +3,7 @@ using System;
 namespace Veldrith;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the DeviceBuffer class.
+/// Represents the DeviceBuffer type used by the graphics runtime.
 /// </summary>
 public abstract class DeviceBuffer : IDeviceResource, IBindableResource, IMappableResource, IDisposable {
 
@@ -24,14 +24,13 @@ public abstract class DeviceBuffer : IDeviceResource, IBindableResource, IMappab
 
     /// <summary>
     /// A string identifying this instance. Can be used to differentiate between objects in graphics debuggers and other
-    /// tools.
     /// </summary>
     public abstract string Name { get; set; }
 
     #region Disposal
 
     /// <summary>
-    /// Executes the Dispose operation.
+    /// Releases resources held by this instance.
     /// </summary>
     public abstract void Dispose();
 

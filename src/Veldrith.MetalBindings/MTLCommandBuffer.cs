@@ -7,147 +7,146 @@ namespace Veldrith.MetalBindings;
 [StructLayout(LayoutKind.Sequential)]
 
 /// <summary>
-/// Defines the data layout and behavior of the MTLCommandBuffer struct.
+/// Represents the MTLCommandBuffer data structure used by the graphics runtime.
 /// </summary>
 public struct MTLCommandBuffer : IEquatable<MTLCommandBuffer> {
 
     /// <summary>
-    /// Stores the value associated with <c>NativePtr</c>.
+    /// Stores the native ptr state used by this instance.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Executes the renderCommandEncoderWithDescriptor operation.
+    /// Executes the render command encoder with descriptor logic for this backend.
     /// </summary>
-    /// <param name="desc">Specifies the value of <paramref name="desc" />.</param>
-    /// <returns>Returns the result produced by the renderCommandEncoderWithDescriptor operation.</returns>
+    /// <param name="desc">The description used to configure this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public MTLRenderCommandEncoder renderCommandEncoderWithDescriptor(MTLRenderPassDescriptor desc) {
         return new MTLRenderCommandEncoder(IntPtr_objc_msgSend(this.NativePtr, sel_renderCommandEncoderWithDescriptor, desc.NativePtr));
     }
 
     /// <summary>
-    /// Executes the presentDrawable operation.
+    /// Executes the present drawable logic for this backend.
     /// </summary>
-    /// <param name="drawable">Specifies the value of <paramref name="drawable" />.</param>
+    /// <param name="drawable">The drawable value used by this operation.</param>
     public void presentDrawable(IntPtr drawable) {
         objc_msgSend(this.NativePtr, sel_presentDrawable, drawable);
     }
 
     /// <summary>
-    /// Executes the commit operation.
+    /// Executes the commit logic for this backend.
     /// </summary>
     public void commit() {
         objc_msgSend(this.NativePtr, sel_commit);
     }
 
     /// <summary>
-    /// Executes the blitCommandEncoder operation.
+    /// Executes the blit command encoder logic for this backend.
     /// </summary>
-    /// <returns>Returns the result produced by the blitCommandEncoder operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public MTLBlitCommandEncoder blitCommandEncoder() {
         return objc_msgSend<MTLBlitCommandEncoder>(this.NativePtr, sel_blitCommandEncoder);
     }
 
     /// <summary>
-    /// Executes the computeCommandEncoder operation.
+    /// Computes the command encoder value.
     /// </summary>
-    /// <returns>Returns the result produced by the computeCommandEncoder operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public MTLComputeCommandEncoder computeCommandEncoder() {
         return objc_msgSend<MTLComputeCommandEncoder>(this.NativePtr, sel_computeCommandEncoder);
     }
 
     /// <summary>
-    /// Executes the waitUntilCompleted operation.
+    /// Executes the wait until completed logic for this backend.
     /// </summary>
     public void waitUntilCompleted() {
         objc_msgSend(this.NativePtr, sel_waitUntilCompleted);
     }
 
     /// <summary>
-    /// Executes the addCompletedHandler operation.
+    /// Executes the add completed handler logic for this backend.
     /// </summary>
-    /// <param name="block">Specifies the value of <paramref name="block" />.</param>
+    /// <param name="block">The block value used by this operation.</param>
     public void addCompletedHandler(MTLCommandBufferHandler block) {
         objc_msgSend(this.NativePtr, sel_addCompletedHandler, block);
     }
 
     /// <summary>
-    /// Executes the addCompletedHandler operation.
+    /// Executes the add completed handler logic for this backend.
     /// </summary>
-    /// <param name="block">Specifies the value of <paramref name="block" />.</param>
+    /// <param name="block">The block value used by this operation.</param>
     public void addCompletedHandler(IntPtr block) {
         objc_msgSend(this.NativePtr, sel_addCompletedHandler, block);
     }
 
     /// <summary>
-    /// Executes the uint_objc_msgSend operation.
+    /// Executes the uint objc msg send logic for this backend.
     /// </summary>
-    /// <param name="MTLCommandBufferStatus">Specifies the value of <paramref name="MTLCommandBufferStatus" />.</param>
-    /// <returns>Returns the result produced by the uint_objc_msgSend operation.</returns>
+
     public MTLCommandBufferStatus status => (MTLCommandBufferStatus)uint_objc_msgSend(this.NativePtr, sel_status);
 
     /// <summary>
-    /// Stores the value associated with <c>sel_renderCommandEncoderWithDescriptor</c>.
+    /// Stores the sel render command encoder with descriptor state used by this instance.
     /// </summary>
     private static readonly Selector sel_renderCommandEncoderWithDescriptor = "renderCommandEncoderWithDescriptor:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_presentDrawable</c>.
+    /// Stores the sel present drawable state used by this instance.
     /// </summary>
     private static readonly Selector sel_presentDrawable = "presentDrawable:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_commit</c>.
+    /// Stores the sel commit state used by this instance.
     /// </summary>
     private static readonly Selector sel_commit = "commit";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_blitCommandEncoder</c>.
+    /// Stores the sel blit command encoder state used by this instance.
     /// </summary>
     private static readonly Selector sel_blitCommandEncoder = "blitCommandEncoder";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_computeCommandEncoder</c>.
+    /// Stores the sel compute command encoder state used by this instance.
     /// </summary>
     private static readonly Selector sel_computeCommandEncoder = "computeCommandEncoder";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_waitUntilCompleted</c>.
+    /// Stores the sel wait until completed state used by this instance.
     /// </summary>
     private static readonly Selector sel_waitUntilCompleted = "waitUntilCompleted";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_addCompletedHandler</c>.
+    /// Stores the sel add completed handler state used by this instance.
     /// </summary>
     private static readonly Selector sel_addCompletedHandler = "addCompletedHandler:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_status</c>.
+    /// Stores the sel status state used by this instance.
     /// </summary>
     private static readonly Selector sel_status = "status";
 
     /// <summary>
-    /// Executes the Equals operation.
+    /// Determines whether this instance is equal to the specified value.
     /// </summary>
-    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
-    /// <returns>Returns the result produced by the Equals operation.</returns>
+    /// <param name="other">The value to compare against.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public bool Equals(MTLCommandBuffer other) {
         return this.NativePtr == other.NativePtr;
     }
 
     /// <summary>
-    /// Executes the Equals operation.
+    /// Determines whether this instance is equal to the specified value.
     /// </summary>
-    /// <param name="obj">Specifies the value of <paramref name="obj" />.</param>
-    /// <returns>Returns the result produced by the Equals operation.</returns>
+    /// <param name="obj">The object instance to evaluate.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public override bool Equals(object obj) {
         return obj is MTLCommandBuffer other && this.Equals(other);
     }
 
     /// <summary>
-    /// Executes the GetHashCode operation.
+    /// Computes a hash code for this instance.
     /// </summary>
-    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public override int GetHashCode() {
         return this.NativePtr.GetHashCode();
     }

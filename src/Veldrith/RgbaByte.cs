@@ -101,10 +101,10 @@ public struct RgbaByte : IEquatable<RgbaByte> {
     /// <summary>
     /// Initializes a new instance of the <see cref="RgbaByte" /> type.
     /// </summary>
-    /// <param name="r">Specifies the value of <paramref name="r" />.</param>
-    /// <param name="g">Specifies the value of <paramref name="g" />.</param>
-    /// <param name="b">Specifies the value of <paramref name="b" />.</param>
-    /// <param name="a">Specifies the value of <paramref name="a" />.</param>
+    /// <param name="r">The r value used by this operation.</param>
+    /// <param name="g">The g value used by this operation.</param>
+    /// <param name="b">The b value used by this operation.</param>
+    /// <param name="a">The a value used by this operation.</param>
     public RgbaByte(byte r, byte g, byte b, byte a) {
         this.R = r;
         this.G = g;
@@ -115,18 +115,18 @@ public struct RgbaByte : IEquatable<RgbaByte> {
     /// <summary>
     /// Compares this color with another <see cref="RgbaByte" /> value.
     /// </summary>
-    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
-    /// <returns><see langword="true" /> if all RGBA components are equal; otherwise, <see langword="false" />.</returns>
+    /// <param name="other">The value to compare against.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Equals(RgbaByte other) {
         return this.R.Equals(other.R) && this.G.Equals(other.G) && this.B.Equals(other.B) && this.A.Equals(other.A);
     }
 
     /// <summary>
-    /// Executes the Equals operation.
+    /// Determines whether this instance is equal to the specified value.
     /// </summary>
-    /// <param name="obj">Specifies the value of <paramref name="obj" />.</param>
-    /// <returns>Returns the result produced by the Equals operation.</returns>
+    /// <param name="obj">The object instance to evaluate.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public override bool Equals(object obj) {
         return obj is RgbaByte other && this.Equals(other);
     }
@@ -134,16 +134,16 @@ public struct RgbaByte : IEquatable<RgbaByte> {
     /// <summary>
     /// Computes a hash code for this color value.
     /// </summary>
-    /// <returns>A hash code that combines all RGBA components.</returns>
+    /// <returns>The value produced by this operation.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public override int GetHashCode() {
         return HashHelper.Combine(this.R.GetHashCode(), this.G.GetHashCode(), this.B.GetHashCode(), this.A.GetHashCode());
     }
 
     /// <summary>
-    /// Executes the ToString operation.
+    /// Builds a string representation of this instance.
     /// </summary>
-    /// <returns>Returns the result produced by the ToString operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public override string ToString() {
         return $"R:{this.R}, G:{this.G}, B:{this.B}, A:{this.A}";
     }
@@ -151,9 +151,8 @@ public struct RgbaByte : IEquatable<RgbaByte> {
     /// <summary>
     /// Compares two <see cref="RgbaByte" /> values for component-wise equality.
     /// </summary>
-    /// <param name="left">Specifies the value of <paramref name="left" />.</param>
-    /// <param name="right">Specifies the value of <paramref name="right" />.</param>
-    /// <returns><see langword="true" /> if both values are equal; otherwise, <see langword="false" />.</returns>
+    /// <param name="left">The left operand of the operation.</param>
+    /// <param name="right">The right operand of the operation.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool operator ==(RgbaByte left, RgbaByte right) {
         return left.Equals(right);
@@ -162,9 +161,8 @@ public struct RgbaByte : IEquatable<RgbaByte> {
     /// <summary>
     /// Compares two <see cref="RgbaByte" /> values for component-wise inequality.
     /// </summary>
-    /// <param name="left">Specifies the value of <paramref name="left" />.</param>
-    /// <param name="right">Specifies the value of <paramref name="right" />.</param>
-    /// <returns><see langword="true" /> if at least one component differs; otherwise, <see langword="false" />.</returns>
+    /// <param name="left">The left operand of the operation.</param>
+    /// <param name="right">The right operand of the operation.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool operator !=(RgbaByte left, RgbaByte right) {
         return !left.Equals(right);

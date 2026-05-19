@@ -7,19 +7,19 @@ using Veldrith.MTL;
 namespace Veldrith;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the BackendInfoMetal class.
+/// Exposes backend-specific native handles and metadata for BackendInfoMetal.
 /// </summary>
 public class BackendInfoMetal {
 
     /// <summary>
-    /// Stores the value associated with <c>gd</c>.
+    /// Stores the gd state used by this instance.
     /// </summary>
     private readonly MtlGraphicsDevice gd;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BackendInfoMetal" /> type.
     /// </summary>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
+    /// <param name="gd">The graphics device that owns this operation.</param>
     internal BackendInfoMetal(MtlGraphicsDevice gd) {
         this.gd = gd;
         this.FeatureSet = new ReadOnlyCollection<MTLFeatureSet>(this.gd.MetalFeatures.ToArray());
@@ -31,7 +31,7 @@ public class BackendInfoMetal {
     public ReadOnlyCollection<MTLFeatureSet> FeatureSet { get; }
 
     /// <summary>
-    /// Stores the value associated with <c>MaxFeatureSet</c>.
+    /// Stores the max feature set state used by this instance.
     /// </summary>
     public MTLFeatureSet MaxFeatureSet => this.gd.MetalFeatures.MaxFeatureSet;
 }

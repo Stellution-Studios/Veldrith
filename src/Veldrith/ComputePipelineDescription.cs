@@ -9,13 +9,11 @@ public struct ComputePipelineDescription : IEquatable<ComputePipelineDescription
 
     /// <summary>
     /// The compute <see cref="Shader" /> to be used in the Pipeline. This must be a Shader with
-    /// <see cref="ShaderStages.Compute" />.
     /// </summary>
     public Shader ComputeShader;
 
     /// <summary>
     /// An array of <see cref="ResourceLayout" />, which controls the layout of shader resoruces in the
-    /// <see cref="Pipeline" />.
     /// </summary>
     public ResourceLayout[] ResourceLayouts;
 
@@ -36,20 +34,17 @@ public struct ComputePipelineDescription : IEquatable<ComputePipelineDescription
 
     /// <summary>
     /// An array of <see cref="SpecializationConstant" /> used to override specialization constants in the created
-    /// <see cref="Pipeline" />. Each element in this array describes a single ID-value pair, which will be matched with
-    /// the
-    /// constants specified in the <see cref="Shader" />.
     /// </summary>
     public SpecializationConstant[] Specializations;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ComputePipelineDescription" /> type.
     /// </summary>
-    /// <param name="computeShader">Specifies the value of <paramref name="computeShader" />.</param>
-    /// <param name="resourceLayouts">Specifies the value of <paramref name="resourceLayouts" />.</param>
-    /// <param name="threadGroupSizeX">Specifies the value of <paramref name="threadGroupSizeX" />.</param>
-    /// <param name="threadGroupSizeY">Specifies the value of <paramref name="threadGroupSizeY" />.</param>
-    /// <param name="threadGroupSizeZ">Specifies the value of <paramref name="threadGroupSizeZ" />.</param>
+    /// <param name="computeShader">The compute shader value used by this operation.</param>
+    /// <param name="resourceLayouts">The resource layout used by this operation.</param>
+    /// <param name="threadGroupSizeX">The thread group size x value used by this operation.</param>
+    /// <param name="threadGroupSizeY">The thread group size y value used by this operation.</param>
+    /// <param name="threadGroupSizeZ">The thread group size z value used by this operation.</param>
     public ComputePipelineDescription(Shader computeShader, ResourceLayout[] resourceLayouts, uint threadGroupSizeX, uint threadGroupSizeY, uint threadGroupSizeZ) {
         this.ComputeShader = computeShader;
         this.ResourceLayouts = resourceLayouts;
@@ -62,11 +57,11 @@ public struct ComputePipelineDescription : IEquatable<ComputePipelineDescription
     /// <summary>
     /// Initializes a new instance of the <see cref="ComputePipelineDescription" /> type.
     /// </summary>
-    /// <param name="shaderStage">Specifies the value of <paramref name="shaderStage" />.</param>
-    /// <param name="resourceLayout">Specifies the value of <paramref name="resourceLayout" />.</param>
-    /// <param name="threadGroupSizeX">Specifies the value of <paramref name="threadGroupSizeX" />.</param>
-    /// <param name="threadGroupSizeY">Specifies the value of <paramref name="threadGroupSizeY" />.</param>
-    /// <param name="threadGroupSizeZ">Specifies the value of <paramref name="threadGroupSizeZ" />.</param>
+    /// <param name="shaderStage">The shader stage value used by this operation.</param>
+    /// <param name="resourceLayout">The resource layout value used by this operation.</param>
+    /// <param name="threadGroupSizeX">The thread group size x value used by this operation.</param>
+    /// <param name="threadGroupSizeY">The thread group size y value used by this operation.</param>
+    /// <param name="threadGroupSizeZ">The thread group size z value used by this operation.</param>
     public ComputePipelineDescription(Shader shaderStage, ResourceLayout resourceLayout, uint threadGroupSizeX, uint threadGroupSizeY, uint threadGroupSizeZ) {
         this.ComputeShader = shaderStage;
         this.ResourceLayouts = new[] { resourceLayout };
@@ -79,12 +74,12 @@ public struct ComputePipelineDescription : IEquatable<ComputePipelineDescription
     /// <summary>
     /// Initializes a new instance of the <see cref="ComputePipelineDescription" /> type.
     /// </summary>
-    /// <param name="shaderStage">Specifies the value of <paramref name="shaderStage" />.</param>
-    /// <param name="resourceLayout">Specifies the value of <paramref name="resourceLayout" />.</param>
-    /// <param name="threadGroupSizeX">Specifies the value of <paramref name="threadGroupSizeX" />.</param>
-    /// <param name="threadGroupSizeY">Specifies the value of <paramref name="threadGroupSizeY" />.</param>
-    /// <param name="threadGroupSizeZ">Specifies the value of <paramref name="threadGroupSizeZ" />.</param>
-    /// <param name="specializations">Specifies the value of <paramref name="specializations" />.</param>
+    /// <param name="shaderStage">The shader stage value used by this operation.</param>
+    /// <param name="resourceLayout">The resource layout value used by this operation.</param>
+    /// <param name="threadGroupSizeX">The thread group size x value used by this operation.</param>
+    /// <param name="threadGroupSizeY">The thread group size y value used by this operation.</param>
+    /// <param name="threadGroupSizeZ">The thread group size z value used by this operation.</param>
+    /// <param name="specializations">The specializations value used by this operation.</param>
     public ComputePipelineDescription(Shader shaderStage, ResourceLayout resourceLayout, uint threadGroupSizeX, uint threadGroupSizeY, uint threadGroupSizeZ, SpecializationConstant[] specializations) {
         this.ComputeShader = shaderStage;
         this.ResourceLayouts = new[] { resourceLayout };
@@ -95,10 +90,10 @@ public struct ComputePipelineDescription : IEquatable<ComputePipelineDescription
     }
 
     /// <summary>
-    /// Executes the Equals operation.
+    /// Determines whether this instance is equal to the specified value.
     /// </summary>
-    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
-    /// <returns>Returns the result produced by the Equals operation.</returns>
+    /// <param name="other">The value to compare against.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public bool Equals(ComputePipelineDescription other) {
         return this.ComputeShader.Equals(other.ComputeShader)
                && Util.ArrayEquals(this.ResourceLayouts, other.ResourceLayouts)
@@ -108,9 +103,9 @@ public struct ComputePipelineDescription : IEquatable<ComputePipelineDescription
     }
 
     /// <summary>
-    /// Executes the GetHashCode operation.
+    /// Computes a hash code for this instance.
     /// </summary>
-    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(this.ComputeShader.GetHashCode(), HashHelper.Array(this.ResourceLayouts), this.ThreadGroupSizeX.GetHashCode(), this.ThreadGroupSizeY.GetHashCode(), this.ThreadGroupSizeZ.GetHashCode());
     }

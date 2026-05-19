@@ -8,63 +8,62 @@ using static Vulkan.VulkanNative;
 namespace Veldrith.Vk;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the VkDeviceMemoryManager class.
+/// Provides the Vulkan backend implementation for VkDeviceMemoryManager.
 /// </summary>
 internal unsafe class VkDeviceMemoryManager : IDisposable {
 
     /// <summary>
-    /// Stores the value associated with <c>_min_dedicated_allocation_size_dynamic</c>.
+    /// Stores the min dedicated allocation size dynamic value used during command execution.
     /// </summary>
     private const ulong _min_dedicated_allocation_size_dynamic = 1024 * 1024 * 64;
 
     /// <summary>
-    /// Stores the value associated with <c>_min_dedicated_allocation_size_non_dynamic</c>.
+    /// Stores the min dedicated allocation size non dynamic value used during command execution.
     /// </summary>
     private const ulong _min_dedicated_allocation_size_non_dynamic = 1024 * 1024 * 256;
 
     /// <summary>
-    /// Stores the value associated with <c>_allocatorsByMemoryType</c>.
+    /// Stores the allocators by memory type state used by this instance.
     /// </summary>
     private readonly Dictionary<uint, ChunkAllocatorSet> _allocatorsByMemoryType = new();
 
     /// <summary>
-    /// Stores the value associated with <c>_allocatorsByMemoryTypeUnmapped</c>.
+    /// Stores the allocators by memory type unmapped state used by this instance.
     /// </summary>
     private readonly Dictionary<uint, ChunkAllocatorSet> _allocatorsByMemoryTypeUnmapped = new();
 
     /// <summary>
-    /// Stores the value associated with <c>bufferImageGranularity</c>.
+    /// Stores the buffer image granularity state used by this instance.
     /// </summary>
     private readonly ulong bufferImageGranularity;
 
     /// <summary>
-    /// Stores the value associated with <c>device</c>.
+    /// Stores the device state used by this instance.
     /// </summary>
     private readonly VkDevice device;
 
     /// <summary>
-    /// Stores the value associated with <c>getBufferMemoryRequirements2</c>.
+    /// Stores the get buffer memory requirements2 state used by this instance.
     /// </summary>
     private readonly VkGetBufferMemoryRequirements2T getBufferMemoryRequirements2;
 
     /// <summary>
-    /// Stores the value associated with <c>getImageMemoryRequirements2</c>.
+    /// Stores the get image memory requirements2 state used by this instance.
     /// </summary>
     private readonly VkGetImageMemoryRequirements2T getImageMemoryRequirements2;
 
     /// <summary>
     /// Creates and returns a new instance.
     /// </summary>
-    /// <returns>Returns the result produced by the new operation.</returns>
     private readonly object @lock = new();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VkDeviceMemoryManager" /> type.
     /// </summary>
-    /// <param name="device">Specifies the value of <paramref name="device" />.</param>
-    /// <param name="bufferImageGranularity">Specifies the value of <paramref name="bufferImageGranularity" />.</param>
-    /// <param name="getBufferMemoryRequirements2">Specifies the value of <paramref name="getBufferMemoryRequirements2" />.</param>
-    /// <param name="getImageMemoryRequirements2">Specifies the value of <paramref name="getImageMemoryRequirements2" />.</param>
+    /// <param name="device">The device value used by this operation.</param>
+    /// <param name="bufferImageGranularity">The buffer image granularity value used by this operation.</param>
+    /// <param name="getBufferMemoryRequirements2">The get buffer memory requirements2 value used by this operation.</param>
+    /// <param name="getImageMemoryRequirements2">The get image memory requirements2 value used by this operation.</param>
     public VkDeviceMemoryManager(VkDevice device, ulong bufferImageGranularity, VkGetBufferMemoryRequirements2T getBufferMemoryRequirements2, VkGetImageMemoryRequirements2T getImageMemoryRequirements2) {
         this.device = device;
         this.bufferImageGranularity = bufferImageGranularity;
@@ -75,7 +74,7 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
     #region Disposal
 
     /// <summary>
-    /// Executes the Dispose operation.
+    /// Releases resources held by this instance.
     /// </summary>
     public void Dispose() {
         foreach (KeyValuePair<uint, ChunkAllocatorSet> kvp in this._allocatorsByMemoryType) {
@@ -90,32 +89,32 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
     #endregion
 
     /// <summary>
-    /// Executes the Allocate operation.
+    /// Executes the allocate logic for this backend.
     /// </summary>
-    /// <param name="memProperties">Specifies the value of <paramref name="memProperties" />.</param>
-    /// <param name="memoryTypeBits">Specifies the value of <paramref name="memoryTypeBits" />.</param>
-    /// <param name="flags">Specifies the value of <paramref name="flags" />.</param>
-    /// <param name="persistentMapped">Specifies the value of <paramref name="persistentMapped" />.</param>
-    /// <param name="size">Specifies the value of <paramref name="size" />.</param>
-    /// <param name="alignment">Specifies the value of <paramref name="alignment" />.</param>
-    /// <returns>Returns the result produced by the Allocate operation.</returns>
+    /// <param name="memProperties">The mem properties value used by this operation.</param>
+    /// <param name="memoryTypeBits">The memory type bits value used by this operation.</param>
+    /// <param name="flags">The flags value used by this operation.</param>
+    /// <param name="persistentMapped">The persistent mapped value used by this operation.</param>
+    /// <param name="size">The size, in bytes, used by this operation.</param>
+    /// <param name="alignment">The alignment value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public VkMemoryBlock Allocate(VkPhysicalDeviceMemoryProperties memProperties, uint memoryTypeBits, VkMemoryPropertyFlags flags, bool persistentMapped, ulong size, ulong alignment) {
         return this.Allocate(memProperties, memoryTypeBits, flags, persistentMapped, size, alignment, false, VkImage.Null, Vulkan.VkBuffer.Null);
     }
 
     /// <summary>
-    /// Executes the Allocate operation.
+    /// Executes the allocate logic for this backend.
     /// </summary>
-    /// <param name="memProperties">Specifies the value of <paramref name="memProperties" />.</param>
-    /// <param name="memoryTypeBits">Specifies the value of <paramref name="memoryTypeBits" />.</param>
-    /// <param name="flags">Specifies the value of <paramref name="flags" />.</param>
-    /// <param name="persistentMapped">Specifies the value of <paramref name="persistentMapped" />.</param>
-    /// <param name="size">Specifies the value of <paramref name="size" />.</param>
-    /// <param name="alignment">Specifies the value of <paramref name="alignment" />.</param>
-    /// <param name="dedicated">Specifies the value of <paramref name="dedicated" />.</param>
-    /// <param name="dedicatedImage">Specifies the value of <paramref name="dedicatedImage" />.</param>
-    /// <param name="dedicatedBuffer">Specifies the value of <paramref name="dedicatedBuffer" />.</param>
-    /// <returns>Returns the result produced by the Allocate operation.</returns>
+    /// <param name="memProperties">The mem properties value used by this operation.</param>
+    /// <param name="memoryTypeBits">The memory type bits value used by this operation.</param>
+    /// <param name="flags">The flags value used by this operation.</param>
+    /// <param name="persistentMapped">The persistent mapped value used by this operation.</param>
+    /// <param name="size">The size, in bytes, used by this operation.</param>
+    /// <param name="alignment">The alignment value used by this operation.</param>
+    /// <param name="dedicated">The dedicated value used by this operation.</param>
+    /// <param name="dedicatedImage">The dedicated image value used by this operation.</param>
+    /// <param name="dedicatedBuffer">The dedicated buffer value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public VkMemoryBlock Allocate(VkPhysicalDeviceMemoryProperties memProperties, uint memoryTypeBits, VkMemoryPropertyFlags flags, bool persistentMapped, ulong size, ulong alignment, bool dedicated, VkImage dedicatedImage, Vulkan.VkBuffer dedicatedBuffer) {
         if (dedicated) {
             if (dedicatedImage != VkImage.Null && this.getImageMemoryRequirements2 != null) {
@@ -190,9 +189,9 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
     }
 
     /// <summary>
-    /// Executes the Free operation.
+    /// Executes the free logic for this backend.
     /// </summary>
-    /// <param name="block">Specifies the value of <paramref name="block" />.</param>
+    /// <param name="block">The block value used by this operation.</param>
     public void Free(VkMemoryBlock block) {
         lock (this.@lock) {
             if (block.DedicatedAllocation) {
@@ -205,10 +204,10 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
     }
 
     /// <summary>
-    /// Executes the Map operation.
+    /// Maps the value resource for CPU access.
     /// </summary>
-    /// <param name="memoryBlock">Specifies the value of <paramref name="memoryBlock" />.</param>
-    /// <returns>Returns the result produced by the Map operation.</returns>
+    /// <param name="memoryBlock">The memory block value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal IntPtr Map(VkMemoryBlock memoryBlock) {
         void* ret;
         VkResult result = vkMapMemory(this.device, memoryBlock.DeviceMemory, memoryBlock.Offset, memoryBlock.Size, 0, &ret);
@@ -217,11 +216,11 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
     }
 
     /// <summary>
-    /// Executes the GetAllocator operation.
+    /// Gets the allocator value.
     /// </summary>
-    /// <param name="memoryTypeIndex">Specifies the value of <paramref name="memoryTypeIndex" />.</param>
-    /// <param name="persistentMapped">Specifies the value of <paramref name="persistentMapped" />.</param>
-    /// <returns>Returns the result produced by the GetAllocator operation.</returns>
+    /// <param name="memoryTypeIndex">The memory type index value used by this operation.</param>
+    /// <param name="persistentMapped">The persistent mapped value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private ChunkAllocatorSet GetAllocator(uint memoryTypeIndex, bool persistentMapped) {
         ChunkAllocatorSet ret;
 
@@ -242,36 +241,36 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
     }
 
     /// <summary>
-    /// Defines the behavior and responsibilities of the ChunkAllocatorSet class.
+    /// Represents the ChunkAllocatorSet type used by the graphics runtime.
     /// </summary>
     private class ChunkAllocatorSet : IDisposable {
 
         /// <summary>
-        /// Stores the value associated with <c>_allocators</c>.
+        /// Stores the allocators state used by this instance.
         /// </summary>
         private readonly List<ChunkAllocator> _allocators = new();
 
         /// <summary>
-        /// Stores the value associated with <c>device</c>.
+        /// Stores the device state used by this instance.
         /// </summary>
         private readonly VkDevice device;
 
         /// <summary>
-        /// Stores the value associated with <c>memoryTypeIndex</c>.
+        /// Stores the memory type index value used during command execution.
         /// </summary>
         private readonly uint memoryTypeIndex;
 
         /// <summary>
-        /// Stores the value associated with <c>persistentMapped</c>.
+        /// Stores the persistent mapped state used by this instance.
         /// </summary>
         private readonly bool persistentMapped;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ChunkAllocatorSet" /> type.
         /// </summary>
-        /// <param name="device">Specifies the value of <paramref name="device" />.</param>
-        /// <param name="memoryTypeIndex">Specifies the value of <paramref name="memoryTypeIndex" />.</param>
-        /// <param name="persistentMapped">Specifies the value of <paramref name="persistentMapped" />.</param>
+        /// <param name="device">The device value used by this operation.</param>
+        /// <param name="memoryTypeIndex">The memory type index value used by this operation.</param>
+        /// <param name="persistentMapped">The persistent mapped value used by this operation.</param>
         public ChunkAllocatorSet(VkDevice device, uint memoryTypeIndex, bool persistentMapped) {
             this.device = device;
             this.memoryTypeIndex = memoryTypeIndex;
@@ -281,7 +280,7 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
         #region Disposal
 
         /// <summary>
-        /// Executes the Dispose operation.
+        /// Releases resources held by this instance.
         /// </summary>
         public void Dispose() {
             foreach (ChunkAllocator allocator in this._allocators) {
@@ -292,12 +291,12 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
         #endregion
 
         /// <summary>
-        /// Executes the Allocate operation.
+        /// Executes the allocate logic for this backend.
         /// </summary>
-        /// <param name="size">Specifies the value of <paramref name="size" />.</param>
-        /// <param name="alignment">Specifies the value of <paramref name="alignment" />.</param>
-        /// <param name="block">Specifies the value of <paramref name="block" />.</param>
-        /// <returns>Returns the result produced by the Allocate operation.</returns>
+        /// <param name="size">The size, in bytes, used by this operation.</param>
+        /// <param name="alignment">The alignment value used by this operation.</param>
+        /// <param name="block">The block value used by this operation.</param>
+        /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
         public bool Allocate(ulong size, ulong alignment, out VkMemoryBlock block) {
             foreach (ChunkAllocator allocator in this._allocators) {
                 if (allocator.Allocate(size, alignment, out block)) {
@@ -311,9 +310,9 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
         }
 
         /// <summary>
-        /// Executes the Free operation.
+        /// Executes the free logic for this backend.
         /// </summary>
-        /// <param name="block">Specifies the value of <paramref name="block" />.</param>
+        /// <param name="block">The block value used by this operation.</param>
         public void Free(VkMemoryBlock block) {
             foreach (ChunkAllocator chunk in this._allocators) {
                 if (chunk.Memory == block.DeviceMemory) {
@@ -324,56 +323,56 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
     }
 
     /// <summary>
-    /// Defines the behavior and responsibilities of the ChunkAllocator class.
+    /// Represents the ChunkAllocator type used by the graphics runtime.
     /// </summary>
     private class ChunkAllocator : IDisposable {
 
         /// <summary>
-        /// Stores the value associated with <c>Memory</c>.
+        /// Stores the memory state used by this instance.
         /// </summary>
         public VkDeviceMemory Memory => this.memory;
 
         /// <summary>
-        /// Stores the value associated with <c>_persistent_mapped_chunk_size</c>.
+        /// Stores the persistent mapped chunk size value used during command execution.
         /// </summary>
         private const ulong _persistent_mapped_chunk_size = 1024 * 1024 * 64;
 
         /// <summary>
-        /// Stores the value associated with <c>_unmapped_chunk_size</c>.
+        /// Stores the unmapped chunk size value used during command execution.
         /// </summary>
         private const ulong _unmapped_chunk_size = 1024 * 1024 * 256;
 
         /// <summary>
-        /// Stores the value associated with <c>device</c>.
+        /// Stores the device state used by this instance.
         /// </summary>
         private readonly VkDevice device;
 
         /// <summary>
-        /// Stores the value associated with <c>memoryTypeIndex</c>.
+        /// Stores the memory type index value used during command execution.
         /// </summary>
         private readonly uint memoryTypeIndex;
 
         /// <summary>
-        /// Stores the value associated with <c>_freeBlocks</c>.
+        /// Synchronizes access to the free blocks state.
         /// </summary>
         private readonly List<VkMemoryBlock> _freeBlocks = new();
 
         /// <summary>
-        /// Stores the value associated with <c>memory</c>.
+        /// Stores the memory state used by this instance.
         /// </summary>
         private readonly VkDeviceMemory memory;
 
         /// <summary>
-        /// Stores the value associated with <c>mappedPtr</c>.
+        /// Stores the mapped ptr state used by this instance.
         /// </summary>
         private readonly void* mappedPtr;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ChunkAllocator" /> type.
         /// </summary>
-        /// <param name="device">Specifies the value of <paramref name="device" />.</param>
-        /// <param name="memoryTypeIndex">Specifies the value of <paramref name="memoryTypeIndex" />.</param>
-        /// <param name="persistentMapped">Specifies the value of <paramref name="persistentMapped" />.</param>
+        /// <param name="device">The device value used by this operation.</param>
+        /// <param name="memoryTypeIndex">The memory type index value used by this operation.</param>
+        /// <param name="persistentMapped">The persistent mapped value used by this operation.</param>
         public ChunkAllocator(VkDevice device, uint memoryTypeIndex, bool persistentMapped) {
             this.device = device;
             this.memoryTypeIndex = memoryTypeIndex;
@@ -401,7 +400,7 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
         #region Disposal
 
         /// <summary>
-        /// Executes the Dispose operation.
+        /// Releases resources held by this instance.
         /// </summary>
         public void Dispose() {
             vkFreeMemory(this.device, this.memory, null);
@@ -410,12 +409,12 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
         #endregion
 
         /// <summary>
-        /// Executes the Allocate operation.
+        /// Executes the allocate logic for this backend.
         /// </summary>
-        /// <param name="size">Specifies the value of <paramref name="size" />.</param>
-        /// <param name="alignment">Specifies the value of <paramref name="alignment" />.</param>
-        /// <param name="block">Specifies the value of <paramref name="block" />.</param>
-        /// <returns>Returns the result produced by the Allocate operation.</returns>
+        /// <param name="size">The size, in bytes, used by this operation.</param>
+        /// <param name="alignment">The alignment value used by this operation.</param>
+        /// <param name="block">The block value used by this operation.</param>
+        /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
         public bool Allocate(ulong size, ulong alignment, out VkMemoryBlock block) {
             checked {
                 for (int i = 0; i < this._freeBlocks.Count; i++) {
@@ -461,9 +460,9 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
         }
 
         /// <summary>
-        /// Executes the Free operation.
+        /// Executes the free logic for this backend.
         /// </summary>
-        /// <param name="block">Specifies the value of <paramref name="block" />.</param>
+        /// <param name="block">The block value used by this operation.</param>
         public void Free(VkMemoryBlock block) {
             for (int i = 0; i < this._freeBlocks.Count; i++) {
                 if (this._freeBlocks[i].Offset > block.Offset) {
@@ -483,7 +482,7 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
         }
 
         /// <summary>
-        /// Executes the MergeContiguousBlocks operation.
+        /// Executes the merge contiguous blocks logic for this backend.
         /// </summary>
         private void MergeContiguousBlocks() {
             int contiguousLength = 1;
@@ -508,14 +507,14 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
 #if DEBUG
 
         /// <summary>
-        /// Stores the value associated with <c>allocatedBlocks</c>.
+        /// Executes the list logic for this backend.
         /// </summary>
         private readonly List<VkMemoryBlock> allocatedBlocks = new List<VkMemoryBlock>();
 
         /// <summary>
-        /// Executes the checkAllocatedBlock operation.
+        /// Executes the check allocated block logic for this backend.
         /// </summary>
-        /// <param name="block">Specifies the value of <paramref name="block" />.</param>
+        /// <param name="block">The block value used by this operation.</param>
         private void checkAllocatedBlock(VkMemoryBlock block) {
             foreach (var oldBlock in allocatedBlocks) Debug.Assert(!blocksOverlap(block, oldBlock), "Allocated blocks have overlapped.");
 
@@ -523,11 +522,11 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
         }
 
         /// <summary>
-        /// Executes the blocksOverlap operation.
+        /// Executes the blocks overlap logic for this backend.
         /// </summary>
-        /// <param name="first">Specifies the value of <paramref name="first" />.</param>
-        /// <param name="second">Specifies the value of <paramref name="second" />.</param>
-        /// <returns>Returns the result produced by the blocksOverlap operation.</returns>
+        /// <param name="first">The first value used by this operation.</param>
+        /// <param name="second">The second value used by this operation.</param>
+        /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
         private bool blocksOverlap(VkMemoryBlock first, VkMemoryBlock second) {
             ulong firstStart = first.Offset;
             ulong firstEnd = first.Offset + first.Size;
@@ -541,9 +540,9 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
         }
 
         /// <summary>
-        /// Executes the removeAllocatedBlock operation.
+        /// Executes the remove allocated block logic for this backend.
         /// </summary>
-        /// <param name="block">Specifies the value of <paramref name="block" />.</param>
+        /// <param name="block">The block value used by this operation.</param>
         private void removeAllocatedBlock(VkMemoryBlock block) {
             Debug.Assert(allocatedBlocks.Remove(block), "Unable to remove a supposedly allocated block.");
         }
@@ -554,42 +553,42 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
 [DebuggerDisplay("[Mem:{DeviceMemory.Handle}] Off:{Offset}, Size:{Size} End:{Offset+Size}")]
 
 /// <summary>
-/// Defines the data layout and behavior of the VkMemoryBlock struct.
+/// Provides the Vulkan backend implementation for VkMemoryBlock.
 /// </summary>
 internal unsafe struct VkMemoryBlock : IEquatable<VkMemoryBlock> {
 
     /// <summary>
-    /// Stores the value associated with <c>MemoryTypeIndex</c>.
+    /// Stores the memory type index value used during command execution.
     /// </summary>
     public readonly uint MemoryTypeIndex;
 
     /// <summary>
-    /// Stores the value associated with <c>DeviceMemory</c>.
+    /// Stores the device memory state used by this instance.
     /// </summary>
     public readonly VkDeviceMemory DeviceMemory;
 
     /// <summary>
-    /// Stores the value associated with <c>BaseMappedPointer</c>.
+    /// Stores the base mapped pointer state used by this instance.
     /// </summary>
     public readonly void* BaseMappedPointer;
 
     /// <summary>
-    /// Stores the value associated with <c>DedicatedAllocation</c>.
+    /// Stores the dedicated allocation state used by this instance.
     /// </summary>
     public readonly bool DedicatedAllocation;
 
     /// <summary>
-    /// Stores the value associated with <c>Offset</c>.
+    /// Stores the offset value used during command execution.
     /// </summary>
     public ulong Offset;
 
     /// <summary>
-    /// Stores the value associated with <c>Size</c>.
+    /// Stores the size value used during command execution.
     /// </summary>
     public ulong Size;
 
     /// <summary>
-    /// Stores the value associated with <c>BlockMappedPointer</c>.
+    /// Executes the value logic for this backend.
     /// </summary>
     public void* BlockMappedPointer => (byte*)this.BaseMappedPointer + this.Offset;
 
@@ -606,12 +605,12 @@ internal unsafe struct VkMemoryBlock : IEquatable<VkMemoryBlock> {
     /// <summary>
     /// Initializes a new instance of the <see cref="VkMemoryBlock" /> type.
     /// </summary>
-    /// <param name="memory">Specifies the value of <paramref name="memory" />.</param>
-    /// <param name="offset">Specifies the value of <paramref name="offset" />.</param>
-    /// <param name="size">Specifies the value of <paramref name="size" />.</param>
-    /// <param name="memoryTypeIndex">Specifies the value of <paramref name="memoryTypeIndex" />.</param>
-    /// <param name="mappedPtr">Specifies the value of <paramref name="mappedPtr" />.</param>
-    /// <param name="dedicatedAllocation">Specifies the value of <paramref name="dedicatedAllocation" />.</param>
+    /// <param name="memory">The memory value used by this operation.</param>
+    /// <param name="offset">The byte offset used by this operation.</param>
+    /// <param name="size">The size, in bytes, used by this operation.</param>
+    /// <param name="memoryTypeIndex">The memory type index value used by this operation.</param>
+    /// <param name="mappedPtr">The mapped ptr value used by this operation.</param>
+    /// <param name="dedicatedAllocation">The dedicated allocation value used by this operation.</param>
     public VkMemoryBlock(VkDeviceMemory memory, ulong offset, ulong size, uint memoryTypeIndex, void* mappedPtr, bool dedicatedAllocation) {
         this.DeviceMemory = memory;
         this.Offset = offset;
@@ -622,10 +621,10 @@ internal unsafe struct VkMemoryBlock : IEquatable<VkMemoryBlock> {
     }
 
     /// <summary>
-    /// Executes the Equals operation.
+    /// Determines whether this instance is equal to the specified value.
     /// </summary>
-    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
-    /// <returns>Returns the result produced by the Equals operation.</returns>
+    /// <param name="other">The value to compare against.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public bool Equals(VkMemoryBlock other) {
         return this.DeviceMemory.Equals(other.DeviceMemory)
                && this.Offset.Equals(other.Offset)

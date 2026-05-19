@@ -14,11 +14,6 @@ public struct ShaderDescription : IEquatable<ShaderDescription> {
 
     /// <summary>
     /// An array containing the raw shader bytes.
-    /// For Direct3D12 shaders, this array must contain HLSL bytecode or HLSL text.
-    /// For Vulkan shaders, this array must contain SPIR-V bytecode.
-    /// For Metal shaders, this array must contain Metal bitcode (a "metallib" file), or UTF8-encoded Metal shading
-    /// language
-    /// text.
     /// </summary>
     public byte[] ShaderBytes;
 
@@ -29,17 +24,15 @@ public struct ShaderDescription : IEquatable<ShaderDescription> {
 
     /// <summary>
     /// Indicates whether the shader should be debuggable. This flag only has an effect if <see cref="ShaderBytes" />
-    /// contains
-    /// shader code that will be compiled.
     /// </summary>
     public bool Debug;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ShaderDescription" /> type.
     /// </summary>
-    /// <param name="stage">Specifies the value of <paramref name="stage" />.</param>
-    /// <param name="shaderBytes">Specifies the value of <paramref name="shaderBytes" />.</param>
-    /// <param name="entryPoint">Specifies the value of <paramref name="entryPoint" />.</param>
+    /// <param name="stage">The stage value used by this operation.</param>
+    /// <param name="shaderBytes">The shader bytes value used by this operation.</param>
+    /// <param name="entryPoint">The entry point value used by this operation.</param>
     public ShaderDescription(ShaderStages stage, byte[] shaderBytes, string entryPoint) {
         this.Stage = stage;
         this.ShaderBytes = shaderBytes;
@@ -50,10 +43,10 @@ public struct ShaderDescription : IEquatable<ShaderDescription> {
     /// <summary>
     /// Initializes a new instance of the <see cref="ShaderDescription" /> type.
     /// </summary>
-    /// <param name="stage">Specifies the value of <paramref name="stage" />.</param>
-    /// <param name="shaderBytes">Specifies the value of <paramref name="shaderBytes" />.</param>
-    /// <param name="entryPoint">Specifies the value of <paramref name="entryPoint" />.</param>
-    /// <param name="debug">Specifies the value of <paramref name="debug" />.</param>
+    /// <param name="stage">The stage value used by this operation.</param>
+    /// <param name="shaderBytes">The shader bytes value used by this operation.</param>
+    /// <param name="entryPoint">The entry point value used by this operation.</param>
+    /// <param name="debug">The debug value used by this operation.</param>
     public ShaderDescription(ShaderStages stage, byte[] shaderBytes, string entryPoint, bool debug) {
         this.Stage = stage;
         this.ShaderBytes = shaderBytes;
@@ -62,10 +55,10 @@ public struct ShaderDescription : IEquatable<ShaderDescription> {
     }
 
     /// <summary>
-    /// Executes the Equals operation.
+    /// Determines whether this instance is equal to the specified value.
     /// </summary>
-    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
-    /// <returns>Returns the result produced by the Equals operation.</returns>
+    /// <param name="other">The value to compare against.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public bool Equals(ShaderDescription other) {
         return this.Stage == other.Stage
                && this.ShaderBytes == other.ShaderBytes
@@ -74,9 +67,9 @@ public struct ShaderDescription : IEquatable<ShaderDescription> {
     }
 
     /// <summary>
-    /// Executes the GetHashCode operation.
+    /// Computes a hash code for this instance.
     /// </summary>
-    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine((int)this.Stage, this.ShaderBytes.GetHashCode(), this.EntryPoint.GetHashCode(), this.Debug.GetHashCode());
     }

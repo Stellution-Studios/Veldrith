@@ -3,20 +3,20 @@ using Veldrith.MetalBindings;
 namespace Veldrith.MTL;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the MtlFramebuffer class.
+/// Provides the Metal backend implementation for MtlFramebuffer.
 /// </summary>
 internal class MtlFramebuffer : Framebuffer {
 
     /// <summary>
-    /// Stores the value associated with <c>_disposed</c>.
+    /// Stores the disposed state used by this instance.
     /// </summary>
     private bool _disposed;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MtlFramebuffer" /> type.
     /// </summary>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <param name="gd">The graphics device that owns this operation.</param>
+    /// <param name="description">The description used to configure this operation.</param>
     public MtlFramebuffer(MtlGraphicsDevice gd, ref FramebufferDescription description) : base(description.DepthTarget, description.ColorTargets) { }
 
     /// <summary>
@@ -37,7 +37,7 @@ internal class MtlFramebuffer : Framebuffer {
     #region Disposal
 
     /// <summary>
-    /// Executes the Dispose operation.
+    /// Releases resources held by this instance.
     /// </summary>
     public override void Dispose() {
         this._disposed = true;
@@ -46,9 +46,9 @@ internal class MtlFramebuffer : Framebuffer {
     #endregion
 
     /// <summary>
-    /// Executes the CreateRenderPassDescriptor operation.
+    /// Creates the render pass descriptor instance used by this backend.
     /// </summary>
-    /// <returns>Returns the result produced by the CreateRenderPassDescriptor operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public MTLRenderPassDescriptor CreateRenderPassDescriptor() {
         MTLRenderPassDescriptor ret = MTLRenderPassDescriptor.New();
 

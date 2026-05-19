@@ -9,7 +9,6 @@ public abstract class Fence : IDeviceResource, IDisposable {
 
     /// <summary>
     /// Gets a value indicating whether the Fence is currently signaled. A Fence is signaled after a CommandList finishes
-    /// execution after it was submitted with a Fence instance.
     /// </summary>
     public abstract bool Signaled { get; }
 
@@ -20,21 +19,20 @@ public abstract class Fence : IDeviceResource, IDisposable {
 
     /// <summary>
     /// A string identifying this instance. Can be used to differentiate between objects in graphics debuggers and other
-    /// tools.
     /// </summary>
     public abstract string Name { get; set; }
 
     #region Disposal
 
     /// <summary>
-    /// Executes the Dispose operation.
+    /// Releases resources held by this instance.
     /// </summary>
     public abstract void Dispose();
 
     #endregion
 
     /// <summary>
-    /// Executes the Reset operation.
+    /// Resets this instance to its initial state.
     /// </summary>
     public abstract void Reset();
 }

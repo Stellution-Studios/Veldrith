@@ -5,41 +5,40 @@ using static Vulkan.VulkanNative;
 namespace Veldrith.Vk;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the VkResourceSet class.
+/// Provides the Vulkan backend implementation for VkResourceSet.
 /// </summary>
 internal unsafe class VkResourceSet : ResourceSet {
 
     /// <summary>
-    /// Stores the value associated with <c>_descriptorAllocationToken</c>.
+    /// Stores the descriptor allocation token state used by this instance.
     /// </summary>
     private readonly DescriptorAllocationToken _descriptorAllocationToken;
 
     /// <summary>
-    /// Stores the value associated with <c>_descriptorCounts</c>.
+    /// Stores the descriptor counts value used during command execution.
     /// </summary>
     private readonly DescriptorResourceCounts _descriptorCounts;
 
     /// <summary>
-    /// Stores the value associated with <c>gd</c>.
+    /// Stores the gd state used by this instance.
     /// </summary>
     private readonly VkGraphicsDevice gd;
 
     /// <summary>
-    /// Stores the value associated with <c>_destroyed</c>.
+    /// Stores the destroyed state used by this instance.
     /// </summary>
     private bool _destroyed;
 
     /// <summary>
-    /// Stores the value associated with <c>_name</c>.
+    /// Stores the human-readable name associated with this instance.
     /// </summary>
     private string _name;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VkResourceSet" /> class.
     /// </summary>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
-    /// <returns>Returns the result produced by the base operation.</returns>
+    /// <param name="gd">The graphics device that owns this operation.</param>
+    /// <param name="description">The description used to configure this operation.</param>
     public VkResourceSet(VkGraphicsDevice gd, ref ResourceSetDescription description) : base(ref description) {
         this.gd = gd;
         this.RefCount = new ResourceRefCount(this.DisposeCore);
@@ -104,17 +103,17 @@ internal unsafe class VkResourceSet : ResourceSet {
     }
 
     /// <summary>
-    /// Stores the value associated with <c>DescriptorSet</c>.
+    /// Stores the descriptor set state used by this instance.
     /// </summary>
     public VkDescriptorSet DescriptorSet => this._descriptorAllocationToken.Set;
 
     /// <summary>
-    /// Stores the value associated with <c>get</c>.
+    /// Stores the sampled textures collection used by this instance.
     /// </summary>
     public List<VkTexture> SampledTextures { get; } = new();
 
     /// <summary>
-    /// Stores the value associated with <c>get</c>.
+    /// Stores the storage textures collection used by this instance.
     /// </summary>
     public List<VkTexture> StorageTextures { get; } = new();
 
@@ -124,7 +123,7 @@ internal unsafe class VkResourceSet : ResourceSet {
     public ResourceRefCount RefCount { get; }
 
     /// <summary>
-    /// Stores the value associated with <c>get</c>.
+    /// Stores the ref counts value used during command processing.
     /// </summary>
     public List<ResourceRefCount> RefCounts { get; } = new();
 
@@ -147,7 +146,7 @@ internal unsafe class VkResourceSet : ResourceSet {
     #region Disposal
 
     /// <summary>
-    /// Executes the Dispose operation.
+    /// Releases resources held by this instance.
     /// </summary>
     public override void Dispose() {
         this.RefCount.Decrement();
@@ -156,7 +155,7 @@ internal unsafe class VkResourceSet : ResourceSet {
     #endregion
 
     /// <summary>
-    /// Executes the DisposeCore operation.
+    /// Executes the dispose core logic for this backend.
     /// </summary>
     private void DisposeCore() {
         if (!this._destroyed) {

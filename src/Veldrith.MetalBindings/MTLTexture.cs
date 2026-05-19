@@ -7,19 +7,19 @@ namespace Veldrith.MetalBindings;
 [StructLayout(LayoutKind.Sequential)]
 
 /// <summary>
-/// Defines the data layout and behavior of the MTLTexture struct.
+/// Provides Objective-C interop bindings for MTLTexture.
 /// </summary>
 public unsafe struct MTLTexture {
 
     /// <summary>
-    /// Stores the value associated with <c>NativePtr</c>.
+    /// Stores the native ptr state used by this instance.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MTLTexture" /> type.
     /// </summary>
-    /// <param name="ptr">Specifies the value of <paramref name="ptr" />.</param>
+    /// <param name="ptr">The ptr value used by this operation.</param>
     public MTLTexture(IntPtr ptr) {
         this.NativePtr = ptr;
     }
@@ -30,38 +30,38 @@ public unsafe struct MTLTexture {
     public bool IsNull => this.NativePtr == IntPtr.Zero;
 
     /// <summary>
-    /// Executes the replaceRegion operation.
+    /// Executes the replace region logic for this backend.
     /// </summary>
-    /// <param name="region">Specifies the value of <paramref name="region" />.</param>
-    /// <param name="mipmapLevel">Specifies the value of <paramref name="mipmapLevel" />.</param>
-    /// <param name="slice">Specifies the value of <paramref name="slice" />.</param>
-    /// <param name="pixelBytes">Specifies the value of <paramref name="pixelBytes" />.</param>
-    /// <param name="bytesPerRow">Specifies the value of <paramref name="bytesPerRow" />.</param>
-    /// <param name="bytesPerImage">Specifies the value of <paramref name="bytesPerImage" />.</param>
+    /// <param name="region">The region value used by this operation.</param>
+    /// <param name="mipmapLevel">The mipmap level value used by this operation.</param>
+    /// <param name="slice">The slice value used by this operation.</param>
+    /// <param name="pixelBytes">The pixel bytes value used by this operation.</param>
+    /// <param name="bytesPerRow">The bytes per row value used by this operation.</param>
+    /// <param name="bytesPerImage">The bytes per image value used by this operation.</param>
     public void replaceRegion(MTLRegion region, UIntPtr mipmapLevel, UIntPtr slice, void* pixelBytes, UIntPtr bytesPerRow, UIntPtr bytesPerImage) {
         objc_msgSend(this.NativePtr, sel_replaceRegion, region, mipmapLevel, slice, (IntPtr)pixelBytes, bytesPerRow, bytesPerImage);
     }
 
     /// <summary>
-    /// Executes the newTextureView operation.
+    /// Executes the new texture view logic for this backend.
     /// </summary>
-    /// <param name="pixelFormat">Specifies the value of <paramref name="pixelFormat" />.</param>
-    /// <param name="textureType">Specifies the value of <paramref name="textureType" />.</param>
-    /// <param name="levelRange">Specifies the value of <paramref name="levelRange" />.</param>
-    /// <param name="sliceRange">Specifies the value of <paramref name="sliceRange" />.</param>
-    /// <returns>Returns the result produced by the newTextureView operation.</returns>
+    /// <param name="pixelFormat">The pixel format value used by this operation.</param>
+    /// <param name="textureType">The texture type value used by this operation.</param>
+    /// <param name="levelRange">The level range value used by this operation.</param>
+    /// <param name="sliceRange">The slice range value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public MTLTexture newTextureView(MTLPixelFormat pixelFormat, MTLTextureType textureType, NSRange levelRange, NSRange sliceRange) {
         IntPtr ret = IntPtr_objc_msgSend(this.NativePtr, sel_newTextureView, (uint)pixelFormat, (uint)textureType, levelRange, sliceRange);
         return new MTLTexture(ret);
     }
 
     /// <summary>
-    /// Stores the value associated with <c>sel_replaceRegion</c>.
+    /// Stores the sel replace region state used by this instance.
     /// </summary>
     private static readonly Selector sel_replaceRegion = "replaceRegion:mipmapLevel:slice:withBytes:bytesPerRow:bytesPerImage:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_newTextureView</c>.
+    /// Stores the sel new texture view state used by this instance.
     /// </summary>
     private static readonly Selector sel_newTextureView = "newTextureViewWithPixelFormat:textureType:levels:slices:";
 }

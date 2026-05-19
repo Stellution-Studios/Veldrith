@@ -6,46 +6,45 @@ using static Vulkan.VulkanNative;
 namespace Veldrith.Vk;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the VkPipeline class.
+/// Provides the Vulkan backend implementation for VkPipeline.
 /// </summary>
 internal unsafe class VkPipeline : Pipeline {
 
     /// <summary>
-    /// Stores the value associated with <c>_devicePipeline</c>.
+    /// Stores the device pipeline state used by this instance.
     /// </summary>
     private readonly Vulkan.VkPipeline _devicePipeline;
 
     /// <summary>
-    /// Stores the value associated with <c>_pipelineLayout</c>.
+    /// Stores the pipeline layout state used by this instance.
     /// </summary>
     private readonly VkPipelineLayout _pipelineLayout;
 
     /// <summary>
-    /// Stores the value associated with <c>_renderPass</c>.
+    /// Stores the render pass state used by this instance.
     /// </summary>
     private readonly VkRenderPass _renderPass;
 
     /// <summary>
-    /// Stores the value associated with <c>gd</c>.
+    /// Stores the gd state used by this instance.
     /// </summary>
     private readonly VkGraphicsDevice gd;
 
     /// <summary>
-    /// Stores the value associated with <c>_destroyed</c>.
+    /// Stores the destroyed state used by this instance.
     /// </summary>
     private bool _destroyed;
 
     /// <summary>
-    /// Stores the value associated with <c>_name</c>.
+    /// Stores the human-readable name associated with this instance.
     /// </summary>
     private string _name;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VkPipeline" /> class.
     /// </summary>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
-    /// <returns>Returns the result produced by the base operation.</returns>
+    /// <param name="gd">The graphics device that owns this operation.</param>
+    /// <param name="description">The description used to configure this operation.</param>
     public VkPipeline(VkGraphicsDevice gd, ref GraphicsPipelineDescription description) : base(ref description) {
         this.gd = gd;
         this.IsComputePipeline = false;
@@ -359,9 +358,8 @@ internal unsafe class VkPipeline : Pipeline {
     /// <summary>
     /// Initializes a new instance of the <see cref="VkPipeline" /> class.
     /// </summary>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
-    /// <returns>Returns the result produced by the base operation.</returns>
+    /// <param name="gd">The graphics device that owns this operation.</param>
+    /// <param name="description">The description used to configure this operation.</param>
     public VkPipeline(VkGraphicsDevice gd, ref ComputePipelineDescription description) : base(ref description) {
         this.gd = gd;
         this.IsComputePipeline = true;
@@ -436,12 +434,12 @@ internal unsafe class VkPipeline : Pipeline {
     }
 
     /// <summary>
-    /// Stores the value associated with <c>DevicePipeline</c>.
+    /// Stores the device pipeline state used by this instance.
     /// </summary>
     public Vulkan.VkPipeline DevicePipeline => this._devicePipeline;
 
     /// <summary>
-    /// Stores the value associated with <c>PipelineLayout</c>.
+    /// Stores the pipeline layout state used by this instance.
     /// </summary>
     public VkPipelineLayout PipelineLayout => this._pipelineLayout;
 
@@ -489,7 +487,7 @@ internal unsafe class VkPipeline : Pipeline {
     #region Disposal
 
     /// <summary>
-    /// Executes the Dispose operation.
+    /// Releases resources held by this instance.
     /// </summary>
     public override void Dispose() {
         this.RefCount.Decrement();
@@ -498,7 +496,7 @@ internal unsafe class VkPipeline : Pipeline {
     #endregion
 
     /// <summary>
-    /// Executes the DisposeCore operation.
+    /// Executes the dispose core logic for this backend.
     /// </summary>
     private void DisposeCore() {
         if (!this._destroyed) {

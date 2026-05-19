@@ -4,38 +4,34 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Defines the data layout and behavior of the NSError struct.
+/// Represents the NSError data structure used by the graphics runtime.
 /// </summary>
 public struct NSError {
 
     /// <summary>
-    /// Stores the value associated with <c>NativePtr</c>.
+    /// Stores the native ptr state used by this instance.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Executes the string_objc_msgSend operation.
+    /// Executes the string objc msg send logic for this backend.
     /// </summary>
-    /// <param name="NativePtr">Specifies the value of <paramref name="NativePtr" />.</param>
-    /// <param name="sel_domain">Specifies the value of <paramref name="sel_domain" />.</param>
-    /// <returns>Returns the result produced by the string_objc_msgSend operation.</returns>
+
     public string domain => string_objc_msgSend(this.NativePtr, sel_domain);
 
     /// <summary>
-    /// Executes the string_objc_msgSend operation.
+    /// Executes the string objc msg send logic for this backend.
     /// </summary>
-    /// <param name="NativePtr">Specifies the value of <paramref name="NativePtr" />.</param>
-    /// <param name="sel_localizedDescription">Specifies the value of <paramref name="sel_localizedDescription" />.</param>
-    /// <returns>Returns the result produced by the string_objc_msgSend operation.</returns>
+
     public string localizedDescription => string_objc_msgSend(this.NativePtr, sel_localizedDescription);
 
     /// <summary>
-    /// Stores the value associated with <c>sel_domain</c>.
+    /// Stores the sel domain state used by this instance.
     /// </summary>
     private static readonly Selector sel_domain = "domain";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_localizedDescription</c>.
+    /// Stores the sel localized description state used by this instance.
     /// </summary>
     private static readonly Selector sel_localizedDescription = "localizedDescription";
 }

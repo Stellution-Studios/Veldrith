@@ -7,16 +7,15 @@ namespace Veldrith.Vk;
 /// <summary>
 /// A super-dangerous stack-only list which can hold up to 256 bytes of blittable data.
 /// </summary>
-/// <typeparam name="T">The type of element held in the list. Must be blittable.</typeparam>
 internal unsafe struct StackList<T> where T : struct {
 
     /// <summary>
-    /// Stores the value associated with <c>CAPACITY_IN_BYTES</c>.
+    /// Defines the predefined value for capacity in bytes.
     /// </summary>
     public const int CAPACITY_IN_BYTES = 256;
 
     /// <summary>
-    /// Stores the value associated with <c>_s_sizeof_t</c>.
+    /// Stores the s sizeof t value used during command execution.
     /// </summary>
     private static readonly int _s_sizeof_t = Unsafe.SizeOf<T>();
 
@@ -28,16 +27,14 @@ internal unsafe struct StackList<T> where T : struct {
     public uint Count { get; private set; }
 
     /// <summary>
-    /// Executes the AsPointer operation.
+    /// Executes the as pointer logic for this backend.
     /// </summary>
-    /// <param name="this">Specifies the value of <paramref name="this" />.</param>
-    /// <returns>Returns the result produced by the AsPointer operation.</returns>
     public void* Data => Unsafe.AsPointer(ref this);
 
     /// <summary>
-    /// Executes the Add operation.
+    /// Executes the add logic for this backend.
     /// </summary>
-    /// <param name="item">Specifies the value of <paramref name="item" />.</param>
+    /// <param name="item">The item value used by this operation.</param>
     public void Add(T item) {
         byte* basePtr = (byte*)this.Data;
         int offset = (int)(this.Count * _s_sizeof_t);
@@ -75,19 +72,17 @@ internal unsafe struct StackList<T> where T : struct {
 /// <summary>
 /// A super-dangerous stack-only list which can hold a number of bytes determined by the second type parameter.
 /// </summary>
-/// <typeparam name="T">The type of element held in the list. Must be blittable.</typeparam>
-/// <typeparam name="TSize">A type parameter dictating the capacity of the list.</typeparam>
 internal unsafe struct StackList<T, TSize> where T : struct where TSize : struct {
 
     /// <summary>
-    /// Stores the value associated with <c>_s_sizeof_t</c>.
+    /// Stores the s sizeof t value used during command execution.
     /// </summary>
     private static readonly int _s_sizeof_t = Unsafe.SizeOf<T>();
 
 #pragma warning disable 0169 // Unused field. This is used implicity because it controls the size of the structure on the stack.
 
     /// <summary>
-    /// Stores the value associated with <c>_storage</c>.
+    /// Stores the storage state used by this instance.
     /// </summary>
     private TSize _storage;
 #pragma warning restore 0169
@@ -98,16 +93,14 @@ internal unsafe struct StackList<T, TSize> where T : struct where TSize : struct
     public uint Count { get; private set; }
 
     /// <summary>
-    /// Executes the AsPointer operation.
+    /// Executes the as pointer logic for this backend.
     /// </summary>
-    /// <param name="this">Specifies the value of <paramref name="this" />.</param>
-    /// <returns>Returns the result produced by the AsPointer operation.</returns>
     public void* Data => Unsafe.AsPointer(ref this);
 
     /// <summary>
-    /// Executes the Add operation.
+    /// Executes the add logic for this backend.
     /// </summary>
-    /// <param name="item">Specifies the value of <paramref name="item" />.</param>
+    /// <param name="item">The item value used by this operation.</param>
     public void Add(T item) {
         ref T dest = ref Unsafe.Add(ref Unsafe.As<TSize, T>(ref this._storage), (int)this.Count);
 #if DEBUG
@@ -120,24 +113,19 @@ internal unsafe struct StackList<T, TSize> where T : struct where TSize : struct
     }
 
     /// <summary>
-    /// Executes the Add operation.
+    /// Executes the add logic for this backend.
     /// </summary>
-    /// <param name="Data">Specifies the value of <paramref name="Data" />.</param>
-    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
-    /// <returns>Returns the result produced by the Add operation.</returns>
+
     public ref T this[int index] => ref Unsafe.Add(ref Unsafe.AsRef<T>(this.Data), index);
 
     /// <summary>
-    /// Executes the Add operation.
+    /// Executes the add logic for this backend.
     /// </summary>
-    /// <param name="Data">Specifies the value of <paramref name="Data" />.</param>
-    /// <param name="int">Specifies the value of <paramref name="int" />.</param>
-    /// <returns>Returns the result produced by the Add operation.</returns>
     public ref T this[uint index] => ref Unsafe.Add(ref Unsafe.AsRef<T>(this.Data), (int)index);
 }
 
 /// <summary>
-/// Defines the data layout and behavior of the Size16Bytes struct.
+/// Represents the Size16Bytes data structure used by the graphics runtime.
 /// </summary>
 internal unsafe struct Size16Bytes {
 
@@ -145,7 +133,7 @@ internal unsafe struct Size16Bytes {
 }
 
 /// <summary>
-/// Defines the data layout and behavior of the Size64Bytes struct.
+/// Represents the Size64Bytes data structure used by the graphics runtime.
 /// </summary>
 internal unsafe struct Size64Bytes {
 
@@ -153,7 +141,7 @@ internal unsafe struct Size64Bytes {
 }
 
 /// <summary>
-/// Defines the data layout and behavior of the Size128Bytes struct.
+/// Represents the Size128Bytes data structure used by the graphics runtime.
 /// </summary>
 internal unsafe struct Size128Bytes {
 
@@ -161,7 +149,7 @@ internal unsafe struct Size128Bytes {
 }
 
 /// <summary>
-/// Defines the data layout and behavior of the Size512Bytes struct.
+/// Represents the Size512Bytes data structure used by the graphics runtime.
 /// </summary>
 internal unsafe struct Size512Bytes {
 
@@ -169,7 +157,7 @@ internal unsafe struct Size512Bytes {
 }
 
 /// <summary>
-/// Defines the data layout and behavior of the Size1024Bytes struct.
+/// Represents the Size1024Bytes data structure used by the graphics runtime.
 /// </summary>
 internal unsafe struct Size1024Bytes {
 
@@ -177,7 +165,7 @@ internal unsafe struct Size1024Bytes {
 }
 
 /// <summary>
-/// Defines the data layout and behavior of the Size2048Bytes struct.
+/// Represents the Size2048Bytes data structure used by the graphics runtime.
 /// </summary>
 internal unsafe struct Size2048Bytes {
 
@@ -186,53 +174,53 @@ internal unsafe struct Size2048Bytes {
 #pragma warning disable 0649 // Fields are not assigned directly -- expected.
 
 /// <summary>
-/// Defines the data layout and behavior of the Size2IntPtr struct.
+/// Represents the Size2IntPtr data structure used by the graphics runtime.
 /// </summary>
 internal struct Size2IntPtr {
 
     /// <summary>
-    /// Stores the value associated with <c>First</c>.
+    /// Stores the first state used by this instance.
     /// </summary>
     public IntPtr First;
 
     /// <summary>
-    /// Stores the value associated with <c>Second</c>.
+    /// Stores the second state used by this instance.
     /// </summary>
     public IntPtr Second;
 }
 
 /// <summary>
-/// Defines the data layout and behavior of the Size6IntPtr struct.
+/// Represents the Size6IntPtr data structure used by the graphics runtime.
 /// </summary>
 internal struct Size6IntPtr {
 
     /// <summary>
-    /// Stores the value associated with <c>First</c>.
+    /// Stores the first state used by this instance.
     /// </summary>
     public IntPtr First;
 
     /// <summary>
-    /// Stores the value associated with <c>Second</c>.
+    /// Stores the second state used by this instance.
     /// </summary>
     public IntPtr Second;
 
     /// <summary>
-    /// Stores the value associated with <c>Third</c>.
+    /// Stores the third state used by this instance.
     /// </summary>
     public IntPtr Third;
 
     /// <summary>
-    /// Stores the value associated with <c>Fourth</c>.
+    /// Stores the fourth state used by this instance.
     /// </summary>
     public IntPtr Fourth;
 
     /// <summary>
-    /// Stores the value associated with <c>Fifth</c>.
+    /// Stores the fifth state used by this instance.
     /// </summary>
     public IntPtr Fifth;
 
     /// <summary>
-    /// Stores the value associated with <c>Sixth</c>.
+    /// Stores the sixth state used by this instance.
     /// </summary>
     public IntPtr Sixth;
 }

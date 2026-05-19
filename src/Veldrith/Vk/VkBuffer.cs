@@ -5,47 +5,47 @@ using static Vulkan.VulkanNative;
 namespace Veldrith.Vk;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the VkBuffer class.
+/// Provides the Vulkan backend implementation for VkBuffer.
 /// </summary>
 internal unsafe class VkBuffer : DeviceBuffer {
 
     /// <summary>
-    /// Stores the value associated with <c>_bufferMemoryRequirements</c>.
+    /// Stores the buffer memory requirements state used by this instance.
     /// </summary>
     private readonly VkMemoryRequirements _bufferMemoryRequirements;
 
     /// <summary>
-    /// Stores the value associated with <c>_deviceBuffer</c>.
+    /// Stores the device buffer state used by this instance.
     /// </summary>
     private readonly Vulkan.VkBuffer _deviceBuffer;
 
     /// <summary>
-    /// Stores the value associated with <c>_memory</c>.
+    /// Stores the memory state used by this instance.
     /// </summary>
     private readonly VkMemoryBlock _memory;
 
     /// <summary>
-    /// Stores the value associated with <c>gd</c>.
+    /// Stores the gd state used by this instance.
     /// </summary>
     private readonly VkGraphicsDevice gd;
 
     /// <summary>
-    /// Stores the value associated with <c>_destroyed</c>.
+    /// Stores the destroyed state used by this instance.
     /// </summary>
     private bool _destroyed;
 
     /// <summary>
-    /// Stores the value associated with <c>_name</c>.
+    /// Stores the human-readable name associated with this instance.
     /// </summary>
     private string _name;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VkBuffer" /> type.
     /// </summary>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
-    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
-    /// <param name="usage">Specifies the value of <paramref name="usage" />.</param>
-    /// <param name="callerMember">Specifies the value of <paramref name="callerMember" />.</param>
+    /// <param name="gd">The graphics device that owns this operation.</param>
+    /// <param name="sizeInBytes">The size, in bytes, used by this operation.</param>
+    /// <param name="usage">The usage value used by this operation.</param>
+    /// <param name="callerMember">The caller member value used by this operation.</param>
     public VkBuffer(VkGraphicsDevice gd, uint sizeInBytes, BufferUsage usage, string callerMember = null) {
         this.gd = gd;
         this.SizeInBytes = sizeInBytes;
@@ -140,17 +140,17 @@ internal unsafe class VkBuffer : DeviceBuffer {
     public override BufferUsage Usage { get; }
 
     /// <summary>
-    /// Stores the value associated with <c>DeviceBuffer</c>.
+    /// Stores the device buffer state used by this instance.
     /// </summary>
     public Vulkan.VkBuffer DeviceBuffer => this._deviceBuffer;
 
     /// <summary>
-    /// Stores the value associated with <c>Memory</c>.
+    /// Stores the memory state used by this instance.
     /// </summary>
     public VkMemoryBlock Memory => this._memory;
 
     /// <summary>
-    /// Stores the value associated with <c>BufferMemoryRequirements</c>.
+    /// Stores the buffer memory requirements state used by this instance.
     /// </summary>
     public VkMemoryRequirements BufferMemoryRequirements => this._bufferMemoryRequirements;
 
@@ -168,7 +168,7 @@ internal unsafe class VkBuffer : DeviceBuffer {
     #region Disposal
 
     /// <summary>
-    /// Executes the Dispose operation.
+    /// Releases resources held by this instance.
     /// </summary>
     public override void Dispose() {
         this.RefCount.Decrement();
@@ -177,7 +177,7 @@ internal unsafe class VkBuffer : DeviceBuffer {
     #endregion
 
     /// <summary>
-    /// Executes the DisposeCore operation.
+    /// Executes the dispose core logic for this backend.
     /// </summary>
     private void DisposeCore() {
         if (!this._destroyed) {

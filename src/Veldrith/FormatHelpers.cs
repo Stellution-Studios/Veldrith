@@ -3,15 +3,15 @@ using System.Diagnostics;
 namespace Veldrith;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the FormatHelpers class.
+/// Represents the FormatHelpers type used by the graphics runtime.
 /// </summary>
 internal static class FormatHelpers {
 
     /// <summary>
-    /// Executes the GetElementCount operation.
+    /// Gets the element count value.
     /// </summary>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
-    /// <returns>Returns the result produced by the GetElementCount operation.</returns>
+    /// <param name="format">The format used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public static int GetElementCount(VertexElementFormat format) {
         switch (format) {
             case VertexElementFormat.Float1: case VertexElementFormat.UInt1: case VertexElementFormat.Int1: case VertexElementFormat.Half1: return 1;
@@ -27,10 +27,10 @@ internal static class FormatHelpers {
     }
 
     /// <summary>
-    /// Executes the GetBlockSizeInBytes operation.
+    /// Gets the block size in bytes value.
     /// </summary>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
-    /// <returns>Returns the result produced by the GetBlockSizeInBytes operation.</returns>
+    /// <param name="format">The format used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public static uint GetBlockSizeInBytes(PixelFormat format) {
         switch (format) {
             case PixelFormat.Bc1RgbUNorm: case PixelFormat.Bc1RgbUNormSRgb: case PixelFormat.Bc1RgbaUNorm: case PixelFormat.Bc1RgbaUNormSRgb: case PixelFormat.Bc4UNorm: case PixelFormat.Bc4SNorm: case PixelFormat.Etc2R8G8B8UNorm: case PixelFormat.Etc2R8G8B8A1UNorm: return 8;
@@ -42,10 +42,10 @@ internal static class FormatHelpers {
     }
 
     /// <summary>
-    /// Executes the GetSampleCountUInt32 operation.
+    /// Gets the sample count uint32 value.
     /// </summary>
-    /// <param name="sampleCount">Specifies the value of <paramref name="sampleCount" />.</param>
-    /// <returns>Returns the result produced by the GetSampleCountUInt32 operation.</returns>
+    /// <param name="sampleCount">The sample count value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal static uint GetSampleCountUInt32(TextureSampleCount sampleCount) {
         switch (sampleCount) {
             case TextureSampleCount.Count1: return 1;
@@ -65,19 +65,19 @@ internal static class FormatHelpers {
     }
 
     /// <summary>
-    /// Executes the IsStencilFormat operation.
+    /// Executes the is stencil format logic for this backend.
     /// </summary>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
-    /// <returns>Returns the result produced by the IsStencilFormat operation.</returns>
+    /// <param name="format">The format used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     internal static bool IsStencilFormat(PixelFormat format) {
         return format == PixelFormat.D24UNormS8UInt || format == PixelFormat.D32FloatS8UInt;
     }
 
     /// <summary>
-    /// Executes the IsDepthStencilFormat operation.
+    /// Executes the is depth stencil format logic for this backend.
     /// </summary>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
-    /// <returns>Returns the result produced by the IsDepthStencilFormat operation.</returns>
+    /// <param name="format">The format used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     internal static bool IsDepthStencilFormat(PixelFormat format) {
         return format == PixelFormat.D32FloatS8UInt
                || format == PixelFormat.D24UNormS8UInt
@@ -86,10 +86,10 @@ internal static class FormatHelpers {
     }
 
     /// <summary>
-    /// Executes the IsCompressedFormat operation.
+    /// Executes the is compressed format logic for this backend.
     /// </summary>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
-    /// <returns>Returns the result produced by the IsCompressedFormat operation.</returns>
+    /// <param name="format">The format used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     internal static bool IsCompressedFormat(PixelFormat format) {
         return format == PixelFormat.Bc1RgbUNorm
                || format == PixelFormat.Bc1RgbUNormSRgb
@@ -111,11 +111,11 @@ internal static class FormatHelpers {
     }
 
     /// <summary>
-    /// Executes the GetRowPitch operation.
+    /// Gets the row pitch value.
     /// </summary>
-    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
-    /// <returns>Returns the result produced by the GetRowPitch operation.</returns>
+    /// <param name="width">The width value.</param>
+    /// <param name="format">The format used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal static uint GetRowPitch(uint width, PixelFormat format) {
         switch (format) {
             case PixelFormat.Bc1RgbUNorm:
@@ -144,11 +144,11 @@ internal static class FormatHelpers {
     }
 
     /// <summary>
-    /// Executes the IsFormatViewCompatible operation.
+    /// Executes the is format view compatible logic for this backend.
     /// </summary>
-    /// <param name="viewFormat">Specifies the value of <paramref name="viewFormat" />.</param>
-    /// <param name="realFormat">Specifies the value of <paramref name="realFormat" />.</param>
-    /// <returns>Returns the result produced by the IsFormatViewCompatible operation.</returns>
+    /// <param name="viewFormat">The view format value used by this operation.</param>
+    /// <param name="realFormat">The real format value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     internal static bool IsFormatViewCompatible(PixelFormat viewFormat, PixelFormat realFormat) {
         if (IsCompressedFormat(realFormat)) {
             return IsSrgbCounterpart(viewFormat, realFormat);
@@ -158,11 +158,11 @@ internal static class FormatHelpers {
     }
 
     /// <summary>
-    /// Executes the GetNumRows operation.
+    /// Gets the num rows value.
     /// </summary>
-    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
-    /// <returns>Returns the result produced by the GetNumRows operation.</returns>
+    /// <param name="height">The height value.</param>
+    /// <param name="format">The format used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal static uint GetNumRows(uint height, PixelFormat format) {
         switch (format) {
             case PixelFormat.Bc1RgbUNorm: case PixelFormat.Bc1RgbUNormSRgb: case PixelFormat.Bc1RgbaUNorm: case PixelFormat.Bc1RgbaUNormSRgb: case PixelFormat.Bc2UNorm: case PixelFormat.Bc2UNormSRgb: case PixelFormat.Bc3UNorm: case PixelFormat.Bc3UNormSRgb: case PixelFormat.Bc4UNorm: case PixelFormat.Bc4SNorm: case PixelFormat.Bc5UNorm: case PixelFormat.Bc5SNorm: case PixelFormat.Bc7UNorm: case PixelFormat.Bc7UNormSRgb: case PixelFormat.Etc2R8G8B8UNorm: case PixelFormat.Etc2R8G8B8A1UNorm: case PixelFormat.Etc2R8G8B8A8UNorm: return (height + 3) / 4;
@@ -172,24 +172,24 @@ internal static class FormatHelpers {
     }
 
     /// <summary>
-    /// Executes the GetDepthPitch operation.
+    /// Gets the depth pitch value.
     /// </summary>
-    /// <param name="rowPitch">Specifies the value of <paramref name="rowPitch" />.</param>
-    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
-    /// <returns>Returns the result produced by the GetDepthPitch operation.</returns>
+    /// <param name="rowPitch">The row pitch value used by this operation.</param>
+    /// <param name="height">The height value.</param>
+    /// <param name="format">The format used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal static uint GetDepthPitch(uint rowPitch, uint height, PixelFormat format) {
         return rowPitch * GetNumRows(height, format);
     }
 
     /// <summary>
-    /// Executes the GetRegionSize operation.
+    /// Gets the region size value.
     /// </summary>
-    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
-    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
-    /// <param name="depth">Specifies the value of <paramref name="depth" />.</param>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
-    /// <returns>Returns the result produced by the GetRegionSize operation.</returns>
+    /// <param name="width">The width value.</param>
+    /// <param name="height">The height value.</param>
+    /// <param name="depth">The depth value.</param>
+    /// <param name="format">The format used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal static uint GetRegionSize(uint width, uint height, uint depth, PixelFormat format) {
         uint blockSizeInBytes;
 
@@ -207,10 +207,10 @@ internal static class FormatHelpers {
     }
 
     /// <summary>
-    /// Executes the GetSampleCount operation.
+    /// Gets the sample count value.
     /// </summary>
-    /// <param name="samples">Specifies the value of <paramref name="samples" />.</param>
-    /// <returns>Returns the result produced by the GetSampleCount operation.</returns>
+    /// <param name="samples">The samples value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal static TextureSampleCount GetSampleCount(uint samples) {
         switch (samples) {
             case 1: return TextureSampleCount.Count1;
@@ -230,10 +230,10 @@ internal static class FormatHelpers {
     }
 
     /// <summary>
-    /// Executes the GetViewFamilyFormat operation.
+    /// Gets the view family format value.
     /// </summary>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
-    /// <returns>Returns the result produced by the GetViewFamilyFormat operation.</returns>
+    /// <param name="format">The format used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal static PixelFormat GetViewFamilyFormat(PixelFormat format) {
         switch (format) {
             case PixelFormat.R32G32B32A32Float: case PixelFormat.R32G32B32A32UInt: case PixelFormat.R32G32B32A32SInt: return PixelFormat.R32G32B32A32Float;
@@ -275,11 +275,11 @@ internal static class FormatHelpers {
     }
 
     /// <summary>
-    /// Executes the IsSrgbCounterpart operation.
+    /// Executes the is srgb counterpart logic for this backend.
     /// </summary>
-    /// <param name="viewFormat">Specifies the value of <paramref name="viewFormat" />.</param>
-    /// <param name="realFormat">Specifies the value of <paramref name="realFormat" />.</param>
-    /// <returns>Returns the result produced by the IsSrgbCounterpart operation.</returns>
+    /// <param name="viewFormat">The view format value used by this operation.</param>
+    /// <param name="realFormat">The real format value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     private static bool IsSrgbCounterpart(PixelFormat viewFormat, PixelFormat realFormat) {
         if (viewFormat == realFormat) {
             return true;

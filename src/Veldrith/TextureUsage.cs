@@ -15,7 +15,6 @@ public enum TextureUsage : byte {
 
     /// <summary>
     /// The Texture can be used as the target of a read-write <see cref="TextureView" />, and can be accessed from a
-    /// shader.
     /// </summary>
     Storage = 1 << 1,
 
@@ -36,9 +35,6 @@ public enum TextureUsage : byte {
 
     /// <summary>
     /// The Texture is used as a read-write staging resource for uploading Texture data.
-    /// With this flag, a Texture can be mapped using the
-    /// <see cref="GraphicsDevice.Map(IMappableResource, MapMode, uint)" />
-    /// method.
     /// </summary>
     Staging = 1 << 5,
 

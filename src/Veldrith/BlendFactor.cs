@@ -57,13 +57,11 @@ public enum BlendFactor : byte {
 
     /// <summary>
     /// Each component is multiplied by the matching component in constant factor specified in
-    /// <see cref="BlendStateDescription.BlendFactor" />.
     /// </summary>
     BlendFactor,
 
     /// <summary>
     /// Each component is multiplied by (1 - the matching component in constant factor specified in
-    /// <see cref="BlendStateDescription.BlendFactor" />).
     /// </summary>
     InverseBlendFactor
 }

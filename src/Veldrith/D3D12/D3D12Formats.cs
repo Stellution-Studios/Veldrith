@@ -5,16 +5,16 @@ using Vortice.Mathematics;
 namespace Veldrith.D3D12;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the D3D12Formats class.
+/// Provides the Direct3D 12 backend implementation for D3D12Formats.
 /// </summary>
 internal static class D3D12Formats {
 
     /// <summary>
-    /// Executes the ToDxgiFormat operation.
+    /// Executes the to dxgi format logic for this backend.
     /// </summary>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
-    /// <param name="depthFormat">Specifies the value of <paramref name="depthFormat" />.</param>
-    /// <returns>Returns the result produced by the ToDxgiFormat operation.</returns>
+    /// <param name="format">The format used by this operation.</param>
+    /// <param name="depthFormat">The depth format value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal static Format ToDxgiFormat(PixelFormat format, bool depthFormat = false) {
         switch (format) {
             case PixelFormat.R8UNorm: return Format.R8_UNorm;
@@ -78,10 +78,10 @@ internal static class D3D12Formats {
     }
 
     /// <summary>
-    /// Executes the ToDepthFormat operation.
+    /// Executes the to depth format logic for this backend.
     /// </summary>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
-    /// <returns>Returns the result produced by the ToDepthFormat operation.</returns>
+    /// <param name="format">The format used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal static Format ToDepthFormat(PixelFormat format) {
         switch (format) {
             case PixelFormat.R16UNorm: return Format.D16_UNorm;
@@ -93,10 +93,10 @@ internal static class D3D12Formats {
     }
 
     /// <summary>
-    /// Executes the GetViewFormat operation.
+    /// Gets the view format value.
     /// </summary>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
-    /// <returns>Returns the result produced by the GetViewFormat operation.</returns>
+    /// <param name="format">The format used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal static Format GetViewFormat(Format format) {
         switch (format) {
             case Format.R16_Typeless: return Format.R16_UNorm;
@@ -108,10 +108,10 @@ internal static class D3D12Formats {
     }
 
     /// <summary>
-    /// Executes the ToResourceFlags operation.
+    /// Executes the to resource flags logic for this backend.
     /// </summary>
-    /// <param name="usage">Specifies the value of <paramref name="usage" />.</param>
-    /// <returns>Returns the result produced by the ToResourceFlags operation.</returns>
+    /// <param name="usage">The usage value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal static ResourceFlags ToResourceFlags(TextureUsage usage) {
         ResourceFlags flags = ResourceFlags.None;
         if ((usage & TextureUsage.RenderTarget) == TextureUsage.RenderTarget) {
@@ -130,10 +130,10 @@ internal static class D3D12Formats {
     }
 
     /// <summary>
-    /// Executes the ToDxgiFormat operation.
+    /// Executes the to dxgi format logic for this backend.
     /// </summary>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
-    /// <returns>Returns the result produced by the ToDxgiFormat operation.</returns>
+    /// <param name="format">The format used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal static Format ToDxgiFormat(IndexFormat format) {
         switch (format) {
             case IndexFormat.UInt16: return Format.R16_UInt;
@@ -143,10 +143,10 @@ internal static class D3D12Formats {
     }
 
     /// <summary>
-    /// Executes the ToDxgiFormat operation.
+    /// Executes the to dxgi format logic for this backend.
     /// </summary>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
-    /// <returns>Returns the result produced by the ToDxgiFormat operation.</returns>
+    /// <param name="format">The format used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal static Format ToDxgiFormat(VertexElementFormat format) {
         switch (format) {
             case VertexElementFormat.Float1: return Format.R32_Float;
@@ -185,10 +185,10 @@ internal static class D3D12Formats {
     }
 
     /// <summary>
-    /// Executes the ToD3DPrimitiveTopology operation.
+    /// Executes the to d3 dprimitive topology logic for this backend.
     /// </summary>
-    /// <param name="topology">Specifies the value of <paramref name="topology" />.</param>
-    /// <returns>Returns the result produced by the ToD3DPrimitiveTopology operation.</returns>
+    /// <param name="topology">The topology value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal static Vortice.Direct3D.PrimitiveTopology ToD3DPrimitiveTopology(PrimitiveTopology topology) {
         switch (topology) {
             case PrimitiveTopology.TriangleList: return Vortice.Direct3D.PrimitiveTopology.TriangleList;
@@ -201,10 +201,10 @@ internal static class D3D12Formats {
     }
 
     /// <summary>
-    /// Executes the ToPrimitiveTopologyType operation.
+    /// Executes the to primitive topology type logic for this backend.
     /// </summary>
-    /// <param name="topology">Specifies the value of <paramref name="topology" />.</param>
-    /// <returns>Returns the result produced by the ToPrimitiveTopologyType operation.</returns>
+    /// <param name="topology">The topology value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal static PrimitiveTopologyType ToPrimitiveTopologyType(PrimitiveTopology topology) {
         switch (topology) {
             case PrimitiveTopology.TriangleList: case PrimitiveTopology.TriangleStrip: return PrimitiveTopologyType.Triangle;
@@ -215,10 +215,10 @@ internal static class D3D12Formats {
     }
 
     /// <summary>
-    /// Executes the ToFillMode operation.
+    /// Executes the to fill mode logic for this backend.
     /// </summary>
-    /// <param name="mode">Specifies the value of <paramref name="mode" />.</param>
-    /// <returns>Returns the result produced by the ToFillMode operation.</returns>
+    /// <param name="mode">The mode value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal static FillMode ToFillMode(PolygonFillMode mode) {
         switch (mode) {
             case PolygonFillMode.Solid: return FillMode.Solid;
@@ -228,10 +228,10 @@ internal static class D3D12Formats {
     }
 
     /// <summary>
-    /// Executes the ToCullMode operation.
+    /// Executes the to cull mode logic for this backend.
     /// </summary>
-    /// <param name="mode">Specifies the value of <paramref name="mode" />.</param>
-    /// <returns>Returns the result produced by the ToCullMode operation.</returns>
+    /// <param name="mode">The mode value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal static CullMode ToCullMode(FaceCullMode mode) {
         switch (mode) {
             case FaceCullMode.None: return CullMode.None;
@@ -242,10 +242,10 @@ internal static class D3D12Formats {
     }
 
     /// <summary>
-    /// Executes the ToComparison operation.
+    /// Executes the to comparison logic for this backend.
     /// </summary>
-    /// <param name="kind">Specifies the value of <paramref name="kind" />.</param>
-    /// <returns>Returns the result produced by the ToComparison operation.</returns>
+    /// <param name="kind">The kind value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal static ComparisonFunction ToComparison(ComparisonKind kind) {
         switch (kind) {
             case ComparisonKind.Never: return ComparisonFunction.Never;
@@ -261,10 +261,10 @@ internal static class D3D12Formats {
     }
 
     /// <summary>
-    /// Executes the ToStencilOp operation.
+    /// Executes the to stencil op logic for this backend.
     /// </summary>
-    /// <param name="op">Specifies the value of <paramref name="op" />.</param>
-    /// <returns>Returns the result produced by the ToStencilOp operation.</returns>
+    /// <param name="op">The op value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal static Vortice.Direct3D12.StencilOperation ToStencilOp(StencilOperation op) {
         switch (op) {
             case StencilOperation.Keep: return Vortice.Direct3D12.StencilOperation.Keep;
@@ -280,10 +280,10 @@ internal static class D3D12Formats {
     }
 
     /// <summary>
-    /// Executes the ToBlend operation.
+    /// Executes the to blend logic for this backend.
     /// </summary>
-    /// <param name="factor">Specifies the value of <paramref name="factor" />.</param>
-    /// <returns>Returns the result produced by the ToBlend operation.</returns>
+    /// <param name="factor">The factor value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal static Blend ToBlend(BlendFactor factor) {
         switch (factor) {
             case BlendFactor.Zero: return Blend.Zero;
@@ -303,10 +303,10 @@ internal static class D3D12Formats {
     }
 
     /// <summary>
-    /// Executes the ToBlendOp operation.
+    /// Executes the to blend op logic for this backend.
     /// </summary>
-    /// <param name="function">Specifies the value of <paramref name="function" />.</param>
-    /// <returns>Returns the result produced by the ToBlendOp operation.</returns>
+    /// <param name="function">The function value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal static BlendOperation ToBlendOp(BlendFunction function) {
         switch (function) {
             case BlendFunction.Add: return BlendOperation.Add;
@@ -319,10 +319,10 @@ internal static class D3D12Formats {
     }
 
     /// <summary>
-    /// Executes the ToColorWriteMask operation.
+    /// Executes the to color write mask logic for this backend.
     /// </summary>
-    /// <param name="mask">Specifies the value of <paramref name="mask" />.</param>
-    /// <returns>Returns the result produced by the ToColorWriteMask operation.</returns>
+    /// <param name="mask">The mask value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal static ColorWriteEnable ToColorWriteMask(ColorWriteMask mask) {
         ColorWriteEnable enable = ColorWriteEnable.None;
         if ((mask & ColorWriteMask.Red) == ColorWriteMask.Red) {
@@ -345,10 +345,10 @@ internal static class D3D12Formats {
     }
 
     /// <summary>
-    /// Executes the ToTextureAddressMode operation.
+    /// Executes the to texture address mode logic for this backend.
     /// </summary>
-    /// <param name="mode">Specifies the value of <paramref name="mode" />.</param>
-    /// <returns>Returns the result produced by the ToTextureAddressMode operation.</returns>
+    /// <param name="mode">The mode value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal static TextureAddressMode ToTextureAddressMode(SamplerAddressMode mode) {
         switch (mode) {
             case SamplerAddressMode.Wrap: return TextureAddressMode.Wrap;
@@ -360,11 +360,11 @@ internal static class D3D12Formats {
     }
 
     /// <summary>
-    /// Executes the ToFilter operation.
+    /// Executes the to filter logic for this backend.
     /// </summary>
-    /// <param name="filter">Specifies the value of <paramref name="filter" />.</param>
-    /// <param name="comparison">Specifies the value of <paramref name="comparison" />.</param>
-    /// <returns>Returns the result produced by the ToFilter operation.</returns>
+    /// <param name="filter">The filter value used by this operation.</param>
+    /// <param name="comparison">The comparison value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal static Filter ToFilter(SamplerFilter filter, bool comparison) {
         switch (filter) {
             case SamplerFilter.MinPointMagPointMipPoint: return comparison ? Filter.ComparisonMinMagMipPoint : Filter.MinMagMipPoint;
@@ -381,10 +381,10 @@ internal static class D3D12Formats {
     }
 
     /// <summary>
-    /// Executes the ToBorderColor operation.
+    /// Executes the to border color logic for this backend.
     /// </summary>
-    /// <param name="color">Specifies the value of <paramref name="color" />.</param>
-    /// <returns>Returns the result produced by the ToBorderColor operation.</returns>
+    /// <param name="color">The color value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal static Color4 ToBorderColor(SamplerBorderColor color) {
         switch (color) {
             case SamplerBorderColor.TransparentBlack: return new Color4(0f, 0f, 0f, 0f);

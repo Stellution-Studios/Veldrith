@@ -4,14 +4,14 @@ namespace Veldrith.MetalBindings;
 // but there are no non-64-bit platforms that anyone cares about.
 
 /// <summary>
-/// Defines the data layout and behavior of the CGFloat struct.
+/// Represents the CGFloat data structure used by the graphics runtime.
 /// </summary>
 public struct CGFloat {
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CGFloat" /> type.
     /// </summary>
-    /// <param name="value">Specifies the value of <paramref name="value" />.</param>
+    /// <param name="value">The value used by this operation.</param>
     public CGFloat(double value) {
         this.Value = value;
     }
@@ -22,27 +22,26 @@ public struct CGFloat {
     public double Value { get; }
 
     /// <summary>
-    /// Executes the operator CGFloat operation.
+    /// Initializes a new instance of the <see cref="CGFloat" /> class.
     /// </summary>
-    /// <param name="value">Specifies the value of <paramref name="value" />.</param>
-    /// <returns>Returns the result produced by the operator CGFloat operation.</returns>
+    /// <param name="value">The value used by this operation.</param>
     public static implicit operator CGFloat(double value) {
         return new CGFloat(value);
     }
 
     /// <summary>
-    /// Executes the operator double operation.
+    /// Executes the double logic for this backend.
     /// </summary>
-    /// <param name="cgf">Specifies the value of <paramref name="cgf" />.</param>
-    /// <returns>Returns the result produced by the operator double operation.</returns>
+    /// <param name="cgf">The cgf value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public static implicit operator double(CGFloat cgf) {
         return cgf.Value;
     }
 
     /// <summary>
-    /// Executes the ToString operation.
+    /// Builds a string representation of this instance.
     /// </summary>
-    /// <returns>Returns the result produced by the ToString operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public override string ToString() {
         return this.Value.ToString();
     }

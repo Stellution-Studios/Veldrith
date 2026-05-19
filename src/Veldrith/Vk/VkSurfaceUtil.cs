@@ -11,17 +11,17 @@ using static Vulkan.VulkanNative;
 namespace Veldrith.Vk;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the VkSurfaceUtil class.
+/// Provides the Vulkan backend implementation for VkSurfaceUtil.
 /// </summary>
 internal static unsafe class VkSurfaceUtil {
 
     /// <summary>
-    /// Executes the CreateSurface operation.
+    /// Creates the surface instance used by this backend.
     /// </summary>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
-    /// <param name="instance">Specifies the value of <paramref name="instance" />.</param>
-    /// <param name="swapchainSource">Specifies the value of <paramref name="swapchainSource" />.</param>
-    /// <returns>Returns the result produced by the CreateSurface operation.</returns>
+    /// <param name="gd">The graphics device that owns this operation.</param>
+    /// <param name="instance">The instance value used by this operation.</param>
+    /// <param name="swapchainSource">The swapchain source value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal static VkSurfaceKHR CreateSurface(VkGraphicsDevice gd, VkInstance instance, SwapchainSource swapchainSource) {
         // TODO a null GD is passed from VkSurfaceSource.CreateSurface for compatibility
         //      when VkSurfaceInfo is removed we do not have to handle gd == null anymore
@@ -101,11 +101,11 @@ internal static unsafe class VkSurfaceUtil {
     }
 
     /// <summary>
-    /// Executes the CreateWin32 operation.
+    /// Creates the win32 instance used by this backend.
     /// </summary>
-    /// <param name="instance">Specifies the value of <paramref name="instance" />.</param>
-    /// <param name="win32Source">Specifies the value of <paramref name="win32Source" />.</param>
-    /// <returns>Returns the result produced by the CreateWin32 operation.</returns>
+    /// <param name="instance">The instance value used by this operation.</param>
+    /// <param name="win32Source">The win32 source value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static VkSurfaceKHR CreateWin32(VkInstance instance, Win32SwapchainSource win32Source) {
         VkWin32SurfaceCreateInfoKHR surfaceCi = VkWin32SurfaceCreateInfoKHR.New();
         surfaceCi.hwnd = win32Source.Hwnd;
@@ -116,11 +116,11 @@ internal static unsafe class VkSurfaceUtil {
     }
 
     /// <summary>
-    /// Executes the CreateXlib operation.
+    /// Creates the xlib instance used by this backend.
     /// </summary>
-    /// <param name="instance">Specifies the value of <paramref name="instance" />.</param>
-    /// <param name="xlibSource">Specifies the value of <paramref name="xlibSource" />.</param>
-    /// <returns>Returns the result produced by the CreateXlib operation.</returns>
+    /// <param name="instance">The instance value used by this operation.</param>
+    /// <param name="xlibSource">The xlib source value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static VkSurfaceKHR CreateXlib(VkInstance instance, XlibSwapchainSource xlibSource) {
         VkXlibSurfaceCreateInfoKHR xsci = VkXlibSurfaceCreateInfoKHR.New();
         xsci.dpy = (Display*)xlibSource.Display;
@@ -131,11 +131,11 @@ internal static unsafe class VkSurfaceUtil {
     }
 
     /// <summary>
-    /// Executes the CreateWayland operation.
+    /// Creates the wayland instance used by this backend.
     /// </summary>
-    /// <param name="instance">Specifies the value of <paramref name="instance" />.</param>
-    /// <param name="waylandSource">Specifies the value of <paramref name="waylandSource" />.</param>
-    /// <returns>Returns the result produced by the CreateWayland operation.</returns>
+    /// <param name="instance">The instance value used by this operation.</param>
+    /// <param name="waylandSource">The wayland source value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static VkSurfaceKHR CreateWayland(VkInstance instance, WaylandSwapchainSource waylandSource) {
         VkWaylandSurfaceCreateInfoKHR wsci = VkWaylandSurfaceCreateInfoKHR.New();
         wsci.display = (wl_display*)waylandSource.Display;
@@ -146,11 +146,11 @@ internal static unsafe class VkSurfaceUtil {
     }
 
     /// <summary>
-    /// Executes the CreateAndroidSurface operation.
+    /// Creates the android surface instance used by this backend.
     /// </summary>
-    /// <param name="instance">Specifies the value of <paramref name="instance" />.</param>
-    /// <param name="androidSource">Specifies the value of <paramref name="androidSource" />.</param>
-    /// <returns>Returns the result produced by the CreateAndroidSurface operation.</returns>
+    /// <param name="instance">The instance value used by this operation.</param>
+    /// <param name="androidSource">The android source value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static VkSurfaceKHR CreateAndroidSurface(VkInstance instance, AndroidSurfaceSwapchainSource androidSource) {
         IntPtr aNativeWindow = AndroidRuntime.ANativeWindow_fromSurface(androidSource.JniEnv, androidSource.Surface);
 
@@ -162,26 +162,26 @@ internal static unsafe class VkSurfaceUtil {
     }
 
     /// <summary>
-    /// Executes the CreateNSWindowSurface operation.
+    /// Creates the nswindow surface instance used by this backend.
     /// </summary>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
-    /// <param name="instance">Specifies the value of <paramref name="instance" />.</param>
-    /// <param name="nsWindowSource">Specifies the value of <paramref name="nsWindowSource" />.</param>
-    /// <param name="hasExtMetalSurface">Specifies the value of <paramref name="hasExtMetalSurface" />.</param>
-    /// <returns>Returns the result produced by the CreateNSWindowSurface operation.</returns>
+    /// <param name="gd">The graphics device that owns this operation.</param>
+    /// <param name="instance">The instance value used by this operation.</param>
+    /// <param name="nsWindowSource">The ns window source value used by this operation.</param>
+    /// <param name="hasExtMetalSurface">The has ext metal surface value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static VkSurfaceKHR CreateNSWindowSurface(VkGraphicsDevice gd, VkInstance instance, NSWindowSwapchainSource nsWindowSource, bool hasExtMetalSurface) {
         NSWindow nswindow = new(nsWindowSource.NSWindow);
         return CreateNSViewSurface(gd, instance, new NSViewSwapchainSource(nswindow.contentView), hasExtMetalSurface);
     }
 
     /// <summary>
-    /// Executes the CreateNSViewSurface operation.
+    /// Creates the nsview surface instance used by this backend.
     /// </summary>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
-    /// <param name="instance">Specifies the value of <paramref name="instance" />.</param>
-    /// <param name="nsViewSource">Specifies the value of <paramref name="nsViewSource" />.</param>
-    /// <param name="hasExtMetalSurface">Specifies the value of <paramref name="hasExtMetalSurface" />.</param>
-    /// <returns>Returns the result produced by the CreateNSViewSurface operation.</returns>
+    /// <param name="gd">The graphics device that owns this operation.</param>
+    /// <param name="instance">The instance value used by this operation.</param>
+    /// <param name="nsViewSource">The ns view source value used by this operation.</param>
+    /// <param name="hasExtMetalSurface">The has ext metal surface value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static VkSurfaceKHR CreateNSViewSurface(VkGraphicsDevice gd, VkInstance instance, NSViewSwapchainSource nsViewSource, bool hasExtMetalSurface) {
         NSView contentView = new(nsViewSource.NSView);
 
@@ -211,13 +211,13 @@ internal static unsafe class VkSurfaceUtil {
     }
 
     /// <summary>
-    /// Executes the CreateUIViewSurface operation.
+    /// Creates the uiview surface instance used by this backend.
     /// </summary>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
-    /// <param name="instance">Specifies the value of <paramref name="instance" />.</param>
-    /// <param name="uiViewSource">Specifies the value of <paramref name="uiViewSource" />.</param>
-    /// <param name="hasExtMetalSurface">Specifies the value of <paramref name="hasExtMetalSurface" />.</param>
-    /// <returns>Returns the result produced by the CreateUIViewSurface operation.</returns>
+    /// <param name="gd">The graphics device that owns this operation.</param>
+    /// <param name="instance">The instance value used by this operation.</param>
+    /// <param name="uiViewSource">The ui view source value used by this operation.</param>
+    /// <param name="hasExtMetalSurface">The has ext metal surface value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static VkSurfaceKHR CreateUIViewSurface(VkGraphicsDevice gd, VkInstance instance, UIViewSwapchainSource uiViewSource, bool hasExtMetalSurface) {
         UIView uiView = new(uiViewSource.UIView);
 

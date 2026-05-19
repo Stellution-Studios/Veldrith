@@ -14,97 +14,94 @@ using VorticeDXGI = Vortice.DXGI.DXGI;
 namespace Veldrith.D3D12;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the D3D12GraphicsDevice class.
+/// Provides the Direct3D 12 backend implementation for D3D12GraphicsDevice.
 /// </summary>
 internal sealed class D3D12GraphicsDevice : GraphicsDevice {
 
     /// <summary>
-    /// Stores the value associated with <c>name</c>.
+    /// Stores the d3d12 features state used by this instance.
     /// </summary>
-    /// <param name="true">Specifies the value of <paramref name="true" />.</param>
-    /// <param name="true">Specifies the value of <paramref name="true" />.</param>
-    /// <param name="true">Specifies the value of <paramref name="true" />.</param>
-    /// <param name="true">Specifies the value of <paramref name="true" />.</param>
-    /// <param name="true">Specifies the value of <paramref name="true" />.</param>
-    /// <param name="true">Specifies the value of <paramref name="true" />.</param>
-    /// <param name="true">Specifies the value of <paramref name="true" />.</param>
-    /// <param name="true">Specifies the value of <paramref name="true" />.</param>
-    /// <param name="true">Specifies the value of <paramref name="true" />.</param>
-    /// <param name="true">Specifies the value of <paramref name="true" />.</param>
-    /// <param name="true">Specifies the value of <paramref name="true" />.</param>
-    /// <param name="true">Specifies the value of <paramref name="true" />.</param>
-    /// <param name="true">Specifies the value of <paramref name="true" />.</param>
-    /// <param name="true">Specifies the value of <paramref name="true" />.</param>
-    /// <param name="true">Specifies the value of <paramref name="true" />.</param>
-    /// <param name="true">Specifies the value of <paramref name="true" />.</param>
-    /// <param name="true">Specifies the value of <paramref name="true" />.</param>
-    /// <param name="true">Specifies the value of <paramref name="true" />.</param>
-    /// <param name="false">Specifies the value of <paramref name="false" />.</param>
-    /// <returns>Returns the result produced by the new operation.</returns>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     private static readonly GraphicsDeviceFeatures _d3d12Features = new(true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, false);
 
     /// <summary>
-    /// Stores the value associated with <c>_d3d12Info</c>.
+    /// Stores the d3d12 info state used by this instance.
     /// </summary>
     private readonly BackendInfoD3D12 _d3d12Info;
 
     /// <summary>
-    /// Stores the value associated with <c>_device</c>.
+    /// Stores the device state used by this instance.
     /// </summary>
     private readonly ID3D12Device _device;
 
     /// <summary>
-    /// Stores the value associated with <c>_formatSupportCache</c>.
+    /// Caches format support cache to reduce repeated allocations and lookups.
     /// </summary>
     private readonly Dictionary<Format, CachedFormatSupport> _formatSupportCache = new();
 
     /// <summary>
-    /// Stores the value associated with <c>_formatSupportCacheLock</c>.
+    /// Caches format support cache lock to reduce repeated allocations and lookups.
     /// </summary>
     private readonly object _formatSupportCacheLock = new();
 
     /// <summary>
-    /// Stores the value associated with <c>_resourceFactory</c>.
+    /// Stores the resource factory state used by this instance.
     /// </summary>
     private readonly D3D12ResourceFactory _resourceFactory;
 
     /// <summary>
-    /// Stores the value associated with <c>name</c>.
+    /// Caches root signature cache to avoid repeated allocations and lookups.
     /// </summary>
-    /// <param name="Ordinal">Specifies the value of <paramref name="Ordinal" />.</param>
-    /// <returns>Returns the result produced by the new operation.</returns>
     private readonly Dictionary<string, ID3D12RootSignature> _rootSignatureCache = new(StringComparer.Ordinal);
 
     /// <summary>
-    /// Stores the value associated with <c>_rootSignatureCacheLock</c>.
+    /// Caches root signature cache lock to reduce repeated allocations and lookups.
     /// </summary>
     private readonly object _rootSignatureCacheLock = new();
 
     /// <summary>
-    /// Stores the value associated with <c>_submissionFence</c>.
+    /// Stores the submission fence state used by this instance.
     /// </summary>
     private readonly ID3D12Fence _submissionFence;
 
     /// <summary>
-    /// Stores the value associated with <c>_submissionFenceEvent</c>.
+    /// Stores the submission fence event state used by this instance.
     /// </summary>
     private readonly AutoResetEvent _submissionFenceEvent;
 
     /// <summary>
-    /// Stores the value associated with <c>_immediateFenceValue</c>.
+    /// Stores the immediate fence value state used by this instance.
     /// </summary>
     private ulong _immediateFenceValue = 1;
 
     /// <summary>
-    /// Stores the value associated with <c>_nextSubmissionFenceValue</c>.
+    /// Stores the next submission fence value state used by this instance.
     /// </summary>
     private ulong _nextSubmissionFenceValue = 1;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="D3D12GraphicsDevice" /> type.
     /// </summary>
-    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
-    /// <param name="swapchainDescription">Specifies the value of <paramref name="swapchainDescription" />.</param>
+    /// <param name="options">The options used to configure this operation.</param>
+    /// <param name="swapchainDescription">The swapchain description value used by this operation.</param>
     public D3D12GraphicsDevice(GraphicsDeviceOptions options, SwapchainDescription? swapchainDescription) {
         if (!IsSupported()) {
             throw new PlatformNotSupportedException("Direct3D 12 is only supported on Windows.");
@@ -210,7 +207,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Stores the value associated with <c>Device</c>.
+    /// Stores the device state used by this instance.
     /// </summary>
     internal ID3D12Device Device => this._device;
 
@@ -225,9 +222,9 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     internal IDXGIFactory4 DxgiFactory { get; }
 
     /// <summary>
-    /// Executes the IsSupported operation.
+    /// Executes the is supported logic for this backend.
     /// </summary>
-    /// <returns>Returns the result produced by the IsSupported operation.</returns>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public static bool IsSupported() {
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
             return false;
@@ -237,18 +234,18 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the IsSubmissionFenceComplete operation.
+    /// Executes the is submission fence complete logic for this backend.
     /// </summary>
-    /// <param name="value">Specifies the value of <paramref name="value" />.</param>
-    /// <returns>Returns the result produced by the IsSubmissionFenceComplete operation.</returns>
+    /// <param name="value">The value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     internal bool IsSubmissionFenceComplete(ulong value) {
         return this._submissionFence.CompletedValue >= value;
     }
 
     /// <summary>
-    /// Executes the WaitForSubmissionFence operation.
+    /// Executes the wait for submission fence logic for this backend.
     /// </summary>
-    /// <param name="value">Specifies the value of <paramref name="value" />.</param>
+    /// <param name="value">The value used by this operation.</param>
     internal void WaitForSubmissionFence(ulong value) {
         if (this._submissionFence.CompletedValue >= value) {
             return;
@@ -260,11 +257,11 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the GetOrCreateRootSignature operation.
+    /// Gets the or create root signature value.
     /// </summary>
-    /// <param name="cacheKey">Specifies the value of <paramref name="cacheKey" />.</param>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
-    /// <returns>Returns the result produced by the GetOrCreateRootSignature operation.</returns>
+    /// <param name="cacheKey">The cache key value used by this operation.</param>
+    /// <param name="description">The description used to configure this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal ID3D12RootSignature GetOrCreateRootSignature(string cacheKey, in RootSignatureDescription description) {
         lock (this._rootSignatureCacheLock) {
             if (this._rootSignatureCache.TryGetValue(cacheKey, out ID3D12RootSignature cached)) {
@@ -278,23 +275,23 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the WaitForFence operation.
+    /// Executes the wait for fence logic for this backend.
     /// </summary>
-    /// <param name="fence">Specifies the value of <paramref name="fence" />.</param>
-    /// <param name="nanosecondTimeout">Specifies the value of <paramref name="nanosecondTimeout" />.</param>
-    /// <returns>Returns the result produced by the WaitForFence operation.</returns>
+    /// <param name="fence">The synchronization fence used by this operation.</param>
+    /// <param name="nanosecondTimeout">The nanosecond timeout value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public override bool WaitForFence(Fence fence, ulong nanosecondTimeout) {
         D3D12Fence d3d12Fence = Util.AssertSubtype<Fence, D3D12Fence>(fence);
         return d3d12Fence.Wait(nanosecondTimeout);
     }
 
     /// <summary>
-    /// Executes the WaitForFences operation.
+    /// Executes the wait for fences logic for this backend.
     /// </summary>
-    /// <param name="fences">Specifies the value of <paramref name="fences" />.</param>
-    /// <param name="waitAll">Specifies the value of <paramref name="waitAll" />.</param>
-    /// <param name="nanosecondTimeout">Specifies the value of <paramref name="nanosecondTimeout" />.</param>
-    /// <returns>Returns the result produced by the WaitForFences operation.</returns>
+    /// <param name="fences">The synchronization fence used by this operation.</param>
+    /// <param name="waitAll">The wait all value used by this operation.</param>
+    /// <param name="nanosecondTimeout">The nanosecond timeout value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public override bool WaitForFences(Fence[] fences, bool waitAll, ulong nanosecondTimeout) {
         if (fences == null || fences.Length == 0) {
             return true;
@@ -337,19 +334,19 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the ResetFence operation.
+    /// Executes the reset fence logic for this backend.
     /// </summary>
-    /// <param name="fence">Specifies the value of <paramref name="fence" />.</param>
+    /// <param name="fence">The synchronization fence used by this operation.</param>
     public override void ResetFence(Fence fence) {
         fence.Reset();
     }
 
     /// <summary>
-    /// Executes the GetSampleCountLimit operation.
+    /// Gets the sample count limit value.
     /// </summary>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
-    /// <param name="depthFormat">Specifies the value of <paramref name="depthFormat" />.</param>
-    /// <returns>Returns the result produced by the GetSampleCountLimit operation.</returns>
+    /// <param name="format">The format used by this operation.</param>
+    /// <param name="depthFormat">The depth format value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public override TextureSampleCount GetSampleCountLimit(PixelFormat format, bool depthFormat) {
         Format dxgiFormat;
         try {
@@ -400,28 +397,28 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the GetUniformBufferMinOffsetAlignmentCore operation.
+    /// Gets the uniform buffer min offset alignment core value.
     /// </summary>
-    /// <returns>Returns the result produced by the GetUniformBufferMinOffsetAlignmentCore operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     internal override uint GetUniformBufferMinOffsetAlignmentCore() {
         return 256;
     }
 
     /// <summary>
-    /// Executes the GetStructuredBufferMinOffsetAlignmentCore operation.
+    /// Gets the structured buffer min offset alignment core value.
     /// </summary>
-    /// <returns>Returns the result produced by the GetStructuredBufferMinOffsetAlignmentCore operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     internal override uint GetStructuredBufferMinOffsetAlignmentCore() {
         return 16;
     }
 
     /// <summary>
-    /// Executes the MapCore operation.
+    /// Maps the core resource for CPU access.
     /// </summary>
-    /// <param name="resource">Specifies the value of <paramref name="resource" />.</param>
-    /// <param name="mode">Specifies the value of <paramref name="mode" />.</param>
-    /// <param name="subresource">Specifies the value of <paramref name="subresource" />.</param>
-    /// <returns>Returns the result produced by the MapCore operation.</returns>
+    /// <param name="resource">The resource involved in this operation.</param>
+    /// <param name="mode">The mode value used by this operation.</param>
+    /// <param name="subresource">The subresource value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     protected override MappedResource MapCore(IMappableResource resource, MapMode mode, uint subresource) {
         if (resource is D3D12DeviceBuffer buffer) {
             return buffer.Map(mode);
@@ -435,10 +432,10 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the UnmapCore operation.
+    /// Unmaps the core resource from CPU access.
     /// </summary>
-    /// <param name="resource">Specifies the value of <paramref name="resource" />.</param>
-    /// <param name="subresource">Specifies the value of <paramref name="subresource" />.</param>
+    /// <param name="resource">The resource involved in this operation.</param>
+    /// <param name="subresource">The subresource value used by this operation.</param>
     protected override void UnmapCore(IMappableResource resource, uint subresource) {
         if (resource is D3D12DeviceBuffer buffer) {
             buffer.Unmap();
@@ -454,7 +451,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the PlatformDispose operation.
+    /// Executes the platform dispose logic for this backend.
     /// </summary>
     protected override void PlatformDispose() {
         lock (this._rootSignatureCacheLock) {
@@ -474,10 +471,10 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the SubmitCommandsCore operation.
+    /// Executes the submit commands core logic for this backend.
     /// </summary>
-    /// <param name="commandList">Specifies the value of <paramref name="commandList" />.</param>
-    /// <param name="fence">Specifies the value of <paramref name="fence" />.</param>
+    /// <param name="commandList">The command list used by this operation.</param>
+    /// <param name="fence">The synchronization fence used by this operation.</param>
     private protected override void SubmitCommandsCore(CommandList commandList, Fence fence) {
         if (commandList is D3D12CommandList d3d12CommandList) {
             d3d12CommandList.ExecuteNoSignal();
@@ -493,9 +490,9 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the SwapBuffersCore operation.
+    /// Executes the swap buffers core logic for this backend.
     /// </summary>
-    /// <param name="swapchain">Specifies the value of <paramref name="swapchain" />.</param>
+    /// <param name="swapchain">The swapchain used by this operation.</param>
     private protected override void SwapBuffersCore(Swapchain swapchain) {
         if (swapchain is D3D12Swapchain d3d12Swapchain) {
             d3d12Swapchain.Present();
@@ -506,14 +503,14 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the WaitForIdleCore operation.
+    /// Executes the wait for idle core logic for this backend.
     /// </summary>
     private protected override void WaitForIdleCore() {
         this.WaitForQueueIdle();
     }
 
     /// <summary>
-    /// Executes the WaitForNextFrameReadyCore operation.
+    /// Executes the wait for next frame ready core logic for this backend.
     /// </summary>
     private protected override void WaitForNextFrameReadyCore() {
         // Do not globally stall the GPU every frame on D3D12.
@@ -521,19 +518,19 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the UpdateTextureCore operation.
+    /// Updates the texture core state for this command sequence.
     /// </summary>
-    /// <param name="texture">Specifies the value of <paramref name="texture" />.</param>
-    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
-    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
-    /// <param name="x">Specifies the value of <paramref name="x" />.</param>
-    /// <param name="y">Specifies the value of <paramref name="y" />.</param>
-    /// <param name="z">Specifies the value of <paramref name="z" />.</param>
-    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
-    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
-    /// <param name="depth">Specifies the value of <paramref name="depth" />.</param>
-    /// <param name="mipLevel">Specifies the value of <paramref name="mipLevel" />.</param>
-    /// <param name="arrayLayer">Specifies the value of <paramref name="arrayLayer" />.</param>
+    /// <param name="texture">The texture resource involved in this operation.</param>
+    /// <param name="source">The source value or resource.</param>
+    /// <param name="sizeInBytes">The size, in bytes, used by this operation.</param>
+    /// <param name="x">The X coordinate.</param>
+    /// <param name="y">The Y coordinate.</param>
+    /// <param name="z">The Z coordinate.</param>
+    /// <param name="width">The width value.</param>
+    /// <param name="height">The height value.</param>
+    /// <param name="depth">The depth value.</param>
+    /// <param name="mipLevel">The mip level index.</param>
+    /// <param name="arrayLayer">The array layer index.</param>
     private protected override void UpdateTextureCore(Texture texture, IntPtr source, uint sizeInBytes, uint x, uint y, uint z, uint width, uint height, uint depth, uint mipLevel, uint arrayLayer) {
         if (texture is not D3D12Texture d3d12Texture) {
             throw new VeldridException("Texture belongs to a different backend.");
@@ -548,12 +545,12 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the UpdateBufferCore operation.
+    /// Updates the buffer core state for this command sequence.
     /// </summary>
-    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
-    /// <param name="bufferOffsetInBytes">Specifies the value of <paramref name="bufferOffsetInBytes" />.</param>
-    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
-    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
+    /// <param name="buffer">The buffer resource involved in this operation.</param>
+    /// <param name="bufferOffsetInBytes">The byte offset used by this operation.</param>
+    /// <param name="source">The source value or resource.</param>
+    /// <param name="sizeInBytes">The size, in bytes, used by this operation.</param>
     private protected override void UpdateBufferCore(DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes) {
         if (buffer is not D3D12DeviceBuffer d3d12Buffer) {
             throw new VeldridException("Buffer belongs to a different backend.");
@@ -576,13 +573,13 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the GetPixelFormatSupportCore operation.
+    /// Gets the pixel format support core value.
     /// </summary>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
-    /// <param name="type">Specifies the value of <paramref name="type" />.</param>
-    /// <param name="usage">Specifies the value of <paramref name="usage" />.</param>
-    /// <param name="properties">Specifies the value of <paramref name="properties" />.</param>
-    /// <returns>Returns the result produced by the GetPixelFormatSupportCore operation.</returns>
+    /// <param name="format">The format used by this operation.</param>
+    /// <param name="type">The type value used by this operation.</param>
+    /// <param name="usage">The usage value used by this operation.</param>
+    /// <param name="properties">The properties value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     private protected override bool GetPixelFormatSupportCore(PixelFormat format, TextureType type, TextureUsage usage, out PixelFormatProperties properties) {
         if ((usage & TextureUsage.Cubemap) != 0 && type != TextureType.Texture2D) {
             properties = default;
@@ -722,20 +719,20 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the GetD3D12Info operation.
+    /// Gets the d3 d12 info value.
     /// </summary>
-    /// <param name="info">Specifies the value of <paramref name="info" />.</param>
-    /// <returns>Returns the result produced by the GetD3D12Info operation.</returns>
+    /// <param name="info">The info value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public override bool GetD3D12Info(out BackendInfoD3D12 info) {
         info = this._d3d12Info;
         return true;
     }
 
     /// <summary>
-    /// Executes the SelectAdapter operation.
+    /// Executes the select adapter logic for this backend.
     /// </summary>
-    /// <param name="factory">Specifies the value of <paramref name="factory" />.</param>
-    /// <returns>Returns the result produced by the SelectAdapter operation.</returns>
+    /// <param name="factory">The factory value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static IDXGIAdapter1 SelectAdapter(IDXGIFactory4 factory) {
         // Prefer the high-performance adapter when DXGI 1.6 is available.
         using (IDXGIFactory6 factory6 = factory.QueryInterfaceOrNull<IDXGIFactory6>()) {
@@ -790,10 +787,10 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the GetSupportedSampleFlags operation.
+    /// Gets the supported sample flags value.
     /// </summary>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
-    /// <returns>Returns the result produced by the GetSupportedSampleFlags operation.</returns>
+    /// <param name="format">The format used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private uint GetSupportedSampleFlags(Format format) {
         uint sampleFlags = 1u << (int)TextureSampleCount.Count1;
         sampleFlags |= this.QuerySampleSupportFlag(format, 2, TextureSampleCount.Count2);
@@ -805,12 +802,12 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the QuerySampleSupportFlag operation.
+    /// Executes the query sample support flag logic for this backend.
     /// </summary>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
-    /// <param name="sampleCount">Specifies the value of <paramref name="sampleCount" />.</param>
-    /// <param name="textureSampleCount">Specifies the value of <paramref name="textureSampleCount" />.</param>
-    /// <returns>Returns the result produced by the QuerySampleSupportFlag operation.</returns>
+    /// <param name="format">The format used by this operation.</param>
+    /// <param name="sampleCount">The sample count value used by this operation.</param>
+    /// <param name="textureSampleCount">The texture sample count value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private uint QuerySampleSupportFlag(Format format, uint sampleCount, TextureSampleCount textureSampleCount) {
         FeatureDataMultisampleQualityLevels msaa = new() {
             Format = format,
@@ -826,13 +823,13 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the GetTextureTypeLimits operation.
+    /// Gets the texture type limits value.
     /// </summary>
-    /// <param name="type">Specifies the value of <paramref name="type" />.</param>
-    /// <param name="maxWidth">Specifies the value of <paramref name="maxWidth" />.</param>
-    /// <param name="maxHeight">Specifies the value of <paramref name="maxHeight" />.</param>
-    /// <param name="maxDepth">Specifies the value of <paramref name="maxDepth" />.</param>
-    /// <param name="maxArrayLayers">Specifies the value of <paramref name="maxArrayLayers" />.</param>
+    /// <param name="type">The type value used by this operation.</param>
+    /// <param name="maxWidth">The max width value used by this operation.</param>
+    /// <param name="maxHeight">The max height value used by this operation.</param>
+    /// <param name="maxDepth">The max depth value used by this operation.</param>
+    /// <param name="maxArrayLayers">The max array layers value used by this operation.</param>
     private static void GetTextureTypeLimits(TextureType type, out uint maxWidth, out uint maxHeight, out uint maxDepth, out uint maxArrayLayers) {
         switch (type) {
             case TextureType.Texture1D:
@@ -858,12 +855,12 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the GetMaxMipLevels operation.
+    /// Gets the max mip levels value.
     /// </summary>
-    /// <param name="maxWidth">Specifies the value of <paramref name="maxWidth" />.</param>
-    /// <param name="maxHeight">Specifies the value of <paramref name="maxHeight" />.</param>
-    /// <param name="maxDepth">Specifies the value of <paramref name="maxDepth" />.</param>
-    /// <returns>Returns the result produced by the GetMaxMipLevels operation.</returns>
+    /// <param name="maxWidth">The max width value used by this operation.</param>
+    /// <param name="maxHeight">The max height value used by this operation.</param>
+    /// <param name="maxDepth">The max depth value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static uint GetMaxMipLevels(uint maxWidth, uint maxHeight, uint maxDepth) {
         uint maxDimension = Math.Max(maxWidth, Math.Max(maxHeight, maxDepth));
         uint mipLevels = 1;
@@ -876,10 +873,10 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the IsSrgbFormat operation.
+    /// Executes the is srgb format logic for this backend.
     /// </summary>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
-    /// <returns>Returns the result produced by the IsSrgbFormat operation.</returns>
+    /// <param name="format">The format used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     private static bool IsSrgbFormat(PixelFormat format) {
         switch (format) {
             case PixelFormat.R8G8B8A8UNormSRgb: case PixelFormat.B8G8R8A8UNormSRgb: case PixelFormat.Bc1RgbUNormSRgb: case PixelFormat.Bc1RgbaUNormSRgb: case PixelFormat.Bc2UNormSRgb: case PixelFormat.Bc3UNormSRgb: case PixelFormat.Bc7UNormSRgb: return true;
@@ -888,13 +885,13 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the IsRuntimeMipmapGenerationSupported operation.
+    /// Executes the is runtime mipmap generation supported logic for this backend.
     /// </summary>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
-    /// <param name="type">Specifies the value of <paramref name="type" />.</param>
-    /// <param name="usage">Specifies the value of <paramref name="usage" />.</param>
-    /// <param name="depthUsage">Specifies the value of <paramref name="depthUsage" />.</param>
-    /// <returns>Returns the result produced by the IsRuntimeMipmapGenerationSupported operation.</returns>
+    /// <param name="format">The format used by this operation.</param>
+    /// <param name="type">The type value used by this operation.</param>
+    /// <param name="usage">The usage value used by this operation.</param>
+    /// <param name="depthUsage">The depth usage value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     private static bool IsRuntimeMipmapGenerationSupported(PixelFormat format, TextureType type, TextureUsage usage, bool depthUsage) {
         if (depthUsage) {
             return false;
@@ -918,11 +915,11 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the TryGetFormatSupport operation.
+    /// Attempts to get format support and reports whether it succeeded.
     /// </summary>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
-    /// <param name="formatSupport">Specifies the value of <paramref name="formatSupport" />.</param>
-    /// <returns>Returns the result produced by the TryGetFormatSupport operation.</returns>
+    /// <param name="format">The format used by this operation.</param>
+    /// <param name="formatSupport">The format support value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     private bool TryGetFormatSupport(Format format, out FeatureDataFormatSupport formatSupport) {
         lock (this._formatSupportCacheLock) {
             if (this._formatSupportCache.TryGetValue(format, out CachedFormatSupport cached)) {
@@ -941,11 +938,11 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the IsTypeSupported operation.
+    /// Executes the is type supported logic for this backend.
     /// </summary>
-    /// <param name="type">Specifies the value of <paramref name="type" />.</param>
-    /// <param name="support">Specifies the value of <paramref name="support" />.</param>
-    /// <returns>Returns the result produced by the IsTypeSupported operation.</returns>
+    /// <param name="type">The type value used by this operation.</param>
+    /// <param name="support">The support value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     private static bool IsTypeSupported(TextureType type, FormatSupport1 support) {
         switch (type) {
             case TextureType.Texture1D: return (support & FormatSupport1.Texture1D) != 0;
@@ -961,19 +958,19 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the UpdateNativeTexture operation.
+    /// Updates the native texture state for this command sequence.
     /// </summary>
-    /// <param name="texture">Specifies the value of <paramref name="texture" />.</param>
-    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
-    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
-    /// <param name="x">Specifies the value of <paramref name="x" />.</param>
-    /// <param name="y">Specifies the value of <paramref name="y" />.</param>
-    /// <param name="z">Specifies the value of <paramref name="z" />.</param>
-    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
-    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
-    /// <param name="depth">Specifies the value of <paramref name="depth" />.</param>
-    /// <param name="mipLevel">Specifies the value of <paramref name="mipLevel" />.</param>
-    /// <param name="arrayLayer">Specifies the value of <paramref name="arrayLayer" />.</param>
+    /// <param name="texture">The texture resource involved in this operation.</param>
+    /// <param name="source">The source value or resource.</param>
+    /// <param name="sizeInBytes">The size, in bytes, used by this operation.</param>
+    /// <param name="x">The X coordinate.</param>
+    /// <param name="y">The Y coordinate.</param>
+    /// <param name="z">The Z coordinate.</param>
+    /// <param name="width">The width value.</param>
+    /// <param name="height">The height value.</param>
+    /// <param name="depth">The depth value.</param>
+    /// <param name="mipLevel">The mip level index.</param>
+    /// <param name="arrayLayer">The array layer index.</param>
     private void UpdateNativeTexture(D3D12Texture texture, IntPtr source, uint sizeInBytes, uint x, uint y, uint z, uint width, uint height, uint depth, uint mipLevel, uint arrayLayer) {
         // Use the validated staging->native upload path in D3D12Texture to avoid
         // partial CopyTextureRegion edge-cases that can trigger device removal.
@@ -981,18 +978,18 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the CopyTextureDataToUploadBuffer operation.
+    /// Copies texture data to upload buffer data between resources.
     /// </summary>
-    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
-    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
-    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
-    /// <param name="copyWidth">Specifies the value of <paramref name="copyWidth" />.</param>
-    /// <param name="copyHeight">Specifies the value of <paramref name="copyHeight" />.</param>
-    /// <param name="copyDepth">Specifies the value of <paramref name="copyDepth" />.</param>
-    /// <param name="uploadMappedPtr">Specifies the value of <paramref name="uploadMappedPtr" />.</param>
-    /// <param name="placedFootprint">Specifies the value of <paramref name="placedFootprint" />.</param>
-    /// <param name="numRows">Specifies the value of <paramref name="numRows" />.</param>
-    /// <param name="rowSizeInBytes">Specifies the value of <paramref name="rowSizeInBytes" />.</param>
+    /// <param name="source">The source value or resource.</param>
+    /// <param name="sizeInBytes">The size, in bytes, used by this operation.</param>
+    /// <param name="format">The format used by this operation.</param>
+    /// <param name="copyWidth">The copy width value used by this operation.</param>
+    /// <param name="copyHeight">The copy height value used by this operation.</param>
+    /// <param name="copyDepth">The copy depth value used by this operation.</param>
+    /// <param name="uploadMappedPtr">The upload mapped ptr value used by this operation.</param>
+    /// <param name="placedFootprint">The placed footprint value used by this operation.</param>
+    /// <param name="numRows">The num rows value used by this operation.</param>
+    /// <param name="rowSizeInBytes">The size, in bytes, used by this operation.</param>
     private unsafe void CopyTextureDataToUploadBuffer(IntPtr source, uint sizeInBytes, PixelFormat format, uint copyWidth, uint copyHeight, uint copyDepth, void* uploadMappedPtr, PlacedSubresourceFootPrint placedFootprint, uint numRows, ulong rowSizeInBytes) {
         uint srcRowPitch = FormatHelpers.GetRowPitch(copyWidth, format);
         uint srcNumRows = FormatHelpers.GetNumRows(copyHeight, format);
@@ -1026,7 +1023,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes the WaitForQueueIdle operation.
+    /// Executes the wait for queue idle logic for this backend.
     /// </summary>
     private void WaitForQueueIdle() {
         ID3D12Fence fence = null;
@@ -1049,25 +1046,25 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Defines the data layout and behavior of the CachedFormatSupport struct.
+    /// Represents the CachedFormatSupport data structure used by the graphics runtime.
     /// </summary>
     private readonly struct CachedFormatSupport {
 
         /// <summary>
-        /// Stores the value associated with <c>IsSupported</c>.
+        /// Stores the is supported state used by this instance.
         /// </summary>
         public readonly bool IsSupported;
 
         /// <summary>
-        /// Stores the value associated with <c>Support</c>.
+        /// Stores the support state used by this instance.
         /// </summary>
         public readonly FeatureDataFormatSupport Support;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CachedFormatSupport" /> type.
         /// </summary>
-        /// <param name="isSupported">Specifies the value of <paramref name="isSupported" />.</param>
-        /// <param name="support">Specifies the value of <paramref name="support" />.</param>
+        /// <param name="isSupported">The is supported value used by this operation.</param>
+        /// <param name="support">The support value used by this operation.</param>
         public CachedFormatSupport(bool isSupported, FeatureDataFormatSupport support) {
             this.IsSupported = isSupported;
             this.Support = support;

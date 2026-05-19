@@ -35,11 +35,11 @@ public struct RasterizerStateDescription : IEquatable<RasterizerStateDescription
     /// <summary>
     /// Initializes a new instance of the <see cref="RasterizerStateDescription" /> type.
     /// </summary>
-    /// <param name="cullMode">Specifies the value of <paramref name="cullMode" />.</param>
-    /// <param name="fillMode">Specifies the value of <paramref name="fillMode" />.</param>
-    /// <param name="frontFace">Specifies the value of <paramref name="frontFace" />.</param>
-    /// <param name="depthClipEnabled">Specifies the value of <paramref name="depthClipEnabled" />.</param>
-    /// <param name="scissorTestEnabled">Specifies the value of <paramref name="scissorTestEnabled" />.</param>
+    /// <param name="cullMode">The cull mode value used by this operation.</param>
+    /// <param name="fillMode">The fill mode value used by this operation.</param>
+    /// <param name="frontFace">The front face value used by this operation.</param>
+    /// <param name="depthClipEnabled">The depth clip enabled value used by this operation.</param>
+    /// <param name="scissorTestEnabled">The scissor test enabled value used by this operation.</param>
     public RasterizerStateDescription(FaceCullMode cullMode, PolygonFillMode fillMode, FrontFace frontFace, bool depthClipEnabled, bool scissorTestEnabled) {
         this.CullMode = cullMode;
         this.FillMode = fillMode;
@@ -71,10 +71,10 @@ public struct RasterizerStateDescription : IEquatable<RasterizerStateDescription
     };
 
     /// <summary>
-    /// Executes the Equals operation.
+    /// Determines whether this instance is equal to the specified value.
     /// </summary>
-    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
-    /// <returns>Returns the result produced by the Equals operation.</returns>
+    /// <param name="other">The value to compare against.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public bool Equals(RasterizerStateDescription other) {
         return this.CullMode == other.CullMode
                && this.FillMode == other.FillMode
@@ -84,9 +84,9 @@ public struct RasterizerStateDescription : IEquatable<RasterizerStateDescription
     }
 
     /// <summary>
-    /// Executes the GetHashCode operation.
+    /// Computes a hash code for this instance.
     /// </summary>
-    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine((int)this.CullMode, (int)this.FillMode, (int)this.FrontFace, this.DepthClipEnabled.GetHashCode(), this.ScissorTestEnabled.GetHashCode());
     }

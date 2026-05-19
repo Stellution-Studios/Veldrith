@@ -3,19 +3,19 @@ using System;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Defines the data layout and behavior of the MTLComputePipelineState struct.
+/// Represents the MTLComputePipelineState data structure used by the graphics runtime.
 /// </summary>
 public struct MTLComputePipelineState {
 
     /// <summary>
-    /// Stores the value associated with <c>NativePtr</c>.
+    /// Stores the native ptr state used by this instance.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MTLComputePipelineState" /> type.
     /// </summary>
-    /// <param name="ptr">Specifies the value of <paramref name="ptr" />.</param>
+    /// <param name="ptr">The ptr value used by this operation.</param>
     public MTLComputePipelineState(IntPtr ptr) {
         this.NativePtr = ptr;
     }

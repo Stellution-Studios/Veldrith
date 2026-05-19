@@ -1,20 +1,19 @@
 namespace Veldrith.D3D12;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the D3D12ResourceLayout class.
+/// Provides the Direct3D 12 backend implementation for D3D12ResourceLayout.
 /// </summary>
 internal sealed class D3D12ResourceLayout : ResourceLayout {
 
     /// <summary>
-    /// Stores the value associated with <c>_disposed</c>.
+    /// Stores the disposed state used by this instance.
     /// </summary>
     private bool _disposed;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="D3D12ResourceLayout" /> class.
     /// </summary>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
-    /// <returns>Returns the result produced by the base operation.</returns>
+    /// <param name="description">The description used to configure this operation.</param>
     public D3D12ResourceLayout(ref ResourceLayoutDescription description) : base(ref description) {
         this.Elements = Util.ShallowClone(description.Elements);
     }
@@ -35,7 +34,7 @@ internal sealed class D3D12ResourceLayout : ResourceLayout {
     public override string Name { get; set; }
 
     /// <summary>
-    /// Executes the Dispose operation.
+    /// Releases resources held by this instance.
     /// </summary>
     public override void Dispose() {
         this._disposed = true;

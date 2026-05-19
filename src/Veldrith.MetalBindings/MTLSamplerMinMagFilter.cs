@@ -6,7 +6,7 @@ namespace Veldrith.MetalBindings;
 public enum MTLSamplerMinMagFilter {
 
     /// <summary>
-    /// Stores the value associated with <c>Nearest</c>.
+    /// Stores the nearest state used by this instance.
     /// </summary>
     Nearest = 0, Linear = 1
 }

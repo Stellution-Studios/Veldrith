@@ -4,36 +4,35 @@ using static Vulkan.VulkanNative;
 namespace Veldrith.Vk;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the VkTextureView class.
+/// Provides the Vulkan backend implementation for VkTextureView.
 /// </summary>
 internal unsafe class VkTextureView : TextureView {
 
     /// <summary>
-    /// Stores the value associated with <c>_imageView</c>.
+    /// Stores the image view state used by this instance.
     /// </summary>
     private readonly VkImageView _imageView;
 
     /// <summary>
-    /// Stores the value associated with <c>gd</c>.
+    /// Stores the gd state used by this instance.
     /// </summary>
     private readonly VkGraphicsDevice gd;
 
     /// <summary>
-    /// Stores the value associated with <c>_destroyed</c>.
+    /// Stores the destroyed state used by this instance.
     /// </summary>
     private bool _destroyed;
 
     /// <summary>
-    /// Stores the value associated with <c>_name</c>.
+    /// Stores the human-readable name associated with this instance.
     /// </summary>
     private string _name;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VkTextureView" /> class.
     /// </summary>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
-    /// <returns>Returns the result produced by the base operation.</returns>
+    /// <param name="gd">The graphics device that owns this operation.</param>
+    /// <param name="description">The description used to configure this operation.</param>
     public VkTextureView(VkGraphicsDevice gd, ref TextureViewDescription description) : base(ref description) {
         this.gd = gd;
         VkImageViewCreateInfo imageViewCi = VkImageViewCreateInfo.New();
@@ -76,13 +75,14 @@ internal unsafe class VkTextureView : TextureView {
     }
 
     /// <summary>
-    /// Stores the value associated with <c>ImageView</c>.
+    /// Stores the image view state used by this instance.
     /// </summary>
     public VkImageView ImageView => this._imageView;
 
     /// <summary>
     /// Gets or sets Target.
     /// </summary>
+
     public new VkTexture Target => (VkTexture)base.Target;
 
     /// <summary>
@@ -109,7 +109,7 @@ internal unsafe class VkTextureView : TextureView {
     #region Disposal
 
     /// <summary>
-    /// Executes the Dispose operation.
+    /// Releases resources held by this instance.
     /// </summary>
     public override void Dispose() {
         this.RefCount.Decrement();
@@ -118,7 +118,7 @@ internal unsafe class VkTextureView : TextureView {
     #endregion
 
     /// <summary>
-    /// Executes the DisposeCore operation.
+    /// Executes the dispose core logic for this backend.
     /// </summary>
     private void DisposeCore() {
         if (!this._destroyed) {

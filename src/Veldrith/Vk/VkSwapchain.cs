@@ -7,89 +7,89 @@ using static Vulkan.VulkanNative;
 namespace Veldrith.Vk;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the VkSwapchain class.
+/// Provides the Vulkan backend implementation for VkSwapchain.
 /// </summary>
 internal unsafe class VkSwapchain : Swapchain {
 
     /// <summary>
-    /// Stores the value associated with <c>_colorSrgb</c>.
+    /// Stores the color srgb state used by this instance.
     /// </summary>
     private readonly bool _colorSrgb;
 
     /// <summary>
-    /// Stores the value associated with <c>_framebuffer</c>.
+    /// Stores the framebuffer state used by this instance.
     /// </summary>
     private readonly VkSwapchainFramebuffer _framebuffer;
 
     /// <summary>
-    /// Stores the value associated with <c>_presentQueue</c>.
+    /// Stores the present queue state used by this instance.
     /// </summary>
     private readonly VkQueue _presentQueue;
 
     /// <summary>
-    /// Stores the value associated with <c>_presentQueueIndex</c>.
+    /// Stores the present queue index value used during command execution.
     /// </summary>
     private readonly uint _presentQueueIndex;
 
     /// <summary>
-    /// Stores the value associated with <c>gd</c>.
+    /// Stores the gd state used by this instance.
     /// </summary>
     private readonly VkGraphicsDevice gd;
 
     /// <summary>
-    /// Stores the value associated with <c>_allowTearing</c>.
+    /// Stores the allow tearing state used by this instance.
     /// </summary>
     private bool _allowTearing;
 
     /// <summary>
-    /// Stores the value associated with <c>_currentImageIndex</c>.
+    /// Stores the current image index value used during command execution.
     /// </summary>
     private uint _currentImageIndex;
 
     /// <summary>
-    /// Stores the value associated with <c>_deviceSwapchain</c>.
+    /// Stores the device swapchain state used by this instance.
     /// </summary>
     private VkSwapchainKHR _deviceSwapchain;
 
     /// <summary>
-    /// Stores the value associated with <c>_disposed</c>.
+    /// Stores the disposed state used by this instance.
     /// </summary>
     private bool _disposed;
 
     /// <summary>
-    /// Stores the value associated with <c>_imageAvailableFence</c>.
+    /// Stores the image available fence state used by this instance.
     /// </summary>
     private Vulkan.VkFence _imageAvailableFence;
 
     /// <summary>
-    /// Stores the value associated with <c>_name</c>.
+    /// Stores the human-readable name associated with this instance.
     /// </summary>
     private string _name;
 
     /// <summary>
-    /// Stores the value associated with <c>_newSyncToVBlank</c>.
+    /// Stores the new sync to vblank state used by this instance.
     /// </summary>
     private bool? _newSyncToVBlank;
 
     /// <summary>
-    /// Stores the value associated with <c>_syncToVBlank</c>.
+    /// Stores the sync to vblank state used by this instance.
     /// </summary>
     private bool _syncToVBlank;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VkSwapchain" /> type.
     /// </summary>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <param name="gd">The graphics device that owns this operation.</param>
+    /// <param name="description">The description used to configure this operation.</param>
     public VkSwapchain(VkGraphicsDevice gd, ref SwapchainDescription description)
         : this(gd, ref description, VkSurfaceKHR.Null) { }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VkSwapchain" /> type.
     /// </summary>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
-    /// <param name="existingSurface">Specifies the value of <paramref name="existingSurface" />.</param>
+    /// <param name="gd">The graphics device that owns this operation.</param>
+    /// <param name="description">The description used to configure this operation.</param>
+    /// <param name="existingSurface">The existing surface value used by this operation.</param>
     public VkSwapchain(VkGraphicsDevice gd, ref SwapchainDescription description, VkSurfaceKHR existingSurface) {
         this.gd = gd;
         this._syncToVBlank = description.SyncToVerticalBlank;
@@ -133,17 +133,17 @@ internal unsafe class VkSwapchain : Swapchain {
     public override bool IsDisposed => this._disposed;
 
     /// <summary>
-    /// Stores the value associated with <c>DeviceSwapchain</c>.
+    /// Stores the device swapchain state used by this instance.
     /// </summary>
     public VkSwapchainKHR DeviceSwapchain => this._deviceSwapchain;
 
     /// <summary>
-    /// Stores the value associated with <c>ImageIndex</c>.
+    /// Stores the image index value used during command execution.
     /// </summary>
     public uint ImageIndex => this._currentImageIndex;
 
     /// <summary>
-    /// Stores the value associated with <c>ImageAvailableFence</c>.
+    /// Stores the image available fence state used by this instance.
     /// </summary>
     public Vulkan.VkFence ImageAvailableFence => this._imageAvailableFence;
 
@@ -153,12 +153,12 @@ internal unsafe class VkSwapchain : Swapchain {
     public VkSurfaceKHR Surface { get; }
 
     /// <summary>
-    /// Stores the value associated with <c>PresentQueue</c>.
+    /// Stores the present queue state used by this instance.
     /// </summary>
     public VkQueue PresentQueue => this._presentQueue;
 
     /// <summary>
-    /// Stores the value associated with <c>PresentQueueIndex</c>.
+    /// Stores the present queue index value used during command execution.
     /// </summary>
     public uint PresentQueueIndex => this._presentQueueIndex;
 
@@ -209,7 +209,7 @@ internal unsafe class VkSwapchain : Swapchain {
     #region Disposal
 
     /// <summary>
-    /// Executes the Dispose operation.
+    /// Releases resources held by this instance.
     /// </summary>
     public override void Dispose() {
         this.RefCount.Decrement();
@@ -218,21 +218,21 @@ internal unsafe class VkSwapchain : Swapchain {
     #endregion
 
     /// <summary>
-    /// Executes the Resize operation.
+    /// Executes the resize logic for this backend.
     /// </summary>
-    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
-    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
+    /// <param name="width">The width value.</param>
+    /// <param name="height">The height value.</param>
     public override void Resize(uint width, uint height) {
         this.RecreateAndReacquire(width, height);
     }
 
     /// <summary>
-    /// Executes the AcquireNextImage operation.
+    /// Executes the acquire next image logic for this backend.
     /// </summary>
-    /// <param name="device">Specifies the value of <paramref name="device" />.</param>
-    /// <param name="semaphore">Specifies the value of <paramref name="semaphore" />.</param>
-    /// <param name="fence">Specifies the value of <paramref name="fence" />.</param>
-    /// <returns>Returns the result produced by the AcquireNextImage operation.</returns>
+    /// <param name="device">The device value used by this operation.</param>
+    /// <param name="semaphore">The semaphore value used by this operation.</param>
+    /// <param name="fence">The synchronization fence used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public bool AcquireNextImage(VkDevice device, VkSemaphore semaphore, Vulkan.VkFence fence) {
         if (this._newSyncToVBlank != null) {
             this._syncToVBlank = this._newSyncToVBlank.Value;
@@ -257,10 +257,10 @@ internal unsafe class VkSwapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes the RecreateAndReacquire operation.
+    /// Executes the recreate and reacquire logic for this backend.
     /// </summary>
-    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
-    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
+    /// <param name="width">The width value.</param>
+    /// <param name="height">The height value.</param>
     private void RecreateAndReacquire(uint width, uint height) {
         if (this.CreateSwapchain(width, height)) {
             if (this.AcquireNextImage(this.gd.Device, VkSemaphore.Null, this._imageAvailableFence)) {
@@ -271,11 +271,11 @@ internal unsafe class VkSwapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes the CreateSwapchain operation.
+    /// Creates the swapchain instance used by this backend.
     /// </summary>
-    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
-    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
-    /// <returns>Returns the result produced by the CreateSwapchain operation.</returns>
+    /// <param name="width">The width value.</param>
+    /// <param name="height">The height value.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     private bool CreateSwapchain(uint width, uint height) {
         // Obtain the surface capabilities first -- this will indicate whether the surface has been lost.
         VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(this.gd.PhysicalDevice, this.Surface, out VkSurfaceCapabilitiesKHR surfaceCapabilities);
@@ -395,10 +395,10 @@ internal unsafe class VkSwapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes the GetPresentQueueIndex operation.
+    /// Gets the present queue index value.
     /// </summary>
-    /// <param name="queueFamilyIndex">Specifies the value of <paramref name="queueFamilyIndex" />.</param>
-    /// <returns>Returns the result produced by the GetPresentQueueIndex operation.</returns>
+    /// <param name="queueFamilyIndex">The queue family index value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     private bool GetPresentQueueIndex(out uint queueFamilyIndex) {
         uint deviceGraphicsQueueIndex = this.gd.GraphicsQueueIndex;
         uint devicePresentQueueIndex = this.gd.PresentQueueIndex;
@@ -418,11 +418,11 @@ internal unsafe class VkSwapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes the QueueSupportsPresent operation.
+    /// Executes the queue supports present logic for this backend.
     /// </summary>
-    /// <param name="queueFamilyIndex">Specifies the value of <paramref name="queueFamilyIndex" />.</param>
-    /// <param name="surface">Specifies the value of <paramref name="surface" />.</param>
-    /// <returns>Returns the result produced by the QueueSupportsPresent operation.</returns>
+    /// <param name="queueFamilyIndex">The queue family index value used by this operation.</param>
+    /// <param name="surface">The surface value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     private bool QueueSupportsPresent(uint queueFamilyIndex, VkSurfaceKHR surface) {
         VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(this.gd.PhysicalDevice, queueFamilyIndex, surface, out VkBool32 supported);
         CheckResult(result);
@@ -430,7 +430,7 @@ internal unsafe class VkSwapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes the DisposeCore operation.
+    /// Executes the dispose core logic for this backend.
     /// </summary>
     private void DisposeCore() {
         vkDestroyFence(this.gd.Device, this._imageAvailableFence, null);

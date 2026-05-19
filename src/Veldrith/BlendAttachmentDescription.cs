@@ -14,7 +14,6 @@ public struct BlendAttachmentDescription : IEquatable<BlendAttachmentDescription
 
     /// <summary>
     /// Controls which components of the color will be written to the framebuffer.
-    /// If <c>null</c>, the mask will be set to <see cref="Veldrith.ColorWriteMask.All" />.
     /// </summary>
     public ColorWriteMask? ColorWriteMask;
 
@@ -51,13 +50,13 @@ public struct BlendAttachmentDescription : IEquatable<BlendAttachmentDescription
     /// <summary>
     /// Initializes a new instance of the <see cref="BlendAttachmentDescription" /> type.
     /// </summary>
-    /// <param name="blendEnabled">Specifies the value of <paramref name="blendEnabled" />.</param>
-    /// <param name="sourceColorFactor">Specifies the value of <paramref name="sourceColorFactor" />.</param>
-    /// <param name="destinationColorFactor">Specifies the value of <paramref name="destinationColorFactor" />.</param>
-    /// <param name="colorFunction">Specifies the value of <paramref name="colorFunction" />.</param>
-    /// <param name="sourceAlphaFactor">Specifies the value of <paramref name="sourceAlphaFactor" />.</param>
-    /// <param name="destinationAlphaFactor">Specifies the value of <paramref name="destinationAlphaFactor" />.</param>
-    /// <param name="alphaFunction">Specifies the value of <paramref name="alphaFunction" />.</param>
+    /// <param name="blendEnabled">The blend enabled value used by this operation.</param>
+    /// <param name="sourceColorFactor">The source color factor value used by this operation.</param>
+    /// <param name="destinationColorFactor">The destination color factor value used by this operation.</param>
+    /// <param name="colorFunction">The color function value used by this operation.</param>
+    /// <param name="sourceAlphaFactor">The source alpha factor value used by this operation.</param>
+    /// <param name="destinationAlphaFactor">The destination alpha factor value used by this operation.</param>
+    /// <param name="alphaFunction">The alpha function value used by this operation.</param>
     public BlendAttachmentDescription(bool blendEnabled, BlendFactor sourceColorFactor, BlendFactor destinationColorFactor, BlendFunction colorFunction, BlendFactor sourceAlphaFactor, BlendFactor destinationAlphaFactor, BlendFunction alphaFunction) {
         this.BlendEnabled = blendEnabled;
         this.SourceColorFactor = sourceColorFactor;
@@ -72,14 +71,14 @@ public struct BlendAttachmentDescription : IEquatable<BlendAttachmentDescription
     /// <summary>
     /// Initializes a new instance of the <see cref="BlendAttachmentDescription" /> type.
     /// </summary>
-    /// <param name="blendEnabled">Specifies the value of <paramref name="blendEnabled" />.</param>
-    /// <param name="colorWriteMask">Specifies the value of <paramref name="colorWriteMask" />.</param>
-    /// <param name="sourceColorFactor">Specifies the value of <paramref name="sourceColorFactor" />.</param>
-    /// <param name="destinationColorFactor">Specifies the value of <paramref name="destinationColorFactor" />.</param>
-    /// <param name="colorFunction">Specifies the value of <paramref name="colorFunction" />.</param>
-    /// <param name="sourceAlphaFactor">Specifies the value of <paramref name="sourceAlphaFactor" />.</param>
-    /// <param name="destinationAlphaFactor">Specifies the value of <paramref name="destinationAlphaFactor" />.</param>
-    /// <param name="alphaFunction">Specifies the value of <paramref name="alphaFunction" />.</param>
+    /// <param name="blendEnabled">The blend enabled value used by this operation.</param>
+    /// <param name="colorWriteMask">The color write mask value used by this operation.</param>
+    /// <param name="sourceColorFactor">The source color factor value used by this operation.</param>
+    /// <param name="destinationColorFactor">The destination color factor value used by this operation.</param>
+    /// <param name="colorFunction">The color function value used by this operation.</param>
+    /// <param name="sourceAlphaFactor">The source alpha factor value used by this operation.</param>
+    /// <param name="destinationAlphaFactor">The destination alpha factor value used by this operation.</param>
+    /// <param name="alphaFunction">The alpha function value used by this operation.</param>
     public BlendAttachmentDescription(bool blendEnabled, ColorWriteMask colorWriteMask, BlendFactor sourceColorFactor, BlendFactor destinationColorFactor, BlendFunction colorFunction, BlendFactor sourceAlphaFactor, BlendFactor destinationAlphaFactor, BlendFunction alphaFunction) {
         this.BlendEnabled = blendEnabled;
         this.ColorWriteMask = colorWriteMask;
@@ -144,10 +143,10 @@ public struct BlendAttachmentDescription : IEquatable<BlendAttachmentDescription
     };
 
     /// <summary>
-    /// Executes the Equals operation.
+    /// Determines whether this instance is equal to the specified value.
     /// </summary>
-    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
-    /// <returns>Returns the result produced by the Equals operation.</returns>
+    /// <param name="other">The value to compare against.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public bool Equals(BlendAttachmentDescription other) {
         return this.BlendEnabled == other.BlendEnabled
                && this.ColorWriteMask == other.ColorWriteMask
@@ -158,9 +157,9 @@ public struct BlendAttachmentDescription : IEquatable<BlendAttachmentDescription
     }
 
     /// <summary>
-    /// Executes the GetHashCode operation.
+    /// Computes a hash code for this instance.
     /// </summary>
-    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(this.BlendEnabled.GetHashCode(), this.ColorWriteMask.GetHashCode(), (int)this.SourceColorFactor, (int)this.DestinationColorFactor, (int)this.ColorFunction, (int)this.SourceAlphaFactor, (int)this.DestinationAlphaFactor, (int)this.AlphaFunction);
     }

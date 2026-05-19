@@ -5,20 +5,20 @@ using System.Text;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Defines the data layout and behavior of the ObjCClass struct.
+/// Provides Objective-C interop bindings for ObjCClass.
 /// </summary>
 public unsafe struct ObjCClass {
 
     /// <summary>
-    /// Stores the value associated with <c>NativePtr</c>.
+    /// Stores the native ptr state used by this instance.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Executes the operator IntPtr operation.
+    /// Executes the int ptr logic for this backend.
     /// </summary>
-    /// <param name="c">Specifies the value of <paramref name="c" />.</param>
-    /// <returns>Returns the result produced by the operator IntPtr operation.</returns>
+    /// <param name="c">The c value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public static implicit operator IntPtr(ObjCClass c) {
         return c.NativePtr;
     }
@@ -26,7 +26,7 @@ public unsafe struct ObjCClass {
     /// <summary>
     /// Initializes a new instance of the <see cref="ObjCClass" /> type.
     /// </summary>
-    /// <param name="name">Specifies the value of <paramref name="name" />.</param>
+    /// <param name="name">The name used by this operation.</param>
     public ObjCClass(string name) {
         int byteCount = Encoding.UTF8.GetMaxByteCount(name.Length);
         byte* utf8BytesPtr = stackalloc byte[byteCount];
@@ -38,10 +38,10 @@ public unsafe struct ObjCClass {
     }
 
     /// <summary>
-    /// Executes the GetProperty operation.
+    /// Gets the property value.
     /// </summary>
-    /// <param name="propertyName">Specifies the value of <paramref name="propertyName" />.</param>
-    /// <returns>Returns the result produced by the GetProperty operation.</returns>
+    /// <param name="propertyName">The property name value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     public IntPtr GetProperty(string propertyName) {
         int byteCount = Encoding.UTF8.GetMaxByteCount(propertyName.Length);
         byte* utf8BytesPtr = stackalloc byte[byteCount];
@@ -53,10 +53,8 @@ public unsafe struct ObjCClass {
     }
 
     /// <summary>
-    /// Executes the GetUtf8String operation.
+    /// Gets the utf8 string value.
     /// </summary>
-    /// <param name="this">Specifies the value of <paramref name="this" />.</param>
-    /// <returns>Returns the result produced by the GetUtf8String operation.</returns>
     public string Name => MTLUtil.GetUtf8String(ObjectiveCRuntime.class_getName(this));
 
     public T Alloc<T>() where T : struct {
@@ -71,10 +69,9 @@ public unsafe struct ObjCClass {
     }
 
     /// <summary>
-    /// Executes the class_copyMethodList operation.
+    /// Executes the class copy method list logic for this backend.
     /// </summary>
-    /// <param name="count">Specifies the value of <paramref name="count" />.</param>
-    /// <returns>Returns the result produced by the class_copyMethodList operation.</returns>
+    /// <param name="count">The number of items involved in this operation.</param>
     public ObjectiveCMethod* class_copyMethodList(out uint count) {
         return ObjectiveCRuntime.class_copyMethodList(this, out count);
     }

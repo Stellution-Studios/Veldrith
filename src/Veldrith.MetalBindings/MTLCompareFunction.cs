@@ -6,7 +6,7 @@ namespace Veldrith.MetalBindings;
 public enum MTLCompareFunction {
 
     /// <summary>
-    /// Stores the value associated with <c>Never</c>.
+    /// Stores the never state used by this instance.
     /// </summary>
     Never = 0, Less = 1, Equal = 2, LessEqual = 3, Greater = 4, NotEqual = 5, GreaterEqual = 6, Always = 7
 }

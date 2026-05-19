@@ -6,31 +6,31 @@ namespace Veldrith.MetalBindings;
 [StructLayout(LayoutKind.Sequential)]
 
 /// <summary>
-/// Defines the data layout and behavior of the MTLSize struct.
+/// Represents the MTLSize data structure used by the graphics runtime.
 /// </summary>
 public struct MTLSize {
 
     /// <summary>
-    /// Stores the value associated with <c>Width</c>.
+    /// Stores the width value used during command execution.
     /// </summary>
     public UIntPtr Width;
 
     /// <summary>
-    /// Stores the value associated with <c>Height</c>.
+    /// Stores the height value used during command execution.
     /// </summary>
     public UIntPtr Height;
 
     /// <summary>
-    /// Stores the value associated with <c>Depth</c>.
+    /// Stores the depth value used during command execution.
     /// </summary>
     public UIntPtr Depth;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MTLSize" /> type.
     /// </summary>
-    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
-    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
-    /// <param name="depth">Specifies the value of <paramref name="depth" />.</param>
+    /// <param name="width">The width value.</param>
+    /// <param name="height">The height value.</param>
+    /// <param name="depth">The depth value.</param>
     public MTLSize(uint width, uint height, uint depth) {
         this.Width = width;
         this.Height = height;

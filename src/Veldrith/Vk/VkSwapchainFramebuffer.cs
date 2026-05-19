@@ -7,84 +7,84 @@ using static Vulkan.VulkanNative;
 namespace Veldrith.Vk;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the VkSwapchainFramebuffer class.
+/// Provides the Vulkan backend implementation for VkSwapchainFramebuffer.
 /// </summary>
 internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
 
     /// <summary>
-    /// Stores the value associated with <c>depthFormat</c>.
+    /// Stores the depth format value used during command execution.
     /// </summary>
     private readonly PixelFormat? depthFormat;
 
     /// <summary>
-    /// Stores the value associated with <c>gd</c>.
+    /// Stores the gd state used by this instance.
     /// </summary>
     private readonly VkGraphicsDevice gd;
 
     /// <summary>
-    /// Stores the value associated with <c>_depthAttachment</c>.
+    /// Stores the depth attachment value used during command execution.
     /// </summary>
     private FramebufferAttachment? _depthAttachment;
 
     /// <summary>
-    /// Stores the value associated with <c>_desiredHeight</c>.
+    /// Stores the desired height value used during command execution.
     /// </summary>
     private uint _desiredHeight;
 
     /// <summary>
-    /// Stores the value associated with <c>_desiredWidth</c>.
+    /// Stores the desired width value used during command execution.
     /// </summary>
     private uint _desiredWidth;
 
     /// <summary>
-    /// Stores the value associated with <c>_destroyed</c>.
+    /// Stores the destroyed state used by this instance.
     /// </summary>
     private bool _destroyed;
 
     /// <summary>
-    /// Stores the value associated with <c>_name</c>.
+    /// Stores the human-readable name associated with this instance.
     /// </summary>
     private string _name;
 
     /// <summary>
-    /// Stores the value associated with <c>_outputDescription</c>.
+    /// Stores the output description state used by this instance.
     /// </summary>
     private OutputDescription _outputDescription;
 
     /// <summary>
-    /// Stores the value associated with <c>_scColorTextures</c>.
+    /// Stores the sc color textures collection used by this instance.
     /// </summary>
     private FramebufferAttachment[][] _scColorTextures;
 
     /// <summary>
-    /// Stores the value associated with <c>_scExtent</c>.
+    /// Stores the sc extent state used by this instance.
     /// </summary>
     private VkExtent2D _scExtent;
 
     /// <summary>
-    /// Stores the value associated with <c>_scFramebuffers</c>.
+    /// Stores the sc framebuffers collection used by this instance.
     /// </summary>
     private VkFramebuffer[] _scFramebuffers;
 
     /// <summary>
-    /// Stores the value associated with <c>_scImageFormat</c>.
+    /// Stores the sc image format state used by this instance.
     /// </summary>
     private VkFormat _scImageFormat;
 
     /// <summary>
-    /// Stores the value associated with <c>_scImages</c>.
+    /// Stores the sc images state used by this instance.
     /// </summary>
     private VkImage[] _scImages = { };
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VkSwapchainFramebuffer" /> type.
     /// </summary>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
-    /// <param name="swapchain">Specifies the value of <paramref name="swapchain" />.</param>
-    /// <param name="surface">Specifies the value of <paramref name="surface" />.</param>
-    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
-    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
-    /// <param name="depthFormat">Specifies the value of <paramref name="depthFormat" />.</param>
+    /// <param name="gd">The graphics device that owns this operation.</param>
+    /// <param name="swapchain">The swapchain used by this operation.</param>
+    /// <param name="surface">The surface value used by this operation.</param>
+    /// <param name="width">The width value.</param>
+    /// <param name="height">The height value.</param>
+    /// <param name="depthFormat">The depth format value used by this operation.</param>
     public VkSwapchainFramebuffer(VkGraphicsDevice gd, VkSwapchain swapchain, VkSurfaceKHR surface, uint width, uint height, PixelFormat? depthFormat) {
         this.gd = gd;
         this.Swapchain = swapchain;
@@ -94,7 +94,7 @@ internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
     }
 
     /// <summary>
-    /// Stores the value associated with <c>CurrentFramebuffer</c>.
+    /// Stores the current framebuffer state used by this instance.
     /// </summary>
     public override Vulkan.VkFramebuffer CurrentFramebuffer =>
         this._scFramebuffers[(int)this.ImageIndex].CurrentFramebuffer;
@@ -117,6 +117,7 @@ internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
     /// <summary>
     /// Gets or sets ColorTargets.
     /// </summary>
+
     public override IReadOnlyList<FramebufferAttachment> ColorTargets => this._scColorTextures[(int)this.ImageIndex];
 
     /// <summary>
@@ -181,9 +182,9 @@ internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
     }
 
     /// <summary>
-    /// Executes the TransitionToIntermediateLayout operation.
+    /// Executes the transition to intermediate layout logic for this backend.
     /// </summary>
-    /// <param name="cb">Specifies the value of <paramref name="cb" />.</param>
+    /// <param name="cb">The cb value used by this operation.</param>
     public override void TransitionToIntermediateLayout(VkCommandBuffer cb) {
         for (int i = 0; i < this.ColorTargets.Count; i++) {
             FramebufferAttachment ca = this.ColorTargets[i];
@@ -193,9 +194,9 @@ internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
     }
 
     /// <summary>
-    /// Executes the TransitionToFinalLayout operation.
+    /// Executes the transition to final layout logic for this backend.
     /// </summary>
-    /// <param name="cb">Specifies the value of <paramref name="cb" />.</param>
+    /// <param name="cb">The cb value used by this operation.</param>
     public override void TransitionToFinalLayout(VkCommandBuffer cb) {
         for (int i = 0; i < this.ColorTargets.Count; i++) {
             FramebufferAttachment ca = this.ColorTargets[i];
@@ -205,21 +206,21 @@ internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
     }
 
     /// <summary>
-    /// Executes the SetImageIndex operation.
+    /// Sets the image index value.
     /// </summary>
-    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
+    /// <param name="index">The zero-based index of the target item.</param>
     internal void SetImageIndex(uint index) {
         this.ImageIndex = index;
     }
 
     /// <summary>
-    /// Executes the SetNewSwapchain operation.
+    /// Sets the new swapchain value.
     /// </summary>
-    /// <param name="deviceSwapchain">Specifies the value of <paramref name="deviceSwapchain" />.</param>
-    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
-    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
-    /// <param name="surfaceFormat">Specifies the value of <paramref name="surfaceFormat" />.</param>
-    /// <param name="swapchainExtent">Specifies the value of <paramref name="swapchainExtent" />.</param>
+    /// <param name="deviceSwapchain">The device swapchain value used by this operation.</param>
+    /// <param name="width">The width value.</param>
+    /// <param name="height">The height value.</param>
+    /// <param name="surfaceFormat">The surface format value used by this operation.</param>
+    /// <param name="swapchainExtent">The swapchain extent value used by this operation.</param>
     internal void SetNewSwapchain(VkSwapchainKHR deviceSwapchain, uint width, uint height, VkSurfaceFormatKHR surfaceFormat, VkExtent2D swapchainExtent) {
         this._desiredWidth = width;
         this._desiredHeight = height;
@@ -245,7 +246,7 @@ internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
     }
 
     /// <summary>
-    /// Executes the DisposeCore operation.
+    /// Executes the dispose core logic for this backend.
     /// </summary>
     protected override void DisposeCore() {
         if (!this._destroyed) {
@@ -256,7 +257,7 @@ internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
     }
 
     /// <summary>
-    /// Executes the DestroySwapchainFramebuffers operation.
+    /// Executes the destroy swapchain framebuffers logic for this backend.
     /// </summary>
     private void DestroySwapchainFramebuffers() {
         if (this._scFramebuffers != null) {
@@ -270,7 +271,7 @@ internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
     }
 
     /// <summary>
-    /// Executes the CreateDepthTexture operation.
+    /// Creates the depth texture instance used by this backend.
     /// </summary>
     private void CreateDepthTexture() {
         if (this.depthFormat.HasValue) {
@@ -281,7 +282,7 @@ internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
     }
 
     /// <summary>
-    /// Executes the CreateFramebuffers operation.
+    /// Creates the framebuffers instance used by this backend.
     /// </summary>
     private void CreateFramebuffers() {
         if (this._scFramebuffers != null) {

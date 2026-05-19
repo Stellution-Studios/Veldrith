@@ -4,19 +4,19 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Defines the data layout and behavior of the MTLDepthStencilDescriptor struct.
+/// Represents the MTLDepthStencilDescriptor data structure used by the graphics runtime.
 /// </summary>
 public struct MTLDepthStencilDescriptor {
 
     /// <summary>
-    /// Stores the value associated with <c>NativePtr</c>.
+    /// Stores the native ptr state used by this instance.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MTLDepthStencilDescriptor" /> type.
     /// </summary>
-    /// <param name="ptr">Specifies the value of <paramref name="ptr" />.</param>
+    /// <param name="ptr">The ptr value used by this operation.</param>
     public MTLDepthStencilDescriptor(IntPtr ptr) {
         this.NativePtr = ptr;
     }
@@ -54,42 +54,42 @@ public struct MTLDepthStencilDescriptor {
     }
 
     /// <summary>
-    /// Stores the value associated with <c>sel_depthCompareFunction</c>.
+    /// Stores the sel depth compare function value used during command execution.
     /// </summary>
     private static readonly Selector sel_depthCompareFunction = "depthCompareFunction";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setDepthCompareFunction</c>.
+    /// Stores the sel set depth compare function value used during command execution.
     /// </summary>
     private static readonly Selector sel_setDepthCompareFunction = "setDepthCompareFunction:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_isDepthWriteEnabled</c>.
+    /// Stores the sel is depth write enabled value used during command execution.
     /// </summary>
     private static readonly Selector sel_isDepthWriteEnabled = "isDepthWriteEnabled";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setDepthWriteEnabled</c>.
+    /// Stores the sel set depth write enabled value used during command execution.
     /// </summary>
     private static readonly Selector sel_setDepthWriteEnabled = "setDepthWriteEnabled:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_backFaceStencil</c>.
+    /// Stores the sel back face stencil state used by this instance.
     /// </summary>
     private static readonly Selector sel_backFaceStencil = "backFaceStencil";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setBackFaceStencil</c>.
+    /// Stores the sel set back face stencil state used by this instance.
     /// </summary>
     private static readonly Selector sel_setBackFaceStencil = "setBackFaceStencil:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_frontFaceStencil</c>.
+    /// Stores the sel front face stencil state used by this instance.
     /// </summary>
     private static readonly Selector sel_frontFaceStencil = "frontFaceStencil";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setFrontFaceStencil</c>.
+    /// Stores the sel set front face stencil state used by this instance.
     /// </summary>
     private static readonly Selector sel_setFrontFaceStencil = "setFrontFaceStencil:";
 }

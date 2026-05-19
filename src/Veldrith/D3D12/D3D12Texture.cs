@@ -7,71 +7,71 @@ using Vortice.Mathematics;
 namespace Veldrith.D3D12;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the D3D12Texture class.
+/// Provides the Direct3D 12 backend implementation for D3D12Texture.
 /// </summary>
 internal sealed class D3D12Texture : Texture {
 
     /// <summary>
-    /// Stores the value associated with <c>_data</c>.
+    /// Stores the data state used by this instance.
     /// </summary>
     private readonly byte[] _data;
 
     /// <summary>
-    /// Stores the value associated with <c>_ownsNativeTexture</c>.
+    /// Stores the owns native texture state used by this instance.
     /// </summary>
     private readonly bool _ownsNativeTexture;
 
     /// <summary>
-    /// Stores the value associated with <c>_subresourceStates</c>.
+    /// Stores the subresource states collection used by this instance.
     /// </summary>
     private readonly ResourceStates[] _subresourceStates;
 
     /// <summary>
-    /// Stores the value associated with <c>gd</c>.
+    /// Stores the gd state used by this instance.
     /// </summary>
     private readonly D3D12GraphicsDevice gd;
 
     /// <summary>
-    /// Stores the value associated with <c>_activeMapMode</c>.
+    /// Stores the active map mode state used by this instance.
     /// </summary>
     private MapMode? _activeMapMode;
 
     /// <summary>
-    /// Stores the value associated with <c>_activeMapSubresource</c>.
+    /// Stores the active map subresource state used by this instance.
     /// </summary>
     private uint _activeMapSubresource;
 
     /// <summary>
-    /// Stores the value associated with <c>_cachedCommonState</c>.
+    /// Caches cached common state to reduce repeated allocations and lookups.
     /// </summary>
     private ResourceStates _cachedCommonState;
 
     /// <summary>
-    /// Stores the value associated with <c>_disposed</c>.
+    /// Stores the disposed state used by this instance.
     /// </summary>
     private bool _disposed;
 
     /// <summary>
-    /// Stores the value associated with <c>_hasCachedCommonState</c>.
+    /// Caches has cached common state to reduce repeated allocations and lookups.
     /// </summary>
     private bool _hasCachedCommonState;
 
     /// <summary>
-    /// Stores the value associated with <c>_mapped</c>.
+    /// Stores the mapped state used by this instance.
     /// </summary>
     private bool _mapped;
 
     /// <summary>
-    /// Stores the value associated with <c>_pinnedData</c>.
+    /// Stores the pinned data state used by this instance.
     /// </summary>
     private GCHandle _pinnedData;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="D3D12Texture" /> type.
     /// </summary>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
-    /// <param name="nativeHandle">Specifies the value of <paramref name="nativeHandle" />.</param>
+    /// <param name="gd">The graphics device that owns this operation.</param>
+    /// <param name="description">The description used to configure this operation.</param>
+    /// <param name="nativeHandle">The native handle value used by this operation.</param>
     public D3D12Texture(D3D12GraphicsDevice gd, ref TextureDescription description, ulong? nativeHandle) {
         this.gd = gd;
         this.Width = description.Width;
@@ -172,6 +172,7 @@ internal sealed class D3D12Texture : Texture {
     /// <summary>
     /// Gets or sets SubresourceCount.
     /// </summary>
+
     internal uint SubresourceCount => (uint)(this._subresourceStates?.Length ?? 0);
 
     /// <summary>
@@ -185,18 +186,18 @@ internal sealed class D3D12Texture : Texture {
     public override string Name { get; set; }
 
     /// <summary>
-    /// Executes the Update operation.
+    /// Updates the value state for this command sequence.
     /// </summary>
-    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
-    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
-    /// <param name="x">Specifies the value of <paramref name="x" />.</param>
-    /// <param name="y">Specifies the value of <paramref name="y" />.</param>
-    /// <param name="z">Specifies the value of <paramref name="z" />.</param>
-    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
-    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
-    /// <param name="depth">Specifies the value of <paramref name="depth" />.</param>
-    /// <param name="mipLevel">Specifies the value of <paramref name="mipLevel" />.</param>
-    /// <param name="arrayLayer">Specifies the value of <paramref name="arrayLayer" />.</param>
+    /// <param name="source">The source value or resource.</param>
+    /// <param name="sizeInBytes">The size, in bytes, used by this operation.</param>
+    /// <param name="x">The X coordinate.</param>
+    /// <param name="y">The Y coordinate.</param>
+    /// <param name="z">The Z coordinate.</param>
+    /// <param name="width">The width value.</param>
+    /// <param name="height">The height value.</param>
+    /// <param name="depth">The depth value.</param>
+    /// <param name="mipLevel">The mip level index.</param>
+    /// <param name="arrayLayer">The array layer index.</param>
     internal void Update(IntPtr source, uint sizeInBytes, uint x, uint y, uint z, uint width, uint height, uint depth, uint mipLevel, uint arrayLayer) {
         uint subresource = this.CalculateSubresource(mipLevel, arrayLayer);
         Util.GetMipDimensions(this, mipLevel, out uint mipWidth, out uint mipHeight, out uint mipDepth);
@@ -224,18 +225,18 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes the UpdateNativeSubresource operation.
+    /// Updates the native subresource state for this command sequence.
     /// </summary>
-    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
-    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
-    /// <param name="x">Specifies the value of <paramref name="x" />.</param>
-    /// <param name="y">Specifies the value of <paramref name="y" />.</param>
-    /// <param name="z">Specifies the value of <paramref name="z" />.</param>
-    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
-    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
-    /// <param name="depth">Specifies the value of <paramref name="depth" />.</param>
-    /// <param name="mipLevel">Specifies the value of <paramref name="mipLevel" />.</param>
-    /// <param name="arrayLayer">Specifies the value of <paramref name="arrayLayer" />.</param>
+    /// <param name="source">The source value or resource.</param>
+    /// <param name="sizeInBytes">The size, in bytes, used by this operation.</param>
+    /// <param name="x">The X coordinate.</param>
+    /// <param name="y">The Y coordinate.</param>
+    /// <param name="z">The Z coordinate.</param>
+    /// <param name="width">The width value.</param>
+    /// <param name="height">The height value.</param>
+    /// <param name="depth">The depth value.</param>
+    /// <param name="mipLevel">The mip level index.</param>
+    /// <param name="arrayLayer">The array layer index.</param>
     internal void UpdateNativeSubresource(IntPtr source, uint sizeInBytes, uint x, uint y, uint z, uint width, uint height, uint depth, uint mipLevel, uint arrayLayer) {
         this.Update(source, sizeInBytes, x, y, z, width, height, depth, mipLevel, arrayLayer);
 
@@ -248,11 +249,11 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes the Map operation.
+    /// Maps the value resource for CPU access.
     /// </summary>
-    /// <param name="mode">Specifies the value of <paramref name="mode" />.</param>
-    /// <param name="subresource">Specifies the value of <paramref name="subresource" />.</param>
-    /// <returns>Returns the result produced by the Map operation.</returns>
+    /// <param name="mode">The mode value used by this operation.</param>
+    /// <param name="subresource">The subresource value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal MappedResource Map(MapMode mode, uint subresource) {
         if (subresource >= this.SubresourceCount) {
             throw new VeldridException("Subresource index is out of bounds.");
@@ -275,7 +276,7 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes the Unmap operation.
+    /// Unmaps the value resource from CPU access.
     /// </summary>
     internal void Unmap() {
         if (this._mapped
@@ -294,23 +295,23 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes the CopyRegionTo operation.
+    /// Copies region to data between resources.
     /// </summary>
-    /// <param name="destination">Specifies the value of <paramref name="destination" />.</param>
-    /// <param name="srcX">Specifies the value of <paramref name="srcX" />.</param>
-    /// <param name="srcY">Specifies the value of <paramref name="srcY" />.</param>
-    /// <param name="srcZ">Specifies the value of <paramref name="srcZ" />.</param>
-    /// <param name="srcMipLevel">Specifies the value of <paramref name="srcMipLevel" />.</param>
-    /// <param name="srcBaseArrayLayer">Specifies the value of <paramref name="srcBaseArrayLayer" />.</param>
-    /// <param name="dstX">Specifies the value of <paramref name="dstX" />.</param>
-    /// <param name="dstY">Specifies the value of <paramref name="dstY" />.</param>
-    /// <param name="dstZ">Specifies the value of <paramref name="dstZ" />.</param>
-    /// <param name="dstMipLevel">Specifies the value of <paramref name="dstMipLevel" />.</param>
-    /// <param name="dstBaseArrayLayer">Specifies the value of <paramref name="dstBaseArrayLayer" />.</param>
-    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
-    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
-    /// <param name="depth">Specifies the value of <paramref name="depth" />.</param>
-    /// <param name="layerCount">Specifies the value of <paramref name="layerCount" />.</param>
+    /// <param name="destination">The destination value or resource.</param>
+    /// <param name="srcX">The src x value used by this operation.</param>
+    /// <param name="srcY">The src y value used by this operation.</param>
+    /// <param name="srcZ">The src z value used by this operation.</param>
+    /// <param name="srcMipLevel">The src mip level value used by this operation.</param>
+    /// <param name="srcBaseArrayLayer">The src base array layer value used by this operation.</param>
+    /// <param name="dstX">The dst x value used by this operation.</param>
+    /// <param name="dstY">The dst y value used by this operation.</param>
+    /// <param name="dstZ">The dst z value used by this operation.</param>
+    /// <param name="dstMipLevel">The dst mip level value used by this operation.</param>
+    /// <param name="dstBaseArrayLayer">The dst base array layer value used by this operation.</param>
+    /// <param name="width">The width value.</param>
+    /// <param name="height">The height value.</param>
+    /// <param name="depth">The depth value.</param>
+    /// <param name="layerCount">The layer count value used by this operation.</param>
     internal void CopyRegionTo(D3D12Texture destination, uint srcX, uint srcY, uint srcZ, uint srcMipLevel, uint srcBaseArrayLayer, uint dstX, uint dstY, uint dstZ, uint dstMipLevel, uint dstBaseArrayLayer, uint width, uint height, uint depth, uint layerCount) {
         if (this.Format != destination.Format) {
             throw new VeldridException("Source and destination texture formats must match.");
@@ -335,9 +336,9 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes the GenerateMipmapsCpu operation.
+    /// Executes the generate mipmaps cpu logic for this backend.
     /// </summary>
-    /// <returns>Returns the result produced by the GenerateMipmapsCpu operation.</returns>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     internal bool GenerateMipmapsCpu() {
         if (this.MipLevels <= 1 || FormatHelpers.IsCompressedFormat(this.Format) || (this.Usage & TextureUsage.DepthStencil) == TextureUsage.DepthStencil) {
             return false;
@@ -412,7 +413,7 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes the UploadGeneratedMipmaps operation.
+    /// Executes the upload generated mipmaps logic for this backend.
     /// </summary>
     internal unsafe void UploadGeneratedMipmaps() {
         if (this.NativeTexture == null || this.MipLevels <= 1) {
@@ -432,17 +433,17 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes the GetSourceByte operation.
+    /// Gets the source byte value.
     /// </summary>
-    /// <param name="srcBaseOffset">Specifies the value of <paramref name="srcBaseOffset" />.</param>
-    /// <param name="srcRowPitch">Specifies the value of <paramref name="srcRowPitch" />.</param>
-    /// <param name="srcDepthPitch">Specifies the value of <paramref name="srcDepthPitch" />.</param>
-    /// <param name="srcX">Specifies the value of <paramref name="srcX" />.</param>
-    /// <param name="srcY">Specifies the value of <paramref name="srcY" />.</param>
-    /// <param name="srcZ">Specifies the value of <paramref name="srcZ" />.</param>
-    /// <param name="bytesPerPixel">Specifies the value of <paramref name="bytesPerPixel" />.</param>
-    /// <param name="component">Specifies the value of <paramref name="component" />.</param>
-    /// <returns>Returns the result produced by the GetSourceByte operation.</returns>
+    /// <param name="srcBaseOffset">The src base offset value used by this operation.</param>
+    /// <param name="srcRowPitch">The src row pitch value used by this operation.</param>
+    /// <param name="srcDepthPitch">The src depth pitch value used by this operation.</param>
+    /// <param name="srcX">The src x value used by this operation.</param>
+    /// <param name="srcY">The src y value used by this operation.</param>
+    /// <param name="srcZ">The src z value used by this operation.</param>
+    /// <param name="bytesPerPixel">The bytes per pixel value used by this operation.</param>
+    /// <param name="component">The component value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private uint GetSourceByte(uint srcBaseOffset, uint srcRowPitch, uint srcDepthPitch, uint srcX, uint srcY, uint srcZ, uint bytesPerPixel, uint component) {
         int srcPixelOffset = (int)(srcBaseOffset
             + srcZ * srcDepthPitch
@@ -453,11 +454,11 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes the CreateNativeTexture operation.
+    /// Creates the native texture instance used by this backend.
     /// </summary>
-    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
-    /// <returns>Returns the result produced by the CreateNativeTexture operation.</returns>
+    /// <param name="gd">The graphics device that owns this operation.</param>
+    /// <param name="description">The description used to configure this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private ID3D12Resource CreateNativeTexture(D3D12GraphicsDevice gd, ref TextureDescription description) {
         bool isDepth = (description.Usage & TextureUsage.DepthStencil) == TextureUsage.DepthStencil;
         uint effectiveDescriptionArrayLayers = GetEffectiveArrayLayers(description.Usage, description.ArrayLayers);
@@ -490,10 +491,10 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes the CreateWrappedNativeTexture operation.
+    /// Creates the wrapped native texture instance used by this backend.
     /// </summary>
-    /// <param name="nativeHandle">Specifies the value of <paramref name="nativeHandle" />.</param>
-    /// <returns>Returns the result produced by the CreateWrappedNativeTexture operation.</returns>
+    /// <param name="nativeHandle">The native handle value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static ID3D12Resource CreateWrappedNativeTexture(ulong nativeHandle) {
         if (nativeHandle == 0) {
             throw new VeldridException("Native D3D12 texture handle cannot be 0.");
@@ -503,10 +504,10 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes the ValidateWrappedTextureDescription operation.
+    /// Executes the validate wrapped texture description logic for this backend.
     /// </summary>
-    /// <param name="nativeDescription">Specifies the value of <paramref name="nativeDescription" />.</param>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <param name="nativeDescription">The native description value used by this operation.</param>
+    /// <param name="description">The description used to configure this operation.</param>
     private static void ValidateWrappedTextureDescription(ResourceDescription nativeDescription, ref TextureDescription description) {
         bool validDimension = (description.Type == TextureType.Texture1D && nativeDescription.Dimension == ResourceDimension.Texture1D)
             || (description.Type == TextureType.Texture2D && nativeDescription.Dimension == ResourceDimension.Texture2D)
@@ -561,11 +562,11 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes the IsNativeFormatCompatible operation.
+    /// Executes the is native format compatible logic for this backend.
     /// </summary>
-    /// <param name="nativeFormat">Specifies the value of <paramref name="nativeFormat" />.</param>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
-    /// <returns>Returns the result produced by the IsNativeFormatCompatible operation.</returns>
+    /// <param name="nativeFormat">The native format value used by this operation.</param>
+    /// <param name="description">The description used to configure this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     private static bool IsNativeFormatCompatible(Format nativeFormat, ref TextureDescription description) {
         bool depthUsage = (description.Usage & TextureUsage.DepthStencil) != 0;
         Format expectedResourceFormat = D3D12Formats.ToDxgiFormat(description.Format, depthUsage);
@@ -592,10 +593,10 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes the GetCreatedTextureInitialState operation.
+    /// Gets the created texture initial state value.
     /// </summary>
-    /// <param name="usage">Specifies the value of <paramref name="usage" />.</param>
-    /// <returns>Returns the result produced by the GetCreatedTextureInitialState operation.</returns>
+    /// <param name="usage">The usage value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static ResourceStates GetCreatedTextureInitialState(TextureUsage usage) {
         if ((usage & TextureUsage.DepthStencil) == TextureUsage.DepthStencil) {
             return ResourceStates.DepthWrite;
@@ -609,9 +610,9 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes the InitializeSubresourceStates operation.
+    /// Executes the initialize subresource states logic for this backend.
     /// </summary>
-    /// <param name="initialState">Specifies the value of <paramref name="initialState" />.</param>
+    /// <param name="initialState">The initial state value used by this operation.</param>
     private void InitializeSubresourceStates(ResourceStates initialState) {
         for (int i = 0; i < this._subresourceStates.Length; i++) {
             this._subresourceStates[i] = initialState;
@@ -622,13 +623,13 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes the GetSubresourceLayout operation.
+    /// Gets the subresource layout value.
     /// </summary>
-    /// <param name="subresource">Specifies the value of <paramref name="subresource" />.</param>
-    /// <param name="offset">Specifies the value of <paramref name="offset" />.</param>
-    /// <param name="size">Specifies the value of <paramref name="size" />.</param>
-    /// <param name="rowPitch">Specifies the value of <paramref name="rowPitch" />.</param>
-    /// <param name="depthPitch">Specifies the value of <paramref name="depthPitch" />.</param>
+    /// <param name="subresource">The subresource value used by this operation.</param>
+    /// <param name="offset">The byte offset used by this operation.</param>
+    /// <param name="size">The size, in bytes, used by this operation.</param>
+    /// <param name="rowPitch">The row pitch value used by this operation.</param>
+    /// <param name="depthPitch">The depth pitch value used by this operation.</param>
     private void GetSubresourceLayout(uint subresource, out uint offset, out uint size, out uint rowPitch, out uint depthPitch) {
         uint totalOffset = 0;
         for (uint arrayLayer = 0; arrayLayer < this.EffectiveArrayLayers; arrayLayer++) {
@@ -659,10 +660,10 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes the ComputeTotalSize operation.
+    /// Computes the total size value.
     /// </summary>
-    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
-    /// <returns>Returns the result produced by the ComputeTotalSize operation.</returns>
+    /// <param name="description">The description used to configure this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static int ComputeTotalSize(ref TextureDescription description) {
         uint total = 0;
         uint effectiveDescriptionArrayLayers = GetEffectiveArrayLayers(description.Usage, description.ArrayLayers);
@@ -681,11 +682,11 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes the GetEffectiveArrayLayers operation.
+    /// Gets the effective array layers value.
     /// </summary>
-    /// <param name="usage">Specifies the value of <paramref name="usage" />.</param>
-    /// <param name="arrayLayers">Specifies the value of <paramref name="arrayLayers" />.</param>
-    /// <returns>Returns the result produced by the GetEffectiveArrayLayers operation.</returns>
+    /// <param name="usage">The usage value used by this operation.</param>
+    /// <param name="arrayLayers">The array layers value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     private static uint GetEffectiveArrayLayers(TextureUsage usage, uint arrayLayers) {
         if ((usage & TextureUsage.Cubemap) != 0) {
             return arrayLayers * 6;
@@ -695,17 +696,17 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes the IsStagingTexture operation.
+    /// Executes the is staging texture logic for this backend.
     /// </summary>
-    /// <returns>Returns the result produced by the IsStagingTexture operation.</returns>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     private bool IsStagingTexture() {
         return (this.Usage & TextureUsage.Staging) == TextureUsage.Staging;
     }
 
     /// <summary>
-    /// Executes the SyncSubresourceToNative operation.
+    /// Executes the sync subresource to native logic for this backend.
     /// </summary>
-    /// <param name="subresource">Specifies the value of <paramref name="subresource" />.</param>
+    /// <param name="subresource">The subresource value used by this operation.</param>
     private void SyncSubresourceToNative(uint subresource) {
         ResourceDescription textureDescription = this.NativeTexture.Description;
         PlacedSubresourceFootPrint[] layouts = new PlacedSubresourceFootPrint[1];
@@ -749,9 +750,9 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes the SyncSubresourceFromNative operation.
+    /// Executes the sync subresource from native logic for this backend.
     /// </summary>
-    /// <param name="subresource">Specifies the value of <paramref name="subresource" />.</param>
+    /// <param name="subresource">The subresource value used by this operation.</param>
     private void SyncSubresourceFromNative(uint subresource) {
         ResourceDescription textureDescription = this.NativeTexture.Description;
         PlacedSubresourceFootPrint[] layouts = new PlacedSubresourceFootPrint[1];
@@ -796,12 +797,12 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes the ExecuteTextureBufferCopy operation.
+    /// Executes the execute texture buffer copy logic for this backend.
     /// </summary>
-    /// <param name="subresource">Specifies the value of <paramref name="subresource" />.</param>
-    /// <param name="copyState">Specifies the value of <paramref name="copyState" />.</param>
-    /// <param name="previousState">Specifies the value of <paramref name="previousState" />.</param>
-    /// <param name="copyToTexture">Specifies the value of <paramref name="copyToTexture" />.</param>
+    /// <param name="subresource">The subresource value used by this operation.</param>
+    /// <param name="copyState">The copy state value used by this operation.</param>
+    /// <param name="buildCopy">The build copy value used by this operation.</param>
+    /// <param name="copyToTexture">The copy to texture value used by this operation.</param>
     private void ExecuteTextureBufferCopy(uint subresource, ResourceStates copyState, Func<ResourceStates, (TextureCopyLocation destination, TextureCopyLocation source, Box? sourceBox, ResourceStates previousState)> buildCopy, bool copyToTexture) {
         ID3D12CommandAllocator allocator = this.gd.Device.CreateCommandAllocator(CommandListType.Direct);
         ID3D12GraphicsCommandList commandList = this.gd.Device.CreateCommandList<ID3D12GraphicsCommandList>(0, CommandListType.Direct, allocator);
@@ -849,7 +850,7 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes the DisposeCore operation.
+    /// Executes the dispose core logic for this backend.
     /// </summary>
     private protected override void DisposeCore() {
         if (this._mapped) {
@@ -865,10 +866,10 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes the GetSubresourceState operation.
+    /// Gets the subresource state value.
     /// </summary>
-    /// <param name="subresource">Specifies the value of <paramref name="subresource" />.</param>
-    /// <returns>Returns the result produced by the GetSubresourceState operation.</returns>
+    /// <param name="subresource">The subresource value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
     internal ResourceStates GetSubresourceState(uint subresource) {
         if (this._subresourceStates == null || subresource >= this._subresourceStates.Length) {
             return ResourceStates.Common;
@@ -878,10 +879,10 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes the SetSubresourceState operation.
+    /// Sets the subresource state value.
     /// </summary>
-    /// <param name="subresource">Specifies the value of <paramref name="subresource" />.</param>
-    /// <param name="state">Specifies the value of <paramref name="state" />.</param>
+    /// <param name="subresource">The subresource value used by this operation.</param>
+    /// <param name="state">The state value used by this operation.</param>
     internal void SetSubresourceState(uint subresource, ResourceStates state) {
         if (this._subresourceStates == null || subresource >= this._subresourceStates.Length) {
             return;
@@ -899,9 +900,9 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes the SetAllSubresourceStates operation.
+    /// Sets the all subresource states value.
     /// </summary>
-    /// <param name="state">Specifies the value of <paramref name="state" />.</param>
+    /// <param name="state">The state value used by this operation.</param>
     internal void SetAllSubresourceStates(ResourceStates state) {
         if (this._subresourceStates == null) {
             return;
@@ -916,10 +917,10 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes the TryGetCommonState operation.
+    /// Attempts to get common state and reports whether it succeeded.
     /// </summary>
-    /// <param name="state">Specifies the value of <paramref name="state" />.</param>
-    /// <returns>Returns the result produced by the TryGetCommonState operation.</returns>
+    /// <param name="state">The state value used by this operation.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     internal bool TryGetCommonState(out ResourceStates state) {
         if (this._subresourceStates == null || this._subresourceStates.Length == 0) {
             state = ResourceStates.Common;

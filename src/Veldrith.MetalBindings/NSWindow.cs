@@ -4,19 +4,19 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Defines the data layout and behavior of the NSWindow struct.
+/// Represents the NSWindow data structure used by the graphics runtime.
 /// </summary>
 public struct NSWindow {
 
     /// <summary>
-    /// Stores the value associated with <c>NativePtr</c>.
+    /// Stores the native ptr state used by this instance.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="NSWindow" /> type.
     /// </summary>
-    /// <param name="ptr">Specifies the value of <paramref name="ptr" />.</param>
+    /// <param name="ptr">The ptr value used by this operation.</param>
     public NSWindow(IntPtr ptr) {
         this.NativePtr = ptr;
     }
@@ -24,10 +24,11 @@ public struct NSWindow {
     /// <summary>
     /// Gets or sets contentView.
     /// </summary>
+
     public NSView contentView => objc_msgSend<NSView>(this.NativePtr, sel_contentView);
 
     /// <summary>
-    /// Stores the value associated with <c>sel_contentView</c>.
+    /// Stores the sel content view state used by this instance.
     /// </summary>
     private static readonly Selector sel_contentView = "contentView";
 }

@@ -1,7 +1,7 @@
 namespace Veldrith.SPIRV;
 
 /// <summary>
-/// Defines the behavior and responsibilities of the SpirvCompilationException class.
+/// Provides SPIR-V compilation support for SpirvCompilationException.
 /// </summary>
 public class SpirvCompilationException : Exception {
 
@@ -13,13 +13,13 @@ public class SpirvCompilationException : Exception {
     /// <summary>
     /// Initializes a new instance of the <see cref="SpirvCompilationException" /> type.
     /// </summary>
-    /// <param name="message">Specifies the value of <paramref name="message" />.</param>
+    /// <param name="message">The message value used by this operation.</param>
     public SpirvCompilationException(string message) : base(message) { }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SpirvCompilationException" /> type.
     /// </summary>
-    /// <param name="message">Specifies the value of <paramref name="message" />.</param>
-    /// <param name="innerException">Specifies the value of <paramref name="innerException" />.</param>
+    /// <param name="message">The message value used by this operation.</param>
+    /// <param name="innerException">The inner exception value used by this operation.</param>
     public SpirvCompilationException(string message, Exception innerException) : base(message, innerException) { }
 }

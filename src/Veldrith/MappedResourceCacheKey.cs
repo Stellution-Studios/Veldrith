@@ -3,44 +3,44 @@ using System;
 namespace Veldrith;
 
 /// <summary>
-/// Defines the data layout and behavior of the MappedResourceCacheKey struct.
+/// Represents the MappedResourceCacheKey data structure used by the graphics runtime.
 /// </summary>
 internal struct MappedResourceCacheKey : IEquatable<MappedResourceCacheKey> {
 
     /// <summary>
-    /// Stores the value associated with <c>Resource</c>.
+    /// Stores the resource state used by this instance.
     /// </summary>
     public readonly IMappableResource Resource;
 
     /// <summary>
-    /// Stores the value associated with <c>Subresource</c>.
+    /// Stores the subresource state used by this instance.
     /// </summary>
     public readonly uint Subresource;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MappedResourceCacheKey" /> type.
     /// </summary>
-    /// <param name="resource">Specifies the value of <paramref name="resource" />.</param>
-    /// <param name="subresource">Specifies the value of <paramref name="subresource" />.</param>
+    /// <param name="resource">The resource involved in this operation.</param>
+    /// <param name="subresource">The subresource value used by this operation.</param>
     public MappedResourceCacheKey(IMappableResource resource, uint subresource) {
         this.Resource = resource;
         this.Subresource = subresource;
     }
 
     /// <summary>
-    /// Executes the Equals operation.
+    /// Determines whether this instance is equal to the specified value.
     /// </summary>
-    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
-    /// <returns>Returns the result produced by the Equals operation.</returns>
+    /// <param name="other">The value to compare against.</param>
+    /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public bool Equals(MappedResourceCacheKey other) {
         return this.Resource.Equals(other.Resource)
                && this.Subresource.Equals(other.Subresource);
     }
 
     /// <summary>
-    /// Executes the GetHashCode operation.
+    /// Computes a hash code for this instance.
     /// </summary>
-    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(this.Resource.GetHashCode(), this.Subresource.GetHashCode());
     }

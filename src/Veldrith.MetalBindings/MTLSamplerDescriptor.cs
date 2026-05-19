@@ -4,26 +4,24 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Defines the data layout and behavior of the MTLSamplerDescriptor struct.
+/// Represents the MTLSamplerDescriptor data structure used by the graphics runtime.
 /// </summary>
 public struct MTLSamplerDescriptor {
 
     /// <summary>
-    /// Stores the value associated with <c>name</c>.
+    /// Stores the s class state used by this instance.
     /// </summary>
-    /// <param name="MTLSamplerDescriptor">Specifies the value of <paramref name="MTLSamplerDescriptor" />.</param>
-    /// <returns>Returns the result produced by the new operation.</returns>
     private static readonly ObjCClass s_class = new(nameof(MTLSamplerDescriptor));
 
     /// <summary>
-    /// Stores the value associated with <c>NativePtr</c>.
+    /// Stores the native ptr state used by this instance.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
     /// Creates and returns a new instance.
     /// </summary>
-    /// <returns>Returns the result produced by the New operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public static MTLSamplerDescriptor New() {
         return s_class.AllocInit<MTLSamplerDescriptor>();
     }
@@ -125,122 +123,122 @@ public struct MTLSamplerDescriptor {
     }
 
     /// <summary>
-    /// Stores the value associated with <c>sel_rAddressMode</c>.
+    /// Stores the sel r address mode state used by this instance.
     /// </summary>
     private static readonly Selector sel_rAddressMode = "rAddressMode";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setRAddressMode</c>.
+    /// Stores the sel set raddress mode state used by this instance.
     /// </summary>
     private static readonly Selector sel_setRAddressMode = "setRAddressMode:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_sAddressMode</c>.
+    /// Stores the sel s address mode state used by this instance.
     /// </summary>
     private static readonly Selector sel_sAddressMode = "sAddressMode";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setSAddressMode</c>.
+    /// Stores the sel set saddress mode state used by this instance.
     /// </summary>
     private static readonly Selector sel_setSAddressMode = "setSAddressMode:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_tAddressMode</c>.
+    /// Stores the sel t address mode state used by this instance.
     /// </summary>
     private static readonly Selector sel_tAddressMode = "tAddressMode";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setTAddressMode</c>.
+    /// Stores the sel set taddress mode state used by this instance.
     /// </summary>
     private static readonly Selector sel_setTAddressMode = "setTAddressMode:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_minFilter</c>.
+    /// Stores the sel min filter state used by this instance.
     /// </summary>
     private static readonly Selector sel_minFilter = "minFilter";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setMinFilter</c>.
+    /// Stores the sel set min filter state used by this instance.
     /// </summary>
     private static readonly Selector sel_setMinFilter = "setMinFilter:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_magFilter</c>.
+    /// Stores the sel mag filter state used by this instance.
     /// </summary>
     private static readonly Selector sel_magFilter = "magFilter";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setMagFilter</c>.
+    /// Stores the sel set mag filter state used by this instance.
     /// </summary>
     private static readonly Selector sel_setMagFilter = "setMagFilter:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_mipFilter</c>.
+    /// Stores the sel mip filter state used by this instance.
     /// </summary>
     private static readonly Selector sel_mipFilter = "mipFilter";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setMipFilter</c>.
+    /// Stores the sel set mip filter state used by this instance.
     /// </summary>
     private static readonly Selector sel_setMipFilter = "setMipFilter:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_lodMinClamp</c>.
+    /// Stores the sel lod min clamp state used by this instance.
     /// </summary>
     private static readonly Selector sel_lodMinClamp = "lodMinClamp";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setLodMinClamp</c>.
+    /// Stores the sel set lod min clamp state used by this instance.
     /// </summary>
     private static readonly Selector sel_setLodMinClamp = "setLodMinClamp:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_lodMaxClamp</c>.
+    /// Stores the sel lod max clamp state used by this instance.
     /// </summary>
     private static readonly Selector sel_lodMaxClamp = "lodMaxClamp";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setLodMaxClamp</c>.
+    /// Stores the sel set lod max clamp state used by this instance.
     /// </summary>
     private static readonly Selector sel_setLodMaxClamp = "setLodMaxClamp:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_lodAverage</c>.
+    /// Stores the sel lod average state used by this instance.
     /// </summary>
     private static readonly Selector sel_lodAverage = "lodAverage";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setLodAverage</c>.
+    /// Stores the sel set lod average state used by this instance.
     /// </summary>
     private static readonly Selector sel_setLodAverage = "setLodAverage:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_maxAnisotropy</c>.
+    /// Stores the sel max anisotropy state used by this instance.
     /// </summary>
     private static readonly Selector sel_maxAnisotropy = "maxAnisotropy";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setMaAnisotropy</c>.
+    /// Stores the sel set ma anisotropy state used by this instance.
     /// </summary>
     private static readonly Selector sel_setMaAnisotropy = "setMaxAnisotropy:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_compareFunction</c>.
+    /// Stores the sel compare function state used by this instance.
     /// </summary>
     private static readonly Selector sel_compareFunction = "compareFunction";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setCompareFunction</c>.
+    /// Stores the sel set compare function state used by this instance.
     /// </summary>
     private static readonly Selector sel_setCompareFunction = "setCompareFunction:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_borderColor</c>.
+    /// Stores the sel border color state used by this instance.
     /// </summary>
     private static readonly Selector sel_borderColor = "borderColor";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setBorderColor</c>.
+    /// Stores the sel set border color state used by this instance.
     /// </summary>
     private static readonly Selector sel_setBorderColor = "setBorderColor:";
 }

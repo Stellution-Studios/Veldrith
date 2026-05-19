@@ -8,18 +8,18 @@ namespace Veldrith.MTL;
 internal interface IMtlDisplayLink : IDisposable {
 
     /// <summary>
-    /// Executes the GetActualOutputVideoRefreshPeriod operation.
+    /// Gets the actual output video refresh period value.
     /// </summary>
-    /// <returns>Returns the result produced by the GetActualOutputVideoRefreshPeriod operation.</returns>
+    /// <returns>The value produced by this operation.</returns>
     public double GetActualOutputVideoRefreshPeriod();
 
     /// <summary>
-    /// Executes the UpdateActiveDisplay operation.
+    /// Updates the active display state for this command sequence.
     /// </summary>
-    /// <param name="x">Specifies the value of <paramref name="x" />.</param>
-    /// <param name="y">Specifies the value of <paramref name="y" />.</param>
-    /// <param name="w">Specifies the value of <paramref name="w" />.</param>
-    /// <param name="h">Specifies the value of <paramref name="h" />.</param>
+    /// <param name="x">The X coordinate.</param>
+    /// <param name="y">The Y coordinate.</param>
+    /// <param name="w">The w value used by this operation.</param>
+    /// <param name="h">The h value used by this operation.</param>
     public void UpdateActiveDisplay(int x, int y, int w, int h);
 
     /// <summary>

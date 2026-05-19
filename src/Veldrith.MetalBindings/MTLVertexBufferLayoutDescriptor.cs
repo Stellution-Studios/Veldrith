@@ -4,19 +4,19 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Defines the data layout and behavior of the MTLVertexBufferLayoutDescriptor struct.
+/// Represents the MTLVertexBufferLayoutDescriptor data structure used by the graphics runtime.
 /// </summary>
 public struct MTLVertexBufferLayoutDescriptor {
 
     /// <summary>
-    /// Stores the value associated with <c>NativePtr</c>.
+    /// Stores the native ptr state used by this instance.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MTLVertexBufferLayoutDescriptor" /> type.
     /// </summary>
-    /// <param name="ptr">Specifies the value of <paramref name="ptr" />.</param>
+    /// <param name="ptr">The ptr value used by this operation.</param>
     public MTLVertexBufferLayoutDescriptor(IntPtr ptr) {
         this.NativePtr = ptr;
     }
@@ -46,32 +46,32 @@ public struct MTLVertexBufferLayoutDescriptor {
     }
 
     /// <summary>
-    /// Stores the value associated with <c>sel_stepFunction</c>.
+    /// Stores the sel step function state used by this instance.
     /// </summary>
     private static readonly Selector sel_stepFunction = "stepFunction";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setStepFunction</c>.
+    /// Stores the sel set step function state used by this instance.
     /// </summary>
     private static readonly Selector sel_setStepFunction = "setStepFunction:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_stride</c>.
+    /// Stores the sel stride state used by this instance.
     /// </summary>
     private static readonly Selector sel_stride = "stride";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setStride</c>.
+    /// Stores the sel set stride state used by this instance.
     /// </summary>
     private static readonly Selector sel_setStride = "setStride:";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_stepRate</c>.
+    /// Stores the sel step rate state used by this instance.
     /// </summary>
     private static readonly Selector sel_stepRate = "stepRate";
 
     /// <summary>
-    /// Stores the value associated with <c>sel_setStepRate</c>.
+    /// Stores the sel set step rate state used by this instance.
     /// </summary>
     private static readonly Selector sel_setStepRate = "setStepRate:";
 }
