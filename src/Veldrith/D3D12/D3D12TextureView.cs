@@ -39,14 +39,14 @@ internal sealed class D3D12TextureView : TextureView {
     private bool _storageBindingSupported;
 
     /// <summary>
-    /// Stores the srv descriptor heap state used by this instance.
+    /// Stores the srv descriptor allocation used by this instance.
     /// </summary>
-    private ID3D12DescriptorHeap _srvDescriptorHeap;
+    private D3D12CpuDescriptorAllocation _srvDescriptor;
 
     /// <summary>
-    /// Stores the uav descriptor heap state used by this instance.
+    /// Stores the uav descriptor allocation used by this instance.
     /// </summary>
-    private ID3D12DescriptorHeap _uavDescriptorHeap;
+    private D3D12CpuDescriptorAllocation _uavDescriptor;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="D3D12TextureView" /> class.
@@ -78,15 +78,15 @@ internal sealed class D3D12TextureView : TextureView {
     /// </summary>
     /// <returns>The value produced by this operation.</returns>
     internal CpuDescriptorHandle GetOrCreateShaderResourceViewDescriptor() {
-        if (this._srvDescriptorHeap == null) {
-            this._srvDescriptorHeap = this.gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView, 1));
+        if (this._srvDescriptor == null) {
+            this._srvDescriptor = this.gd.SrvUavDescriptorAllocator.Allocate(1);
             ID3D12Resource nativeTexture = this.TargetTexture.NativeTexture
                                            ?? throw new PlatformNotSupportedException("Texture has no native D3D12 resource.");
             ShaderResourceViewDescription srvDescription = this.GetShaderResourceViewDescription();
-            this.gd.Device.CreateShaderResourceView(nativeTexture, srvDescription, this._srvDescriptorHeap.GetCPUDescriptorHandleForHeapStart());
+            this.gd.Device.CreateShaderResourceView(nativeTexture, srvDescription, this._srvDescriptor.Handle);
         }
 
-        return this._srvDescriptorHeap.GetCPUDescriptorHandleForHeapStart();
+        return this._srvDescriptor.Handle;
     }
 
     /// <summary>
@@ -94,15 +94,15 @@ internal sealed class D3D12TextureView : TextureView {
     /// </summary>
     /// <returns>The value produced by this operation.</returns>
     internal CpuDescriptorHandle GetOrCreateUnorderedAccessViewDescriptor() {
-        if (this._uavDescriptorHeap == null) {
-            this._uavDescriptorHeap = this.gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView, 1));
+        if (this._uavDescriptor == null) {
+            this._uavDescriptor = this.gd.SrvUavDescriptorAllocator.Allocate(1);
             ID3D12Resource nativeTexture = this.TargetTexture.NativeTexture
                                            ?? throw new PlatformNotSupportedException("Texture has no native D3D12 resource.");
             UnorderedAccessViewDescription uavDescription = this.GetUnorderedAccessViewDescription();
-            this.gd.Device.CreateUnorderedAccessView(nativeTexture, null, uavDescription, this._uavDescriptorHeap.GetCPUDescriptorHandleForHeapStart());
+            this.gd.Device.CreateUnorderedAccessView(nativeTexture, null, uavDescription, this._uavDescriptor.Handle);
         }
 
-        return this._uavDescriptorHeap.GetCPUDescriptorHandleForHeapStart();
+        return this._uavDescriptor.Handle;
     }
 
     /// <summary>
@@ -273,8 +273,8 @@ internal sealed class D3D12TextureView : TextureView {
     /// Releases resources held by this instance.
     /// </summary>
     public override void Dispose() {
-        this._srvDescriptorHeap?.Dispose();
-        this._uavDescriptorHeap?.Dispose();
+        this.gd.ReleaseAfterLastSubmission(this._srvDescriptor);
+        this.gd.ReleaseAfterLastSubmission(this._uavDescriptor);
         this._disposed = true;
     }
 }

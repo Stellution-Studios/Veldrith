@@ -24,14 +24,14 @@ internal class D3D12Framebuffer : Framebuffer {
     private readonly CpuDescriptorHandle? _depthStencilView;
 
     /// <summary>
-    /// Stores the dsv heap state used by this instance.
+    /// Stores the dsv descriptor allocation used by this instance.
     /// </summary>
-    private readonly ID3D12DescriptorHeap _dsvHeap;
+    private readonly D3D12CpuDescriptorAllocation _dsvDescriptor;
 
     /// <summary>
-    /// Stores the rtv heap state used by this instance.
+    /// Stores the rtv descriptor allocation used by this instance.
     /// </summary>
-    private readonly ID3D12DescriptorHeap _rtvHeap;
+    private readonly D3D12CpuDescriptorAllocation _rtvDescriptors;
 
     /// <summary>
     /// Stores the disposed state used by this instance.
@@ -53,9 +53,9 @@ internal class D3D12Framebuffer : Framebuffer {
         this._colorTargetTextures = new D3D12Texture[this.ColorTargets.Count];
         this._colorTargetViews = new CpuDescriptorHandle[this.ColorTargets.Count];
         if (this.ColorTargets.Count > 0) {
-            this._rtvHeap = gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(DescriptorHeapType.RenderTargetView, (uint)this.ColorTargets.Count));
+            this._rtvDescriptors = gd.RtvDescriptorAllocator.Allocate((uint)this.ColorTargets.Count);
             int rtvDescriptorSize = (int)gd.Device.GetDescriptorHandleIncrementSize(DescriptorHeapType.RenderTargetView);
-            CpuDescriptorHandle baseRtvHandle = this._rtvHeap.GetCPUDescriptorHandleForHeapStart();
+            CpuDescriptorHandle baseRtvHandle = this._rtvDescriptors.Handle;
 
             for (int i = 0; i < this.ColorTargets.Count; i++) {
                 FramebufferAttachment attachment = this.ColorTargets[i];
@@ -72,8 +72,8 @@ internal class D3D12Framebuffer : Framebuffer {
 
         if (this.DepthTarget is FramebufferAttachment depthAttachment) {
             this.DepthTargetTexture = Util.AssertSubtype<Texture, D3D12Texture>(depthAttachment.Target);
-            this._dsvHeap = gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(DescriptorHeapType.DepthStencilView, 1));
-            CpuDescriptorHandle dsv = this._dsvHeap.GetCPUDescriptorHandleForHeapStart();
+            this._dsvDescriptor = gd.DsvDescriptorAllocator.Allocate(1);
+            CpuDescriptorHandle dsv = this._dsvDescriptor.Handle;
             this._depthStencilView = dsv;
 
             if (this.DepthTargetTexture.NativeTexture != null) {
@@ -162,8 +162,8 @@ internal class D3D12Framebuffer : Framebuffer {
             return;
         }
 
-        this.gd.ReleaseAfterLastSubmission(this._rtvHeap);
-        this.gd.ReleaseAfterLastSubmission(this._dsvHeap);
+        this.gd.ReleaseAfterLastSubmission(this._rtvDescriptors);
+        this.gd.ReleaseAfterLastSubmission(this._dsvDescriptor);
         this._disposed = true;
     }
 

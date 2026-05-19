@@ -18,9 +18,9 @@ internal sealed class D3D12Sampler : Sampler {
     private readonly D3D12GraphicsDevice gd;
 
     /// <summary>
-    /// Stores the descriptor heap state used by this instance.
+    /// Stores the descriptor allocation used by this instance.
     /// </summary>
-    private ID3D12DescriptorHeap _descriptorHeap;
+    private D3D12CpuDescriptorAllocation _descriptor;
 
     /// <summary>
     /// Stores the disposed state used by this instance.
@@ -57,8 +57,8 @@ internal sealed class D3D12Sampler : Sampler {
     /// </summary>
     /// <returns>The value produced by this operation.</returns>
     internal CpuDescriptorHandle GetOrCreateDescriptor() {
-        if (this._descriptorHeap == null) {
-            this._descriptorHeap = this.gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(DescriptorHeapType.Sampler, 1));
+        if (this._descriptor == null) {
+            this._descriptor = this.gd.SamplerDescriptorAllocator.Allocate(1);
             bool comparison = this.description.ComparisonKind != null;
             ComparisonFunction comparisonFunction = this.description.ComparisonKind != null
                 ? D3D12Formats.ToComparison(this.description.ComparisonKind.Value)
@@ -76,17 +76,17 @@ internal sealed class D3D12Sampler : Sampler {
                 MinLOD = this.description.MinimumLod,
                 MaxLOD = this.description.MaximumLod
             };
-            this.gd.Device.CreateSampler(ref samplerDescription, this._descriptorHeap.GetCPUDescriptorHandleForHeapStart());
+            this.gd.Device.CreateSampler(ref samplerDescription, this._descriptor.Handle);
         }
 
-        return this._descriptorHeap.GetCPUDescriptorHandleForHeapStart();
+        return this._descriptor.Handle;
     }
 
     /// <summary>
     /// Releases resources held by this instance.
     /// </summary>
     public override void Dispose() {
-        this._descriptorHeap?.Dispose();
+        this.gd.ReleaseAfterLastSubmission(this._descriptor);
         this._disposed = true;
     }
 }

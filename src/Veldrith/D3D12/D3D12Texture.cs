@@ -811,7 +811,7 @@ internal sealed class D3D12Texture : Texture {
 
             bool depthUsage = (this.Usage & TextureUsage.DepthStencil) != 0;
             PlacedSubresourceFootPrint footprint = new() {
-                Offset = 0,
+                Offset = uploadBuffer.Offset,
                 Footprint = new SubresourceFootPrint(D3D12Formats.ToDxgiFormat(this.Format, depthUsage), width, height, depth, uploadRowPitch)
             };
             uint subresource = this.CalculateSubresource(mipLevel, arrayLayer);
@@ -869,7 +869,9 @@ internal sealed class D3D12Texture : Texture {
 
             ulong signalValue = this.ExecuteTextureBufferCopy(subresource, ResourceStates.CopyDest, previousState => {
                 TextureCopyLocation destination = new(this.NativeTexture, subresource);
-                TextureCopyLocation sourceLocation = new(uploadBuffer.Resource, layouts[0]);
+                PlacedSubresourceFootPrint sourceFootprint = layouts[0];
+                sourceFootprint.Offset += uploadBuffer.Offset;
+                TextureCopyLocation sourceLocation = new(uploadBuffer.Resource, sourceFootprint);
                 return (destination, sourceLocation, sourceBox: null, previousState);
             }, true, uploadBuffer);
             if (signalValue == 0) {

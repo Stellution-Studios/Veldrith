@@ -305,7 +305,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
 
         ResourceStates previousState = this.CurrentState;
         this.Transition(commandList, previousState, ResourceStates.CopyDest);
-        commandList.CopyBufferRegion(this.NativeBuffer, destinationOffset, uploadBuffer.Resource, 0, sizeInBytes);
+        commandList.CopyBufferRegion(this.NativeBuffer, destinationOffset, uploadBuffer.Resource, uploadBuffer.Offset, sizeInBytes);
         this.Transition(commandList, ResourceStates.CopyDest, previousState);
         this.CurrentState = previousState;
         return uploadBuffer;

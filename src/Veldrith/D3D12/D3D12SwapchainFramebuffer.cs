@@ -24,9 +24,9 @@ internal sealed class D3D12SwapchainFramebuffer : Framebuffer {
     private CpuDescriptorHandle? _depthStencilView;
 
     /// <summary>
-    /// Stores the dsv heap state used by this instance.
+    /// Stores the dsv descriptor allocation used by this instance.
     /// </summary>
-    private ID3D12DescriptorHeap _dsvHeap;
+    private D3D12CpuDescriptorAllocation _dsvDescriptor;
 
     /// <summary>
     /// Stores the output description state used by this instance.
@@ -168,8 +168,8 @@ internal sealed class D3D12SwapchainFramebuffer : Framebuffer {
 
         if (depthTexture != null) {
             this._depthTarget = new FramebufferAttachment(depthTexture, 0);
-            this._dsvHeap = this.gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(DescriptorHeapType.DepthStencilView, 1));
-            CpuDescriptorHandle dsv = this._dsvHeap.GetCPUDescriptorHandleForHeapStart();
+            this._dsvDescriptor = this.gd.DsvDescriptorAllocator.Allocate(1);
+            CpuDescriptorHandle dsv = this._dsvDescriptor.Handle;
             this._depthStencilView = dsv;
             DepthStencilViewDescription dsvDescription = D3D12Framebuffer.CreateDepthStencilViewDescription(depthTexture, this._depthTarget.Value);
             this.gd.Device.CreateDepthStencilView(depthTexture.NativeTexture, dsvDescription, dsv);
@@ -177,7 +177,7 @@ internal sealed class D3D12SwapchainFramebuffer : Framebuffer {
         else {
             this._depthTarget = null;
             this._depthStencilView = null;
-            this._dsvHeap = null;
+            this._dsvDescriptor = null;
         }
 
         this._outputDescription = OutputDescription.CreateFromFramebuffer(this);
@@ -187,8 +187,8 @@ internal sealed class D3D12SwapchainFramebuffer : Framebuffer {
     /// Releases metadata-only attachment resources owned by this framebuffer.
     /// </summary>
     private void ReleaseAttachmentMetadata() {
-        this.gd.ReleaseAfterLastSubmission(this._dsvHeap);
-        this._dsvHeap = null;
+        this.gd.ReleaseAfterLastSubmission(this._dsvDescriptor);
+        this._dsvDescriptor = null;
         this._depthStencilView = null;
 
         if (this._colorTargets != null) {

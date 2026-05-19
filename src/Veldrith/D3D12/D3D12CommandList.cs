@@ -987,6 +987,9 @@ internal sealed class D3D12CommandList : CommandList {
         this._ended = false;
         this._transitionedBackBufferIndex = -1;
         this._descriptorHeapsBound = false;
+        this._nextSrvUavDescriptor = 0;
+        this._nextSamplerDescriptor = 0;
+        this._descriptorTableCache.Clear();
         this._activeViewportCount = 0;
         this._activeScissorRectCount = 0;
         this._uavBarrierPending = false;

@@ -96,9 +96,9 @@ internal sealed class D3D12Swapchain : Swapchain {
     private int _rtvDescriptorSize;
 
     /// <summary>
-    /// Stores the rtv heap state used by this instance.
+    /// Stores the rtv descriptor allocation used by this instance.
     /// </summary>
-    private ID3D12DescriptorHeap _rtvHeap;
+    private D3D12CpuDescriptorAllocation _rtvDescriptors;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="D3D12Swapchain" /> type.
@@ -396,16 +396,16 @@ internal sealed class D3D12Swapchain : Swapchain {
     /// Creates the native render targets instance used by this backend.
     /// </summary>
     private void CreateNativeRenderTargets() {
-        if (this._rtvHeap == null) {
+        if (this._rtvDescriptors == null) {
             this._rtvDescriptorSize = (int)this.gd.Device.GetDescriptorHandleIncrementSize(DescriptorHeapType.RenderTargetView);
-            this._rtvHeap = this.gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(DescriptorHeapType.RenderTargetView, (uint)this._bufferCount));
+            this._rtvDescriptors = this.gd.RtvDescriptorAllocator.Allocate((uint)this._bufferCount);
         }
 
         this._backBufferResources = new ID3D12Resource[this._bufferCount];
         this._backBufferRtvs = new CpuDescriptorHandle[this._bufferCount];
         this._backBufferStates = new ResourceStates[this._bufferCount];
 
-        CpuDescriptorHandle handle = this._rtvHeap.GetCPUDescriptorHandleForHeapStart();
+        CpuDescriptorHandle handle = this._rtvDescriptors.Handle;
         for (int i = 0; i < this._bufferCount; i++) {
             ID3D12Resource buffer = this._dxgiSwapChain.GetBuffer<ID3D12Resource>((uint)i);
             this._backBufferResources[i] = buffer;
@@ -529,8 +529,8 @@ internal sealed class D3D12Swapchain : Swapchain {
         }
 
         if (disposeDescriptorHeap) {
-            this._rtvHeap?.Dispose();
-            this._rtvHeap = null;
+            this._rtvDescriptors?.Dispose();
+            this._rtvDescriptors = null;
             this._rtvDescriptorSize = 0;
         }
 

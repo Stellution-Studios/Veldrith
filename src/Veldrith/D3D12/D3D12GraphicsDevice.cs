@@ -26,6 +26,11 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     private const ulong MaxPooledUploadBufferSize = 16UL * 1024UL * 1024UL;
 
     /// <summary>
+    /// Stores the size of each transient upload ring page.
+    /// </summary>
+    private const ulong UploadRingPageSize = 16UL * 1024UL * 1024UL;
+
+    /// <summary>
     /// Stores the total upload-buffer pool budget.
     /// </summary>
     private const ulong MaxPooledUploadBufferBytes = 128UL * 1024UL * 1024UL;
@@ -190,6 +195,11 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     private readonly List<D3D12ResourceAllocation> _availableUploadBuffers = new();
 
     /// <summary>
+    /// Stores transient upload pages used as a fence-recycled ring.
+    /// </summary>
+    private readonly List<UploadRingPage> _uploadRingPages = new();
+
+    /// <summary>
     /// Protects reusable upload-buffer pool access.
     /// </summary>
     private readonly object _availableUploadBuffersLock = new();
@@ -198,6 +208,11 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// Tracks total bytes retained by the upload-buffer pool.
     /// </summary>
     private ulong _availableUploadBufferBytes;
+
+    /// <summary>
+    /// Stores the upload ring page index preferred for the next allocation.
+    /// </summary>
+    private int _currentUploadRingPageIndex = -1;
 
     /// <summary>
     /// Stores accumulated CPU time spent flushing batched immediate upload work.
@@ -467,6 +482,10 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         this._immediateCopyFence = this._device.CreateFence();
         this._immediateCopyFenceEvent = new AutoResetEvent(false);
         this.MemoryManager = new D3D12DeviceMemoryManager(this._device);
+        this.SrvUavDescriptorAllocator = new D3D12CpuDescriptorAllocator(this._device, DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView, 4096);
+        this.SamplerDescriptorAllocator = new D3D12CpuDescriptorAllocator(this._device, DescriptorHeapType.Sampler, 1024);
+        this.RtvDescriptorAllocator = new D3D12CpuDescriptorAllocator(this._device, DescriptorHeapType.RenderTargetView, 1024);
+        this.DsvDescriptorAllocator = new D3D12CpuDescriptorAllocator(this._device, DescriptorHeapType.DepthStencilView, 1024);
         this._resourceFactory = new D3D12ResourceFactory(this, this.Features);
 
         if (swapchainDescription != null) {
@@ -568,6 +587,26 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// Gets the D3D12 default heap memory manager.
     /// </summary>
     internal D3D12DeviceMemoryManager MemoryManager { get; }
+
+    /// <summary>
+    /// Gets the CPU SRV/UAV descriptor allocator.
+    /// </summary>
+    internal D3D12CpuDescriptorAllocator SrvUavDescriptorAllocator { get; }
+
+    /// <summary>
+    /// Gets the CPU sampler descriptor allocator.
+    /// </summary>
+    internal D3D12CpuDescriptorAllocator SamplerDescriptorAllocator { get; }
+
+    /// <summary>
+    /// Gets the CPU RTV descriptor allocator.
+    /// </summary>
+    internal D3D12CpuDescriptorAllocator RtvDescriptorAllocator { get; }
+
+    /// <summary>
+    /// Gets the CPU DSV descriptor allocator.
+    /// </summary>
+    internal D3D12CpuDescriptorAllocator DsvDescriptorAllocator { get; }
 
     /// <summary>
     /// Emits a periodic device-level performance report when D3D12 performance logging is enabled.
@@ -920,6 +959,16 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
             sizeInBytes = 1;
         }
 
+        ulong allocationSize = AlignUp(sizeInBytes, 256UL);
+        if (allocationSize <= UploadRingPageSize) {
+            lock (this._availableUploadBuffersLock) {
+                D3D12ResourceAllocation ringAllocation = this.TryRentUploadRingAllocation(allocationSize);
+                if (ringAllocation != null) {
+                    return ringAllocation;
+                }
+            }
+        }
+
         lock (this._availableUploadBuffersLock) {
             int bestIndex = -1;
             ulong bestSize = ulong.MaxValue;
@@ -940,7 +989,6 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
             }
         }
 
-        ulong allocationSize = AlignUp(sizeInBytes, 4096);
         ResourceDescription description = ResourceDescription.Buffer(allocationSize);
         return this.MemoryManager.CreateResource(ref description, ResourceStates.GenericRead, HeapType.Upload, HeapFlags.AllowOnlyBuffers);
     }
@@ -951,6 +999,11 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// <param name="buffer">The upload buffer to return.</param>
     internal void ReturnUploadBuffer(D3D12ResourceAllocation buffer) {
         if (buffer == null) {
+            return;
+        }
+
+        if (buffer.IsTransient) {
+            buffer.Dispose();
             return;
         }
 
@@ -987,6 +1040,35 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// <param name="fenceValue">The immediate-copy fence value guarding the buffer.</param>
     internal void EnqueueImmediateUploadBuffer(D3D12ResourceAllocation buffer, ulong fenceValue) {
         this.EnqueueImmediateDisposal(new PooledUploadBuffer(this, buffer), fenceValue);
+    }
+
+    /// <summary>
+    /// Attempts to rent a suballocation from the transient upload ring.
+    /// </summary>
+    /// <param name="sizeInBytes">The aligned allocation size.</param>
+    /// <returns>The transient allocation, or null when a dedicated upload buffer should be used.</returns>
+    private D3D12ResourceAllocation TryRentUploadRingAllocation(ulong sizeInBytes) {
+        if (this._currentUploadRingPageIndex >= 0 && this._currentUploadRingPageIndex < this._uploadRingPages.Count) {
+            D3D12ResourceAllocation allocation = this._uploadRingPages[this._currentUploadRingPageIndex].TryAllocate(sizeInBytes);
+            if (allocation != null) {
+                return allocation;
+            }
+        }
+
+        for (int i = 0; i < this._uploadRingPages.Count; i++) {
+            D3D12ResourceAllocation allocation = this._uploadRingPages[i].TryAllocate(sizeInBytes);
+            if (allocation != null) {
+                this._currentUploadRingPageIndex = i;
+                return allocation;
+            }
+        }
+
+        ResourceDescription description = ResourceDescription.Buffer(UploadRingPageSize);
+        D3D12ResourceAllocation pageAllocation = this.MemoryManager.CreateResource(ref description, ResourceStates.GenericRead, HeapType.Upload, HeapFlags.AllowOnlyBuffers);
+        UploadRingPage page = new(pageAllocation);
+        this._uploadRingPages.Add(page);
+        this._currentUploadRingPageIndex = this._uploadRingPages.Count - 1;
+        return page.TryAllocate(sizeInBytes);
     }
 
     /// <summary>
@@ -1265,6 +1347,10 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         }
 
         this.MainSwapchain?.Dispose();
+        this.SrvUavDescriptorAllocator?.Dispose();
+        this.SamplerDescriptorAllocator?.Dispose();
+        this.RtvDescriptorAllocator?.Dispose();
+        this.DsvDescriptorAllocator?.Dispose();
         this.MemoryManager?.Dispose();
         this._submissionFenceEvent?.Dispose();
         this._submissionFence?.Dispose();
@@ -2024,20 +2110,33 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// </summary>
     private void DisposeAvailableUploadBuffers() {
         List<D3D12ResourceAllocation> buffers = null;
+        List<UploadRingPage> ringPages = null;
         lock (this._availableUploadBuffersLock) {
             if (this._availableUploadBuffers.Count > 0) {
                 buffers = new List<D3D12ResourceAllocation>(this._availableUploadBuffers);
                 this._availableUploadBuffers.Clear();
                 this._availableUploadBufferBytes = 0;
             }
+
+            if (this._uploadRingPages.Count > 0) {
+                ringPages = new List<UploadRingPage>(this._uploadRingPages);
+                this._uploadRingPages.Clear();
+                this._currentUploadRingPageIndex = -1;
+            }
         }
 
-        if (buffers == null) {
+        if (buffers != null) {
+            for (int i = 0; i < buffers.Count; i++) {
+                buffers[i].Dispose();
+            }
+        }
+
+        if (ringPages == null) {
             return;
         }
 
-        for (int i = 0; i < buffers.Count; i++) {
-            buffers[i].Dispose();
+        for (int i = 0; i < ringPages.Count; i++) {
+            ringPages[i].Dispose();
         }
     }
 
@@ -2111,12 +2210,12 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         /// <summary>
         /// Stores the owning graphics device.
         /// </summary>
-        private readonly D3D12GraphicsDevice gd;
+        private readonly D3D12GraphicsDevice _gd;
 
         /// <summary>
         /// Stores the upload buffer being returned.
         /// </summary>
-        private D3D12ResourceAllocation buffer;
+        private D3D12ResourceAllocation _buffer;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PooledUploadBuffer"/> class.
@@ -2124,19 +2223,98 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         /// <param name="gd">The owning graphics device.</param>
         /// <param name="buffer">The upload buffer to return.</param>
         public PooledUploadBuffer(D3D12GraphicsDevice gd, D3D12ResourceAllocation buffer) {
-            this.gd = gd;
-            this.buffer = buffer;
+            this._gd = gd;
+            this._buffer = buffer;
         }
 
         /// <summary>
         /// Returns the upload buffer to the graphics device pool.
         /// </summary>
         public void Dispose() {
-            D3D12ResourceAllocation resource = this.buffer;
-            this.buffer = null;
+            D3D12ResourceAllocation resource = this._buffer;
+            this._buffer = null;
             if (resource != null) {
-                this.gd.ReturnUploadBuffer(resource);
+                this._gd.ReturnUploadBuffer(resource);
             }
+        }
+    }
+
+    /// <summary>
+    /// Represents a persistently mapped transient upload page.
+    /// </summary>
+    private sealed class UploadRingPage : IDisposable {
+
+        /// <summary>
+        /// Stores the backing upload resource allocation.
+        /// </summary>
+        private readonly D3D12ResourceAllocation _allocation;
+
+        /// <summary>
+        /// Protects page suballocation state.
+        /// </summary>
+        private readonly object _lock = new();
+
+        /// <summary>
+        /// Stores the current write offset.
+        /// </summary>
+        private ulong _offset;
+
+        /// <summary>
+        /// Stores the number of live transient allocations on this page.
+        /// </summary>
+        private int _activeAllocations;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="UploadRingPage"/> type.
+        /// </summary>
+        /// <param name="allocation">The backing allocation.</param>
+        public UploadRingPage(D3D12ResourceAllocation allocation) {
+            this._allocation = allocation;
+        }
+
+        /// <summary>
+        /// Attempts to allocate a transient region from this page.
+        /// </summary>
+        /// <param name="sizeInBytes">The allocation size in bytes.</param>
+        /// <returns>The allocation, or null when this page has no room.</returns>
+        public D3D12ResourceAllocation TryAllocate(ulong sizeInBytes) {
+            lock (this._lock) {
+                if (this._offset + sizeInBytes > UploadRingPageSize) {
+                    if (this._activeAllocations == 0) {
+                        this._offset = 0;
+                    }
+
+                    if (this._offset + sizeInBytes > UploadRingPageSize) {
+                        return null;
+                    }
+                }
+
+                ulong allocationOffset = this._offset;
+                this._offset += sizeInBytes;
+                this._activeAllocations++;
+                IntPtr mappedPointer = IntPtr.Add(this._allocation.MappedPointer, checked((int)allocationOffset));
+                return new D3D12ResourceAllocation(this._allocation.Resource, null, mappedPointer, allocationOffset, sizeInBytes, this.ReturnAllocation);
+            }
+        }
+
+        /// <summary>
+        /// Returns a transient allocation to this page.
+        /// </summary>
+        /// <param name="returnedAllocation">The returned allocation.</param>
+        private void ReturnAllocation(D3D12ResourceAllocation returnedAllocation) {
+            lock (this._lock) {
+                this._activeAllocations--;
+                if (this._activeAllocations == 0 && this._offset >= UploadRingPageSize) {
+                    this._offset = 0;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Releases the backing allocation.
+        /// </summary>
+        public void Dispose() {
+            this._allocation.Dispose();
         }
     }
 
