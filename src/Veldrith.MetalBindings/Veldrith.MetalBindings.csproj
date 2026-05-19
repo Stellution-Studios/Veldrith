@@ -13,6 +13,11 @@
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
         <AssemblyName>Veldrith.MetalBindings</AssemblyName>
+        <PackageId>Veldrith.MetalBindings</PackageId>
+        <Version>1.0.0</Version>
+        <IsPackable>true</IsPackable>
+        <Description>Native Metal interop bindings used by the Veldrith backend abstraction layer.</Description>
+        <PackageTags>Graphics Backend Abstraction Metal Bindings Rendering</PackageTags>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <LangVersion>14</LangVersion>
     </PropertyGroup>

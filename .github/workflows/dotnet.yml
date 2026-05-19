@@ -54,5 +54,8 @@ jobs:
       - name: Pack Veldrith.SPIRV
         run: dotnet pack src/Veldrith.SPIRV/Veldrith.SPIRV.csproj --configuration Release --no-restore -p:PackageVersion=${{ env.PACKAGE_VERSION }} --output artifacts/nuget
 
+      - name: Pack Veldrith.MetalBindings
+        run: dotnet pack src/Veldrith.MetalBindings/Veldrith.MetalBindings.csproj --configuration Release --no-restore -p:PackageVersion=${{ env.PACKAGE_VERSION }} --output artifacts/nuget
+
       - name: Publish NuGet packages
         run: dotnet nuget push "artifacts/nuget/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
