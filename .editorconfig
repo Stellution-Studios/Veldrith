@@ -91,7 +91,7 @@ dotnet_naming_rule.public_members_pascal_case.severity = suggestion
 dotnet_naming_rule.public_members_pascal_case.symbols = public_members
 dotnet_naming_rule.public_members_pascal_case.style = pascal_case_style
 
-dotnet_naming_symbols.public_members.applicable_kinds = property,method,field,event
+dotnet_naming_symbols.public_members.applicable_kinds = property, method, field, event
 dotnet_naming_symbols.public_members.applicable_accessibilities = public
 
 dotnet_naming_style.pascal_case_style.capitalization = pascal_case
@@ -102,6 +102,11 @@ dotnet_naming_style.pascal_case_style.capitalization = pascal_case
 
 # Allow blank/indented lines
 csharp_style_allow_blank_lines_between_consecutive_braces_experimental = true
+
+########################################
+# Line length & wrapping
+########################################
+max_line_length = 999
 
 ########################################
 # Rider / ReSharper specific
@@ -128,3 +133,41 @@ resharper_keep_blank_lines_in_declarations = 1
 # var usage
 resharper_csharp_use_var_when_evident = false
 resharper_csharp_use_var = false
+
+# ── Line wrapping — never auto-wrap ──────────────────────────────────────────
+resharper_wrap_long_lines = false
+resharper_max_line_length = 999
+
+resharper_wrap_arguments_style = do_not_wrap
+resharper_wrap_parameters_style = do_not_wrap
+resharper_wrap_chained_method_calls = do_not_wrap
+resharper_wrap_before_arrow_with_expressions = false
+resharper_wrap_linq_expressions = do_not_wrap
+resharper_wrap_after_dot_in_method_calls = false
+resharper_wrap_multiple_declaration_style = do_not_wrap
+resharper_wrap_object_and_collection_initializer_style = do_not_wrap
+resharper_wrap_array_initializer_style = do_not_wrap
+resharper_wrap_chained_binary_expressions = do_not_wrap
+resharper_wrap_before_binary_opsign = false
+resharper_wrap_ternary_expr_style = do_not_wrap
+resharper_wrap_multiple_type_parameer_constraints_style = do_not_wrap
+resharper_csharp_wrap_extends_list_style = do_not_wrap
+resharper_place_attribute_on_same_line = false
+
+# ── Naming rules (Rider/ReSharper) ───────────────────────────────────────────
+resharper_csharp_naming_rule.private_instance_fields = _ + aaBb
+resharper_csharp_naming_rule.private_static_fields = _ + aaBb
+resharper_csharp_naming_rule.private_readonly_fields = _ + aaBb
+resharper_csharp_naming_rule.public_fields = AaBb
+resharper_csharp_naming_rule.public_static_fields = AaBb
+resharper_csharp_naming_rule.properties = AaBb
+resharper_csharp_naming_rule.method = AaBb
+resharper_csharp_naming_rule.events = AaBb
+resharper_csharp_naming_rule.types_and_namespaces = AaBb
+resharper_csharp_naming_rule.interfaces = I + AaBb
+resharper_csharp_naming_rule.type_parameters = T + AaBb
+resharper_csharp_naming_rule.locals = aaBb
+resharper_csharp_naming_rule.parameters = aaBb
+resharper_csharp_naming_rule.local_constants = aaBb
+resharper_csharp_naming_rule.constants = AaBb
+resharper_csharp_naming_rule.static_readonly = AaBb

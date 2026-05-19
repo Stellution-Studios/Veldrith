@@ -1,16 +1,18 @@
 using System;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
-namespace Veldrith.MetalBindings
-{
-    public struct NSObject
-    {
-        public readonly IntPtr NativePtr;
+namespace Veldrith.MetalBindings;
 
-        public NSObject(IntPtr ptr) => NativePtr = ptr;
+public struct NSObject {
+    public readonly IntPtr NativePtr;
 
-        public Bool8 IsKindOfClass(IntPtr @class) => bool8_objc_msgSend(NativePtr, sel_isKindOfClass, @class);
-
-        private static readonly Selector sel_isKindOfClass = "isKindOfClass:";
+    public NSObject(IntPtr ptr) {
+        this.NativePtr = ptr;
     }
+
+    public Bool8 IsKindOfClass(IntPtr @class) {
+        return bool8_objc_msgSend(this.NativePtr, sel_isKindOfClass, @class);
+    }
+
+    private static readonly Selector sel_isKindOfClass = "isKindOfClass:";
 }

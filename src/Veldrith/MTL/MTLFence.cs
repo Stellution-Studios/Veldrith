@@ -1,50 +1,43 @@
 using System;
 using System.Threading;
 
-namespace Veldrith.MTL
-{
-    internal class MtlFence : Fence
-    {
-        public ManualResetEvent ResetEvent { get; }
+namespace Veldrith.MTL;
 
-        public override bool Signaled => ResetEvent.WaitOne(0);
-        public override bool IsDisposed => this._disposed;
+internal class MtlFence : Fence {
+    private bool _disposed;
 
-        public override string Name { get; set; }
-        private bool _disposed;
+    public MtlFence(bool signaled) {
+        this.ResetEvent = new ManualResetEvent(signaled);
+    }
 
-        public MtlFence(bool signaled)
-        {
-            ResetEvent = new ManualResetEvent(signaled);
+    public ManualResetEvent ResetEvent { get; }
+
+    public override bool Signaled => this.ResetEvent.WaitOne(0);
+    public override bool IsDisposed => this._disposed;
+
+    public override string Name { get; set; }
+
+    #region Disposal
+
+    public override void Dispose() {
+        if (!this._disposed) {
+            this.ResetEvent.Dispose();
+            this._disposed = true;
         }
+    }
 
-        #region Disposal
+    #endregion
 
-        public override void Dispose()
-        {
-            if (!this._disposed)
-            {
-                ResetEvent.Dispose();
-                this._disposed = true;
-            }
-        }
+    public void Set() {
+        this.ResetEvent.Set();
+    }
 
-        #endregion
+    public override void Reset() {
+        this.ResetEvent.Reset();
+    }
 
-        public void Set()
-        {
-            ResetEvent.Set();
-        }
-
-        public override void Reset()
-        {
-            ResetEvent.Reset();
-        }
-
-        internal bool Wait(ulong nanosecondTimeout)
-        {
-            ulong timeout = Math.Min(int.MaxValue, nanosecondTimeout / 1_000_000);
-            return ResetEvent.WaitOne((int)timeout);
-        }
+    internal bool Wait(ulong nanosecondTimeout) {
+        ulong timeout = Math.Min(int.MaxValue, nanosecondTimeout / 1_000_000);
+        return this.ResetEvent.WaitOne((int)timeout);
     }
 }

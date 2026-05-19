@@ -1,31 +1,29 @@
-﻿namespace Veldrith
-{
+﻿namespace Veldrith;
+
+/// <summary>
+///     The type of a vertex element, describing how the element is interpreted.
+///     NOTE: This enumeration is only meaningful for the Direct3D 11 backend.
+///     When using Veldrith.SPIRV to cross-compile a vertex shader to HLSL, all vertex elements will
+///     use <see cref="VertexElementSemantic.TextureCoordinate" />.
+/// </summary>
+public enum VertexElementSemantic : byte {
     /// <summary>
-    ///     The type of a vertex element, describing how the element is interpreted.
-    ///     NOTE: This enumeration is only meaningful for the Direct3D 11 backend.
-    ///     When using Veldrith.SPIRV to cross-compile a vertex shader to HLSL, all vertex elements will
-    ///     use <see cref="VertexElementSemantic.TextureCoordinate" />.
+    ///     A position.
     /// </summary>
-    public enum VertexElementSemantic : byte
-    {
-        /// <summary>
-        ///     A position.
-        /// </summary>
-        Position,
+    Position,
 
-        /// <summary>
-        ///     A normal direction.
-        /// </summary>
-        Normal,
+    /// <summary>
+    ///     A normal direction.
+    /// </summary>
+    Normal,
 
-        /// <summary>
-        ///     A texture coordinate.
-        /// </summary>
-        TextureCoordinate,
+    /// <summary>
+    ///     A texture coordinate.
+    /// </summary>
+    TextureCoordinate,
 
-        /// <summary>
-        ///     A color.
-        /// </summary>
-        Color
-    }
+    /// <summary>
+    ///     A color.
+    /// </summary>
+    Color
 }

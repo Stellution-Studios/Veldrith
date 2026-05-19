@@ -2,61 +2,65 @@ using System;
 using System.Runtime.InteropServices;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
-namespace Veldrith.MetalBindings
-{
-    [StructLayout(LayoutKind.Sequential)]
-    public struct MTLCommandBuffer : IEquatable<MTLCommandBuffer>
-    {
-        public readonly IntPtr NativePtr;
+namespace Veldrith.MetalBindings;
 
-        public MTLRenderCommandEncoder renderCommandEncoderWithDescriptor(MTLRenderPassDescriptor desc)
-        {
-            return new MTLRenderCommandEncoder(
-                IntPtr_objc_msgSend(NativePtr, sel_renderCommandEncoderWithDescriptor, desc.NativePtr));
-        }
+[StructLayout(LayoutKind.Sequential)]
+public struct MTLCommandBuffer : IEquatable<MTLCommandBuffer> {
+    public readonly IntPtr NativePtr;
 
-        public void presentDrawable(IntPtr drawable) => objc_msgSend(NativePtr, sel_presentDrawable, drawable);
+    public MTLRenderCommandEncoder renderCommandEncoderWithDescriptor(MTLRenderPassDescriptor desc) {
+        return new MTLRenderCommandEncoder(
+            IntPtr_objc_msgSend(this.NativePtr, sel_renderCommandEncoderWithDescriptor, desc.NativePtr));
+    }
 
-        public void commit() => objc_msgSend(NativePtr, sel_commit);
+    public void presentDrawable(IntPtr drawable) {
+        objc_msgSend(this.NativePtr, sel_presentDrawable, drawable);
+    }
 
-        public MTLBlitCommandEncoder blitCommandEncoder()
-            => objc_msgSend<MTLBlitCommandEncoder>(NativePtr, sel_blitCommandEncoder);
+    public void commit() {
+        objc_msgSend(this.NativePtr, sel_commit);
+    }
 
-        public MTLComputeCommandEncoder computeCommandEncoder()
-            => objc_msgSend<MTLComputeCommandEncoder>(NativePtr, sel_computeCommandEncoder);
+    public MTLBlitCommandEncoder blitCommandEncoder() {
+        return objc_msgSend<MTLBlitCommandEncoder>(this.NativePtr, sel_blitCommandEncoder);
+    }
 
-        public void waitUntilCompleted() => objc_msgSend(NativePtr, sel_waitUntilCompleted);
+    public MTLComputeCommandEncoder computeCommandEncoder() {
+        return objc_msgSend<MTLComputeCommandEncoder>(this.NativePtr, sel_computeCommandEncoder);
+    }
 
-        public void addCompletedHandler(MTLCommandBufferHandler block)
-            => objc_msgSend(NativePtr, sel_addCompletedHandler, block);
+    public void waitUntilCompleted() {
+        objc_msgSend(this.NativePtr, sel_waitUntilCompleted);
+    }
 
-        public void addCompletedHandler(IntPtr block)
-            => objc_msgSend(NativePtr, sel_addCompletedHandler, block);
+    public void addCompletedHandler(MTLCommandBufferHandler block) {
+        objc_msgSend(this.NativePtr, sel_addCompletedHandler, block);
+    }
 
-        public MTLCommandBufferStatus status => (MTLCommandBufferStatus)uint_objc_msgSend(NativePtr, sel_status);
+    public void addCompletedHandler(IntPtr block) {
+        objc_msgSend(this.NativePtr, sel_addCompletedHandler, block);
+    }
 
-        private static readonly Selector sel_renderCommandEncoderWithDescriptor = "renderCommandEncoderWithDescriptor:";
-        private static readonly Selector sel_presentDrawable = "presentDrawable:";
-        private static readonly Selector sel_commit = "commit";
-        private static readonly Selector sel_blitCommandEncoder = "blitCommandEncoder";
-        private static readonly Selector sel_computeCommandEncoder = "computeCommandEncoder";
-        private static readonly Selector sel_waitUntilCompleted = "waitUntilCompleted";
-        private static readonly Selector sel_addCompletedHandler = "addCompletedHandler:";
-        private static readonly Selector sel_status = "status";
+    public MTLCommandBufferStatus status => (MTLCommandBufferStatus)uint_objc_msgSend(this.NativePtr, sel_status);
 
-        public bool Equals(MTLCommandBuffer other)
-        {
-            return NativePtr == other.NativePtr;
-        }
+    private static readonly Selector sel_renderCommandEncoderWithDescriptor = "renderCommandEncoderWithDescriptor:";
+    private static readonly Selector sel_presentDrawable = "presentDrawable:";
+    private static readonly Selector sel_commit = "commit";
+    private static readonly Selector sel_blitCommandEncoder = "blitCommandEncoder";
+    private static readonly Selector sel_computeCommandEncoder = "computeCommandEncoder";
+    private static readonly Selector sel_waitUntilCompleted = "waitUntilCompleted";
+    private static readonly Selector sel_addCompletedHandler = "addCompletedHandler:";
+    private static readonly Selector sel_status = "status";
 
-        public override bool Equals(object obj)
-        {
-            return obj is MTLCommandBuffer other && Equals(other);
-        }
+    public bool Equals(MTLCommandBuffer other) {
+        return this.NativePtr == other.NativePtr;
+    }
 
-        public override int GetHashCode()
-        {
-            return NativePtr.GetHashCode();
-        }
+    public override bool Equals(object obj) {
+        return obj is MTLCommandBuffer other && this.Equals(other);
+    }
+
+    public override int GetHashCode() {
+        return this.NativePtr.GetHashCode();
     }
 }

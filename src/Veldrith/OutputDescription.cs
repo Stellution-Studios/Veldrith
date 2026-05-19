@@ -1,99 +1,91 @@
 using System;
 
-namespace Veldrith
-{
+namespace Veldrith;
+
+/// <summary>
+///     Describes a set of output attachments and their formats.
+/// </summary>
+public struct OutputDescription : IEquatable<OutputDescription> {
     /// <summary>
-    ///     Describes a set of output attachments and their formats.
+    ///     A description of the depth attachment, or null if none exists.
     /// </summary>
-    public struct OutputDescription : IEquatable<OutputDescription>
-    {
-        /// <summary>
-        ///     A description of the depth attachment, or null if none exists.
-        /// </summary>
-        public OutputAttachmentDescription? DepthAttachment;
+    public OutputAttachmentDescription? DepthAttachment;
 
-        /// <summary>
-        ///     An array of attachment descriptions, one for each color attachment. May be empty.
-        /// </summary>
-        public OutputAttachmentDescription[] ColorAttachments;
+    /// <summary>
+    ///     An array of attachment descriptions, one for each color attachment. May be empty.
+    /// </summary>
+    public OutputAttachmentDescription[] ColorAttachments;
 
-        /// <summary>
-        ///     The number of samples in each target attachment.
-        /// </summary>
-        public TextureSampleCount SampleCount;
+    /// <summary>
+    ///     The number of samples in each target attachment.
+    /// </summary>
+    public TextureSampleCount SampleCount;
 
-        /// <summary>
-        ///     Constructs a new <see cref="OutputDescription" />.
-        /// </summary>
-        /// <param name="depthAttachment">A description of the depth attachment.</param>
-        /// <param name="colorAttachments">An array of descriptions of each color attachment.</param>
-        public OutputDescription(OutputAttachmentDescription? depthAttachment, params OutputAttachmentDescription[] colorAttachments)
-        {
-            this.DepthAttachment = depthAttachment;
-            this.ColorAttachments = colorAttachments ?? Array.Empty<OutputAttachmentDescription>();
-            this.SampleCount = TextureSampleCount.Count1;
+    /// <summary>
+    ///     Constructs a new <see cref="OutputDescription" />.
+    /// </summary>
+    /// <param name="depthAttachment">A description of the depth attachment.</param>
+    /// <param name="colorAttachments">An array of descriptions of each color attachment.</param>
+    public OutputDescription(OutputAttachmentDescription? depthAttachment,
+        params OutputAttachmentDescription[] colorAttachments) {
+        this.DepthAttachment = depthAttachment;
+        this.ColorAttachments = colorAttachments ?? Array.Empty<OutputAttachmentDescription>();
+        this.SampleCount = TextureSampleCount.Count1;
+    }
+
+    /// <summary>
+    ///     Constructs a new <see cref="OutputDescription" />.
+    /// </summary>
+    /// <param name="depthAttachment">A description of the depth attachment.</param>
+    /// <param name="colorAttachments">An array of descriptions of each color attachment.</param>
+    /// <param name="sampleCount">The number of samples in each target attachment.</param>
+    public OutputDescription(
+        OutputAttachmentDescription? depthAttachment,
+        OutputAttachmentDescription[] colorAttachments,
+        TextureSampleCount sampleCount) {
+        this.DepthAttachment = depthAttachment;
+        this.ColorAttachments = colorAttachments ?? Array.Empty<OutputAttachmentDescription>();
+        this.SampleCount = sampleCount;
+    }
+
+    internal static OutputDescription CreateFromFramebuffer(Framebuffer fb) {
+        TextureSampleCount sampleCount = 0;
+        OutputAttachmentDescription? depthAttachment = null;
+
+        if (fb.DepthTarget != null) {
+            depthAttachment = new OutputAttachmentDescription(fb.DepthTarget.Value.Target.Format);
+            sampleCount = fb.DepthTarget.Value.Target.SampleCount;
         }
 
-        /// <summary>
-        ///     Constructs a new <see cref="OutputDescription" />.
-        /// </summary>
-        /// <param name="depthAttachment">A description of the depth attachment.</param>
-        /// <param name="colorAttachments">An array of descriptions of each color attachment.</param>
-        /// <param name="sampleCount">The number of samples in each target attachment.</param>
-        public OutputDescription(
-            OutputAttachmentDescription? depthAttachment,
-            OutputAttachmentDescription[] colorAttachments,
-            TextureSampleCount sampleCount)
-        {
-            this.DepthAttachment = depthAttachment;
-            this.ColorAttachments = colorAttachments ?? Array.Empty<OutputAttachmentDescription>();
-            this.SampleCount = sampleCount;
+        OutputAttachmentDescription[] colorAttachments = new OutputAttachmentDescription[fb.ColorTargets.Count];
+
+        for (int i = 0; i < colorAttachments.Length; i++) {
+            colorAttachments[i] = new OutputAttachmentDescription(fb.ColorTargets[i].Target.Format);
+            sampleCount = fb.ColorTargets[i].Target.SampleCount;
         }
 
-        internal static OutputDescription CreateFromFramebuffer(Framebuffer fb)
-        {
-            TextureSampleCount sampleCount = 0;
-            OutputAttachmentDescription? depthAttachment = null;
+        return new OutputDescription(depthAttachment, colorAttachments, sampleCount);
+    }
 
-            if (fb.DepthTarget != null)
-            {
-                depthAttachment = new OutputAttachmentDescription(fb.DepthTarget.Value.Target.Format);
-                sampleCount = fb.DepthTarget.Value.Target.SampleCount;
-            }
+    /// <summary>
+    ///     Element-wise equality.
+    /// </summary>
+    /// <param name="other">The instance to compare to.</param>
+    /// <returns>True if all elements and all array elements are equal; false otherswise.</returns>
+    public bool Equals(OutputDescription other) {
+        return this.DepthAttachment.GetValueOrDefault().Equals(other.DepthAttachment.GetValueOrDefault())
+               && Util.ArrayEqualsEquatable(this.ColorAttachments, other.ColorAttachments)
+               && this.SampleCount == other.SampleCount;
+    }
 
-            var colorAttachments = new OutputAttachmentDescription[fb.ColorTargets.Count];
-
-            for (int i = 0; i < colorAttachments.Length; i++)
-            {
-                colorAttachments[i] = new OutputAttachmentDescription(fb.ColorTargets[i].Target.Format);
-                sampleCount = fb.ColorTargets[i].Target.SampleCount;
-            }
-
-            return new OutputDescription(depthAttachment, colorAttachments, sampleCount);
-        }
-
-        /// <summary>
-        ///     Element-wise equality.
-        /// </summary>
-        /// <param name="other">The instance to compare to.</param>
-        /// <returns>True if all elements and all array elements are equal; false otherswise.</returns>
-        public bool Equals(OutputDescription other)
-        {
-            return this.DepthAttachment.GetValueOrDefault().Equals(other.DepthAttachment.GetValueOrDefault())
-                   && Util.ArrayEqualsEquatable(this.ColorAttachments, other.ColorAttachments)
-                   && this.SampleCount == other.SampleCount;
-        }
-
-        /// <summary>
-        ///     Returns the hash code for this instance.
-        /// </summary>
-        /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
-        public override int GetHashCode()
-        {
-            return HashHelper.Combine(
-                this.DepthAttachment.GetHashCode(),
-                HashHelper.Array(this.ColorAttachments),
-                (int)this.SampleCount);
-        }
+    /// <summary>
+    ///     Returns the hash code for this instance.
+    /// </summary>
+    /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
+    public override int GetHashCode() {
+        return HashHelper.Combine(
+            this.DepthAttachment.GetHashCode(),
+            HashHelper.Array(this.ColorAttachments),
+            (int)this.SampleCount);
     }
 }

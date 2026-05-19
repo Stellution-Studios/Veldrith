@@ -1,60 +1,71 @@
 using System;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
-namespace Veldrith.MetalBindings
-{
-    public struct MTLComputeCommandEncoder
-    {
-        public readonly IntPtr NativePtr;
-        public bool IsNull => NativePtr == IntPtr.Zero;
+namespace Veldrith.MetalBindings;
 
-        private static readonly Selector sel_setComputePipelineState = "setComputePipelineState:";
-        private static readonly Selector sel_setBuffer = "setBuffer:offset:atIndex:";
-        private static readonly Selector sel_dispatchThreadgroups0 = "dispatchThreadgroups:threadsPerThreadgroup:";
-        private static readonly Selector sel_dispatchThreadgroups1 = "dispatchThreadgroupsWithIndirectBuffer:indirectBufferOffset:threadsPerThreadgroup:";
-        private static readonly Selector sel_endEncoding = "endEncoding";
-        private static readonly Selector sel_setTexture = "setTexture:atIndex:";
-        private static readonly Selector sel_setSamplerState = "setSamplerState:atIndex:";
-        private static readonly Selector sel_setBytes = "setBytes:length:atIndex:";
+public struct MTLComputeCommandEncoder {
+    public readonly IntPtr NativePtr;
+    public bool IsNull => this.NativePtr == IntPtr.Zero;
 
-        public void setComputePipelineState(MTLComputePipelineState state)
-            => objc_msgSend(NativePtr, sel_setComputePipelineState, state.NativePtr);
+    private static readonly Selector sel_setComputePipelineState = "setComputePipelineState:";
+    private static readonly Selector sel_setBuffer = "setBuffer:offset:atIndex:";
+    private static readonly Selector sel_dispatchThreadgroups0 = "dispatchThreadgroups:threadsPerThreadgroup:";
+    private static readonly Selector sel_dispatchThreadgroups1 = "dispatchThreadgroupsWithIndirectBuffer:indirectBufferOffset:threadsPerThreadgroup:";
+    private static readonly Selector sel_endEncoding = "endEncoding";
+    private static readonly Selector sel_setTexture = "setTexture:atIndex:";
+    private static readonly Selector sel_setSamplerState = "setSamplerState:atIndex:";
+    private static readonly Selector sel_setBytes = "setBytes:length:atIndex:";
 
-        public void setBuffer(MTLBuffer buffer, UIntPtr offset, UIntPtr index)
-            => objc_msgSend(NativePtr, sel_setBuffer,
-                buffer.NativePtr,
-                offset,
-                index);
+    public void setComputePipelineState(MTLComputePipelineState state) {
+        objc_msgSend(this.NativePtr, sel_setComputePipelineState, state.NativePtr);
+    }
 
-        public unsafe void setBytes(void* bytes, UIntPtr length, UIntPtr index)
-            => objc_msgSend(NativePtr, sel_setBytes, bytes, length, index);
+    public void setBuffer(MTLBuffer buffer, UIntPtr offset, UIntPtr index) {
+        objc_msgSend(this.NativePtr, sel_setBuffer,
+            buffer.NativePtr,
+            offset,
+            index);
+    }
 
-        public void dispatchThreadGroups(MTLSize threadgroupsPerGrid, MTLSize threadsPerThreadgroup)
-            => objc_msgSend(NativePtr, sel_dispatchThreadgroups0, threadgroupsPerGrid, threadsPerThreadgroup);
+    public unsafe void setBytes(void* bytes, UIntPtr length, UIntPtr index) {
+        objc_msgSend(this.NativePtr, sel_setBytes, bytes, length, index);
+    }
 
-        public void dispatchThreadgroupsWithIndirectBuffer(
-            MTLBuffer indirectBuffer,
-            UIntPtr indirectBufferOffset,
-            MTLSize threadsPerThreadgroup)
-            => objc_msgSend(NativePtr, sel_dispatchThreadgroups1,
-                indirectBuffer.NativePtr,
-                indirectBufferOffset,
-                threadsPerThreadgroup);
+    public void dispatchThreadGroups(MTLSize threadgroupsPerGrid, MTLSize threadsPerThreadgroup) {
+        objc_msgSend(this.NativePtr, sel_dispatchThreadgroups0, threadgroupsPerGrid, threadsPerThreadgroup);
+    }
 
-        public void endEncoding() => objc_msgSend(NativePtr, sel_endEncoding);
+    public void dispatchThreadgroupsWithIndirectBuffer(
+        MTLBuffer indirectBuffer,
+        UIntPtr indirectBufferOffset,
+        MTLSize threadsPerThreadgroup) {
+        objc_msgSend(this.NativePtr, sel_dispatchThreadgroups1,
+            indirectBuffer.NativePtr,
+            indirectBufferOffset,
+            threadsPerThreadgroup);
+    }
 
-        public void setTexture(MTLTexture texture, UIntPtr index)
-            => objc_msgSend(NativePtr, sel_setTexture, texture.NativePtr, index);
+    public void endEncoding() {
+        objc_msgSend(this.NativePtr, sel_endEncoding);
+    }
 
-        public void setSamplerState(MTLSamplerState sampler, UIntPtr index)
-            => objc_msgSend(NativePtr, sel_setSamplerState, sampler.NativePtr, index);
+    public void setTexture(MTLTexture texture, UIntPtr index) {
+        objc_msgSend(this.NativePtr, sel_setTexture, texture.NativePtr, index);
+    }
 
-        public void pushDebugGroup(NSString @string)
-            => objc_msgSend(NativePtr, Selectors.pushDebugGroup, @string.NativePtr);
+    public void setSamplerState(MTLSamplerState sampler, UIntPtr index) {
+        objc_msgSend(this.NativePtr, sel_setSamplerState, sampler.NativePtr, index);
+    }
 
-        public void popDebugGroup() => objc_msgSend(NativePtr, Selectors.popDebugGroup);
+    public void pushDebugGroup(NSString @string) {
+        objc_msgSend(this.NativePtr, Selectors.pushDebugGroup, @string.NativePtr);
+    }
 
-        public void insertDebugSignpost(NSString @string)
-            => objc_msgSend(NativePtr, Selectors.insertDebugSignpost, @string.NativePtr);
+    public void popDebugGroup() {
+        objc_msgSend(this.NativePtr, Selectors.popDebugGroup);
+    }
+
+    public void insertDebugSignpost(NSString @string) {
+        objc_msgSend(this.NativePtr, Selectors.insertDebugSignpost, @string.NativePtr);
     }
 }

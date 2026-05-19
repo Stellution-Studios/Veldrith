@@ -1,133 +1,116 @@
 using System;
 using System.Runtime.CompilerServices;
 
-namespace Veldrith.Vk
-{
-    /// <summary>
-    ///     A super-dangerous stack-only list which can hold up to 256 bytes of blittable data.
-    /// </summary>
-    /// <typeparam name="T">The type of element held in the list. Must be blittable.</typeparam>
-    internal unsafe struct StackList<T> where T : struct
-    {
-        public const int CAPACITY_IN_BYTES = 256;
-        private static readonly int _s_sizeof_t = Unsafe.SizeOf<T>();
+namespace Veldrith.Vk;
 
-        private fixed byte _storage[CAPACITY_IN_BYTES];
+/// <summary>
+///     A super-dangerous stack-only list which can hold up to 256 bytes of blittable data.
+/// </summary>
+/// <typeparam name="T">The type of element held in the list. Must be blittable.</typeparam>
+internal unsafe struct StackList<T> where T : struct {
+    public const int CAPACITY_IN_BYTES = 256;
+    private static readonly int _s_sizeof_t = Unsafe.SizeOf<T>();
 
-        public uint Count { get; private set; }
+    private fixed byte _storage[CAPACITY_IN_BYTES];
 
-        public void* Data => Unsafe.AsPointer(ref this);
+    public uint Count { get; private set; }
 
-        public void Add(T item)
-        {
-            byte* basePtr = (byte*)this.Data;
-            int offset = (int)(Count * _s_sizeof_t);
+    public void* Data => Unsafe.AsPointer(ref this);
+
+    public void Add(T item) {
+        byte* basePtr = (byte*)this.Data;
+        int offset = (int)(this.Count * _s_sizeof_t);
 #if DEBUG
             Debug.Assert(offset + s_sizeof_t <= CAPACITY_IN_BYTES);
 #endif
-            Unsafe.Write(basePtr + offset, item);
+        Unsafe.Write(basePtr + offset, item);
 
-            Count += 1;
-        }
+        this.Count += 1;
+    }
 
-        public ref T this[uint index]
-        {
-            get
-            {
-                byte* basePtr = (byte*)Unsafe.AsPointer(ref this);
-                int offset = (int)(index * _s_sizeof_t);
-                return ref Unsafe.AsRef<T>(basePtr + offset);
-            }
-        }
-
-        public ref T this[int index]
-        {
-            get
-            {
-                byte* basePtr = (byte*)Unsafe.AsPointer(ref this);
-                int offset = index * _s_sizeof_t;
-                return ref Unsafe.AsRef<T>(basePtr + offset);
-            }
+    public ref T this[uint index] {
+        get {
+            byte* basePtr = (byte*)Unsafe.AsPointer(ref this);
+            int offset = (int)(index * _s_sizeof_t);
+            return ref Unsafe.AsRef<T>(basePtr + offset);
         }
     }
 
-    /// <summary>
-    ///     A super-dangerous stack-only list which can hold a number of bytes determined by the second type parameter.
-    /// </summary>
-    /// <typeparam name="T">The type of element held in the list. Must be blittable.</typeparam>
-    /// <typeparam name="TSize">A type parameter dictating the capacity of the list.</typeparam>
-    internal unsafe struct StackList<T, TSize> where T : struct where TSize : struct
-    {
-        private static readonly int _s_sizeof_t = Unsafe.SizeOf<T>();
+    public ref T this[int index] {
+        get {
+            byte* basePtr = (byte*)Unsafe.AsPointer(ref this);
+            int offset = index * _s_sizeof_t;
+            return ref Unsafe.AsRef<T>(basePtr + offset);
+        }
+    }
+}
+
+/// <summary>
+///     A super-dangerous stack-only list which can hold a number of bytes determined by the second type parameter.
+/// </summary>
+/// <typeparam name="T">The type of element held in the list. Must be blittable.</typeparam>
+/// <typeparam name="TSize">A type parameter dictating the capacity of the list.</typeparam>
+internal unsafe struct StackList<T, TSize> where T : struct where TSize : struct {
+    private static readonly int _s_sizeof_t = Unsafe.SizeOf<T>();
 
 #pragma warning disable 0169 // Unused field. This is used implicity because it controls the size of the structure on the stack.
-        private TSize _storage;
+    private TSize _storage;
 #pragma warning restore 0169
 
-        public uint Count { get; private set; }
+    public uint Count { get; private set; }
 
-        public void* Data => Unsafe.AsPointer(ref this);
+    public void* Data => Unsafe.AsPointer(ref this);
 
-        public void Add(T item)
-        {
-            ref var dest = ref Unsafe.Add(ref Unsafe.As<TSize, T>(ref this._storage), (int)Count);
+    public void Add(T item) {
+        ref T dest = ref Unsafe.Add(ref Unsafe.As<TSize, T>(ref this._storage), (int)this.Count);
 #if DEBUG
             int offset = (int)(Count * s_sizeof_t);
             Debug.Assert(offset + s_sizeof_t <= Unsafe.SizeOf<TSize>());
 #endif
-            dest = item;
+        dest = item;
 
-            Count += 1;
-        }
-
-        public ref T this[int index] => ref Unsafe.Add(ref Unsafe.AsRef<T>(this.Data), index);
-        public ref T this[uint index] => ref Unsafe.Add(ref Unsafe.AsRef<T>(this.Data), (int)index);
+        this.Count += 1;
     }
 
-    internal unsafe struct Size16Bytes
-    {
-        public fixed byte Data[16];
-    }
-
-    internal unsafe struct Size64Bytes
-    {
-        public fixed byte Data[64];
-    }
-
-    internal unsafe struct Size128Bytes
-    {
-        public fixed byte Data[64];
-    }
-
-    internal unsafe struct Size512Bytes
-    {
-        public fixed byte Data[1024];
-    }
-
-    internal unsafe struct Size1024Bytes
-    {
-        public fixed byte Data[1024];
-    }
-
-    internal unsafe struct Size2048Bytes
-    {
-        public fixed byte Data[2048];
-    }
-#pragma warning disable 0649 // Fields are not assigned directly -- expected.
-    internal struct Size2IntPtr
-    {
-        public IntPtr First;
-        public IntPtr Second;
-    }
-
-    internal struct Size6IntPtr
-    {
-        public IntPtr First;
-        public IntPtr Second;
-        public IntPtr Third;
-        public IntPtr Fourth;
-        public IntPtr Fifth;
-        public IntPtr Sixth;
-    }
-#pragma warning restore 0649
+    public ref T this[int index] => ref Unsafe.Add(ref Unsafe.AsRef<T>(this.Data), index);
+    public ref T this[uint index] => ref Unsafe.Add(ref Unsafe.AsRef<T>(this.Data), (int)index);
 }
+
+internal unsafe struct Size16Bytes {
+    public fixed byte Data[16];
+}
+
+internal unsafe struct Size64Bytes {
+    public fixed byte Data[64];
+}
+
+internal unsafe struct Size128Bytes {
+    public fixed byte Data[64];
+}
+
+internal unsafe struct Size512Bytes {
+    public fixed byte Data[1024];
+}
+
+internal unsafe struct Size1024Bytes {
+    public fixed byte Data[1024];
+}
+
+internal unsafe struct Size2048Bytes {
+    public fixed byte Data[2048];
+}
+#pragma warning disable 0649 // Fields are not assigned directly -- expected.
+internal struct Size2IntPtr {
+    public IntPtr First;
+    public IntPtr Second;
+}
+
+internal struct Size6IntPtr {
+    public IntPtr First;
+    public IntPtr Second;
+    public IntPtr Third;
+    public IntPtr Fourth;
+    public IntPtr Fifth;
+    public IntPtr Sixth;
+}
+#pragma warning restore 0649

@@ -1,27 +1,22 @@
-using System;
+﻿using System;
 
-namespace Veldrith
-{
-    internal struct MappedResourceCacheKey : IEquatable<MappedResourceCacheKey>
-    {
-        public readonly IMappableResource Resource;
-        public readonly uint Subresource;
+namespace Veldrith;
 
-        public MappedResourceCacheKey(IMappableResource resource, uint subresource)
-        {
-            this.Resource = resource;
-            this.Subresource = subresource;
-        }
+internal struct MappedResourceCacheKey : IEquatable<MappedResourceCacheKey> {
+    public readonly IMappableResource Resource;
+    public readonly uint Subresource;
 
-        public bool Equals(MappedResourceCacheKey other)
-        {
-            return this.Resource.Equals(other.Resource)
-                   && this.Subresource.Equals(other.Subresource);
-        }
+    public MappedResourceCacheKey(IMappableResource resource, uint subresource) {
+        this.Resource = resource;
+        this.Subresource = subresource;
+    }
 
-        public override int GetHashCode()
-        {
-            return HashHelper.Combine(this.Resource.GetHashCode(), this.Subresource.GetHashCode());
-        }
+    public bool Equals(MappedResourceCacheKey other) {
+        return this.Resource.Equals(other.Resource)
+               && this.Subresource.Equals(other.Subresource);
+    }
+
+    public override int GetHashCode() {
+        return HashHelper.Combine(this.Resource.GetHashCode(), this.Subresource.GetHashCode());
     }
 }

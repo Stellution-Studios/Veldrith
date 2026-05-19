@@ -1,43 +1,38 @@
 using System;
 
-namespace Veldrith
-{
+namespace Veldrith;
+
+/// <summary>
+///     Describes an individual output attachment and its format.
+/// </summary>
+public struct OutputAttachmentDescription : IEquatable<OutputAttachmentDescription> {
     /// <summary>
-    ///     Describes an individual output attachment and its format.
+    ///     The format of the <see cref="Texture" /> attachment.
     /// </summary>
-    public struct OutputAttachmentDescription : IEquatable<OutputAttachmentDescription>
-    {
-        /// <summary>
-        ///     The format of the <see cref="Texture" /> attachment.
-        /// </summary>
-        public PixelFormat Format;
+    public PixelFormat Format;
 
-        /// <summary>
-        ///     Constructs a new <see cref="OutputAttachmentDescription" />.
-        /// </summary>
-        /// <param name="format">THe format of the <see cref="Texture" /> attachment.</param>
-        public OutputAttachmentDescription(PixelFormat format)
-        {
-            this.Format = format;
-        }
+    /// <summary>
+    ///     Constructs a new <see cref="OutputAttachmentDescription" />.
+    /// </summary>
+    /// <param name="format">THe format of the <see cref="Texture" /> attachment.</param>
+    public OutputAttachmentDescription(PixelFormat format) {
+        this.Format = format;
+    }
 
-        /// <summary>
-        ///     Element-wise equality.
-        /// </summary>
-        /// <param name="other">The instance to compare to.</param>
-        /// <returns>True if all elements are equal; false otherswise.</returns>
-        public bool Equals(OutputAttachmentDescription other)
-        {
-            return this.Format == other.Format;
-        }
+    /// <summary>
+    ///     Element-wise equality.
+    /// </summary>
+    /// <param name="other">The instance to compare to.</param>
+    /// <returns>True if all elements are equal; false otherswise.</returns>
+    public bool Equals(OutputAttachmentDescription other) {
+        return this.Format == other.Format;
+    }
 
-        /// <summary>
-        ///     Returns the hash code for this instance.
-        /// </summary>
-        /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
-        public override int GetHashCode()
-        {
-            return (int)this.Format;
-        }
+    /// <summary>
+    ///     Returns the hash code for this instance.
+    /// </summary>
+    /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
+    public override int GetHashCode() {
+        return (int)this.Format;
     }
 }

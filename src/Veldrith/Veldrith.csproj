@@ -1,50 +1,50 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup Label="Nuget">
-    <PackageId>ppy.Veldrid</PackageId>
-    <Version>0.0.0</Version>
-    <IsPackable>true</IsPackable>
-  </PropertyGroup>
+    <PropertyGroup Label="Nuget">
+        <PackageId>ppy.Veldrid</PackageId>
+        <Version>0.0.0</Version>
+        <IsPackable>true</IsPackable>
+    </PropertyGroup>
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <AssemblyName>ppy.Veldrid</AssemblyName>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DocumentationFile>$(BinDir)\$(AssemblyName).xml</DocumentationFile>
-    <NoWarn Condition="'$(Configuration)' == 'Debug'">1591</NoWarn>
-    <DefineConstants>$(DefineConstants);VALIDATE_USAGE;EXCLUDE_D3D11_BACKEND;EXCLUDE_OPENGL_BACKEND</DefineConstants>
-    <LangVersion>12.0</LangVersion>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <AssemblyName>ppy.Veldrid</AssemblyName>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <DocumentationFile>$(BinDir)\$(AssemblyName).xml</DocumentationFile>
+        <NoWarn Condition="'$(Configuration)' == 'Debug'">1591</NoWarn>
+        <DefineConstants>$(DefineConstants);VALIDATE_USAGE;EXCLUDE_D3D11_BACKEND;EXCLUDE_OPENGL_BACKEND</DefineConstants>
+        <LangVersion>12.0</LangVersion>
+    </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
-    <Optimize>true</Optimize>
-  </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+        <Optimize>true</Optimize>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="ppy.Vk" Version="1.0.26" Condition="'$(ExcludeVulkan)' != 'true'"/>
-    <PackageReference Include="Vortice.Direct3D12" Version="$(VorticeWindowsVersion)"/>
-    <PackageReference Update="Nerdbank.GitVersioning" Version="3.10.44-alpha">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="ppy.Vk" Version="1.0.26" Condition="'$(ExcludeVulkan)' != 'true'"/>
+        <PackageReference Include="Vortice.Direct3D12" Version="$(VorticeWindowsVersion)"/>
+        <PackageReference Update="Nerdbank.GitVersioning" Version="3.10.44-alpha">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Veldrith.MetalBindings\Veldrith.MetalBindings.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Veldrith.MetalBindings\Veldrith.MetalBindings.csproj"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <EmbeddedResource Include="MTL/EmbeddedShaders/MTL_UnalignedBufferCopy_macOS.metallib">
-      <LogicalName>MTL_UnalignedBufferCopy_macOS</LogicalName>
-    </EmbeddedResource>
-    <EmbeddedResource Include="MTL/EmbeddedShaders/MTL_UnalignedBufferCopy_iOS.metallib">
-      <LogicalName>MTL_UnalignedBufferCopy_iOS</LogicalName>
-    </EmbeddedResource>
-  </ItemGroup>
+    <ItemGroup>
+        <EmbeddedResource Include="MTL/EmbeddedShaders/MTL_UnalignedBufferCopy_macOS.metallib">
+            <LogicalName>MTL_UnalignedBufferCopy_macOS</LogicalName>
+        </EmbeddedResource>
+        <EmbeddedResource Include="MTL/EmbeddedShaders/MTL_UnalignedBufferCopy_iOS.metallib">
+            <LogicalName>MTL_UnalignedBufferCopy_iOS</LogicalName>
+        </EmbeddedResource>
+    </ItemGroup>
 
-  <PropertyGroup>
-    <Description>A low-level, hardware-accelerated graphics and compute library for .NET, with backends for Vulkan, Metal, and Direct3D 12. Veldrid can be used to create high-performance 2D and 3D games, simulations, tools, and other graphical applications.</Description>
-    <PackageTags>3D Graphics Direct3D DirectX DX12 Vulkan Metal Core Standard Game</PackageTags>
-  </PropertyGroup>
+    <PropertyGroup>
+        <Description>A low-level, hardware-accelerated graphics and compute library for .NET, with backends for Vulkan, Metal, and Direct3D 12. Veldrid can be used to create high-performance 2D and 3D games, simulations, tools, and other graphical applications.</Description>
+        <PackageTags>3D Graphics Direct3D DirectX DX12 Vulkan Metal Core Standard Game</PackageTags>
+    </PropertyGroup>
 
 </Project>

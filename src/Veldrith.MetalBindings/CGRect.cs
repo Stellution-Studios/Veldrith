@@ -1,16 +1,15 @@
-namespace Veldrith.MetalBindings
-{
-    public struct CGRect
-    {
-        public CGPoint origin;
-        public CGSize size;
+namespace Veldrith.MetalBindings;
 
-        public CGRect(CGPoint origin, CGSize size)
-        {
-            this.origin = origin;
-            this.size = size;
-        }
+public struct CGRect {
+    public CGPoint origin;
+    public CGSize size;
 
-        public override string ToString() => string.Format("{0}, {1}", origin, size);
+    public CGRect(CGPoint origin, CGSize size) {
+        this.origin = origin;
+        this.size = size;
+    }
+
+    public override string ToString() {
+        return string.Format("{0}, {1}", this.origin, this.size);
     }
 }

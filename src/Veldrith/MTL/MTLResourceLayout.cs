@@ -1,32 +1,29 @@
-namespace Veldrith.MTL
-{
-    internal class MtlResourceLayout : ResourceLayout
-    {
-        private readonly ResourceBindingInfo[] _bindingInfosByVdIndex;
-        private bool _disposed;
-        public uint BufferCount { get; }
-        public uint TextureCount { get; }
-        public uint SamplerCount { get; }
+namespace Veldrith.MTL;
+
+internal class MtlResourceLayout : ResourceLayout {
+    private readonly ResourceBindingInfo[] _bindingInfosByVdIndex;
+    private bool _disposed;
+    public uint BufferCount { get; }
+    public uint TextureCount { get; }
+    public uint SamplerCount { get; }
 #if !VALIDATE_USAGE
         public ResourceKind[] ResourceKinds { get; }
 #endif
-        public ResourceBindingInfo GetBindingInfo(int index)
-        {
-            return this._bindingInfosByVdIndex[index];
-        }
+    public ResourceBindingInfo GetBindingInfo(int index) {
+        return this._bindingInfosByVdIndex[index];
+    }
 
 #if !VALIDATE_USAGE
         public ResourceLayoutDescription Description { get; }
 #endif
 
-        public MtlResourceLayout(ref ResourceLayoutDescription description, MtlGraphicsDevice gd)
-            : base(ref description)
-        {
+    public MtlResourceLayout(ref ResourceLayoutDescription description, MtlGraphicsDevice gd)
+        : base(ref description) {
 #if !VALIDATE_USAGE
             Description = description;
 #endif
 
-            var elements = description.Elements;
+        ResourceLayoutElementDescription[] elements = description.Elements;
 #if !VALIDATE_USAGE
             ResourceKinds = new ResourceKind[elements.Length];
             for (int i = 0; i < elements.Length; i++)
@@ -35,80 +32,74 @@ namespace Veldrith.MTL
             }
 #endif
 
-            this._bindingInfosByVdIndex = new ResourceBindingInfo[elements.Length];
+        this._bindingInfosByVdIndex = new ResourceBindingInfo[elements.Length];
 
-            uint bufferIndex = 0;
-            uint texIndex = 0;
-            uint samplerIndex = 0;
+        uint bufferIndex = 0;
+        uint texIndex = 0;
+        uint samplerIndex = 0;
 
-            for (int i = 0; i < this._bindingInfosByVdIndex.Length; i++)
-            {
-                uint slot;
+        for (int i = 0; i < this._bindingInfosByVdIndex.Length; i++) {
+            uint slot;
 
-                switch (elements[i].Kind)
-                {
-                    case ResourceKind.UniformBuffer:
-                        slot = bufferIndex++;
-                        break;
+            switch (elements[i].Kind) {
+                case ResourceKind.UniformBuffer:
+                    slot = bufferIndex++;
+                    break;
 
-                    case ResourceKind.StructuredBufferReadOnly:
-                        slot = bufferIndex++;
-                        break;
+                case ResourceKind.StructuredBufferReadOnly:
+                    slot = bufferIndex++;
+                    break;
 
-                    case ResourceKind.StructuredBufferReadWrite:
-                        slot = bufferIndex++;
-                        break;
+                case ResourceKind.StructuredBufferReadWrite:
+                    slot = bufferIndex++;
+                    break;
 
-                    case ResourceKind.TextureReadOnly:
-                        slot = texIndex++;
-                        break;
+                case ResourceKind.TextureReadOnly:
+                    slot = texIndex++;
+                    break;
 
-                    case ResourceKind.TextureReadWrite:
-                        slot = texIndex++;
-                        break;
+                case ResourceKind.TextureReadWrite:
+                    slot = texIndex++;
+                    break;
 
-                    case ResourceKind.Sampler:
-                        slot = samplerIndex++;
-                        break;
+                case ResourceKind.Sampler:
+                    slot = samplerIndex++;
+                    break;
 
-                    default: throw Illegal.Value<ResourceKind>();
-                }
-
-                this._bindingInfosByVdIndex[i] = new ResourceBindingInfo(
-                    slot,
-                    elements[i].Stages,
-                    elements[i].Kind,
-                    (elements[i].Options & ResourceLayoutElementOptions.DynamicBinding) != 0);
+                default: throw Illegal.Value<ResourceKind>();
             }
 
-            BufferCount = bufferIndex;
-            TextureCount = texIndex;
-            SamplerCount = samplerIndex;
+            this._bindingInfosByVdIndex[i] = new ResourceBindingInfo(
+                slot,
+                elements[i].Stages,
+                elements[i].Kind,
+                (elements[i].Options & ResourceLayoutElementOptions.DynamicBinding) != 0);
         }
 
-        public override string Name { get; set; }
+        this.BufferCount = bufferIndex;
+        this.TextureCount = texIndex;
+        this.SamplerCount = samplerIndex;
+    }
 
-        public override bool IsDisposed => this._disposed;
+    public override string Name { get; set; }
 
-        public override void Dispose()
-        {
-            this._disposed = true;
-        }
+    public override bool IsDisposed => this._disposed;
 
-        internal struct ResourceBindingInfo
-        {
-            public uint Slot;
-            public ShaderStages Stages;
-            public ResourceKind Kind;
-            public bool DynamicBuffer;
+    public override void Dispose() {
+        this._disposed = true;
+    }
 
-            public ResourceBindingInfo(uint slot, ShaderStages stages, ResourceKind kind, bool dynamicBuffer)
-            {
-                this.Slot = slot;
-                this.Stages = stages;
-                this.Kind = kind;
-                this.DynamicBuffer = dynamicBuffer;
-            }
+    internal struct ResourceBindingInfo {
+        public uint Slot;
+        public ShaderStages Stages;
+        public ResourceKind Kind;
+        public bool DynamicBuffer;
+
+        public ResourceBindingInfo(uint slot, ShaderStages stages, ResourceKind kind, bool dynamicBuffer) {
+            this.Slot = slot;
+            this.Stages = stages;
+            this.Kind = kind;
+            this.DynamicBuffer = dynamicBuffer;
         }
     }
 }

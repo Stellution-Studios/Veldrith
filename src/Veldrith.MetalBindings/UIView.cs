@@ -2,21 +2,22 @@ using System;
 using System.Runtime.InteropServices;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
-namespace Veldrith.MetalBindings
-{
-    public struct UIView
-    {
-        public readonly IntPtr NativePtr;
-        public UIView(IntPtr ptr) => NativePtr = ptr;
+namespace Veldrith.MetalBindings;
 
-        public CALayer layer => objc_msgSend<CALayer>(NativePtr, sel_layer);
+public struct UIView {
+    public readonly IntPtr NativePtr;
 
-        public CGRect frame =>
-            RuntimeInformation.ProcessArchitecture == Architecture.Arm64
-                ? CGRect_objc_msgSend(NativePtr, sel_frame)
-                : objc_msgSend_stret<CGRect>(NativePtr, sel_frame);
-
-        private static readonly Selector sel_layer = "layer";
-        private static readonly Selector sel_frame = "frame";
+    public UIView(IntPtr ptr) {
+        this.NativePtr = ptr;
     }
+
+    public CALayer layer => objc_msgSend<CALayer>(this.NativePtr, sel_layer);
+
+    public CGRect frame =>
+        RuntimeInformation.ProcessArchitecture == Architecture.Arm64
+            ? CGRect_objc_msgSend(this.NativePtr, sel_frame)
+            : objc_msgSend_stret<CGRect>(this.NativePtr, sel_frame);
+
+    private static readonly Selector sel_layer = "layer";
+    private static readonly Selector sel_frame = "frame";
 }

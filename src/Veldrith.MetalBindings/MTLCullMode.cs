@@ -1,9 +1,7 @@
-namespace Veldrith.MetalBindings
-{
-    public enum MTLCullMode
-    {
-        None = 0,
-        Front = 1,
-        Back = 2,
-    }
+namespace Veldrith.MetalBindings;
+
+public enum MTLCullMode {
+    None = 0,
+    Front = 1,
+    Back = 2
 }

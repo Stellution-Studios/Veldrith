@@ -4,48 +4,41 @@
 using System;
 using Veldrith.MetalBindings;
 
-namespace Veldrith.MTL
-{
-    internal unsafe class MtlcvDisplayLink : IMtlDisplayLink
-    {
-        private CVDisplayLink _displayLink;
+namespace Veldrith.MTL;
 
-        // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
-        private readonly CVDisplayLinkOutputCallbackDelegate _cvDisplayLinkCallbackHandler;
+internal unsafe class MtlcvDisplayLink : IMtlDisplayLink {
+    // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
+    private readonly CVDisplayLinkOutputCallbackDelegate _cvDisplayLinkCallbackHandler;
+    private CVDisplayLink _displayLink;
 
-        public MtlcvDisplayLink()
-        {
-            this._cvDisplayLinkCallbackHandler = OnCallback;
-            this._displayLink = CVDisplayLink.CreateWithActiveCGDisplays();
-            this._displayLink.SetOutputCallback(this._cvDisplayLinkCallbackHandler, IntPtr.Zero);
-            this._displayLink.Start();
-        }
+    public MtlcvDisplayLink() {
+        this._cvDisplayLinkCallbackHandler = this.OnCallback;
+        this._displayLink = CVDisplayLink.CreateWithActiveCGDisplays();
+        this._displayLink.SetOutputCallback(this._cvDisplayLinkCallbackHandler, IntPtr.Zero);
+        this._displayLink.Start();
+    }
 
-        #region Disposal
+    #region Disposal
 
-        public void Dispose()
-        {
-            this._displayLink.Release();
-        }
+    public void Dispose() {
+        this._displayLink.Release();
+    }
 
-        #endregion
+    #endregion
 
-        public void UpdateActiveDisplay(int x, int y, int w, int h)
-        {
-            this._displayLink.UpdateActiveMonitor(x, y, w, h);
-        }
+    public void UpdateActiveDisplay(int x, int y, int w, int h) {
+        this._displayLink.UpdateActiveMonitor(x, y, w, h);
+    }
 
-        public double GetActualOutputVideoRefreshPeriod()
-        {
-            return this._displayLink.GetActualOutputVideoRefreshPeriod();
-        }
+    public double GetActualOutputVideoRefreshPeriod() {
+        return this._displayLink.GetActualOutputVideoRefreshPeriod();
+    }
 
-        private int OnCallback(CVDisplayLink displaylink, CVTimeStamp* innow, CVTimeStamp* inoutputtime, long flagsin, long flagsout, IntPtr userdata)
-        {
-            Callback?.Invoke();
-            return 0;
-        }
+    public event Action Callback;
 
-        public event Action Callback;
+    private int OnCallback(CVDisplayLink displaylink, CVTimeStamp* innow, CVTimeStamp* inoutputtime, long flagsin,
+        long flagsout, IntPtr userdata) {
+        this.Callback?.Invoke();
+        return 0;
     }
 }

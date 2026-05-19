@@ -3,43 +3,39 @@
 
 using Veldrith.MetalBindings;
 
-namespace Veldrith.MTL
-{
-    internal class MtlSwapchainTexture : MtlTexture
-    {
-        public override MTLTexture DeviceTexture => this._deviceTexture;
+namespace Veldrith.MTL;
 
-        public override uint Width => this._width;
+internal class MtlSwapchainTexture : MtlTexture {
+    private MTLTexture _deviceTexture;
+    private uint _height;
+    private MTLPixelFormat _mtlPixelFormat;
+    private uint _width;
+    public override MTLTexture DeviceTexture => this._deviceTexture;
 
-        public override uint Height => this._height;
+    public override uint Width => this._width;
 
-        public override uint Depth => 1;
+    public override uint Height => this._height;
 
-        public override uint ArrayLayers => 1;
+    public override uint Depth => 1;
 
-        public override uint MipLevels => 1;
+    public override uint ArrayLayers => 1;
 
-        public override TextureUsage Usage => TextureUsage.RenderTarget;
+    public override uint MipLevels => 1;
 
-        public override TextureType Type => TextureType.Texture2D;
+    public override TextureUsage Usage => TextureUsage.RenderTarget;
 
-        public override TextureSampleCount SampleCount => TextureSampleCount.Count1;
+    public override TextureType Type => TextureType.Texture2D;
 
-        public override MTLPixelFormat MtlPixelFormat => this._mtlPixelFormat;
+    public override TextureSampleCount SampleCount => TextureSampleCount.Count1;
 
-        public override MTLTextureType MtlTextureType => MTLTextureType.Type2D;
+    public override MTLPixelFormat MtlPixelFormat => this._mtlPixelFormat;
 
-        private MTLTexture _deviceTexture;
-        private uint _width;
-        private uint _height;
-        private MTLPixelFormat _mtlPixelFormat;
+    public override MTLTextureType MtlTextureType => MTLTextureType.Type2D;
 
-        public void SetDrawable(CAMetalDrawable drawable, CGSize size, PixelFormat format)
-        {
-            this._deviceTexture = drawable.texture;
-            this._width = (uint)size.width;
-            this._height = (uint)size.height;
-            this._mtlPixelFormat = MtlFormats.VdToMtlPixelFormat(Format, false);
-        }
+    public void SetDrawable(CAMetalDrawable drawable, CGSize size, PixelFormat format) {
+        this._deviceTexture = drawable.texture;
+        this._width = (uint)size.width;
+        this._height = (uint)size.height;
+        this._mtlPixelFormat = MtlFormats.VdToMtlPixelFormat(this.Format, false);
     }
 }

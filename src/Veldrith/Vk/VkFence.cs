@@ -1,55 +1,48 @@
-using Vulkan;
+﻿using Vulkan;
 using static Vulkan.VulkanNative;
 
-namespace Veldrith.Vk
-{
-    internal unsafe class VkFence : Fence
-    {
-        public Vulkan.VkFence DeviceFence => this._fence;
+namespace Veldrith.Vk;
 
-        public override bool Signaled => vkGetFenceStatus(gd.Device, this._fence) == VkResult.Success;
-        public override bool IsDisposed => this._destroyed;
+internal unsafe class VkFence : Fence {
+    private readonly Vulkan.VkFence _fence;
 
-        public override string Name
-        {
-            get => this._name;
-            set
-            {
-                this._name = value;
-                gd.SetResourceName(this, value);
-            }
+    private readonly VkGraphicsDevice gd;
+    private bool _destroyed;
+    private string _name;
+
+    public VkFence(VkGraphicsDevice gd, bool signaled) {
+        this.gd = gd;
+        VkFenceCreateInfo fenceCi = VkFenceCreateInfo.New();
+        fenceCi.flags = signaled ? VkFenceCreateFlags.Signaled : VkFenceCreateFlags.None;
+        VkResult result = vkCreateFence(this.gd.Device, ref fenceCi, null, out this._fence);
+        VulkanUtil.CheckResult(result);
+    }
+
+    public Vulkan.VkFence DeviceFence => this._fence;
+
+    public override bool Signaled => vkGetFenceStatus(this.gd.Device, this._fence) == VkResult.Success;
+    public override bool IsDisposed => this._destroyed;
+
+    public override string Name {
+        get => this._name;
+        set {
+            this._name = value;
+            this.gd.SetResourceName(this, value);
         }
+    }
 
-        private readonly VkGraphicsDevice gd;
-        private readonly Vulkan.VkFence _fence;
-        private string _name;
-        private bool _destroyed;
+    #region Disposal
 
-        public VkFence(VkGraphicsDevice gd, bool signaled)
-        {
-            this.gd = gd;
-            var fenceCi = VkFenceCreateInfo.New();
-            fenceCi.flags = signaled ? VkFenceCreateFlags.Signaled : VkFenceCreateFlags.None;
-            var result = vkCreateFence(this.gd.Device, ref fenceCi, null, out this._fence);
-            VulkanUtil.CheckResult(result);
+    public override void Dispose() {
+        if (!this._destroyed) {
+            vkDestroyFence(this.gd.Device, this._fence, null);
+            this._destroyed = true;
         }
+    }
 
-        #region Disposal
+    #endregion
 
-        public override void Dispose()
-        {
-            if (!this._destroyed)
-            {
-                vkDestroyFence(gd.Device, this._fence, null);
-                this._destroyed = true;
-            }
-        }
-
-        #endregion
-
-        public override void Reset()
-        {
-            gd.ResetFence(this);
-        }
+    public override void Reset() {
+        this.gd.ResetFence(this);
     }
 }

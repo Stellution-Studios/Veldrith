@@ -2,36 +2,33 @@ using System;
 using System.Runtime.InteropServices;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
-namespace Veldrith.MetalBindings
-{
-    [StructLayout(LayoutKind.Sequential)]
-    public struct MTLCompileOptions
-    {
-        public readonly IntPtr NativePtr;
+namespace Veldrith.MetalBindings;
 
-        public static implicit operator IntPtr(MTLCompileOptions mco) => mco.NativePtr;
+[StructLayout(LayoutKind.Sequential)]
+public struct MTLCompileOptions {
+    public readonly IntPtr NativePtr;
 
-        public static MTLCompileOptions New()
-        {
-            return s_class.AllocInit<MTLCompileOptions>();
-        }
-
-        public Bool8 fastMathEnabled
-        {
-            get => bool8_objc_msgSend(NativePtr, sel_fastMathEnabled);
-            set => objc_msgSend(NativePtr, sel_setFastMathEnabled, value);
-        }
-
-        public MTLLanguageVersion languageVersion
-        {
-            get => (MTLLanguageVersion)uint_objc_msgSend(NativePtr, sel_languageVersion);
-            set => objc_msgSend(NativePtr, sel_setLanguageVersion, (uint)value);
-        }
-
-        private static readonly ObjCClass s_class = new ObjCClass(nameof(MTLCompileOptions));
-        private static readonly Selector sel_fastMathEnabled = "fastMathEnabled";
-        private static readonly Selector sel_setFastMathEnabled = "setFastMathEnabled:";
-        private static readonly Selector sel_languageVersion = "languageVersion";
-        private static readonly Selector sel_setLanguageVersion = "setLanguageVersion:";
+    public static implicit operator IntPtr(MTLCompileOptions mco) {
+        return mco.NativePtr;
     }
+
+    public static MTLCompileOptions New() {
+        return s_class.AllocInit<MTLCompileOptions>();
+    }
+
+    public Bool8 fastMathEnabled {
+        get => bool8_objc_msgSend(this.NativePtr, sel_fastMathEnabled);
+        set => objc_msgSend(this.NativePtr, sel_setFastMathEnabled, value);
+    }
+
+    public MTLLanguageVersion languageVersion {
+        get => (MTLLanguageVersion)uint_objc_msgSend(this.NativePtr, sel_languageVersion);
+        set => objc_msgSend(this.NativePtr, sel_setLanguageVersion, (uint)value);
+    }
+
+    private static readonly ObjCClass s_class = new(nameof(MTLCompileOptions));
+    private static readonly Selector sel_fastMathEnabled = "fastMathEnabled";
+    private static readonly Selector sel_setFastMathEnabled = "setFastMathEnabled:";
+    private static readonly Selector sel_languageVersion = "languageVersion";
+    private static readonly Selector sel_setLanguageVersion = "setLanguageVersion:";
 }

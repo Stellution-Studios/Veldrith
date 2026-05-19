@@ -1,95 +1,83 @@
-namespace Veldrith.Vk
-{
-    // Fixed-size "array" types, useful for constructing inputs
-    // to some Vulkan functions without allocating and pinning a real array.
+﻿namespace Veldrith.Vk;
+// Fixed-size "array" types, useful for constructing inputs
+// to some Vulkan functions without allocating and pinning a real array.
 
-    internal struct FixedArray2<T> where T : struct
-    {
-        public T First;
-        public T Second;
+internal struct FixedArray2<T> where T : struct {
+    public T First;
+    public T Second;
 
-        public FixedArray2(T first, T second)
-        {
-            this.First = first;
-            this.Second = second;
-        }
-
-        public uint Count => 2;
+    public FixedArray2(T first, T second) {
+        this.First = first;
+        this.Second = second;
     }
 
-    internal struct FixedArray3<T> where T : struct
-    {
-        public T First;
-        public T Second;
-        public T Third;
+    public uint Count => 2;
+}
 
-        public FixedArray3(T first, T second, T third)
-        {
-            this.First = first;
-            this.Second = second;
-            this.Third = third;
-        }
+internal struct FixedArray3<T> where T : struct {
+    public T First;
+    public T Second;
+    public T Third;
 
-        public uint Count => 3;
+    public FixedArray3(T first, T second, T third) {
+        this.First = first;
+        this.Second = second;
+        this.Third = third;
     }
 
-    internal struct FixedArray4<T> where T : struct
-    {
-        public T First;
-        public T Second;
-        public T Third;
-        public T Fourth;
+    public uint Count => 3;
+}
 
-        public FixedArray4(T first, T second, T third, T fourth)
-        {
-            this.First = first;
-            this.Second = second;
-            this.Third = third;
-            this.Fourth = fourth;
-        }
+internal struct FixedArray4<T> where T : struct {
+    public T First;
+    public T Second;
+    public T Third;
+    public T Fourth;
 
-        public uint Count => 4;
+    public FixedArray4(T first, T second, T third, T fourth) {
+        this.First = first;
+        this.Second = second;
+        this.Third = third;
+        this.Fourth = fourth;
     }
 
-    internal struct FixedArray5<T> where T : struct
-    {
-        public T First;
-        public T Second;
-        public T Third;
-        public T Fourth;
-        public T Fifth;
+    public uint Count => 4;
+}
 
-        public FixedArray5(T first, T second, T third, T fourth, T fifth)
-        {
-            this.First = first;
-            this.Second = second;
-            this.Third = third;
-            this.Fourth = fourth;
-            this.Fifth = fifth;
-        }
+internal struct FixedArray5<T> where T : struct {
+    public T First;
+    public T Second;
+    public T Third;
+    public T Fourth;
+    public T Fifth;
 
-        public uint Count => 5;
+    public FixedArray5(T first, T second, T third, T fourth, T fifth) {
+        this.First = first;
+        this.Second = second;
+        this.Third = third;
+        this.Fourth = fourth;
+        this.Fifth = fifth;
     }
 
-    internal struct FixedArray6<T> where T : struct
-    {
-        public T First;
-        public T Second;
-        public T Third;
-        public T Fourth;
-        public T Fifth;
-        public T Sixth;
+    public uint Count => 5;
+}
 
-        public FixedArray6(T first, T second, T third, T fourth, T fifth, T sixth)
-        {
-            this.First = first;
-            this.Second = second;
-            this.Third = third;
-            this.Fourth = fourth;
-            this.Fifth = fifth;
-            this.Sixth = sixth;
-        }
+internal struct FixedArray6<T> where T : struct {
+    public T First;
+    public T Second;
+    public T Third;
+    public T Fourth;
+    public T Fifth;
+    public T Sixth;
 
-        public uint Count => 6;
+    public FixedArray6(T first, T second, T third, T fourth, T fifth, T sixth) {
+        this.First = first;
+        this.Second = second;
+        this.Third = third;
+        this.Fourth = fourth;
+        this.Fifth = fifth;
+        this.Sixth = sixth;
     }
+
+    public uint Count => 6;
 }

@@ -1,19 +1,17 @@
 using System;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
-namespace Veldrith.MetalBindings
-{
-    public struct MTLVertexDescriptor
-    {
-        public readonly IntPtr NativePtr;
+namespace Veldrith.MetalBindings;
 
-        public MTLVertexBufferLayoutDescriptorArray layouts
-            => objc_msgSend<MTLVertexBufferLayoutDescriptorArray>(NativePtr, sel_layouts);
+public struct MTLVertexDescriptor {
+    public readonly IntPtr NativePtr;
 
-        public MTLVertexAttributeDescriptorArray attributes
-            => objc_msgSend<MTLVertexAttributeDescriptorArray>(NativePtr, sel_attributes);
+    public MTLVertexBufferLayoutDescriptorArray layouts
+        => objc_msgSend<MTLVertexBufferLayoutDescriptorArray>(this.NativePtr, sel_layouts);
 
-        private static readonly Selector sel_layouts = "layouts";
-        private static readonly Selector sel_attributes = "attributes";
-    }
+    public MTLVertexAttributeDescriptorArray attributes
+        => objc_msgSend<MTLVertexAttributeDescriptorArray>(this.NativePtr, sel_attributes);
+
+    private static readonly Selector sel_layouts = "layouts";
+    private static readonly Selector sel_attributes = "attributes";
 }

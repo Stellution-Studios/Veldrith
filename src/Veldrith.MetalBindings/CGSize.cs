@@ -1,16 +1,15 @@
-namespace Veldrith.MetalBindings
-{
-    public struct CGSize
-    {
-        public double width;
-        public double height;
+namespace Veldrith.MetalBindings;
 
-        public CGSize(double width, double height)
-        {
-            this.width = width;
-            this.height = height;
-        }
+public struct CGSize {
+    public double width;
+    public double height;
 
-        public override string ToString() => string.Format("{0} x {1}", width, height);
+    public CGSize(double width, double height) {
+        this.width = width;
+        this.height = height;
+    }
+
+    public override string ToString() {
+        return string.Format("{0} x {1}", this.width, this.height);
     }
 }

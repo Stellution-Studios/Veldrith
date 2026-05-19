@@ -1,33 +1,31 @@
-﻿namespace Veldrith
-{
+﻿namespace Veldrith;
+
+/// <summary>
+///     Controls how the source and destination factors are combined in a blend operation.
+/// </summary>
+public enum BlendFunction : byte {
     /// <summary>
-    ///     Controls how the source and destination factors are combined in a blend operation.
+    ///     Source and destination are added.
     /// </summary>
-    public enum BlendFunction : byte
-    {
-        /// <summary>
-        ///     Source and destination are added.
-        /// </summary>
-        Add,
+    Add,
 
-        /// <summary>
-        ///     Destination is subtracted from source.
-        /// </summary>
-        Subtract,
+    /// <summary>
+    ///     Destination is subtracted from source.
+    /// </summary>
+    Subtract,
 
-        /// <summary>
-        ///     Source is subtracted from destination.
-        /// </summary>
-        ReverseSubtract,
+    /// <summary>
+    ///     Source is subtracted from destination.
+    /// </summary>
+    ReverseSubtract,
 
-        /// <summary>
-        ///     The minimum of source and destination is selected.
-        /// </summary>
-        Minimum,
+    /// <summary>
+    ///     The minimum of source and destination is selected.
+    /// </summary>
+    Minimum,
 
-        /// <summary>
-        ///     The maximum of source and destination is selected.
-        /// </summary>
-        Maximum
-    }
+    /// <summary>
+    ///     The maximum of source and destination is selected.
+    /// </summary>
+    Maximum
 }

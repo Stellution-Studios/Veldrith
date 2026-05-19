@@ -1,36 +1,28 @@
 ﻿using System;
 
-namespace Veldrith
-{
+namespace Veldrith;
+
+/// <summary>
+///     Represents errors that occur in the Veldrith library.
+/// </summary>
+public class VeldridException : Exception {
     /// <summary>
-    ///     Represents errors that occur in the Veldrith library.
+    ///     Constructs a new VeldridException.
     /// </summary>
-    public class VeldridException : Exception
-    {
-        /// <summary>
-        ///     Constructs a new VeldridException.
-        /// </summary>
-        public VeldridException()
-        {
-        }
+    public VeldridException() { }
 
-        /// <summary>
-        ///     Constructs a new Veldridexception with the given message.
-        /// </summary>
-        /// <param name="message">The exception message.</param>
-        public VeldridException(string message)
-            : base(message)
-        {
-        }
+    /// <summary>
+    ///     Constructs a new Veldridexception with the given message.
+    /// </summary>
+    /// <param name="message">The exception message.</param>
+    public VeldridException(string message)
+        : base(message) { }
 
-        /// <summary>
-        ///     Constructs a new Veldridexception with the given message and inner exception.
-        /// </summary>
-        /// <param name="message">The exception message.</param>
-        /// <param name="innerException">The inner exception.</param>
-        public VeldridException(string message, Exception innerException)
-            : base(message, innerException)
-        {
-        }
-    }
+    /// <summary>
+    ///     Constructs a new Veldridexception with the given message and inner exception.
+    /// </summary>
+    /// <param name="message">The exception message.</param>
+    /// <param name="innerException">The inner exception.</param>
+    public VeldridException(string message, Exception innerException)
+        : base(message, innerException) { }
 }

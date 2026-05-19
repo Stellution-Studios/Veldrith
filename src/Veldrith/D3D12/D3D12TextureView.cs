@@ -1,222 +1,183 @@
 using System;
 using Vortice.Direct3D12;
 
-namespace Veldrith.D3D12
-{
-    internal sealed class D3D12TextureView : TextureView
-    {
-        private readonly D3D12GraphicsDevice gd;
-        private readonly D3D12Texture _targetTexture;
-        private ID3D12DescriptorHeap _srvDescriptorHeap;
-        private ID3D12DescriptorHeap _uavDescriptorHeap;
-        private bool _disposed;
-        private string _name;
+namespace Veldrith.D3D12;
 
-        public D3D12TextureView(D3D12GraphicsDevice gd, ref TextureViewDescription description)
-            : base(ref description)
-        {
-            this.gd = gd;
-            this._targetTexture = Util.AssertSubtype<Texture, D3D12Texture>(description.Target);
+internal sealed class D3D12TextureView : TextureView {
+    private readonly D3D12GraphicsDevice gd;
+    private bool _disposed;
+    private ID3D12DescriptorHeap _srvDescriptorHeap;
+    private ID3D12DescriptorHeap _uavDescriptorHeap;
+
+    public D3D12TextureView(D3D12GraphicsDevice gd, ref TextureViewDescription description)
+        : base(ref description) {
+        this.gd = gd;
+        this.TargetTexture = Util.AssertSubtype<Texture, D3D12Texture>(description.Target);
+    }
+
+    internal D3D12Texture TargetTexture { get; }
+
+    public override bool IsDisposed => this._disposed;
+
+    public override string Name { get; set; }
+
+    internal CpuDescriptorHandle GetOrCreateShaderResourceViewDescriptor() {
+        if (this._srvDescriptorHeap == null) {
+            this._srvDescriptorHeap = this.gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(
+                DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView,
+                1));
+            ID3D12Resource nativeTexture = this.TargetTexture.NativeTexture
+                                           ?? throw new PlatformNotSupportedException(
+                                               "Texture has no native D3D12 resource.");
+            ShaderResourceViewDescription srvDescription = this.GetShaderResourceViewDescription();
+            this.gd.Device.CreateShaderResourceView(nativeTexture, srvDescription,
+                this._srvDescriptorHeap.GetCPUDescriptorHandleForHeapStart());
         }
 
-        internal D3D12Texture TargetTexture => this._targetTexture;
+        return this._srvDescriptorHeap.GetCPUDescriptorHandleForHeapStart();
+    }
 
-        public override bool IsDisposed => this._disposed;
-
-        public override string Name
-        {
-            get => this._name;
-            set => this._name = value;
+    internal CpuDescriptorHandle GetOrCreateUnorderedAccessViewDescriptor() {
+        if (this._uavDescriptorHeap == null) {
+            this._uavDescriptorHeap = this.gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(
+                DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView,
+                1));
+            ID3D12Resource nativeTexture = this.TargetTexture.NativeTexture
+                                           ?? throw new PlatformNotSupportedException(
+                                               "Texture has no native D3D12 resource.");
+            UnorderedAccessViewDescription uavDescription = this.GetUnorderedAccessViewDescription();
+            this.gd.Device.CreateUnorderedAccessView(nativeTexture, null, uavDescription,
+                this._uavDescriptorHeap.GetCPUDescriptorHandleForHeapStart());
         }
 
-        internal CpuDescriptorHandle GetOrCreateShaderResourceViewDescriptor()
-        {
-            if (this._srvDescriptorHeap == null)
-            {
-                this._srvDescriptorHeap = gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(
-                    DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView,
-                    1,
-                    DescriptorHeapFlags.None));
-                ID3D12Resource nativeTexture = this._targetTexture.NativeTexture
-                    ?? throw new PlatformNotSupportedException("Texture has no native D3D12 resource.");
-                ShaderResourceViewDescription srvDescription = GetShaderResourceViewDescription();
-                gd.Device.CreateShaderResourceView(nativeTexture, srvDescription, this._srvDescriptorHeap.GetCPUDescriptorHandleForHeapStart());
-            }
+        return this._uavDescriptorHeap.GetCPUDescriptorHandleForHeapStart();
+    }
 
-            return this._srvDescriptorHeap.GetCPUDescriptorHandleForHeapStart();
-        }
+    internal ShaderResourceViewDescription GetShaderResourceViewDescription() {
+        ShaderResourceViewDescription description = new() {
+            Format = D3D12Formats.GetViewFormat(D3D12Formats.ToDxgiFormat(this.Format)),
+            Shader4ComponentMapping = ShaderComponentMapping.Default
+        };
 
-        internal CpuDescriptorHandle GetOrCreateUnorderedAccessViewDescriptor()
-        {
-            if (this._uavDescriptorHeap == null)
-            {
-                this._uavDescriptorHeap = gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(
-                    DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView,
-                    1,
-                    DescriptorHeapFlags.None));
-                ID3D12Resource nativeTexture = this._targetTexture.NativeTexture
-                    ?? throw new PlatformNotSupportedException("Texture has no native D3D12 resource.");
-                UnorderedAccessViewDescription uavDescription = GetUnorderedAccessViewDescription();
-                gd.Device.CreateUnorderedAccessView(nativeTexture, null, uavDescription, this._uavDescriptorHeap.GetCPUDescriptorHandleForHeapStart());
-            }
-
-            return this._uavDescriptorHeap.GetCPUDescriptorHandleForHeapStart();
-        }
-
-        internal ShaderResourceViewDescription GetShaderResourceViewDescription()
-        {
-            var description = new ShaderResourceViewDescription
-            {
-                Format = D3D12Formats.GetViewFormat(D3D12Formats.ToDxgiFormat(Format, false)),
-                Shader4ComponentMapping = ShaderComponentMapping.Default
+        if (this.TargetTexture.Type == TextureType.Texture3D) {
+            description.ViewDimension = ShaderResourceViewDimension.Texture3D;
+            description.Texture3D = new Texture3DShaderResourceView {
+                MostDetailedMip = this.BaseMipLevel,
+                MipLevels = this.MipLevels,
+                ResourceMinLODClamp = 0f
             };
+            return description;
+        }
 
-            if (this._targetTexture.Type == TextureType.Texture3D)
-            {
-                description.ViewDimension = ShaderResourceViewDimension.Texture3D;
-                description.Texture3D = new Texture3DShaderResourceView
-                {
-                    MostDetailedMip = BaseMipLevel,
-                    MipLevels = MipLevels,
+        bool isMultisampled = this.TargetTexture.SampleCount != TextureSampleCount.Count1;
+        bool isCube = (this.TargetTexture.Usage & TextureUsage.Cubemap) == TextureUsage.Cubemap;
+
+        if (isCube) {
+            if (this.ArrayLayers > 1) {
+                description.ViewDimension = ShaderResourceViewDimension.TextureCubeArray;
+                description.TextureCubeArray = new TextureCubeArrayShaderResourceView {
+                    MostDetailedMip = this.BaseMipLevel,
+                    MipLevels = this.MipLevels,
+                    First2DArrayFace = this.BaseArrayLayer * 6,
+                    NumCubes = this.ArrayLayers,
                     ResourceMinLODClamp = 0f
                 };
-                return description;
             }
-
-            bool isMultisampled = this._targetTexture.SampleCount != TextureSampleCount.Count1;
-            bool isCube = (this._targetTexture.Usage & TextureUsage.Cubemap) == TextureUsage.Cubemap;
-
-            if (isCube)
-            {
-                if (ArrayLayers > 1)
-                {
-                    description.ViewDimension = ShaderResourceViewDimension.TextureCubeArray;
-                    description.TextureCubeArray = new TextureCubeArrayShaderResourceView
-                    {
-                        MostDetailedMip = BaseMipLevel,
-                        MipLevels = MipLevels,
-                        First2DArrayFace = BaseArrayLayer * 6,
-                        NumCubes = ArrayLayers,
-                        ResourceMinLODClamp = 0f
-                    };
-                }
-                else
-                {
-                    description.ViewDimension = ShaderResourceViewDimension.TextureCube;
-                    description.TextureCube = new TextureCubeShaderResourceView
-                    {
-                        MostDetailedMip = BaseMipLevel,
-                        MipLevels = MipLevels,
-                        ResourceMinLODClamp = 0f
-                    };
-                }
-
-                return description;
-            }
-
-            if (ArrayLayers > 1)
-            {
-                description.ViewDimension = isMultisampled
-                    ? ShaderResourceViewDimension.Texture2DMultisampledArray
-                    : ShaderResourceViewDimension.Texture2DArray;
-                if (isMultisampled)
-                {
-                    description.Texture2DMSArray = new Texture2DMultisampledArrayShaderResourceView
-                    {
-                        FirstArraySlice = BaseArrayLayer,
-                        ArraySize = ArrayLayers
-                    };
-                }
-                else
-                {
-                    description.Texture2DArray = new Texture2DArrayShaderResourceView
-                    {
-                        MostDetailedMip = BaseMipLevel,
-                        MipLevels = MipLevels,
-                        FirstArraySlice = BaseArrayLayer,
-                        ArraySize = ArrayLayers,
-                        PlaneSlice = 0,
-                        ResourceMinLODClamp = 0f
-                    };
-                }
-            }
-            else
-            {
-                description.ViewDimension = isMultisampled
-                    ? ShaderResourceViewDimension.Texture2DMultisampled
-                    : ShaderResourceViewDimension.Texture2D;
-                if (isMultisampled)
-                {
-                    description.Texture2DMS = new Texture2DMultisampledShaderResourceView();
-                }
-                else
-                {
-                    description.Texture2D = new Texture2DShaderResourceView
-                    {
-                        MostDetailedMip = BaseMipLevel,
-                        MipLevels = MipLevels,
-                        PlaneSlice = 0,
-                        ResourceMinLODClamp = 0f
-                    };
-                }
+            else {
+                description.ViewDimension = ShaderResourceViewDimension.TextureCube;
+                description.TextureCube = new TextureCubeShaderResourceView {
+                    MostDetailedMip = this.BaseMipLevel,
+                    MipLevels = this.MipLevels,
+                    ResourceMinLODClamp = 0f
+                };
             }
 
             return description;
         }
 
-        internal UnorderedAccessViewDescription GetUnorderedAccessViewDescription()
-        {
-            if (this._targetTexture.SampleCount != TextureSampleCount.Count1)
-            {
-                throw new PlatformNotSupportedException("Multisampled UAV textures are not supported.");
+        if (this.ArrayLayers > 1) {
+            description.ViewDimension = isMultisampled
+                ? ShaderResourceViewDimension.Texture2DMultisampledArray
+                : ShaderResourceViewDimension.Texture2DArray;
+            if (isMultisampled) {
+                description.Texture2DMSArray = new Texture2DMultisampledArrayShaderResourceView {
+                    FirstArraySlice = this.BaseArrayLayer,
+                    ArraySize = this.ArrayLayers
+                };
             }
+            else {
+                description.Texture2DArray = new Texture2DArrayShaderResourceView {
+                    MostDetailedMip = this.BaseMipLevel,
+                    MipLevels = this.MipLevels,
+                    FirstArraySlice = this.BaseArrayLayer,
+                    ArraySize = this.ArrayLayers,
+                    PlaneSlice = 0,
+                    ResourceMinLODClamp = 0f
+                };
+            }
+        }
+        else {
+            description.ViewDimension = isMultisampled
+                ? ShaderResourceViewDimension.Texture2DMultisampled
+                : ShaderResourceViewDimension.Texture2D;
+            if (isMultisampled) {
+                description.Texture2DMS = new Texture2DMultisampledShaderResourceView();
+            }
+            else {
+                description.Texture2D = new Texture2DShaderResourceView {
+                    MostDetailedMip = this.BaseMipLevel,
+                    MipLevels = this.MipLevels,
+                    PlaneSlice = 0,
+                    ResourceMinLODClamp = 0f
+                };
+            }
+        }
 
-            var description = new UnorderedAccessViewDescription
-            {
-                Format = D3D12Formats.GetViewFormat(D3D12Formats.ToDxgiFormat(Format, false))
+        return description;
+    }
+
+    internal UnorderedAccessViewDescription GetUnorderedAccessViewDescription() {
+        if (this.TargetTexture.SampleCount != TextureSampleCount.Count1) {
+            throw new PlatformNotSupportedException("Multisampled UAV textures are not supported.");
+        }
+
+        UnorderedAccessViewDescription description = new() {
+            Format = D3D12Formats.GetViewFormat(D3D12Formats.ToDxgiFormat(this.Format))
+        };
+
+        if (this.TargetTexture.Type == TextureType.Texture3D) {
+            description.ViewDimension = UnorderedAccessViewDimension.Texture3D;
+            description.Texture3D = new Texture3DUnorderedAccessView {
+                MipSlice = this.BaseMipLevel,
+                FirstWSlice = 0,
+                WSize = uint.MaxValue
             };
-
-            if (this._targetTexture.Type == TextureType.Texture3D)
-            {
-                description.ViewDimension = UnorderedAccessViewDimension.Texture3D;
-                description.Texture3D = new Texture3DUnorderedAccessView
-                {
-                    MipSlice = BaseMipLevel,
-                    FirstWSlice = 0,
-                    WSize = uint.MaxValue
-                };
-                return description;
-            }
-
-            if (ArrayLayers > 1)
-            {
-                description.ViewDimension = UnorderedAccessViewDimension.Texture2DArray;
-                description.Texture2DArray = new Texture2DArrayUnorderedAccessView
-                {
-                    MipSlice = BaseMipLevel,
-                    FirstArraySlice = BaseArrayLayer,
-                    ArraySize = ArrayLayers,
-                    PlaneSlice = 0
-                };
-            }
-            else
-            {
-                description.ViewDimension = UnorderedAccessViewDimension.Texture2D;
-                description.Texture2D = new Texture2DUnorderedAccessView
-                {
-                    MipSlice = BaseMipLevel,
-                    PlaneSlice = 0
-                };
-            }
-
             return description;
         }
 
-        public override void Dispose()
-        {
-            this._srvDescriptorHeap?.Dispose();
-            this._uavDescriptorHeap?.Dispose();
-            this._disposed = true;
+        if (this.ArrayLayers > 1) {
+            description.ViewDimension = UnorderedAccessViewDimension.Texture2DArray;
+            description.Texture2DArray = new Texture2DArrayUnorderedAccessView {
+                MipSlice = this.BaseMipLevel,
+                FirstArraySlice = this.BaseArrayLayer,
+                ArraySize = this.ArrayLayers,
+                PlaneSlice = 0
+            };
         }
+        else {
+            description.ViewDimension = UnorderedAccessViewDimension.Texture2D;
+            description.Texture2D = new Texture2DUnorderedAccessView {
+                MipSlice = this.BaseMipLevel,
+                PlaneSlice = 0
+            };
+        }
+
+        return description;
+    }
+
+    public override void Dispose() {
+        this._srvDescriptorHeap?.Dispose();
+        this._uavDescriptorHeap?.Dispose();
+        this._disposed = true;
     }
 }

@@ -1,31 +1,28 @@
-namespace Veldrith.Vk
-{
-    internal struct DescriptorResourceCounts
-    {
-        public readonly uint UniformBufferCount;
-        public readonly uint SampledImageCount;
-        public readonly uint SamplerCount;
-        public readonly uint StorageBufferCount;
-        public readonly uint StorageImageCount;
-        public readonly uint UniformBufferDynamicCount;
-        public readonly uint StorageBufferDynamicCount;
+﻿namespace Veldrith.Vk;
 
-        public DescriptorResourceCounts(
-            uint uniformBufferCount,
-            uint uniformBufferDynamicCount,
-            uint sampledImageCount,
-            uint samplerCount,
-            uint storageBufferCount,
-            uint storageBufferDynamicCount,
-            uint storageImageCount)
-        {
-            this.UniformBufferCount = uniformBufferCount;
-            this.UniformBufferDynamicCount = uniformBufferDynamicCount;
-            this.SampledImageCount = sampledImageCount;
-            this.SamplerCount = samplerCount;
-            this.StorageBufferCount = storageBufferCount;
-            this.StorageBufferDynamicCount = storageBufferDynamicCount;
-            this.StorageImageCount = storageImageCount;
-        }
+internal struct DescriptorResourceCounts {
+    public readonly uint UniformBufferCount;
+    public readonly uint SampledImageCount;
+    public readonly uint SamplerCount;
+    public readonly uint StorageBufferCount;
+    public readonly uint StorageImageCount;
+    public readonly uint UniformBufferDynamicCount;
+    public readonly uint StorageBufferDynamicCount;
+
+    public DescriptorResourceCounts(
+        uint uniformBufferCount,
+        uint uniformBufferDynamicCount,
+        uint sampledImageCount,
+        uint samplerCount,
+        uint storageBufferCount,
+        uint storageBufferDynamicCount,
+        uint storageImageCount) {
+        this.UniformBufferCount = uniformBufferCount;
+        this.UniformBufferDynamicCount = uniformBufferDynamicCount;
+        this.SampledImageCount = sampledImageCount;
+        this.SamplerCount = samplerCount;
+        this.StorageBufferCount = storageBufferCount;
+        this.StorageBufferDynamicCount = storageBufferDynamicCount;
+        this.StorageImageCount = storageImageCount;
     }
 }

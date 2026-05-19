@@ -1,21 +1,18 @@
-namespace Veldrith.SPIRV
-{
-    /// <summary>
-    /// The output of a source to SPIR-V compilation operation.
-    /// </summary>
-    public class SpirvCompilationResult
-    {
-        /// <summary>
-        /// The compiled SPIR-V bytecode.
-        /// </summary>
-        public byte[] SpirvBytes { get; }
+namespace Veldrith.SPIRV;
 
-        /// <summary>
-        /// Constructs a new <see cref="SpirvCompilationResult"/>.
-        /// </summary>
-        public SpirvCompilationResult(byte[] spirvBytes)
-        {
-            SpirvBytes = spirvBytes;
-        }
+/// <summary>
+///     The output of a source to SPIR-V compilation operation.
+/// </summary>
+public class SpirvCompilationResult {
+    /// <summary>
+    ///     Constructs a new <see cref="SpirvCompilationResult" />.
+    /// </summary>
+    public SpirvCompilationResult(byte[] spirvBytes) {
+        this.SpirvBytes = spirvBytes;
     }
+
+    /// <summary>
+    ///     The compiled SPIR-V bytecode.
+    /// </summary>
+    public byte[] SpirvBytes { get; }
 }

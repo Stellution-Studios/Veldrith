@@ -1,151 +1,151 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Veldrith.MetalBindings;
 
-namespace Veldrith.MTL
-{
-    internal class CommandBufferUsageList<T>
-    {
-        private readonly List<(MTLCommandBuffer buffer, T value)> _items = new List<(MTLCommandBuffer buffer, T item)>();
+namespace Veldrith.MTL;
 
-        public void Add(MTLCommandBuffer cb, T value)
-            => this._items.Add((cb, value));
+internal class CommandBufferUsageList<T> {
+    private readonly List<(MTLCommandBuffer buffer, T value)> _items = new List<(MTLCommandBuffer buffer, T item)>();
 
-        public ItemsEnumerator EnumerateItems()
-            => new ItemsEnumerator(this._items);
+    public void Add(MTLCommandBuffer cb, T value) {
+        this._items.Add((cb, value));
+    }
 
-        public RemovalEnumerator EnumerateAndRemove(MTLCommandBuffer cb)
-            => new RemovalEnumerator(this._items, cb);
+    public ItemsEnumerator EnumerateItems() {
+        return new ItemsEnumerator(this._items);
+    }
 
-        public bool Contains(MTLCommandBuffer cb)
-        {
-            foreach (var (buffer, _) in this._items)
-            {
-                if (buffer.Equals(cb))
-                    return true;
-            }
+    public RemovalEnumerator EnumerateAndRemove(MTLCommandBuffer cb) {
+        return new RemovalEnumerator(this._items, cb);
+    }
 
-            return false;
-        }
-
-        public void Clear()
-            => this._items.Clear();
-
-        /// <summary>
-        /// This is a basic enumerator for the list.
-        /// </summary>
-        public struct ItemsEnumerator : IEnumerator<T>, IEnumerable
-        {
-            private readonly List<(MTLCommandBuffer buffer, T value)> list;
-            private int _index;
-
-            public ItemsEnumerator(List<(MTLCommandBuffer buffer, T value)> list)
-            {
-                this.list = list;
-            }
-
-            public bool MoveNext()
-            {
-                if (this._index == list.Count)
-                    return false;
-
-                Current = list[this._index].value;
-                this._index++;
-
+    public bool Contains(MTLCommandBuffer cb) {
+        foreach ((MTLCommandBuffer buffer, T _) in this._items) {
+            if (buffer.Equals(cb)) {
                 return true;
             }
-
-            public void Reset()
-            {
-                this._index = 0;
-            }
-
-            public T Current { get; private set; }
-
-            object IEnumerator.Current => Current;
-
-            public void Dispose()
-            {
-            }
-
-            public ItemsEnumerator GetEnumerator() => this;
-
-            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
 
-        /// <summary>
-        /// This is a combined enumerate + remove enumerator for the list.
-        ///
-        /// It works by duplicating the items that shall be retained to the end of the list
-        /// and then moving them in-place to the front of the list upon disposal.
-        ///
-        /// The combined operation has therefore O(n) time complexity.
-        /// </summary>
-        public struct RemovalEnumerator : IEnumerator<T>, IEnumerable
-        {
-            private readonly List<(MTLCommandBuffer buffer, T value)> list;
-            private readonly MTLCommandBuffer cb;
-            private readonly int _count;
-            private int _index;
+        return false;
+    }
 
-            public RemovalEnumerator(List<(MTLCommandBuffer buffer, T value)> list, MTLCommandBuffer cb)
-            {
-                this.list = list;
-                this.cb = cb;
+    public void Clear() {
+        this._items.Clear();
+    }
 
-                this._count = list.Count;
-                list.EnsureCapacity(this._count * 2);
+    /// <summary>
+    ///     This is a basic enumerator for the list.
+    /// </summary>
+    public struct ItemsEnumerator : IEnumerator<T>, IEnumerable {
+        private readonly List<(MTLCommandBuffer buffer, T value)> list;
+        private int _index;
+
+        public ItemsEnumerator(List<(MTLCommandBuffer buffer, T value)> list) {
+            this.list = list;
+        }
+
+        public bool MoveNext() {
+            if (this._index == this.list.Count) {
+                return false;
             }
 
-            public bool MoveNext()
-            {
-                while (true)
-                {
-                    if (this._index == this._count)
-                        return false;
+            this.Current = this.list[this._index].value;
+            this._index++;
 
-                    if (list[this._index].buffer.Equals(cb))
-                        break;
+            return true;
+        }
 
-                    // Track the item to be kept.
-                    list.Add(list[this._index]);
-                    this._index++;
+        public void Reset() {
+            this._index = 0;
+        }
+
+        public T Current { get; private set; }
+
+        object IEnumerator.Current => this.Current;
+
+        public void Dispose() { }
+
+        public ItemsEnumerator GetEnumerator() {
+            return this;
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() {
+            return this.GetEnumerator();
+        }
+    }
+
+    /// <summary>
+    ///     This is a combined enumerate + remove enumerator for the list.
+    ///     It works by duplicating the items that shall be retained to the end of the list
+    ///     and then moving them in-place to the front of the list upon disposal.
+    ///     The combined operation has therefore O(n) time complexity.
+    /// </summary>
+    public struct RemovalEnumerator : IEnumerator<T>, IEnumerable {
+        private readonly List<(MTLCommandBuffer buffer, T value)> list;
+        private readonly MTLCommandBuffer cb;
+        private readonly int _count;
+        private int _index;
+
+        public RemovalEnumerator(List<(MTLCommandBuffer buffer, T value)> list, MTLCommandBuffer cb) {
+            this.list = list;
+            this.cb = cb;
+
+            this._count = list.Count;
+            list.EnsureCapacity(this._count * 2);
+        }
+
+        public bool MoveNext() {
+            while (true) {
+                if (this._index == this._count) {
+                    return false;
                 }
 
-                Current = list[this._index].value;
+                if (this.list[this._index].buffer.Equals(this.cb)) {
+                    break;
+                }
+
+                // Track the item to be kept.
+                this.list.Add(this.list[this._index]);
                 this._index++;
-
-                return true;
             }
 
-            public void Reset()
-            {
-                this._index = 0;
+            this.Current = this.list[this._index].value;
+            this._index++;
+
+            return true;
+        }
+
+        public void Reset() {
+            this._index = 0;
+        }
+
+        public T Current { get; private set; }
+
+        object IEnumerator.Current => this.Current;
+
+        public void Dispose() {
+            if (this.list.Count == 0) {
+                return;
             }
 
-            public T Current { get; private set; }
+            int toKeepItemCount = this.list.Count - this._count;
+            Span<(MTLCommandBuffer buffer, T value)> listSpan = CollectionsMarshal.AsSpan(this.list);
 
-            object IEnumerator.Current => Current;
+            listSpan.Slice(this._count, toKeepItemCount).CopyTo(listSpan);
+            this.list.RemoveRange(toKeepItemCount, this.list.Count - toKeepItemCount);
+        }
 
-            public void Dispose()
-            {
-                if (list.Count == 0)
-                    return;
+        public RemovalEnumerator GetEnumerator() {
+            return this;
+        }
 
-                int toKeepItemCount = list.Count - this._count;
-                var listSpan = CollectionsMarshal.AsSpan(list);
-
-                listSpan.Slice(this._count, toKeepItemCount).CopyTo(listSpan);
-                list.RemoveRange(toKeepItemCount, list.Count - toKeepItemCount);
-            }
-
-            public RemovalEnumerator GetEnumerator() => this;
-
-            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() {
+            return this.GetEnumerator();
         }
     }
 }
