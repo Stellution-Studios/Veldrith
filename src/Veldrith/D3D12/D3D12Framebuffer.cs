@@ -39,11 +39,17 @@ internal class D3D12Framebuffer : Framebuffer {
     private bool _disposed;
 
     /// <summary>
+    /// Stores the graphics device that owns this framebuffer.
+    /// </summary>
+    private readonly D3D12GraphicsDevice gd;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="D3D12Framebuffer" /> type.
     /// </summary>
     /// <param name="gd">The graphics device that owns this operation.</param>
     /// <param name="description">The description used to configure this operation.</param>
     public D3D12Framebuffer(D3D12GraphicsDevice gd, ref FramebufferDescription description) : base(description.DepthTarget, description.ColorTargets) {
+        this.gd = gd;
         this._colorTargetTextures = new D3D12Texture[this.ColorTargets.Count];
         this._colorTargetViews = new CpuDescriptorHandle[this.ColorTargets.Count];
         if (this.ColorTargets.Count > 0) {
@@ -156,8 +162,8 @@ internal class D3D12Framebuffer : Framebuffer {
             return;
         }
 
-        this._rtvHeap?.Dispose();
-        this._dsvHeap?.Dispose();
+        this.gd.ReleaseAfterLastSubmission(this._rtvHeap);
+        this.gd.ReleaseAfterLastSubmission(this._dsvHeap);
         this._disposed = true;
     }
 
@@ -243,7 +249,7 @@ internal class D3D12Framebuffer : Framebuffer {
     /// <param name="texture">The texture resource involved in this operation.</param>
     /// <param name="attachment">The attachment value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    private static DepthStencilViewDescription CreateDepthStencilViewDescription(D3D12Texture texture, FramebufferAttachment attachment) {
+    internal static DepthStencilViewDescription CreateDepthStencilViewDescription(D3D12Texture texture, FramebufferAttachment attachment) {
         DepthStencilViewDescription description = new() {
             Format = D3D12Formats.ToDepthFormat(texture.Format),
             Flags = DepthStencilViewFlags.None

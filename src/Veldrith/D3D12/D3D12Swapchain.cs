@@ -1,5 +1,7 @@
 using Vortice.Direct3D12;
 using Vortice.DXGI;
+using Microsoft.Win32.SafeHandles;
+using System.Threading;
 
 namespace Veldrith.D3D12;
 
@@ -22,6 +24,11 @@ internal sealed class D3D12Swapchain : Swapchain {
     /// Tracks whether has native swapchain is currently enabled.
     /// </summary>
     private readonly bool _hasNativeSwapchain;
+
+    /// <summary>
+    /// Tracks whether DXGI frame latency waitable objects can be used.
+    /// </summary>
+    private readonly bool _canCreateFrameLatencyWaitableObject;
 
     /// <summary>
     /// Stores the native color format state used by this instance.
@@ -79,6 +86,11 @@ internal sealed class D3D12Swapchain : Swapchain {
     private Framebuffer _framebuffer;
 
     /// <summary>
+    /// Stores the frame latency wait handle used by this instance.
+    /// </summary>
+    private FrameLatencyWaitHandle _frameLatencyWaitHandle;
+
+    /// <summary>
     /// Stores the rtv descriptor size value used during command execution.
     /// </summary>
     private int _rtvDescriptorSize;
@@ -99,6 +111,10 @@ internal sealed class D3D12Swapchain : Swapchain {
         this._nativeColorFormat = description.ColorSrgb ? Format.B8G8R8A8_UNorm_SRgb : Format.B8G8R8A8_UNorm;
         using (IDXGIFactory5 factory5 = gd.DxgiFactory.QueryInterfaceOrNull<IDXGIFactory5>()) {
             this._canTear = factory5?.PresentAllowTearing == true;
+        }
+
+        using (IDXGIFactory3 factory3 = gd.DxgiFactory.QueryInterfaceOrNull<IDXGIFactory3>()) {
+            this._canCreateFrameLatencyWaitableObject = factory3 != null;
         }
 
         this._hasNativeSwapchain = this.TryCreateNativeSwapchain(ref description);
@@ -138,8 +154,8 @@ internal sealed class D3D12Swapchain : Swapchain {
                 return;
             }
 
-            uint width = this._colorTexture?.Width ?? 1u;
-            uint height = this._colorTexture?.Height ?? 1u;
+            uint width = this._framebuffer?.Width ?? 1u;
+            uint height = this._framebuffer?.Height ?? 1u;
             this.RecreateNativeSwapchain(width, height);
         }
     }
@@ -158,10 +174,11 @@ internal sealed class D3D12Swapchain : Swapchain {
         }
 
         this._disposed = true;
-        this.DisposeNativeResources();
+        this.DisposeNativeResources(disposeDescriptorHeap: true);
+        this._frameLatencyWaitHandle?.Dispose();
         this._dxgiSwapChain?.Dispose();
-        this._framebuffer.Dispose();
-        this._colorTexture.Dispose();
+        this._framebuffer?.Dispose();
+        this._colorTexture?.Dispose();
         this._depthTexture?.Dispose();
     }
 
@@ -175,24 +192,16 @@ internal sealed class D3D12Swapchain : Swapchain {
             return;
         }
 
+        if (this._framebuffer != null && this._framebuffer.Width == width && this._framebuffer.Height == height) {
+            return;
+        }
+
         lock (this.gd.CommandQueueLock) {
-            this.gd.WaitForIdle();
-
-            bool useDepth = this._depthTexture != null;
-            PixelFormat? depthFormat = useDepth ? this._depthTexture.Format : null;
-            bool srgb = this._colorTexture.Format == PixelFormat.B8G8R8A8UNormSRgb || this._colorTexture.Format == PixelFormat.R8G8B8A8UNormSRgb;
-
-            this._framebuffer.Dispose();
-            this._colorTexture.Dispose();
-            this._depthTexture?.Dispose();
-            if (this._hasNativeSwapchain) {
-                this.DisposeNativeResources();
-                this._dxgiSwapChain.ResizeBuffers((uint)this._bufferCount, width, height, this._nativeColorFormat, this.GetSwapChainFlags());
-                this.CreateNativeRenderTargets();
+            if (this._framebuffer != null && this._framebuffer.Width == width && this._framebuffer.Height == height) {
+                return;
             }
 
-            this.TryResolveAttachmentSize(ref width, ref height);
-            this.CreateAttachments(width, height, depthFormat, srgb);
+            this.ResizeImmediate(width, height);
         }
     }
 
@@ -213,6 +222,13 @@ internal sealed class D3D12Swapchain : Swapchain {
     }
 
     /// <summary>
+    /// Waits until DXGI allows another frame to be queued.
+    /// </summary>
+    internal void WaitForNextFrameReady() {
+        this._frameLatencyWaitHandle?.WaitOne(1000);
+    }
+
+    /// <summary>
     /// Creates the attachments instance used by this backend.
     /// </summary>
     /// <param name="width">The width value.</param>
@@ -221,8 +237,6 @@ internal sealed class D3D12Swapchain : Swapchain {
     /// <param name="srgb">The srgb value used by this operation.</param>
     private void CreateAttachments(uint width, uint height, PixelFormat? depthFormat, bool srgb) {
         PixelFormat colorFormat = srgb ? PixelFormat.B8G8R8A8UNormSRgb : PixelFormat.B8G8R8A8UNorm;
-        TextureDescription colorDesc = TextureDescription.Texture2D(width, height, 1, 1, colorFormat, TextureUsage.RenderTarget | TextureUsage.Sampled);
-        this._colorTexture = this.gd.ResourceFactory.CreateTexture(colorDesc);
 
         if (depthFormat != null) {
             TextureDescription depthDesc = TextureDescription.Texture2D(width, height, 1, 1, depthFormat.Value, TextureUsage.DepthStencil);
@@ -232,12 +246,83 @@ internal sealed class D3D12Swapchain : Swapchain {
             this._depthTexture = null;
         }
 
-        FramebufferDescription fbDesc = new(this._depthTexture, this._colorTexture);
         if (this._hasNativeSwapchain) {
-            this._framebuffer = new D3D12SwapchainFramebuffer(this.gd, this, ref fbDesc);
+            this._colorTexture = null;
+            this._framebuffer = new D3D12SwapchainFramebuffer(this.gd, this, width, height, colorFormat, (D3D12Texture)this._depthTexture);
         }
         else {
+            TextureDescription colorDesc = TextureDescription.Texture2D(width, height, 1, 1, colorFormat, TextureUsage.RenderTarget | TextureUsage.Sampled);
+            this._colorTexture = this.gd.ResourceFactory.CreateTexture(colorDesc);
+            FramebufferDescription fbDesc = new(this._depthTexture, this._colorTexture);
             this._framebuffer = this.gd.ResourceFactory.CreateFramebuffer(fbDesc);
+        }
+    }
+
+    /// <summary>
+    /// Executes the resize immediately.
+    /// </summary>
+    /// <param name="width">The width value.</param>
+    /// <param name="height">The height value.</param>
+    private void ResizeImmediate(uint width, uint height) {
+        if (this._framebuffer != null && this._framebuffer.Width == width && this._framebuffer.Height == height) {
+            return;
+        }
+
+        if (this._hasNativeSwapchain) {
+            this.gd.WaitForLastSubmission();
+        }
+        else {
+            this.gd.WaitForIdle();
+        }
+
+        bool useDepth = this._depthTexture != null;
+        PixelFormat? depthFormat = useDepth ? this._depthTexture.Format : null;
+        bool srgb = this._framebuffer.OutputDescription.ColorAttachments[0].Format == PixelFormat.B8G8R8A8UNormSRgb
+            || this._framebuffer.OutputDescription.ColorAttachments[0].Format == PixelFormat.R8G8B8A8UNormSRgb;
+
+        this._colorTexture?.Dispose();
+        this._colorTexture = null;
+        this._depthTexture?.Dispose();
+        if (this._hasNativeSwapchain) {
+            this.DisposeNativeResources(disposeDescriptorHeap: false);
+            this._dxgiSwapChain.ResizeBuffers((uint)this._bufferCount, width, height, this._nativeColorFormat, this.GetSwapChainFlags());
+            this.CreateNativeRenderTargets();
+        }
+        else {
+            this._framebuffer.Dispose();
+        }
+
+        this.TryResolveAttachmentSize(ref width, ref height);
+        this.CreateOrUpdateAttachments(width, height, depthFormat, srgb);
+    }
+
+    /// <summary>
+    /// Creates or updates the attachments instance used by this backend.
+    /// </summary>
+    /// <param name="width">The width value.</param>
+    /// <param name="height">The height value.</param>
+    /// <param name="depthFormat">The depth format value used by this operation.</param>
+    /// <param name="srgb">The srgb value used by this operation.</param>
+    private void CreateOrUpdateAttachments(uint width, uint height, PixelFormat? depthFormat, bool srgb) {
+        if (!this._hasNativeSwapchain) {
+            this.CreateAttachments(width, height, depthFormat, srgb);
+            return;
+        }
+
+        PixelFormat colorFormat = srgb ? PixelFormat.B8G8R8A8UNormSRgb : PixelFormat.B8G8R8A8UNorm;
+        if (depthFormat != null) {
+            TextureDescription depthDesc = TextureDescription.Texture2D(width, height, 1, 1, depthFormat.Value, TextureUsage.DepthStencil);
+            this._depthTexture = this.gd.ResourceFactory.CreateTexture(depthDesc);
+        }
+        else {
+            this._depthTexture = null;
+        }
+
+        if (this._framebuffer is D3D12SwapchainFramebuffer swapchainFramebuffer) {
+            swapchainFramebuffer.Resize(width, height, colorFormat, (D3D12Texture)this._depthTexture);
+        }
+        else {
+            this._framebuffer = new D3D12SwapchainFramebuffer(this.gd, this, width, height, colorFormat, (D3D12Texture)this._depthTexture);
         }
     }
 
@@ -269,6 +354,7 @@ internal sealed class D3D12Swapchain : Swapchain {
         IDXGISwapChain1 swapChain1 = this.gd.DxgiFactory.CreateSwapChainForHwnd(this.gd.CommandQueue, win32Source.Hwnd, swapChainDesc);
         this._dxgiSwapChain = swapChain1.QueryInterface<IDXGISwapChain3>();
         swapChain1.Dispose();
+        this.ConfigureFrameLatencyWaitableObject();
         this.CreateNativeRenderTargets();
         return true;
     }
@@ -310,8 +396,11 @@ internal sealed class D3D12Swapchain : Swapchain {
     /// Creates the native render targets instance used by this backend.
     /// </summary>
     private void CreateNativeRenderTargets() {
-        this._rtvDescriptorSize = (int)this.gd.Device.GetDescriptorHandleIncrementSize(DescriptorHeapType.RenderTargetView);
-        this._rtvHeap = this.gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(DescriptorHeapType.RenderTargetView, (uint)this._bufferCount));
+        if (this._rtvHeap == null) {
+            this._rtvDescriptorSize = (int)this.gd.Device.GetDescriptorHandleIncrementSize(DescriptorHeapType.RenderTargetView);
+            this._rtvHeap = this.gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(DescriptorHeapType.RenderTargetView, (uint)this._bufferCount));
+        }
+
         this._backBufferResources = new ID3D12Resource[this._bufferCount];
         this._backBufferRtvs = new CpuDescriptorHandle[this._bufferCount];
         this._backBufferStates = new ResourceStates[this._bufferCount];
@@ -338,8 +427,9 @@ internal sealed class D3D12Swapchain : Swapchain {
 
         lock (this.gd.CommandQueueLock) {
             this.gd.WaitForIdle();
-            this.DisposeNativeResources();
+            this.DisposeNativeResources(disposeDescriptorHeap: false);
             this._dxgiSwapChain.ResizeBuffers((uint)this._bufferCount, width, height, this._nativeColorFormat, this.GetSwapChainFlags());
+            this.ConfigureFrameLatencyWaitableObject();
             this.CreateNativeRenderTargets();
         }
     }
@@ -396,26 +486,70 @@ internal sealed class D3D12Swapchain : Swapchain {
     /// </summary>
     /// <returns>The value produced by this operation.</returns>
     private SwapChainFlags GetSwapChainFlags() {
+        SwapChainFlags flags = SwapChainFlags.None;
         if (this._allowTearing && this._canTear) {
-            return SwapChainFlags.AllowTearing;
+            flags |= SwapChainFlags.AllowTearing;
         }
 
-        return SwapChainFlags.None;
+        if (this._canCreateFrameLatencyWaitableObject) {
+            flags |= SwapChainFlags.FrameLatencyWaitableObject;
+        }
+
+        return flags;
+    }
+
+    /// <summary>
+    /// Configures DXGI frame latency limiting for this swapchain when available.
+    /// </summary>
+    private void ConfigureFrameLatencyWaitableObject() {
+        this._frameLatencyWaitHandle?.Dispose();
+        this._frameLatencyWaitHandle = null;
+
+        if ((this.GetSwapChainFlags() & SwapChainFlags.FrameLatencyWaitableObject) == 0) {
+            return;
+        }
+
+        using IDXGISwapChain2 swapChain2 = this._dxgiSwapChain.QueryInterfaceOrNull<IDXGISwapChain2>();
+        if (swapChain2 == null) {
+            return;
+        }
+
+        swapChain2.MaximumFrameLatency = 1;
+        this._frameLatencyWaitHandle = new FrameLatencyWaitHandle(swapChain2.FrameLatencyWaitableObject);
     }
 
     /// <summary>
     /// Executes the dispose native resources logic for this backend.
     /// </summary>
-    private void DisposeNativeResources() {
+    private void DisposeNativeResources(bool disposeDescriptorHeap) {
         if (this._backBufferResources != null) {
             foreach (ID3D12Resource resource in this._backBufferResources) {
                 resource?.Dispose();
             }
         }
 
-        this._rtvHeap?.Dispose();
+        if (disposeDescriptorHeap) {
+            this._rtvHeap?.Dispose();
+            this._rtvHeap = null;
+            this._rtvDescriptorSize = 0;
+        }
+
         this._backBufferResources = null;
         this._backBufferRtvs = null;
         this._backBufferStates = null;
+    }
+
+    /// <summary>
+    /// Wraps a DXGI frame-latency waitable handle.
+    /// </summary>
+    private sealed class FrameLatencyWaitHandle : WaitHandle {
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FrameLatencyWaitHandle" /> type.
+        /// </summary>
+        /// <param name="handle">The native handle value.</param>
+        public FrameLatencyWaitHandle(nint handle) {
+            this.SafeWaitHandle = new SafeWaitHandle(handle, true);
+        }
     }
 }

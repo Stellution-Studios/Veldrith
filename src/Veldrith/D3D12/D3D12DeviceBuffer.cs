@@ -19,6 +19,11 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     private readonly uint _dynamicSnapshotCapacity;
 
     /// <summary>
+    /// Stores the alignment used between dynamic snapshots.
+    /// </summary>
+    private readonly uint _dynamicSnapshotAlignment;
+
+    /// <summary>
     /// Stores the dynamic snapshot enabled state used by this instance.
     /// </summary>
     private readonly bool _dynamicSnapshotEnabled;
@@ -52,6 +57,21 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     /// Reuses a single barrier array for buffer state transitions.
     /// </summary>
     private readonly ResourceBarrier[] _singleBarrier = new ResourceBarrier[1];
+
+    /// <summary>
+    /// Stores the placed-resource allocation block when this buffer is allocated from the D3D12 memory manager.
+    /// </summary>
+    private D3D12ResourceAllocation _allocation;
+
+    /// <summary>
+    /// Stores the staging write allocation when this buffer is backed by staging resources.
+    /// </summary>
+    private D3D12ResourceAllocation _stagingWriteAllocation;
+
+    /// <summary>
+    /// Stores the staging read allocation when this buffer is backed by staging resources.
+    /// </summary>
+    private D3D12ResourceAllocation _stagingReadAllocation;
 
     /// <summary>
     /// Stores the staging write mapped pointer state used by this instance.
@@ -121,14 +141,23 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         this._isDynamic = (description.Usage & BufferUsage.Dynamic) == BufferUsage.Dynamic;
         this._isStaging = (description.Usage & BufferUsage.Staging) == BufferUsage.Staging;
         this.CanTransitionState = !this._isDynamic && !this._isStaging;
-        this._dynamicSnapshotEnabled = this._isDynamic && ((description.Usage & BufferUsage.VertexBuffer) == BufferUsage.VertexBuffer || (description.Usage & BufferUsage.IndexBuffer) == BufferUsage.IndexBuffer);
-        this._dynamicSnapshotCapacity = this._dynamicSnapshotEnabled ? CalculateDynamicSnapshotCapacity(description.SizeInBytes) : description.SizeInBytes;
+        this._dynamicSnapshotEnabled = this._isDynamic
+                                       && (((description.Usage & BufferUsage.VertexBuffer) == BufferUsage.VertexBuffer)
+                                           || ((description.Usage & BufferUsage.IndexBuffer) == BufferUsage.IndexBuffer)
+                                           || ((description.Usage & BufferUsage.UniformBuffer) == BufferUsage.UniformBuffer)
+                                           || ((description.Usage & BufferUsage.StructuredBufferReadOnly) == BufferUsage.StructuredBufferReadOnly));
+        bool isUniformBuffer = (description.Usage & BufferUsage.UniformBuffer) == BufferUsage.UniformBuffer;
+        this._dynamicSnapshotAlignment = isUniformBuffer ? 256u : 16u;
+        uint minimumSnapshotCount = isUniformBuffer ? 1024u : 8u;
+        this._dynamicSnapshotCapacity = this._dynamicSnapshotEnabled ? CalculateDynamicSnapshotCapacity(description.SizeInBytes, this._dynamicSnapshotAlignment, minimumSnapshotCount) : description.SizeInBytes;
 
         ResourceDescription resourceDescription = ResourceDescription.Buffer(this._dynamicSnapshotEnabled ? this._dynamicSnapshotCapacity : description.SizeInBytes, GetResourceFlags(description.Usage));
 
         if (this._isStaging) {
-            this._stagingWriteBuffer = gd.Device.CreateCommittedResource(HeapType.Upload, HeapFlags.None, resourceDescription, ResourceStates.GenericRead);
-            this._stagingReadBuffer = gd.Device.CreateCommittedResource(HeapType.Readback, HeapFlags.None, resourceDescription, ResourceStates.CopyDest);
+            this._stagingWriteAllocation = gd.MemoryManager.CreateResource(ref resourceDescription, ResourceStates.GenericRead, HeapType.Upload, HeapFlags.AllowOnlyBuffers);
+            this._stagingReadAllocation = gd.MemoryManager.CreateResource(ref resourceDescription, ResourceStates.CopyDest, HeapType.Readback, HeapFlags.AllowOnlyBuffers);
+            this._stagingWriteBuffer = this._stagingWriteAllocation.Resource;
+            this._stagingReadBuffer = this._stagingReadAllocation.Resource;
             this.NativeBuffer = this._stagingWriteBuffer;
 
             unsafe {
@@ -142,7 +171,8 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
             }
         }
         else if (this._isDynamic) {
-            this.NativeBuffer = gd.Device.CreateCommittedResource(HeapType.Upload, HeapFlags.None, resourceDescription, ResourceStates.GenericRead);
+            this._allocation = gd.MemoryManager.CreateResource(ref resourceDescription, ResourceStates.GenericRead, HeapType.Upload, HeapFlags.AllowOnlyBuffers);
+            this.NativeBuffer = this._allocation.Resource;
             unsafe {
                 void* dataPointer = null;
                 this.NativeBuffer.Map(0, &dataPointer).CheckError();
@@ -150,7 +180,8 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
             }
         }
         else {
-            this.NativeBuffer = gd.Device.CreateCommittedResource(HeapType.Default, HeapFlags.None, resourceDescription, ResourceStates.Common);
+            this._allocation = gd.MemoryManager.CreateResource(ref resourceDescription, ResourceStates.Common, HeapType.Default, HeapFlags.AllowOnlyBuffers);
+            this.NativeBuffer = this._allocation.Resource;
             this.CurrentState = ResourceStates.Common;
         }
     }
@@ -244,15 +275,15 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         if (this._isStaging) {
             this._stagingWriteBuffer.Unmap(0);
             this._stagingReadBuffer.Unmap(0);
-            this._stagingWriteBuffer.Dispose();
-            this._stagingReadBuffer.Dispose();
+            this.gd.ReleaseAfterLastSubmission(this._stagingWriteAllocation);
+            this.gd.ReleaseAfterLastSubmission(this._stagingReadAllocation);
         }
         else if (this._isDynamic) {
             this.NativeBuffer.Unmap(0);
-            this.NativeBuffer.Dispose();
+            this.gd.ReleaseAfterLastSubmission(this._allocation);
         }
         else {
-            this.NativeBuffer.Dispose();
+            this.gd.ReleaseAfterLastSubmission(this._allocation);
         }
 
         this._disposed = true;
@@ -266,7 +297,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     /// <param name="destinationOffset">The destination offset value used by this operation.</param>
     /// <param name="sizeInBytes">The size, in bytes, used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    internal ID3D12Resource Update(ID3D12GraphicsCommandList commandList, IntPtr source, uint destinationOffset, uint sizeInBytes) {
+    internal D3D12ResourceAllocation Update(ID3D12GraphicsCommandList commandList, IntPtr source, uint destinationOffset, uint sizeInBytes) {
         if (destinationOffset + sizeInBytes > this.SizeInBytes) {
             throw new VeldridException("Buffer update range exceeds the destination buffer size.");
         }
@@ -281,14 +312,14 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
             return null;
         }
 
-        ID3D12Resource uploadBuffer = this.CreateUploadBuffer(source, sizeInBytes);
+        D3D12ResourceAllocation uploadBuffer = this.CreateUploadBuffer(source, sizeInBytes);
         if (commandList == null) {
             throw new VeldridException("A command list is required when updating GPU-local D3D12 buffers.");
         }
 
         ResourceStates previousState = this.CurrentState;
         this.Transition(commandList, previousState, ResourceStates.CopyDest);
-        commandList.CopyBufferRegion(this.NativeBuffer, destinationOffset, uploadBuffer, 0, sizeInBytes);
+        commandList.CopyBufferRegion(this.NativeBuffer, destinationOffset, uploadBuffer.Resource, 0, sizeInBytes);
         this.Transition(commandList, ResourceStates.CopyDest, previousState);
         this.CurrentState = previousState;
         return uploadBuffer;
@@ -337,7 +368,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
 
         uint previousBaseOffset = this._dynamicSnapshotBaseOffset;
         this._dynamicSnapshotBaseOffset = newBaseOffset;
-        this._dynamicSnapshotWriteHead = AlignUp(newBaseOffset + snapshotSize, 16);
+        this._dynamicSnapshotWriteHead = AlignUp(newBaseOffset + snapshotSize, this._dynamicSnapshotAlignment);
         this._dynamicSnapshotInitialized = true;
         if (newBaseOffset != previousBaseOffset) {
             this._dynamicBindVersion++;
@@ -505,17 +536,17 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     /// <param name="source">The source value or resource.</param>
     /// <param name="copySize">The copy size value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    private ID3D12Resource CreateUploadBuffer(IntPtr source, uint copySize) {
-        ID3D12Resource uploadBuffer = this.gd.RentUploadBuffer(copySize);
+    private D3D12ResourceAllocation CreateUploadBuffer(IntPtr source, uint copySize) {
+        D3D12ResourceAllocation uploadBuffer = this.gd.RentUploadBuffer(copySize);
         try {
             unsafe {
                 void* mapped = null;
-                uploadBuffer.Map(0, &mapped).CheckError();
+                uploadBuffer.Resource.Map(0, &mapped).CheckError();
                 try {
                     Buffer.MemoryCopy(source.ToPointer(), mapped, copySize, copySize);
                 }
                 finally {
-                    uploadBuffer.Unmap(0);
+                    uploadBuffer.Resource.Unmap(0);
                 }
             }
 
@@ -583,7 +614,9 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
             throw new PlatformNotSupportedException("This D3D12 buffer copy direction is unsupported because the destination cannot be CPU-written.");
         }
 
-        ID3D12Resource readbackBuffer = this.gd.Device.CreateCommittedResource(HeapType.Readback, HeapFlags.None, ResourceDescription.Buffer(copySize), ResourceStates.CopyDest);
+        ResourceDescription readbackDescription = ResourceDescription.Buffer(copySize);
+        D3D12ResourceAllocation readbackAllocation = this.gd.MemoryManager.CreateResource(ref readbackDescription, ResourceStates.CopyDest, HeapType.Readback, HeapFlags.AllowOnlyBuffers);
+        ID3D12Resource readbackBuffer = readbackAllocation.Resource;
         try {
             this.gd.ExecuteImmediateCommand(commandList => {
                 ResourceStates previousState = this.CurrentState;
@@ -614,7 +647,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
             }
         }
         finally {
-            readbackBuffer.Dispose();
+            readbackAllocation.Dispose();
         }
 
         if (destination._isStaging) {
@@ -716,10 +749,12 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     /// </summary>
     /// <param name="logicalSize">The logical size value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    private static uint CalculateDynamicSnapshotCapacity(uint logicalSize) {
+    private static uint CalculateDynamicSnapshotCapacity(uint logicalSize, uint alignment, uint minimumSnapshotCount) {
         // Keep enough history to avoid write-after-read hazards across a few in-flight frames,
         // but avoid very large per-buffer overallocation spikes when many dynamic meshes stream in.
         const ulong maxSnapshotBytes = 64UL * 1024UL * 1024UL;
+        ulong alignedLogicalSize = AlignUp(logicalSize, alignment);
+        ulong minimumSize = alignedLogicalSize * minimumSnapshotCount;
         ulong desired;
         if (logicalSize <= 256UL * 1024UL) {
             desired = logicalSize * 8UL;
@@ -731,8 +766,8 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
             desired = logicalSize * 3UL;
         }
 
-        ulong capped = Math.Min(desired, maxSnapshotBytes);
-        ulong finalSize = Math.Max(logicalSize, capped);
+        ulong capped = Math.Min(Math.Max(desired, minimumSize), maxSnapshotBytes);
+        ulong finalSize = Math.Max(alignedLogicalSize, capped);
         if (finalSize > uint.MaxValue) {
             return uint.MaxValue;
         }

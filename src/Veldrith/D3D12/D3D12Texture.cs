@@ -32,6 +32,11 @@ internal sealed class D3D12Texture : Texture {
     private readonly ResourceStates[] _subresourceStates;
 
     /// <summary>
+    /// Stores the placed-resource allocation block when this texture is allocated from the D3D12 memory manager.
+    /// </summary>
+    private D3D12ResourceAllocation _allocation;
+
+    /// <summary>
     /// Stores the gd state used by this instance.
     /// </summary>
     private readonly D3D12GraphicsDevice gd;
@@ -505,7 +510,9 @@ internal sealed class D3D12Texture : Texture {
             initialState = ResourceStates.RenderTarget;
         }
 
-        return gd.Device.CreateCommittedResource(HeapType.Default, HeapFlags.None, resourceDescription, initialState);
+        HeapFlags heapFlags = GetHeapFlags(resourceFlags);
+        this._allocation = gd.MemoryManager.CreateResource(ref resourceDescription, initialState, HeapType.Default, heapFlags);
+        return this._allocation.Resource;
     }
 
     /// <summary>
@@ -786,13 +793,13 @@ internal sealed class D3D12Texture : Texture {
         uint uploadRowPitch = AlignUp(sourceRowPitch, Vortice.Direct3D12.D3D12.TextureDataPitchAlignment);
         ulong uploadDepthPitch = (ulong)uploadRowPitch * sourceRowCount;
         ulong totalBytes = uploadDepthPitch * depth;
-        ID3D12Resource uploadBuffer = this.gd.RentUploadBuffer(totalBytes);
+        D3D12ResourceAllocation uploadBuffer = this.gd.RentUploadBuffer(totalBytes);
         bool uploadEnqueuedForDeferredDisposal = false;
 
         try {
             unsafe {
                 void* mappedUpload = null;
-                uploadBuffer.Map(0, &mappedUpload).CheckError();
+                uploadBuffer.Resource.Map(0, &mappedUpload).CheckError();
                 try {
                     byte* srcBase = (byte*)source.ToPointer();
                     byte* dstBase = (byte*)mappedUpload;
@@ -805,7 +812,7 @@ internal sealed class D3D12Texture : Texture {
                     }
                 }
                 finally {
-                    uploadBuffer.Unmap(0);
+                    uploadBuffer.Resource.Unmap(0);
                 }
             }
 
@@ -817,7 +824,7 @@ internal sealed class D3D12Texture : Texture {
             uint subresource = this.CalculateSubresource(mipLevel, arrayLayer);
             ulong signalValue = this.ExecuteTextureBufferCopy(subresource, ResourceStates.CopyDest, previousState => {
                 TextureCopyLocation destination = new(this.NativeTexture, subresource);
-                TextureCopyLocation sourceLocation = new(uploadBuffer, footprint);
+                TextureCopyLocation sourceLocation = new(uploadBuffer.Resource, footprint);
                 return (destination, sourceLocation, sourceBox: null, previousState);
             }, true, uploadBuffer, x, y, z);
             if (signalValue == 0) {
@@ -849,7 +856,7 @@ internal sealed class D3D12Texture : Texture {
         ulong[] rowSizesInBytes = new ulong[1];
         this.gd.Device.GetCopyableFootprints(textureDescription, subresource, 1, 0, layouts, rowCounts, rowSizesInBytes, out ulong totalBytes);
 
-        ID3D12Resource uploadBuffer = this.gd.RentUploadBuffer(totalBytes);
+        D3D12ResourceAllocation uploadBuffer = this.gd.RentUploadBuffer(totalBytes);
         bool uploadEnqueuedForDeferredDisposal = false;
 
         try {
@@ -859,7 +866,7 @@ internal sealed class D3D12Texture : Texture {
 
             unsafe {
                 void* mappedUpload = null;
-                uploadBuffer.Map(0, &mappedUpload).CheckError();
+                uploadBuffer.Resource.Map(0, &mappedUpload).CheckError();
                 try {
                     fixed (byte* srcBase = data) {
                         byte* srcSubresource = srcBase + srcOffset;
@@ -870,13 +877,13 @@ internal sealed class D3D12Texture : Texture {
                     }
                 }
                 finally {
-                    uploadBuffer.Unmap(0);
+                    uploadBuffer.Resource.Unmap(0);
                 }
             }
 
             ulong signalValue = this.ExecuteTextureBufferCopy(subresource, ResourceStates.CopyDest, previousState => {
                 TextureCopyLocation destination = new(this.NativeTexture, subresource);
-                TextureCopyLocation sourceLocation = new(uploadBuffer, layouts[0]);
+                TextureCopyLocation sourceLocation = new(uploadBuffer.Resource, layouts[0]);
                 return (destination, sourceLocation, sourceBox: null, previousState);
             }, true, uploadBuffer);
             if (signalValue == 0) {
@@ -908,7 +915,9 @@ internal sealed class D3D12Texture : Texture {
         ulong[] rowSizesInBytes = new ulong[1];
         this.gd.Device.GetCopyableFootprints(textureDescription, subresource, 1, 0, layouts, rowCounts, rowSizesInBytes, out ulong totalBytes);
 
-        ID3D12Resource readbackBuffer = this.gd.Device.CreateCommittedResource(HeapType.Readback, HeapFlags.None, ResourceDescription.Buffer(totalBytes), ResourceStates.CopyDest);
+        ResourceDescription readbackDescription = ResourceDescription.Buffer(totalBytes);
+        D3D12ResourceAllocation readbackAllocation = this.gd.MemoryManager.CreateResource(ref readbackDescription, ResourceStates.CopyDest, HeapType.Readback, HeapFlags.AllowOnlyBuffers);
+        ID3D12Resource readbackBuffer = readbackAllocation.Resource;
 
         try {
             this.GetSubresourceLayout(subresource, out uint dstOffset, out _, out uint dstRowPitch, out uint dstDepthPitch);
@@ -940,7 +949,7 @@ internal sealed class D3D12Texture : Texture {
             }
         }
         finally {
-            readbackBuffer.Dispose();
+            readbackAllocation.Dispose();
         }
     }
 
@@ -952,7 +961,7 @@ internal sealed class D3D12Texture : Texture {
     /// <param name="buildCopy">The build copy value used by this operation.</param>
     /// <param name="copyToTexture">The copy to texture value used by this operation.</param>
     /// <returns>The fence value signaled for this copy submission.</returns>
-    private ulong ExecuteTextureBufferCopy(uint subresource, ResourceStates copyState, Func<ResourceStates, (TextureCopyLocation destination, TextureCopyLocation source, Box? sourceBox, ResourceStates previousState)> buildCopy, bool copyToTexture, ID3D12Resource uploadBuffer = null, uint destinationX = 0, uint destinationY = 0, uint destinationZ = 0) {
+    private ulong ExecuteTextureBufferCopy(uint subresource, ResourceStates copyState, Func<ResourceStates, (TextureCopyLocation destination, TextureCopyLocation source, Box? sourceBox, ResourceStates previousState)> buildCopy, bool copyToTexture, D3D12ResourceAllocation uploadBuffer = null, uint destinationX = 0, uint destinationY = 0, uint destinationZ = 0) {
         void RecordCopy(ID3D12GraphicsCommandList commandList) {
             ResourceStates previousState = this.GetSubresourceState(subresource);
             if (previousState != copyState) {
@@ -990,7 +999,19 @@ internal sealed class D3D12Texture : Texture {
         }
 
         if (copyToTexture) {
-            this.gd.RecordBatchedImmediateCommand(RecordCopy, uploadBuffer);
+            ID3D12Resource retainedTexture = null;
+            bool retainedTextureQueued = false;
+            try {
+                retainedTexture = this.NativeTexture?.QueryInterface<ID3D12Resource>();
+                this.gd.RecordBatchedImmediateCommand(RecordCopy, uploadBuffer, retainedTexture);
+                retainedTextureQueued = true;
+            }
+            finally {
+                if (!retainedTextureQueued) {
+                    retainedTexture?.Dispose();
+                }
+            }
+
             return 0;
         }
 
@@ -1007,10 +1028,23 @@ internal sealed class D3D12Texture : Texture {
         }
 
         if (this._ownsNativeTexture) {
-            this.NativeTexture?.Dispose();
+            this.gd.ReleaseAfterLastSubmission(this._allocation);
         }
 
         this._disposed = true;
+    }
+
+    /// <summary>
+    /// Gets the heap flags required by a placed texture resource.
+    /// </summary>
+    /// <param name="resourceFlags">The resource flags.</param>
+    /// <returns>The value produced by this operation.</returns>
+    private static HeapFlags GetHeapFlags(ResourceFlags resourceFlags) {
+        if ((resourceFlags & (ResourceFlags.AllowRenderTarget | ResourceFlags.AllowDepthStencil)) != 0) {
+            return HeapFlags.AllowOnlyRenderTargetDepthStencilTextures;
+        }
+
+        return HeapFlags.AllowOnlyNonRenderTargetDepthStencilTextures;
     }
 
     /// <summary>

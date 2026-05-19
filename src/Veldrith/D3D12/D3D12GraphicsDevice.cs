@@ -130,11 +130,6 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     private readonly AutoResetEvent _submissionFenceEvent;
 
     /// <summary>
-    /// Stores the immediate fence value state used by this instance.
-    /// </summary>
-    private ulong _immediateFenceValue = 1;
-
-    /// <summary>
     /// Stores the fence used to track completion of immediate copy submissions.
     /// </summary>
     private readonly ID3D12Fence _immediateCopyFence;
@@ -152,7 +147,12 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// <summary>
     /// Stores upload buffers recorded into the batched immediate copy command list.
     /// </summary>
-    private readonly List<ID3D12Resource> _batchedImmediateUploadBuffers = new();
+    private readonly List<D3D12ResourceAllocation> _batchedImmediateUploadBuffers = new();
+
+    /// <summary>
+    /// Stores resources retained by batched immediate copy commands until the copy fence completes.
+    /// </summary>
+    private readonly List<IDisposable> _batchedImmediateRetainedResources = new();
 
     /// <summary>
     /// Protects immediate copy command context pool access.
@@ -187,7 +187,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// <summary>
     /// Stores reusable upload buffers after their GPU fence has completed.
     /// </summary>
-    private readonly List<ID3D12Resource> _availableUploadBuffers = new();
+    private readonly List<D3D12ResourceAllocation> _availableUploadBuffers = new();
 
     /// <summary>
     /// Protects reusable upload-buffer pool access.
@@ -428,6 +428,11 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     private ulong _nextSubmissionFenceValue = 1;
 
     /// <summary>
+    /// Stores the latest fence value signaled for user command-list submissions.
+    /// </summary>
+    private ulong _lastSubmissionFenceValue;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="D3D12GraphicsDevice" /> type.
     /// </summary>
     /// <param name="options">The options used to configure this operation.</param>
@@ -461,6 +466,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         this._submissionFenceEvent = new AutoResetEvent(false);
         this._immediateCopyFence = this._device.CreateFence();
         this._immediateCopyFenceEvent = new AutoResetEvent(false);
+        this.MemoryManager = new D3D12DeviceMemoryManager(this._device);
         this._resourceFactory = new D3D12ResourceFactory(this, this.Features);
 
         if (swapchainDescription != null) {
@@ -559,6 +565,11 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     internal IDXGIFactory4 DxgiFactory { get; }
 
     /// <summary>
+    /// Gets the D3D12 default heap memory manager.
+    /// </summary>
+    internal D3D12DeviceMemoryManager MemoryManager { get; }
+
+    /// <summary>
     /// Emits a periodic device-level performance report when D3D12 performance logging is enabled.
     /// </summary>
     /// <param name="submitMs">The CPU time spent in the current submit path.</param>
@@ -647,6 +658,19 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
+    /// Waits for the latest user command-list submission, without draining unrelated immediate-copy work.
+    /// </summary>
+    internal void WaitForLastSubmission() {
+        ulong fenceValue = this._lastSubmissionFenceValue;
+        if (fenceValue == 0) {
+            return;
+        }
+
+        this.WaitForSubmissionFence(fenceValue);
+        this.PumpSubmissionDeferredDisposals();
+    }
+
+    /// <summary>
     /// Executes a short immediate command list using a reusable allocator and command list context.
     /// </summary>
     /// <param name="recordCommands">Records commands into the provided command list.</param>
@@ -720,7 +744,17 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// </summary>
     /// <param name="recordCommands">Records commands into the batched immediate command list.</param>
     /// <param name="uploadBuffer">The upload buffer to retain until the batch completes.</param>
-    internal void RecordBatchedImmediateCommand(Action<ID3D12GraphicsCommandList> recordCommands, ID3D12Resource uploadBuffer) {
+    internal void RecordBatchedImmediateCommand(Action<ID3D12GraphicsCommandList> recordCommands, D3D12ResourceAllocation uploadBuffer) {
+        this.RecordBatchedImmediateCommand(recordCommands, uploadBuffer, null);
+    }
+
+    /// <summary>
+    /// Records immediate upload work and keeps related resources alive with the recorded batch.
+    /// </summary>
+    /// <param name="recordCommands">Records commands into the batched immediate command list.</param>
+    /// <param name="uploadBuffer">The upload buffer to retain until the batch completes.</param>
+    /// <param name="retainedResource">An additional disposable resource reference to retain until the batch completes.</param>
+    internal void RecordBatchedImmediateCommand(Action<ID3D12GraphicsCommandList> recordCommands, D3D12ResourceAllocation uploadBuffer, IDisposable retainedResource) {
         long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
         lock (this._commandQueueLock) {
             lock (this._batchedImmediateCopyLock) {
@@ -732,6 +766,10 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
                 recordCommands(this._batchedImmediateCopyContext.CommandList);
                 if (uploadBuffer != null) {
                     this._batchedImmediateUploadBuffers.Add(uploadBuffer);
+                }
+
+                if (retainedResource != null) {
+                    this._batchedImmediateRetainedResources.Add(retainedResource);
                 }
 
                 this._batchedImmediateCopyHasWork = true;
@@ -750,7 +788,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// Keeps an upload buffer alive until the batched immediate upload work has completed.
     /// </summary>
     /// <param name="buffer">The upload buffer to retain.</param>
-    internal void EnqueueBatchedImmediateUploadBuffer(ID3D12Resource buffer) {
+    internal void EnqueueBatchedImmediateUploadBuffer(D3D12ResourceAllocation buffer) {
         if (buffer == null) {
             return;
         }
@@ -792,7 +830,12 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
                     this.EnqueueImmediateUploadBuffer(this._batchedImmediateUploadBuffers[i], signalValue);
                 }
 
+                for (int i = 0; i < this._batchedImmediateRetainedResources.Count; i++) {
+                    this.EnqueueImmediateDisposal(this._batchedImmediateRetainedResources[i], signalValue);
+                }
+
                 this._batchedImmediateUploadBuffers.Clear();
+                this._batchedImmediateRetainedResources.Clear();
             }
 
             if (waitForCompletion) {
@@ -835,6 +878,24 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
+    /// Releases a resource after all currently submitted user command lists have completed.
+    /// </summary>
+    /// <param name="disposable">The resource to release.</param>
+    internal void ReleaseAfterLastSubmission(IDisposable disposable) {
+        if (disposable == null) {
+            return;
+        }
+
+        ulong fenceValue = this._lastSubmissionFenceValue;
+        if (fenceValue == 0 || this._submissionFence.CompletedValue >= fenceValue) {
+            disposable.Dispose();
+            return;
+        }
+
+        this.EnqueueSubmissionDisposal(disposable, fenceValue);
+    }
+
+    /// <summary>
     /// Enqueues a disposable resource to be released after the specified immediate fence value has completed.
     /// </summary>
     /// <param name="disposable">The resource to dispose.</param>
@@ -854,7 +915,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// </summary>
     /// <param name="sizeInBytes">The required upload-buffer size in bytes.</param>
     /// <returns>An upload heap resource ready for CPU writes.</returns>
-    internal ID3D12Resource RentUploadBuffer(ulong sizeInBytes) {
+    internal D3D12ResourceAllocation RentUploadBuffer(ulong sizeInBytes) {
         if (sizeInBytes == 0) {
             sizeInBytes = 1;
         }
@@ -863,8 +924,8 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
             int bestIndex = -1;
             ulong bestSize = ulong.MaxValue;
             for (int i = 0; i < this._availableUploadBuffers.Count; i++) {
-                ID3D12Resource candidate = this._availableUploadBuffers[i];
-                ulong candidateSize = candidate.Description.Width;
+                D3D12ResourceAllocation candidate = this._availableUploadBuffers[i];
+                ulong candidateSize = candidate.Resource.Description.Width;
                 if (candidateSize >= sizeInBytes && candidateSize < bestSize) {
                     bestIndex = i;
                     bestSize = candidateSize;
@@ -872,27 +933,28 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
             }
 
             if (bestIndex >= 0) {
-                ID3D12Resource buffer = this._availableUploadBuffers[bestIndex];
+                D3D12ResourceAllocation buffer = this._availableUploadBuffers[bestIndex];
                 this._availableUploadBuffers.RemoveAt(bestIndex);
-                this._availableUploadBufferBytes -= buffer.Description.Width;
+                this._availableUploadBufferBytes -= buffer.Resource.Description.Width;
                 return buffer;
             }
         }
 
         ulong allocationSize = AlignUp(sizeInBytes, 4096);
-        return this._device.CreateCommittedResource(HeapType.Upload, HeapFlags.None, ResourceDescription.Buffer(allocationSize), ResourceStates.GenericRead);
+        ResourceDescription description = ResourceDescription.Buffer(allocationSize);
+        return this.MemoryManager.CreateResource(ref description, ResourceStates.GenericRead, HeapType.Upload, HeapFlags.AllowOnlyBuffers);
     }
 
     /// <summary>
     /// Returns an upload buffer to the reusable pool or disposes it when it is too large.
     /// </summary>
     /// <param name="buffer">The upload buffer to return.</param>
-    internal void ReturnUploadBuffer(ID3D12Resource buffer) {
+    internal void ReturnUploadBuffer(D3D12ResourceAllocation buffer) {
         if (buffer == null) {
             return;
         }
 
-        ulong size = buffer.Description.Width;
+        ulong size = buffer.Resource.Description.Width;
         if (size > MaxPooledUploadBufferSize) {
             buffer.Dispose();
             return;
@@ -914,7 +976,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// </summary>
     /// <param name="buffer">The upload buffer to return.</param>
     /// <param name="fenceValue">The submission fence value guarding the buffer.</param>
-    internal void EnqueueSubmissionUploadBuffer(ID3D12Resource buffer, ulong fenceValue) {
+    internal void EnqueueSubmissionUploadBuffer(D3D12ResourceAllocation buffer, ulong fenceValue) {
         this.EnqueueSubmissionDisposal(new PooledUploadBuffer(this, buffer), fenceValue);
     }
 
@@ -923,7 +985,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// </summary>
     /// <param name="buffer">The upload buffer to return.</param>
     /// <param name="fenceValue">The immediate-copy fence value guarding the buffer.</param>
-    internal void EnqueueImmediateUploadBuffer(ID3D12Resource buffer, ulong fenceValue) {
+    internal void EnqueueImmediateUploadBuffer(D3D12ResourceAllocation buffer, ulong fenceValue) {
         this.EnqueueImmediateDisposal(new PooledUploadBuffer(this, buffer), fenceValue);
     }
 
@@ -1202,11 +1264,12 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
             this._pipelineStateCache.Clear();
         }
 
+        this.MainSwapchain?.Dispose();
+        this.MemoryManager?.Dispose();
         this._submissionFenceEvent?.Dispose();
         this._submissionFence?.Dispose();
         this._immediateCopyFenceEvent?.Dispose();
         this._immediateCopyFence?.Dispose();
-        this.MainSwapchain?.Dispose();
         this.CommandQueue?.Dispose();
         this._device?.Dispose();
         this.DxgiFactory?.Dispose();
@@ -1229,6 +1292,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
                     d3d12CommandList.ExecuteNoSignal();
                     ulong signalValue = this._nextSubmissionFenceValue++;
                     this.CommandQueue.Signal(this._submissionFence, signalValue).CheckError();
+                    this._lastSubmissionFenceValue = signalValue;
                     d3d12CommandList.MarkSubmitted(signalValue);
                     d3d12CommandList.ClearCachedState();
                 }
@@ -1277,8 +1341,9 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// Executes the wait for next frame ready core logic for this backend.
     /// </summary>
     private protected override void WaitForNextFrameReadyCore() {
-        // Do not globally stall the GPU every frame on D3D12.
-        // Frame pacing should be handled by swapchain present / fences.
+        if (this.MainSwapchain is D3D12Swapchain swapchain) {
+            swapchain.WaitForNextFrameReady();
+        }
     }
 
     /// <summary>
@@ -1328,7 +1393,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
             d3d12Buffer.Update(null, source, bufferOffsetInBytes, sizeInBytes);
             return;
         }
-        ID3D12Resource temporaryUpload = null;
+        D3D12ResourceAllocation temporaryUpload = null;
         try {
             this.RecordBatchedImmediateCommand(commandList => {
                 temporaryUpload = d3d12Buffer.Update(commandList, source, bufferOffsetInBytes, sizeInBytes);
@@ -1801,23 +1866,17 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// </summary>
     private void WaitForQueueIdle() {
         lock (this._commandQueueLock) {
-            this.FlushBatchedImmediateCommands(waitForCompletion: true);
-            ID3D12Fence fence = null;
-            using AutoResetEvent waitEvent = new(false);
+            this.FlushBatchedImmediateCommands();
             try {
-                fence = this._device.CreateFence();
-                ulong signalValue = this._immediateFenceValue++;
-                this.CommandQueue.Signal(fence, signalValue);
-                if (fence.CompletedValue < signalValue) {
-                    fence.SetEventOnCompletion(signalValue, waitEvent.SafeWaitHandle.DangerousGetHandle()).CheckError();
-                    waitEvent.WaitOne();
+                ulong signalValue = this._nextSubmissionFenceValue++;
+                this.CommandQueue.Signal(this._submissionFence, signalValue).CheckError();
+                if (this._submissionFence.CompletedValue < signalValue) {
+                    this._submissionFence.SetEventOnCompletion(signalValue, this._submissionFenceEvent.SafeWaitHandle.DangerousGetHandle()).CheckError();
+                    this._submissionFenceEvent.WaitOne();
                 }
             }
             catch (SharpGenException ex) when (ex.ResultCode.Code == unchecked((int)0x887A0005)) {
                 // Device already lost. During shutdown this should not escalate into a second crash.
-            }
-            finally {
-                fence?.Dispose();
             }
         }
     }
@@ -1964,10 +2023,10 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// Disposes all upload buffers currently retained by the pool.
     /// </summary>
     private void DisposeAvailableUploadBuffers() {
-        List<ID3D12Resource> buffers = null;
+        List<D3D12ResourceAllocation> buffers = null;
         lock (this._availableUploadBuffersLock) {
             if (this._availableUploadBuffers.Count > 0) {
-                buffers = new List<ID3D12Resource>(this._availableUploadBuffers);
+                buffers = new List<D3D12ResourceAllocation>(this._availableUploadBuffers);
                 this._availableUploadBuffers.Clear();
                 this._availableUploadBufferBytes = 0;
             }
@@ -2057,14 +2116,14 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         /// <summary>
         /// Stores the upload buffer being returned.
         /// </summary>
-        private ID3D12Resource buffer;
+        private D3D12ResourceAllocation buffer;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PooledUploadBuffer"/> class.
         /// </summary>
         /// <param name="gd">The owning graphics device.</param>
         /// <param name="buffer">The upload buffer to return.</param>
-        public PooledUploadBuffer(D3D12GraphicsDevice gd, ID3D12Resource buffer) {
+        public PooledUploadBuffer(D3D12GraphicsDevice gd, D3D12ResourceAllocation buffer) {
             this.gd = gd;
             this.buffer = buffer;
         }
@@ -2073,7 +2132,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         /// Returns the upload buffer to the graphics device pool.
         /// </summary>
         public void Dispose() {
-            ID3D12Resource resource = this.buffer;
+            D3D12ResourceAllocation resource = this.buffer;
             this.buffer = null;
             if (resource != null) {
                 this.gd.ReturnUploadBuffer(resource);

@@ -195,7 +195,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// <summary>
     /// Stores upload resources recorded on this command list until submission assigns a fence value.
     /// </summary>
-    private readonly List<ID3D12Resource> _pendingSubmissionUploadBuffers = new();
+    private readonly List<D3D12ResourceAllocation> _pendingSubmissionUploadBuffers = new();
 
     /// <summary>
     /// Stores the active scissor rect count value used during command execution.
@@ -296,6 +296,16 @@ internal sealed class D3D12CommandList : CommandList {
     /// Stores the current graphics pipeline state used by this instance.
     /// </summary>
     private D3D12Pipeline _currentGraphicsPipeline;
+
+    /// <summary>
+    /// Stores the stencil reference currently recorded in output-merger state.
+    /// </summary>
+    private uint _currentStencilReference;
+
+    /// <summary>
+    /// Tracks whether the cached stencil reference matches command-list state.
+    /// </summary>
+    private bool _currentStencilReferenceValid;
 
     /// <summary>
     /// Stores the primitive topology currently recorded in input-assembler state.
@@ -999,6 +1009,7 @@ internal sealed class D3D12CommandList : CommandList {
         this.InvalidateComputeRootCaches();
         this._maxBoundVertexBufferSlot = 0;
         this._currentPrimitiveTopologyValid = false;
+        this._currentStencilReferenceValid = false;
         this.ClearCachedState();
         this._currentGraphicsPipeline = null;
         this._currentComputePipeline = null;
@@ -1635,6 +1646,7 @@ internal sealed class D3D12CommandList : CommandList {
         }
 
         this.NativeCommandList.SetPipelineState(d3D12Pipeline.PipelineState);
+        this.SetStencilReference(d3D12Pipeline.StencilReference);
         if (rootSignatureChanged) {
             ClearBoundResourceSets(this._boundGraphicsResourceSets);
             ClearChangedResourceSets(this._graphicsResourceSetsChanged);
@@ -1761,6 +1773,24 @@ internal sealed class D3D12CommandList : CommandList {
     private protected override void ClearDepthStencilCore(float depth, byte stencil) {
         using PerfCommandApiScope perfCommandApiScope = this.TrackPerfCommandApi(nameof(this.ClearDepthStencil));
         this.FlushPendingUavBarrier();
+        if (this.Framebuffer is D3D12SwapchainFramebuffer swapchainFramebuffer) {
+            if (swapchainFramebuffer.DepthTargetTexture == null) {
+                return;
+            }
+
+            this.TransitionTexture(swapchainFramebuffer.DepthTargetTexture, ResourceStates.DepthWrite);
+            if (swapchainFramebuffer.TryGetDepthStencilView(out CpuDescriptorHandle swapchainDsv)) {
+                ClearFlags swapchainClearFlags = ClearFlags.Depth;
+                if (FormatHelpers.IsStencilFormat(swapchainFramebuffer.DepthTargetTexture.Format)) {
+                    swapchainClearFlags |= ClearFlags.Stencil;
+                }
+
+                this.NativeCommandList.ClearDepthStencilView(swapchainDsv, swapchainClearFlags, depth, stencil, 0, null!);
+            }
+
+            return;
+        }
+
         if (this.Framebuffer is not D3D12Framebuffer d3D12Framebuffer) {
             return;
         }
@@ -1831,7 +1861,12 @@ internal sealed class D3D12CommandList : CommandList {
         long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
         this.FlushPendingUavBarrier();
         D3D12DeviceBuffer d3D12Buffer = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(buffer);
-        ID3D12Resource temporaryUpload = d3D12Buffer.Update(this.NativeCommandList, source, bufferOffsetInBytes, sizeInBytes);
+        ulong previousBindVersion = d3D12Buffer.BindVersion;
+        D3D12ResourceAllocation temporaryUpload = d3D12Buffer.Update(this.NativeCommandList, source, bufferOffsetInBytes, sizeInBytes);
+        if (d3D12Buffer.BindVersion != previousBindVersion) {
+            this.MarkResourceSetsReferencingBufferDirty(d3D12Buffer);
+        }
+
         if (temporaryUpload != null) {
             this._pendingSubmissionUploadBuffers.Add(temporaryUpload);
         }
@@ -2015,6 +2050,20 @@ internal sealed class D3D12CommandList : CommandList {
         this.NativeCommandList.IASetPrimitiveTopology(topology);
         this._currentPrimitiveTopology = topology;
         this._currentPrimitiveTopologyValid = true;
+    }
+
+    /// <summary>
+    /// Sets the output-merger stencil reference when needed.
+    /// </summary>
+    /// <param name="stencilReference">The stencil reference value.</param>
+    private void SetStencilReference(uint stencilReference) {
+        if (this._currentStencilReferenceValid && this._currentStencilReference == stencilReference) {
+            return;
+        }
+
+        this.NativeCommandList.OMSetStencilRef(stencilReference);
+        this._currentStencilReference = stencilReference;
+        this._currentStencilReferenceValid = true;
     }
 
     /// <summary>
@@ -2267,6 +2316,7 @@ internal sealed class D3D12CommandList : CommandList {
                 this.NativeCommandList.SetPipelineState(previousGraphics.PipelineState);
                 this.NativeCommandList.SetGraphicsRootSignature(previousGraphics.RootSignature);
                 this.SetPrimitiveTopology(previousGraphics.PrimitiveTopology);
+                this.SetStencilReference(previousGraphics.StencilReference);
                 this._currentGraphicsPipeline = previousGraphics;
                 this._currentComputePipeline = null;
                 this.InvalidateGraphicsRootCaches();
@@ -2753,6 +2803,71 @@ internal sealed class D3D12CommandList : CommandList {
         if (descriptorTablesChanged) {
             this.BindResourceSetDescriptorTables(d3d12Set, bindingPlan, compute);
         }
+    }
+
+    /// <summary>
+    /// Marks currently bound resource sets dirty when a dynamic buffer moves to a new native snapshot.
+    /// </summary>
+    /// <param name="buffer">The buffer whose native binding address changed.</param>
+    private void MarkResourceSetsReferencingBufferDirty(D3D12DeviceBuffer buffer) {
+        bool graphicsChanged = this.MarkResourceSetsReferencingBufferDirty(this._boundGraphicsResourceSets, this._graphicsResourceSetsChanged, buffer);
+        bool computeChanged = this.MarkResourceSetsReferencingBufferDirty(this._boundComputeResourceSets, this._computeResourceSetsChanged, buffer);
+        if (graphicsChanged) {
+            this._graphicsResourceSetsDirty = true;
+            this.InvalidateGraphicsRootCaches();
+        }
+
+        if (computeChanged) {
+            this._computeResourceSetsDirty = true;
+            this.InvalidateComputeRootCaches();
+        }
+    }
+
+    /// <summary>
+    /// Marks the resource sets that reference a specific buffer as dirty.
+    /// </summary>
+    /// <param name="resourceSets">The bound resource set collection.</param>
+    /// <param name="changed">The dirty flag collection.</param>
+    /// <param name="buffer">The buffer whose native binding address changed.</param>
+    /// <returns><see langword="true" /> when at least one resource set was marked dirty.</returns>
+    private bool MarkResourceSetsReferencingBufferDirty(BoundResourceSetInfo[] resourceSets, bool[] changed, D3D12DeviceBuffer buffer) {
+        int count = Math.Min(resourceSets.Length, changed.Length);
+        bool anyChanged = false;
+        for (int slot = 0; slot < count; slot++) {
+            if (resourceSets[slot].Set is not D3D12ResourceSet resourceSet) {
+                continue;
+            }
+
+            if (!ResourceSetReferencesBuffer(resourceSet, buffer)) {
+                continue;
+            }
+
+            changed[slot] = true;
+            anyChanged = true;
+        }
+
+        return anyChanged;
+    }
+
+    /// <summary>
+    /// Checks whether a resource set references a specific buffer.
+    /// </summary>
+    /// <param name="resourceSet">The resource set to inspect.</param>
+    /// <param name="buffer">The buffer to find.</param>
+    /// <returns><see langword="true" /> when the resource set references the buffer.</returns>
+    private static bool ResourceSetReferencesBuffer(D3D12ResourceSet resourceSet, D3D12DeviceBuffer buffer) {
+        IBindableResource[] resources = resourceSet.BoundResources;
+        for (int i = 0; i < resources.Length; i++) {
+            if (!Util.GetDeviceBuffer(resources[i], out DeviceBuffer boundBuffer)) {
+                continue;
+            }
+
+            if (ReferenceEquals(boundBuffer, buffer)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>

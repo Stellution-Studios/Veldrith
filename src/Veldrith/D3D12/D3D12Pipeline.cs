@@ -71,6 +71,7 @@ internal sealed class D3D12Pipeline : Pipeline {
         this.IsComputePipeline = false;
         this.PrimitiveTopology = D3D12Formats.ToD3DPrimitiveTopology(description.PrimitiveTopology);
         this.PrimitiveTopologyType = D3D12Formats.ToPrimitiveTopologyType(description.PrimitiveTopology);
+        this.StencilReference = description.DepthStencilState.StencilReference;
         this.VertexStrides = new uint[description.ShaderSet.VertexLayouts.Length];
         for (uint i = 0; i < this.VertexStrides.Length; i++) {
             this.VertexStrides[i] = description.ShaderSet.VertexLayouts[i].Stride;
@@ -123,6 +124,11 @@ internal sealed class D3D12Pipeline : Pipeline {
     /// Gets or sets VertexStrides.
     /// </summary>
     public uint[] VertexStrides { get; } = Array.Empty<uint>();
+
+    /// <summary>
+    /// Gets the stencil reference value used by this graphics pipeline.
+    /// </summary>
+    public uint StencilReference { get; }
 
     /// <summary>
     /// Gets the root-parameter index that receives push constants.
