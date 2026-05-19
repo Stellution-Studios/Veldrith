@@ -819,12 +819,13 @@ internal sealed class D3D12Texture : Texture {
                 TextureCopyLocation destination = new(this.NativeTexture, subresource);
                 TextureCopyLocation sourceLocation = new(uploadBuffer, footprint);
                 return (destination, sourceLocation, sourceBox: null, previousState);
-            }, true, x, y, z);
+            }, true, uploadBuffer, x, y, z);
             if (signalValue == 0) {
-                this.gd.EnqueueBatchedImmediateUploadBuffer(uploadBuffer);
+                uploadBuffer = null;
             }
             else {
                 this.gd.EnqueueImmediateUploadBuffer(uploadBuffer, signalValue);
+                uploadBuffer = null;
             }
 
             uploadEnqueuedForDeferredDisposal = true;
@@ -877,12 +878,13 @@ internal sealed class D3D12Texture : Texture {
                 TextureCopyLocation destination = new(this.NativeTexture, subresource);
                 TextureCopyLocation sourceLocation = new(uploadBuffer, layouts[0]);
                 return (destination, sourceLocation, sourceBox: null, previousState);
-            }, true);
+            }, true, uploadBuffer);
             if (signalValue == 0) {
-                this.gd.EnqueueBatchedImmediateUploadBuffer(uploadBuffer);
+                uploadBuffer = null;
             }
             else {
                 this.gd.EnqueueImmediateUploadBuffer(uploadBuffer, signalValue);
+                uploadBuffer = null;
             }
 
             uploadEnqueuedForDeferredDisposal = true;
@@ -950,7 +952,7 @@ internal sealed class D3D12Texture : Texture {
     /// <param name="buildCopy">The build copy value used by this operation.</param>
     /// <param name="copyToTexture">The copy to texture value used by this operation.</param>
     /// <returns>The fence value signaled for this copy submission.</returns>
-    private ulong ExecuteTextureBufferCopy(uint subresource, ResourceStates copyState, Func<ResourceStates, (TextureCopyLocation destination, TextureCopyLocation source, Box? sourceBox, ResourceStates previousState)> buildCopy, bool copyToTexture, uint destinationX = 0, uint destinationY = 0, uint destinationZ = 0) {
+    private ulong ExecuteTextureBufferCopy(uint subresource, ResourceStates copyState, Func<ResourceStates, (TextureCopyLocation destination, TextureCopyLocation source, Box? sourceBox, ResourceStates previousState)> buildCopy, bool copyToTexture, ID3D12Resource uploadBuffer = null, uint destinationX = 0, uint destinationY = 0, uint destinationZ = 0) {
         void RecordCopy(ID3D12GraphicsCommandList commandList) {
             ResourceStates previousState = this.GetSubresourceState(subresource);
             if (previousState != copyState) {
@@ -988,7 +990,7 @@ internal sealed class D3D12Texture : Texture {
         }
 
         if (copyToTexture) {
-            this.gd.RecordBatchedImmediateCommand(RecordCopy);
+            this.gd.RecordBatchedImmediateCommand(RecordCopy, uploadBuffer);
             return 0;
         }
 

@@ -95,6 +95,11 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     private readonly D3D12ResourceFactory _resourceFactory;
 
     /// <summary>
+    /// Serializes direct command queue, presentation, and swapchain resize operations.
+    /// </summary>
+    private readonly object _commandQueueLock = new();
+
+    /// <summary>
     /// Caches root signature cache to avoid repeated allocations and lookups.
     /// </summary>
     private readonly Dictionary<string, ID3D12RootSignature> _rootSignatureCache = new(StringComparer.Ordinal);
@@ -544,6 +549,11 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     internal ID3D12CommandQueue CommandQueue { get; }
 
     /// <summary>
+    /// Gets the lock used to serialize command queue and swapchain operations.
+    /// </summary>
+    internal object CommandQueueLock => this._commandQueueLock;
+
+    /// <summary>
     /// Gets or sets DxgiFactory.
     /// </summary>
     internal IDXGIFactory4 DxgiFactory { get; }
@@ -644,43 +654,46 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// <returns>The fence value signaled for this immediate submission.</returns>
     internal ulong ExecuteImmediateCommand(Action<ID3D12GraphicsCommandList> recordCommands, bool waitForCompletion = false) {
         long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
-        this.FlushBatchedImmediateCommands();
-
-        ImmediateCopyContext context = this.AcquireImmediateCopyContext();
-        bool removeContext = false;
         ulong signalValue = 0;
-        try {
-            PrepareImmediateCopyContext(context);
 
-            recordCommands(context.CommandList);
-            context.CommandList.Close();
-            this.CommandQueue.ExecuteCommandList(context.CommandList);
-            signalValue = this._nextImmediateCopyFenceValue++;
-            this.CommandQueue.Signal(this._immediateCopyFence, signalValue).CheckError();
-            context.FenceValue = signalValue;
+        lock (this._commandQueueLock) {
+            this.FlushBatchedImmediateCommands();
 
-            if (waitForCompletion) {
-                long waitStartTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
-                this.WaitForImmediateCopyFence(signalValue);
-                if (_perfLogEnabled) {
-                    double waitMs = TicksToMilliseconds(Stopwatch.GetTimestamp() - waitStartTicks);
-                    this._perfAccumImmediateWaitMs += waitMs;
-                    this._perfMaxImmediateWaitMs = Math.Max(this._perfMaxImmediateWaitMs, waitMs);
+            ImmediateCopyContext context = this.AcquireImmediateCopyContext();
+            bool removeContext = false;
+            try {
+                PrepareImmediateCopyContext(context);
+
+                recordCommands(context.CommandList);
+                context.CommandList.Close();
+                this.CommandQueue.ExecuteCommandList(context.CommandList);
+                signalValue = this._nextImmediateCopyFenceValue++;
+                this.CommandQueue.Signal(this._immediateCopyFence, signalValue).CheckError();
+                context.FenceValue = signalValue;
+
+                if (waitForCompletion) {
+                    long waitStartTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
+                    this.WaitForImmediateCopyFence(signalValue);
+                    if (_perfLogEnabled) {
+                        double waitMs = TicksToMilliseconds(Stopwatch.GetTimestamp() - waitStartTicks);
+                        this._perfAccumImmediateWaitMs += waitMs;
+                        this._perfMaxImmediateWaitMs = Math.Max(this._perfMaxImmediateWaitMs, waitMs);
+                    }
                 }
-            }
 
-            this.PumpImmediateDeferredDisposals();
-        }
-        catch {
-            removeContext = true;
-            throw;
-        }
-        finally {
-            if (removeContext) {
-                this.ReleaseImmediateCopyContext(context, remove: true);
+                this.PumpImmediateDeferredDisposals();
             }
-            else {
-                this.ReleaseImmediateCopyContext(context, remove: false);
+            catch {
+                removeContext = true;
+                throw;
+            }
+            finally {
+                if (removeContext) {
+                    this.ReleaseImmediateCopyContext(context, remove: true);
+                }
+                else {
+                    this.ReleaseImmediateCopyContext(context, remove: false);
+                }
             }
         }
 
@@ -699,15 +712,30 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// </summary>
     /// <param name="recordCommands">Records commands into the batched immediate command list.</param>
     internal void RecordBatchedImmediateCommand(Action<ID3D12GraphicsCommandList> recordCommands) {
-        long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
-        lock (this._batchedImmediateCopyLock) {
-            if (this._batchedImmediateCopyContext == null) {
-                this._batchedImmediateCopyContext = this.AcquireImmediateCopyContext();
-                PrepareImmediateCopyContext(this._batchedImmediateCopyContext);
-            }
+        this.RecordBatchedImmediateCommand(recordCommands, null);
+    }
 
-            recordCommands(this._batchedImmediateCopyContext.CommandList);
-            this._batchedImmediateCopyHasWork = true;
+    /// <summary>
+    /// Records immediate upload work and keeps an upload buffer alive with the recorded batch.
+    /// </summary>
+    /// <param name="recordCommands">Records commands into the batched immediate command list.</param>
+    /// <param name="uploadBuffer">The upload buffer to retain until the batch completes.</param>
+    internal void RecordBatchedImmediateCommand(Action<ID3D12GraphicsCommandList> recordCommands, ID3D12Resource uploadBuffer) {
+        long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
+        lock (this._commandQueueLock) {
+            lock (this._batchedImmediateCopyLock) {
+                if (this._batchedImmediateCopyContext == null) {
+                    this._batchedImmediateCopyContext = this.AcquireImmediateCopyContext();
+                    PrepareImmediateCopyContext(this._batchedImmediateCopyContext);
+                }
+
+                recordCommands(this._batchedImmediateCopyContext.CommandList);
+                if (uploadBuffer != null) {
+                    this._batchedImmediateUploadBuffers.Add(uploadBuffer);
+                }
+
+                this._batchedImmediateCopyHasWork = true;
+            }
         }
 
         if (_perfLogEnabled) {
@@ -743,36 +771,38 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         ulong signalValue;
         int uploadBufferCount;
 
-        lock (this._batchedImmediateCopyLock) {
-            if (!this._batchedImmediateCopyHasWork || this._batchedImmediateCopyContext == null) {
-                return 0;
+        lock (this._commandQueueLock) {
+            lock (this._batchedImmediateCopyLock) {
+                if (!this._batchedImmediateCopyHasWork || this._batchedImmediateCopyContext == null) {
+                    return 0;
+                }
+
+                context = this._batchedImmediateCopyContext;
+                this._batchedImmediateCopyContext = null;
+                this._batchedImmediateCopyHasWork = false;
+
+                context.CommandList.Close();
+                this.CommandQueue.ExecuteCommandList(context.CommandList);
+                signalValue = this._nextImmediateCopyFenceValue++;
+                this.CommandQueue.Signal(this._immediateCopyFence, signalValue).CheckError();
+                context.FenceValue = signalValue;
+
+                uploadBufferCount = this._batchedImmediateUploadBuffers.Count;
+                for (int i = 0; i < this._batchedImmediateUploadBuffers.Count; i++) {
+                    this.EnqueueImmediateUploadBuffer(this._batchedImmediateUploadBuffers[i], signalValue);
+                }
+
+                this._batchedImmediateUploadBuffers.Clear();
             }
 
-            context = this._batchedImmediateCopyContext;
-            this._batchedImmediateCopyContext = null;
-            this._batchedImmediateCopyHasWork = false;
-
-            context.CommandList.Close();
-            this.CommandQueue.ExecuteCommandList(context.CommandList);
-            signalValue = this._nextImmediateCopyFenceValue++;
-            this.CommandQueue.Signal(this._immediateCopyFence, signalValue).CheckError();
-            context.FenceValue = signalValue;
-
-            uploadBufferCount = this._batchedImmediateUploadBuffers.Count;
-            for (int i = 0; i < this._batchedImmediateUploadBuffers.Count; i++) {
-                this.EnqueueImmediateUploadBuffer(this._batchedImmediateUploadBuffers[i], signalValue);
-            }
-
-            this._batchedImmediateUploadBuffers.Clear();
-        }
-
-        if (waitForCompletion) {
-            long waitStartTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
-            this.WaitForImmediateCopyFence(signalValue);
-            if (_perfLogEnabled) {
-                double waitMs = TicksToMilliseconds(Stopwatch.GetTimestamp() - waitStartTicks);
-                this._perfAccumImmediateWaitMs += waitMs;
-                this._perfMaxImmediateWaitMs = Math.Max(this._perfMaxImmediateWaitMs, waitMs);
+            if (waitForCompletion) {
+                long waitStartTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
+                this.WaitForImmediateCopyFence(signalValue);
+                if (_perfLogEnabled) {
+                    double waitMs = TicksToMilliseconds(Stopwatch.GetTimestamp() - waitStartTicks);
+                    this._perfAccumImmediateWaitMs += waitMs;
+                    this._perfMaxImmediateWaitMs = Math.Max(this._perfMaxImmediateWaitMs, waitMs);
+                }
             }
         }
 
@@ -1189,29 +1219,31 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// <param name="fence">The synchronization fence used by this operation.</param>
     private protected override void SubmitCommandsCore(CommandList commandList, Fence fence) {
         long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
-        this.FlushBatchedImmediateCommands();
-        this.PumpSubmissionDeferredDisposals();
-        this.PumpImmediateDeferredDisposals();
-
-        try {
-            if (commandList is D3D12CommandList d3d12CommandList) {
-                d3d12CommandList.ExecuteNoSignal();
-                ulong signalValue = this._nextSubmissionFenceValue++;
-                this.CommandQueue.Signal(this._submissionFence, signalValue).CheckError();
-                d3d12CommandList.MarkSubmitted(signalValue);
-                d3d12CommandList.ClearCachedState();
-            }
-
-            if (fence is D3D12Fence d3d12Fence) {
-                d3d12Fence.Signal(this.CommandQueue);
-            }
-
+        lock (this._commandQueueLock) {
+            this.FlushBatchedImmediateCommands();
             this.PumpSubmissionDeferredDisposals();
             this.PumpImmediateDeferredDisposals();
-        }
-        catch (SharpGenException ex) {
-            string reason = this.GetDeviceRemovedReasonDescription();
-            throw new VeldridException($"D3D12 command submission failed. DeviceRemovedReason={reason}.", ex);
+
+            try {
+                if (commandList is D3D12CommandList d3d12CommandList) {
+                    d3d12CommandList.ExecuteNoSignal();
+                    ulong signalValue = this._nextSubmissionFenceValue++;
+                    this.CommandQueue.Signal(this._submissionFence, signalValue).CheckError();
+                    d3d12CommandList.MarkSubmitted(signalValue);
+                    d3d12CommandList.ClearCachedState();
+                }
+
+                if (fence is D3D12Fence d3d12Fence) {
+                    d3d12Fence.Signal(this.CommandQueue);
+                }
+
+                this.PumpSubmissionDeferredDisposals();
+                this.PumpImmediateDeferredDisposals();
+            }
+            catch (SharpGenException ex) {
+                string reason = this.GetDeviceRemovedReasonDescription();
+                throw new VeldridException($"D3D12 command submission failed. DeviceRemovedReason={reason}.", ex);
+            }
         }
 
         if (_perfLogEnabled) {
@@ -1768,23 +1800,25 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// Executes the wait for queue idle logic for this backend.
     /// </summary>
     private void WaitForQueueIdle() {
-        this.FlushBatchedImmediateCommands(waitForCompletion: true);
-        ID3D12Fence fence = null;
-        using AutoResetEvent waitEvent = new(false);
-        try {
-            fence = this._device.CreateFence();
-            ulong signalValue = this._immediateFenceValue++;
-            this.CommandQueue.Signal(fence, signalValue);
-            if (fence.CompletedValue < signalValue) {
-                fence.SetEventOnCompletion(signalValue, waitEvent.SafeWaitHandle.DangerousGetHandle()).CheckError();
-                waitEvent.WaitOne();
+        lock (this._commandQueueLock) {
+            this.FlushBatchedImmediateCommands(waitForCompletion: true);
+            ID3D12Fence fence = null;
+            using AutoResetEvent waitEvent = new(false);
+            try {
+                fence = this._device.CreateFence();
+                ulong signalValue = this._immediateFenceValue++;
+                this.CommandQueue.Signal(fence, signalValue);
+                if (fence.CompletedValue < signalValue) {
+                    fence.SetEventOnCompletion(signalValue, waitEvent.SafeWaitHandle.DangerousGetHandle()).CheckError();
+                    waitEvent.WaitOne();
+                }
             }
-        }
-        catch (SharpGenException ex) when (ex.ResultCode.Code == unchecked((int)0x887A0005)) {
-            // Device already lost. During shutdown this should not escalate into a second crash.
-        }
-        finally {
-            fence?.Dispose();
+            catch (SharpGenException ex) when (ex.ResultCode.Code == unchecked((int)0x887A0005)) {
+                // Device already lost. During shutdown this should not escalate into a second crash.
+            }
+            finally {
+                fence?.Dispose();
+            }
         }
     }
 

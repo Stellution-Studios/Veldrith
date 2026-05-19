@@ -175,21 +175,25 @@ internal sealed class D3D12Swapchain : Swapchain {
             return;
         }
 
-        bool useDepth = this._depthTexture != null;
-        PixelFormat? depthFormat = useDepth ? this._depthTexture.Format : null;
-        bool srgb = this._colorTexture.Format == PixelFormat.B8G8R8A8UNormSRgb || this._colorTexture.Format == PixelFormat.R8G8B8A8UNormSRgb;
+        lock (this.gd.CommandQueueLock) {
+            this.gd.WaitForIdle();
 
-        this._framebuffer.Dispose();
-        this._colorTexture.Dispose();
-        this._depthTexture?.Dispose();
-        if (this._hasNativeSwapchain) {
-            this.DisposeNativeResources();
-            this._dxgiSwapChain.ResizeBuffers((uint)this._bufferCount, width, height, this._nativeColorFormat, this.GetSwapChainFlags());
-            this.CreateNativeRenderTargets();
+            bool useDepth = this._depthTexture != null;
+            PixelFormat? depthFormat = useDepth ? this._depthTexture.Format : null;
+            bool srgb = this._colorTexture.Format == PixelFormat.B8G8R8A8UNormSRgb || this._colorTexture.Format == PixelFormat.R8G8B8A8UNormSRgb;
+
+            this._framebuffer.Dispose();
+            this._colorTexture.Dispose();
+            this._depthTexture?.Dispose();
+            if (this._hasNativeSwapchain) {
+                this.DisposeNativeResources();
+                this._dxgiSwapChain.ResizeBuffers((uint)this._bufferCount, width, height, this._nativeColorFormat, this.GetSwapChainFlags());
+                this.CreateNativeRenderTargets();
+            }
+
+            this.TryResolveAttachmentSize(ref width, ref height);
+            this.CreateAttachments(width, height, depthFormat, srgb);
         }
-
-        this.TryResolveAttachmentSize(ref width, ref height);
-        this.CreateAttachments(width, height, depthFormat, srgb);
     }
 
     /// <summary>
@@ -202,7 +206,9 @@ internal sealed class D3D12Swapchain : Swapchain {
                 presentFlags = PresentFlags.AllowTearing;
             }
 
-            this._dxgiSwapChain.Present(this.SyncToVerticalBlank ? 1u : 0u, presentFlags);
+            lock (this.gd.CommandQueueLock) {
+                this._dxgiSwapChain.Present(this.SyncToVerticalBlank ? 1u : 0u, presentFlags);
+            }
         }
     }
 
@@ -330,9 +336,12 @@ internal sealed class D3D12Swapchain : Swapchain {
             return;
         }
 
-        this.DisposeNativeResources();
-        this._dxgiSwapChain.ResizeBuffers((uint)this._bufferCount, width, height, this._nativeColorFormat, this.GetSwapChainFlags());
-        this.CreateNativeRenderTargets();
+        lock (this.gd.CommandQueueLock) {
+            this.gd.WaitForIdle();
+            this.DisposeNativeResources();
+            this._dxgiSwapChain.ResizeBuffers((uint)this._bufferCount, width, height, this._nativeColorFormat, this.GetSwapChainFlags());
+            this.CreateNativeRenderTargets();
+        }
     }
 
     /// <summary>
