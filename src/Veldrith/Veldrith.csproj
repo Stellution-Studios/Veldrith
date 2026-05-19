@@ -23,6 +23,10 @@
   <ItemGroup>
     <PackageReference Include="ppy.Vk" Version="1.0.26" Condition="'$(ExcludeVulkan)' != 'true'"/>
     <PackageReference Include="Vortice.Direct3D12" Version="$(VorticeWindowsVersion)"/>
+    <PackageReference Update="Nerdbank.GitVersioning" Version="3.10.44-alpha">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>

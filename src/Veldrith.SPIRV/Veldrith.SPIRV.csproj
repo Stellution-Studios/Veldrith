@@ -18,6 +18,10 @@
     <ItemGroup>
         <PackageReference Include="Silk.NET.SPIRV.Cross" Version="2.23.0" />
         <PackageReference Include="Silk.NET.Shaderc" Version="2.23.0" />
+        <PackageReference Update="Nerdbank.GitVersioning" Version="3.10.44-alpha">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+        </PackageReference>
     </ItemGroup>
 
 </Project>
