@@ -1,6 +1,3 @@
-// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
-// See the LICENCE file in the repository root for full licence text.
-
 using System;
 using Veldrith.MetalBindings;
 
@@ -8,9 +5,20 @@ namespace Veldrith.MTL;
 
 internal unsafe class MtlcvDisplayLink : IMtlDisplayLink {
     // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
+
+    /// <summary>
+    /// Represents the _cvDisplayLinkCallbackHandler field.
+    /// </summary>
     private readonly CVDisplayLinkOutputCallbackDelegate _cvDisplayLinkCallbackHandler;
+
+    /// <summary>
+    /// Represents the _displayLink field.
+    /// </summary>
     private CVDisplayLink _displayLink;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MtlcvDisplayLink" /> class.
+    /// </summary>
     public MtlcvDisplayLink() {
         this._cvDisplayLinkCallbackHandler = this.OnCallback;
         this._displayLink = CVDisplayLink.CreateWithActiveCGDisplays();
@@ -20,24 +28,38 @@ internal unsafe class MtlcvDisplayLink : IMtlDisplayLink {
 
     #region Disposal
 
+    /// <summary>
+    /// Executes Dispose.
+    /// </summary>
     public void Dispose() {
         this._displayLink.Release();
     }
 
     #endregion
 
+    /// <summary>
+    /// Executes UpdateActiveDisplay.
+    /// </summary>
     public void UpdateActiveDisplay(int x, int y, int w, int h) {
         this._displayLink.UpdateActiveMonitor(x, y, w, h);
     }
 
+    /// <summary>
+    /// Executes GetActualOutputVideoRefreshPeriod.
+    /// </summary>
     public double GetActualOutputVideoRefreshPeriod() {
         return this._displayLink.GetActualOutputVideoRefreshPeriod();
     }
 
+    /// <summary>
+    /// Represents the Callback field.
+    /// </summary>
     public event Action Callback;
 
-    private int OnCallback(CVDisplayLink displaylink, CVTimeStamp* innow, CVTimeStamp* inoutputtime, long flagsin,
-        long flagsout, IntPtr userdata) {
+    /// <summary>
+    /// Executes OnCallback.
+    /// </summary>
+    private int OnCallback(CVDisplayLink displaylink, CVTimeStamp* innow, CVTimeStamp* inoutputtime, long flagsin, long flagsout, IntPtr userdata) {
         this.Callback?.Invoke();
         return 0;
     }

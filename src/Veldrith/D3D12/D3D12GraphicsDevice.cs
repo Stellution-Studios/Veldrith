@@ -14,40 +14,70 @@ using VorticeDXGI = Vortice.DXGI.DXGI;
 namespace Veldrith.D3D12;
 
 internal sealed class D3D12GraphicsDevice : GraphicsDevice {
-    private static readonly GraphicsDeviceFeatures _d3d12Features = new(
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        false);
 
+    /// <summary>
+    /// Represents the _d3d12Features field.
+    /// </summary>
+    private static readonly GraphicsDeviceFeatures _d3d12Features = new(true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, false);
+
+    /// <summary>
+    /// Represents the _d3d12Info field.
+    /// </summary>
     private readonly BackendInfoD3D12 _d3d12Info;
+
+    /// <summary>
+    /// Represents the _device field.
+    /// </summary>
     private readonly ID3D12Device _device;
+
+    /// <summary>
+    /// Represents the _formatSupportCache field.
+    /// </summary>
     private readonly Dictionary<Format, CachedFormatSupport> _formatSupportCache = new();
+
+    /// <summary>
+    /// Represents the _formatSupportCacheLock field.
+    /// </summary>
     private readonly object _formatSupportCacheLock = new();
 
+    /// <summary>
+    /// Represents the _resourceFactory field.
+    /// </summary>
     private readonly D3D12ResourceFactory _resourceFactory;
+
+    /// <summary>
+    /// Represents the _rootSignatureCache field.
+    /// </summary>
     private readonly Dictionary<string, ID3D12RootSignature> _rootSignatureCache = new(StringComparer.Ordinal);
+
+    /// <summary>
+    /// Represents the _rootSignatureCacheLock field.
+    /// </summary>
     private readonly object _rootSignatureCacheLock = new();
+
+    /// <summary>
+    /// Represents the _submissionFence field.
+    /// </summary>
     private readonly ID3D12Fence _submissionFence;
+
+    /// <summary>
+    /// Represents the _submissionFenceEvent field.
+    /// </summary>
     private readonly AutoResetEvent _submissionFenceEvent;
+
+    /// <summary>
+    /// Represents the _immediateFenceValue field.
+    /// </summary>
     private ulong _immediateFenceValue = 1;
+
+    /// <summary>
+    /// Represents the _nextSubmissionFenceValue field.
+    /// </summary>
     private ulong _nextSubmissionFenceValue = 1;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="D3D12GraphicsDevice" /> class.
+    /// </summary>
     public D3D12GraphicsDevice(GraphicsDeviceOptions options, SwapchainDescription? swapchainDescription) {
         if (!IsSupported()) {
             throw new PlatformNotSupportedException("Direct3D 12 is only supported on Windows.");
@@ -90,26 +120,59 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         this.PostDeviceCreated();
     }
 
+    /// <summary>
+    /// Gets or sets DeviceName.
+    /// </summary>
     public override string DeviceName { get; }
 
+    /// <summary>
+    /// Gets or sets VendorName.
+    /// </summary>
     public override string VendorName { get; }
 
+    /// <summary>
+    /// Gets or sets ApiVersion.
+    /// </summary>
     public override GraphicsApiVersion ApiVersion => GraphicsApiVersion.Unknown;
 
+    /// <summary>
+    /// Gets or sets BackendType.
+    /// </summary>
     public override GraphicsBackend BackendType => GraphicsBackend.Direct3D12;
 
+    /// <summary>
+    /// Gets or sets IsUvOriginTopLeft.
+    /// </summary>
     public override bool IsUvOriginTopLeft => true;
 
+    /// <summary>
+    /// Gets or sets IsDepthRangeZeroToOne.
+    /// </summary>
     public override bool IsDepthRangeZeroToOne => true;
 
+    /// <summary>
+    /// Gets or sets IsClipSpaceYInverted.
+    /// </summary>
     public override bool IsClipSpaceYInverted => true;
 
+    /// <summary>
+    /// Gets or sets ResourceFactory.
+    /// </summary>
     public override ResourceFactory ResourceFactory => this._resourceFactory;
 
+    /// <summary>
+    /// Gets or sets MainSwapchain.
+    /// </summary>
     public override Swapchain MainSwapchain { get; }
 
+    /// <summary>
+    /// Gets or sets Features.
+    /// </summary>
     public override GraphicsDeviceFeatures Features => _d3d12Features;
 
+    /// <summary>
+    /// Gets or sets AllowTearing.
+    /// </summary>
     public override bool AllowTearing {
         get => this.MainSwapchain is D3D12Swapchain d3d12Swapchain && d3d12Swapchain.AllowTearing;
         set {
@@ -119,11 +182,24 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         }
     }
 
+    /// <summary>
+    /// Represents the Device field.
+    /// </summary>
     internal ID3D12Device Device => this._device;
+
+    /// <summary>
+    /// Gets or sets CommandQueue.
+    /// </summary>
     internal ID3D12CommandQueue CommandQueue { get; }
 
+    /// <summary>
+    /// Gets or sets DxgiFactory.
+    /// </summary>
     internal IDXGIFactory4 DxgiFactory { get; }
 
+    /// <summary>
+    /// Executes IsSupported.
+    /// </summary>
     public static bool IsSupported() {
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
             return false;
@@ -132,10 +208,16 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         return VorticeD3D12.D3D12CreateDevice(null, FeatureLevel.Level_11_0, out ID3D12Device _).Success;
     }
 
+    /// <summary>
+    /// Executes IsSubmissionFenceComplete.
+    /// </summary>
     internal bool IsSubmissionFenceComplete(ulong value) {
         return this._submissionFence.CompletedValue >= value;
     }
 
+    /// <summary>
+    /// Executes WaitForSubmissionFence.
+    /// </summary>
     internal void WaitForSubmissionFence(ulong value) {
         if (this._submissionFence.CompletedValue >= value) {
             return;
@@ -146,24 +228,32 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         this._submissionFenceEvent.WaitOne();
     }
 
+    /// <summary>
+    /// Executes GetOrCreateRootSignature.
+    /// </summary>
     internal ID3D12RootSignature GetOrCreateRootSignature(string cacheKey, in RootSignatureDescription description) {
         lock (this._rootSignatureCacheLock) {
             if (this._rootSignatureCache.TryGetValue(cacheKey, out ID3D12RootSignature cached)) {
                 return cached;
             }
 
-            ID3D12RootSignature created =
-                this._device.CreateRootSignature(in description, RootSignatureVersion.Version1);
+            ID3D12RootSignature created = this._device.CreateRootSignature(in description, RootSignatureVersion.Version1);
             this._rootSignatureCache.Add(cacheKey, created);
             return created;
         }
     }
 
+    /// <summary>
+    /// Executes WaitForFence.
+    /// </summary>
     public override bool WaitForFence(Fence fence, ulong nanosecondTimeout) {
         D3D12Fence d3d12Fence = Util.AssertSubtype<Fence, D3D12Fence>(fence);
         return d3d12Fence.Wait(nanosecondTimeout);
     }
 
+    /// <summary>
+    /// Executes WaitForFences.
+    /// </summary>
     public override bool WaitForFences(Fence[] fences, bool waitAll, ulong nanosecondTimeout) {
         if (fences == null || fences.Length == 0) {
             return true;
@@ -205,10 +295,16 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         return false;
     }
 
+    /// <summary>
+    /// Executes ResetFence.
+    /// </summary>
     public override void ResetFence(Fence fence) {
         fence.Reset();
     }
 
+    /// <summary>
+    /// Executes GetSampleCountLimit.
+    /// </summary>
     public override TextureSampleCount GetSampleCountLimit(PixelFormat format, bool depthFormat) {
         Format dxgiFormat;
         try {
@@ -258,14 +354,23 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         return TextureSampleCount.Count1;
     }
 
+    /// <summary>
+    /// Executes GetUniformBufferMinOffsetAlignmentCore.
+    /// </summary>
     internal override uint GetUniformBufferMinOffsetAlignmentCore() {
         return 256;
     }
 
+    /// <summary>
+    /// Executes GetStructuredBufferMinOffsetAlignmentCore.
+    /// </summary>
     internal override uint GetStructuredBufferMinOffsetAlignmentCore() {
         return 16;
     }
 
+    /// <summary>
+    /// Executes MapCore.
+    /// </summary>
     protected override MappedResource MapCore(IMappableResource resource, MapMode mode, uint subresource) {
         if (resource is D3D12DeviceBuffer buffer) {
             return buffer.Map(mode);
@@ -278,6 +383,9 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         throw new VeldridException("Resource belongs to a different backend.");
     }
 
+    /// <summary>
+    /// Executes UnmapCore.
+    /// </summary>
     protected override void UnmapCore(IMappableResource resource, uint subresource) {
         if (resource is D3D12DeviceBuffer buffer) {
             buffer.Unmap();
@@ -292,6 +400,9 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         throw new VeldridException("Resource belongs to a different backend.");
     }
 
+    /// <summary>
+    /// Executes PlatformDispose.
+    /// </summary>
     protected override void PlatformDispose() {
         lock (this._rootSignatureCacheLock) {
             foreach (ID3D12RootSignature rootSignature in this._rootSignatureCache.Values) {
@@ -309,6 +420,9 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         this.DxgiFactory?.Dispose();
     }
 
+    /// <summary>
+    /// Executes SubmitCommandsCore.
+    /// </summary>
     private protected override void SubmitCommandsCore(CommandList commandList, Fence fence) {
         if (commandList is D3D12CommandList d3d12CommandList) {
             d3d12CommandList.ExecuteNoSignal();
@@ -323,6 +437,9 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         }
     }
 
+    /// <summary>
+    /// Executes SwapBuffersCore.
+    /// </summary>
     private protected override void SwapBuffersCore(Swapchain swapchain) {
         if (swapchain is D3D12Swapchain d3d12Swapchain) {
             d3d12Swapchain.Present();
@@ -332,59 +449,47 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         throw new VeldridException("Swapchain belongs to a different backend.");
     }
 
+    /// <summary>
+    /// Executes WaitForIdleCore.
+    /// </summary>
     private protected override void WaitForIdleCore() {
         this.WaitForQueueIdle();
     }
 
+    /// <summary>
+    /// Executes WaitForNextFrameReadyCore.
+    /// </summary>
     private protected override void WaitForNextFrameReadyCore() {
         // Do not globally stall the GPU every frame on D3D12.
         // Frame pacing should be handled by swapchain present / fences.
     }
 
-    private protected override void UpdateTextureCore(
-        Texture texture,
-        IntPtr source,
-        uint sizeInBytes,
-        uint x,
-        uint y,
-        uint z,
-        uint width,
-        uint height,
-        uint depth,
-        uint mipLevel,
-        uint arrayLayer) {
+    /// <summary>
+    /// Executes UpdateTextureCore.
+    /// </summary>
+    private protected override void UpdateTextureCore(Texture texture, IntPtr source, uint sizeInBytes, uint x, uint y, uint z, uint width, uint height, uint depth, uint mipLevel, uint arrayLayer) {
         if (texture is not D3D12Texture d3d12Texture) {
             throw new VeldridException("Texture belongs to a different backend.");
         }
 
         if (d3d12Texture.NativeTexture != null) {
-            this.UpdateNativeTexture(
-                d3d12Texture,
-                source,
-                sizeInBytes,
-                x,
-                y,
-                z,
-                width,
-                height,
-                depth,
-                mipLevel,
-                arrayLayer);
+            this.UpdateNativeTexture(d3d12Texture, source, sizeInBytes, x, y, z, width, height, depth, mipLevel, arrayLayer);
             return;
         }
 
         d3d12Texture.Update(source, sizeInBytes, x, y, z, width, height, depth, mipLevel, arrayLayer);
     }
 
-    private protected override void UpdateBufferCore(DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source,
-        uint sizeInBytes) {
+    /// <summary>
+    /// Executes UpdateBufferCore.
+    /// </summary>
+    private protected override void UpdateBufferCore(DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes) {
         if (buffer is not D3D12DeviceBuffer d3d12Buffer) {
             throw new VeldridException("Buffer belongs to a different backend.");
         }
 
         ID3D12CommandAllocator allocator = this._device.CreateCommandAllocator(CommandListType.Direct);
-        ID3D12GraphicsCommandList commandList =
-            this._device.CreateCommandList<ID3D12GraphicsCommandList>(0, CommandListType.Direct, allocator);
+        ID3D12GraphicsCommandList commandList = this._device.CreateCommandList<ID3D12GraphicsCommandList>(0, CommandListType.Direct, allocator);
         ID3D12Resource temporaryUpload = null;
         try {
             temporaryUpload = d3d12Buffer.Update(commandList, source, bufferOffsetInBytes, sizeInBytes);
@@ -399,15 +504,16 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         }
     }
 
-    private protected override bool GetPixelFormatSupportCore(PixelFormat format, TextureType type, TextureUsage usage,
-        out PixelFormatProperties properties) {
+    /// <summary>
+    /// Executes GetPixelFormatSupportCore.
+    /// </summary>
+    private protected override bool GetPixelFormatSupportCore(PixelFormat format, TextureType type, TextureUsage usage, out PixelFormatProperties properties) {
         if ((usage & TextureUsage.Cubemap) != 0 && type != TextureType.Texture2D) {
             properties = default;
             return false;
         }
 
-        if ((usage & TextureUsage.DepthStencil) != 0 &&
-            (usage & (TextureUsage.RenderTarget | TextureUsage.Storage)) != 0) {
+        if ((usage & TextureUsage.DepthStencil) != 0 && (usage & (TextureUsage.RenderTarget | TextureUsage.Storage)) != 0) {
             properties = default;
             return false;
         }
@@ -535,28 +641,27 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
             sampleFlags = 1u << (int)TextureSampleCount.Count1;
         }
 
-        properties = new PixelFormatProperties(
-            maxWidth,
-            maxHeight,
-            maxDepth,
-            maxMipLevels,
-            maxArrayLayers,
-            sampleFlags);
+        properties = new PixelFormatProperties(maxWidth, maxHeight, maxDepth, maxMipLevels, maxArrayLayers, sampleFlags);
         return true;
     }
 
+    /// <summary>
+    /// Executes GetD3D12Info.
+    /// </summary>
     public override bool GetD3D12Info(out BackendInfoD3D12 info) {
         info = this._d3d12Info;
         return true;
     }
 
+    /// <summary>
+    /// Executes SelectAdapter.
+    /// </summary>
     private static IDXGIAdapter1 SelectAdapter(IDXGIFactory4 factory) {
         // Prefer the high-performance adapter when DXGI 1.6 is available.
         using (IDXGIFactory6 factory6 = factory.QueryInterfaceOrNull<IDXGIFactory6>()) {
             if (factory6 != null) {
                 uint hpIndex = 0;
-                while (factory6.EnumAdapterByGpuPreference(hpIndex, GpuPreference.HighPerformance,
-                           out IDXGIAdapter1 hpAdapter).Success) {
+                while (factory6.EnumAdapterByGpuPreference(hpIndex, GpuPreference.HighPerformance, out IDXGIAdapter1 hpAdapter).Success) {
                     AdapterDescription1 hpDescription = hpAdapter.Description1;
                     bool softwareHp = (hpDescription.Flags & AdapterFlags.Software) != 0;
                     if (!softwareHp
@@ -604,6 +709,9 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         return bestAdapter;
     }
 
+    /// <summary>
+    /// Executes GetSupportedSampleFlags.
+    /// </summary>
     private uint GetSupportedSampleFlags(Format format) {
         uint sampleFlags = 1u << (int)TextureSampleCount.Count1;
         sampleFlags |= this.QuerySampleSupportFlag(format, 2, TextureSampleCount.Count2);
@@ -614,6 +722,9 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         return sampleFlags;
     }
 
+    /// <summary>
+    /// Executes QuerySampleSupportFlag.
+    /// </summary>
     private uint QuerySampleSupportFlag(Format format, uint sampleCount, TextureSampleCount textureSampleCount) {
         FeatureDataMultisampleQualityLevels msaa = new() {
             Format = format,
@@ -621,16 +732,17 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
             Flags = MultisampleQualityLevelFlags.None
         };
 
-        if (!this.TryCheckFeatureSupport(D3D12Feature.MultisampleQualityLevels, ref msaa) ||
-            msaa.NumQualityLevels == 0) {
+        if (!this.TryCheckFeatureSupport(D3D12Feature.MultisampleQualityLevels, ref msaa) || msaa.NumQualityLevels == 0) {
             return 0;
         }
 
         return 1u << (int)textureSampleCount;
     }
 
-    private static void GetTextureTypeLimits(TextureType type, out uint maxWidth, out uint maxHeight, out uint maxDepth,
-        out uint maxArrayLayers) {
+    /// <summary>
+    /// Executes GetTextureTypeLimits.
+    /// </summary>
+    private static void GetTextureTypeLimits(TextureType type, out uint maxWidth, out uint maxHeight, out uint maxDepth, out uint maxArrayLayers) {
         switch (type) {
             case TextureType.Texture1D:
                 maxWidth = 16384;
@@ -650,11 +762,13 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
                 maxDepth = 2048;
                 maxArrayLayers = 1;
                 break;
-            default:
-                throw Illegal.Value<TextureType>();
+            default: throw Illegal.Value<TextureType>();
         }
     }
 
+    /// <summary>
+    /// Executes GetMaxMipLevels.
+    /// </summary>
     private static uint GetMaxMipLevels(uint maxWidth, uint maxHeight, uint maxDepth) {
         uint maxDimension = Math.Max(maxWidth, Math.Max(maxHeight, maxDepth));
         uint mipLevels = 1;
@@ -666,23 +780,20 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         return mipLevels;
     }
 
+    /// <summary>
+    /// Executes IsSrgbFormat.
+    /// </summary>
     private static bool IsSrgbFormat(PixelFormat format) {
         switch (format) {
-            case PixelFormat.R8G8B8A8UNormSRgb:
-            case PixelFormat.B8G8R8A8UNormSRgb:
-            case PixelFormat.Bc1RgbUNormSRgb:
-            case PixelFormat.Bc1RgbaUNormSRgb:
-            case PixelFormat.Bc2UNormSRgb:
-            case PixelFormat.Bc3UNormSRgb:
-            case PixelFormat.Bc7UNormSRgb:
-                return true;
-            default:
-                return false;
+            case PixelFormat.R8G8B8A8UNormSRgb: case PixelFormat.B8G8R8A8UNormSRgb: case PixelFormat.Bc1RgbUNormSRgb: case PixelFormat.Bc1RgbaUNormSRgb: case PixelFormat.Bc2UNormSRgb: case PixelFormat.Bc3UNormSRgb: case PixelFormat.Bc7UNormSRgb: return true;
+            default: return false;
         }
     }
 
-    private static bool IsRuntimeMipmapGenerationSupported(PixelFormat format, TextureType type, TextureUsage usage,
-        bool depthUsage) {
+    /// <summary>
+    /// Executes IsRuntimeMipmapGenerationSupported.
+    /// </summary>
+    private static bool IsRuntimeMipmapGenerationSupported(PixelFormat format, TextureType type, TextureUsage usage, bool depthUsage) {
         if (depthUsage) {
             return false;
         }
@@ -704,6 +815,9 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         return true;
     }
 
+    /// <summary>
+    /// Executes TryGetFormatSupport.
+    /// </summary>
     private bool TryGetFormatSupport(Format format, out FeatureDataFormatSupport formatSupport) {
         lock (this._formatSupportCacheLock) {
             if (this._formatSupportCache.TryGetValue(format, out CachedFormatSupport cached)) {
@@ -721,16 +835,15 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         }
     }
 
+    /// <summary>
+    /// Executes IsTypeSupported.
+    /// </summary>
     private static bool IsTypeSupported(TextureType type, FormatSupport1 support) {
         switch (type) {
-            case TextureType.Texture1D:
-                return (support & FormatSupport1.Texture1D) != 0;
-            case TextureType.Texture2D:
-                return (support & FormatSupport1.Texture2D) != 0;
-            case TextureType.Texture3D:
-                return (support & FormatSupport1.Texture3D) != 0;
-            default:
-                return false;
+            case TextureType.Texture1D: return (support & FormatSupport1.Texture1D) != 0;
+            case TextureType.Texture2D: return (support & FormatSupport1.Texture2D) != 0;
+            case TextureType.Texture3D: return (support & FormatSupport1.Texture3D) != 0;
+            default: return false;
         }
     }
 
@@ -739,51 +852,25 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         return this._device.CheckFeatureSupport(feature, ref data);
     }
 
-    private void UpdateNativeTexture(
-        D3D12Texture texture,
-        IntPtr source,
-        uint sizeInBytes,
-        uint x,
-        uint y,
-        uint z,
-        uint width,
-        uint height,
-        uint depth,
-        uint mipLevel,
-        uint arrayLayer) {
+    /// <summary>
+    /// Executes UpdateNativeTexture.
+    /// </summary>
+    private void UpdateNativeTexture(D3D12Texture texture, IntPtr source, uint sizeInBytes, uint x, uint y, uint z, uint width, uint height, uint depth, uint mipLevel, uint arrayLayer) {
         // Use the validated staging->native upload path in D3D12Texture to avoid
         // partial CopyTextureRegion edge-cases that can trigger device removal.
-        texture.UpdateNativeSubresource(
-            source,
-            sizeInBytes,
-            x,
-            y,
-            z,
-            width,
-            height,
-            depth,
-            mipLevel,
-            arrayLayer);
+        texture.UpdateNativeSubresource(source, sizeInBytes, x, y, z, width, height, depth, mipLevel, arrayLayer);
     }
 
-    private unsafe void CopyTextureDataToUploadBuffer(
-        IntPtr source,
-        uint sizeInBytes,
-        PixelFormat format,
-        uint copyWidth,
-        uint copyHeight,
-        uint copyDepth,
-        void* uploadMappedPtr,
-        PlacedSubresourceFootPrint placedFootprint,
-        uint numRows,
-        ulong rowSizeInBytes) {
+    /// <summary>
+    /// Executes CopyTextureDataToUploadBuffer.
+    /// </summary>
+    private unsafe void CopyTextureDataToUploadBuffer(IntPtr source, uint sizeInBytes, PixelFormat format, uint copyWidth, uint copyHeight, uint copyDepth, void* uploadMappedPtr, PlacedSubresourceFootPrint placedFootprint, uint numRows, ulong rowSizeInBytes) {
         uint srcRowPitch = FormatHelpers.GetRowPitch(copyWidth, format);
         uint srcNumRows = FormatHelpers.GetNumRows(copyHeight, format);
         uint srcDepthPitch = srcRowPitch * srcNumRows;
         ulong requiredBytes = (ulong)srcDepthPitch * copyDepth;
         if (sizeInBytes < requiredBytes) {
-            throw new VeldridException(
-                "Texture update source size is smaller than required for the destination texture.");
+            throw new VeldridException("Texture update source size is smaller than required for the destination texture.");
         }
 
         if (numRows < srcNumRows) {
@@ -809,6 +896,9 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         }
     }
 
+    /// <summary>
+    /// Executes WaitForQueueIdle.
+    /// </summary>
     private void WaitForQueueIdle() {
         ID3D12Fence fence = null;
         using AutoResetEvent waitEvent = new(false);
@@ -829,10 +919,24 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         }
     }
 
+    /// <summary>
+    /// Represents the CachedFormatSupport struct.
+    /// </summary>
     private readonly struct CachedFormatSupport {
+
+        /// <summary>
+        /// Represents the IsSupported field.
+        /// </summary>
         public readonly bool IsSupported;
+
+        /// <summary>
+        /// Represents the Support field.
+        /// </summary>
         public readonly FeatureDataFormatSupport Support;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CachedFormatSupport" /> class.
+        /// </summary>
         public CachedFormatSupport(bool isSupported, FeatureDataFormatSupport support) {
             this.IsSupported = isSupported;
             this.Support = support;

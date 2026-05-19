@@ -5,7 +5,15 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 namespace Veldrith.MetalBindings;
 
 [StructLayout(LayoutKind.Sequential)]
+
+/// <summary>
+/// Represents the MTLRenderPipelineColorAttachmentDescriptorArray struct.
+/// </summary>
 public struct MTLRenderPipelineColorAttachmentDescriptorArray {
+
+    /// <summary>
+    /// Represents the NativePtr field.
+    /// </summary>
     public readonly IntPtr NativePtr;
 
     public MTLRenderPipelineColorAttachmentDescriptor this[uint index] {

@@ -1,21 +1,22 @@
-﻿namespace Veldrith;
+namespace Veldrith;
 
 /// <summary>
-///     The specific graphics API used by the <see cref="GraphicsDevice" />.
+/// The specific graphics API used by the <see cref="GraphicsDevice" />.
 /// </summary>
 public enum GraphicsBackend : byte {
+
     /// <summary>
-    ///     Direct3D 12.
+    /// Direct3D 12.
     /// </summary>
     Direct3D12,
 
     /// <summary>
-    ///     Vulkan.
+    /// Vulkan.
     /// </summary>
     Vulkan,
 
     /// <summary>
-    ///     Metal.
+    /// Metal.
     /// </summary>
     Metal
 }

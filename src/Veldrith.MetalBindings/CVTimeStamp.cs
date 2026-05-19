@@ -1,16 +1,52 @@
-// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
-// See the LICENCE file in the repository root for full licence text.
-
 namespace Veldrith.MetalBindings;
 
+/// <summary>
+/// Represents the CVTimeStamp struct.
+/// </summary>
 public struct CVTimeStamp {
+
+    /// <summary>
+    /// Represents the flags field.
+    /// </summary>
     public ulong flags;
+
+    /// <summary>
+    /// Represents the hostTime field.
+    /// </summary>
     public ulong hostTime;
+
+    /// <summary>
+    /// Represents the rateScalar field.
+    /// </summary>
     public double rateScalar;
+
+    /// <summary>
+    /// Represents the reserved field.
+    /// </summary>
     public ulong reserved;
+
+    /// <summary>
+    /// Represents the smpteTime field.
+    /// </summary>
     public CVSMPTETime smpteTime;
+
+    /// <summary>
+    /// Represents the version field.
+    /// </summary>
     public uint version;
+
+    /// <summary>
+    /// Represents the videoRefreshPeriod field.
+    /// </summary>
     public long videoRefreshPeriod;
+
+    /// <summary>
+    /// Represents the videoTime field.
+    /// </summary>
     public long videoTime;
+
+    /// <summary>
+    /// Represents the videoTimeScale field.
+    /// </summary>
     public int videoTimeScale;
 }

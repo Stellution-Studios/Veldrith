@@ -1,6 +1,5 @@
 namespace Veldrith.MetalBindings;
 
 public enum MTLDepthClipMode {
-    Clip = 0,
-    Clamp = 1
+    Clip = 0, Clamp = 1
 }

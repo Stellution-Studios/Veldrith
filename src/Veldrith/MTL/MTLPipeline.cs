@@ -6,9 +6,20 @@ using Veldrith.MetalBindings;
 namespace Veldrith.MTL;
 
 internal class MtlPipeline : Pipeline {
+
+    /// <summary>
+    /// Represents the _disposed field.
+    /// </summary>
     private bool _disposed;
+
+    /// <summary>
+    /// Represents the _specializedFunctions field.
+    /// </summary>
     private List<MTLFunction> _specializedFunctions;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MtlPipeline" /> class.
+    /// </summary>
     public MtlPipeline(ref GraphicsPipelineDescription description, MtlGraphicsDevice gd)
         : base(ref description) {
         this.PrimitiveType = MtlFormats.VdToMtlPrimitiveTopology(description.PrimitiveTopology);
@@ -16,8 +27,7 @@ internal class MtlPipeline : Pipeline {
         this.NonVertexBufferCount = 0;
 
         for (int i = 0; i < this.ResourceLayouts.Length; i++) {
-            this.ResourceLayouts[i] =
-                Util.AssertSubtype<ResourceLayout, MtlResourceLayout>(description.ResourceLayouts[i]);
+            this.ResourceLayouts[i] = Util.AssertSubtype<ResourceLayout, MtlResourceLayout>(description.ResourceLayouts[i]);
             this.NonVertexBufferCount += this.ResourceLayouts[i].BufferCount;
         }
 
@@ -36,10 +46,8 @@ internal class MtlPipeline : Pipeline {
 
             if (mtlShader.HasFunctionConstants) {
                 // Need to create specialized MTLFunction.
-                MTLFunctionConstantValues constantValues =
-                    this.CreateConstantValues(description.ShaderSet.Specializations);
-                specializedFunction =
-                    mtlShader.Library.newFunctionWithNameConstantValues(mtlShader.EntryPoint, constantValues);
+                MTLFunctionConstantValues constantValues = this.CreateConstantValues(description.ShaderSet.Specializations);
+                specializedFunction = mtlShader.Library.newFunctionWithNameConstantValues(mtlShader.EntryPoint, constantValues);
                 this.AddSpecializedFunction(specializedFunction);
                 ObjectiveCRuntime.release(constantValues.NativePtr);
 
@@ -68,8 +76,7 @@ internal class MtlPipeline : Pipeline {
             MTLVertexBufferLayoutDescriptor mtlLayout = vertexDescriptor.layouts[layoutIndex];
             mtlLayout.stride = vdVertexLayouts[i].Stride;
             uint stepRate = vdVertexLayouts[i].InstanceStepRate;
-            mtlLayout.stepFunction =
-                stepRate == 0 ? MTLVertexStepFunction.PerVertex : MTLVertexStepFunction.PerInstance;
+            mtlLayout.stepFunction = stepRate == 0 ? MTLVertexStepFunction.PerVertex : MTLVertexStepFunction.PerInstance;
             mtlLayout.stepRate = Math.Max(1, stepRate);
         }
 
@@ -122,13 +129,11 @@ internal class MtlPipeline : Pipeline {
             colorDesc.writeMask = MtlFormats.VdToMtlColorWriteMask(attachmentBlendDesc.ColorWriteMask.GetOrDefault());
             colorDesc.alphaBlendOperation = MtlFormats.VdToMtlBlendOp(attachmentBlendDesc.AlphaFunction);
             colorDesc.sourceAlphaBlendFactor = MtlFormats.VdToMtlBlendFactor(attachmentBlendDesc.SourceAlphaFactor);
-            colorDesc.destinationAlphaBlendFactor =
-                MtlFormats.VdToMtlBlendFactor(attachmentBlendDesc.DestinationAlphaFactor);
+            colorDesc.destinationAlphaBlendFactor = MtlFormats.VdToMtlBlendFactor(attachmentBlendDesc.DestinationAlphaFactor);
 
             colorDesc.rgbBlendOperation = MtlFormats.VdToMtlBlendOp(attachmentBlendDesc.ColorFunction);
             colorDesc.sourceRGBBlendFactor = MtlFormats.VdToMtlBlendFactor(attachmentBlendDesc.SourceColorFactor);
-            colorDesc.destinationRGBBlendFactor =
-                MtlFormats.VdToMtlBlendFactor(attachmentBlendDesc.DestinationColorFactor);
+            colorDesc.destinationRGBBlendFactor = MtlFormats.VdToMtlBlendFactor(attachmentBlendDesc.DestinationColorFactor);
         }
 
         mtlDesc.alphaToCoverageEnabled = blendStateDesc.AlphaToCoverageEnabled;
@@ -137,13 +142,11 @@ internal class MtlPipeline : Pipeline {
         ObjectiveCRuntime.release(mtlDesc.NativePtr);
 
         if (description.Outputs.DepthAttachment != null) {
-            MTLDepthStencilDescriptor depthDescriptor = MTLUtil.AllocInit<MTLDepthStencilDescriptor>(
-                nameof(MTLDepthStencilDescriptor));
+            MTLDepthStencilDescriptor depthDescriptor = MTLUtil.AllocInit<MTLDepthStencilDescriptor>(nameof(MTLDepthStencilDescriptor));
             // Metal has no explicit depth-test enable flag on the depth-stencil descriptor.
             // When depth testing is disabled we must force "always" to avoid unintentionally
             // rejecting all fragments if DepthComparison is left at its default (Never).
-            depthDescriptor.depthCompareFunction = MtlFormats.VdToMtlCompareFunction(
-                description.DepthStencilState.DepthTestEnabled
+            depthDescriptor.depthCompareFunction = MtlFormats.VdToMtlCompareFunction(description.DepthStencilState.DepthTestEnabled
                     ? description.DepthStencilState.DepthComparison
                     : ComparisonKind.Always);
             depthDescriptor.depthWriteEnabled = description.DepthStencilState.DepthWriteEnabled;
@@ -186,31 +189,28 @@ internal class MtlPipeline : Pipeline {
             : MTLDepthClipMode.Clamp;
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MtlPipeline" /> class.
+    /// </summary>
     public MtlPipeline(ref ComputePipelineDescription description, MtlGraphicsDevice gd)
         : base(ref description) {
         this.IsComputePipeline = true;
         this.ResourceLayouts = new MtlResourceLayout[description.ResourceLayouts.Length];
 
         for (int i = 0; i < this.ResourceLayouts.Length; i++) {
-            this.ResourceLayouts[i] =
-                Util.AssertSubtype<ResourceLayout, MtlResourceLayout>(description.ResourceLayouts[i]);
+            this.ResourceLayouts[i] = Util.AssertSubtype<ResourceLayout, MtlResourceLayout>(description.ResourceLayouts[i]);
         }
 
-        this.ThreadsPerThreadgroup = new MTLSize(
-            description.ThreadGroupSizeX,
-            description.ThreadGroupSizeY,
-            description.ThreadGroupSizeZ);
+        this.ThreadsPerThreadgroup = new MTLSize(description.ThreadGroupSizeX, description.ThreadGroupSizeY, description.ThreadGroupSizeZ);
 
-        MTLComputePipelineDescriptor mtlDesc = MTLUtil.AllocInit<MTLComputePipelineDescriptor>(
-            nameof(MTLComputePipelineDescriptor));
+        MTLComputePipelineDescriptor mtlDesc = MTLUtil.AllocInit<MTLComputePipelineDescriptor>(nameof(MTLComputePipelineDescriptor));
         MtlShader mtlShader = Util.AssertSubtype<Shader, MtlShader>(description.ComputeShader);
         MTLFunction specializedFunction;
 
         if (mtlShader.HasFunctionConstants) {
             // Need to create specialized MTLFunction.
             MTLFunctionConstantValues constantValues = this.CreateConstantValues(description.Specializations);
-            specializedFunction =
-                mtlShader.Library.newFunctionWithNameConstantValues(mtlShader.EntryPoint, constantValues);
+            specializedFunction = mtlShader.Library.newFunctionWithNameConstantValues(mtlShader.EntryPoint, constantValues);
             this.AddSpecializedFunction(specializedFunction);
             ObjectiveCRuntime.release(constantValues.NativePtr);
 
@@ -246,29 +246,111 @@ internal class MtlPipeline : Pipeline {
         ObjectiveCRuntime.release(mtlDesc.NativePtr);
     }
 
+    /// <summary>
+    /// Gets or sets RenderPipelineState.
+    /// </summary>
     public MTLRenderPipelineState RenderPipelineState { get; }
+
+    /// <summary>
+    /// Gets or sets ComputePipelineState.
+    /// </summary>
     public MTLComputePipelineState ComputePipelineState { get; }
+
+    /// <summary>
+    /// Gets or sets PrimitiveType.
+    /// </summary>
     public MTLPrimitiveType PrimitiveType { get; }
+
+    /// <summary>
+    /// Gets or sets ResourceLayouts.
+    /// </summary>
     public new MtlResourceLayout[] ResourceLayouts { get; }
+
+    /// <summary>
+    /// Gets or sets ResourceBindingModel.
+    /// </summary>
     public ResourceBindingModel ResourceBindingModel { get; }
+
+    /// <summary>
+    /// Gets or sets VertexBufferCount.
+    /// </summary>
     public uint VertexBufferCount { get; }
+
+    /// <summary>
+    /// Gets or sets NonVertexBufferCount.
+    /// </summary>
     public uint NonVertexBufferCount { get; }
+
+    /// <summary>
+    /// Gets or sets CullMode.
+    /// </summary>
     public MTLCullMode CullMode { get; }
+
+    /// <summary>
+    /// Gets or sets FrontFace.
+    /// </summary>
     public MTLWinding FrontFace { get; }
+
+    /// <summary>
+    /// Gets or sets FillMode.
+    /// </summary>
     public MTLTriangleFillMode FillMode { get; }
+
+    /// <summary>
+    /// Gets or sets DepthStencilState.
+    /// </summary>
     public MTLDepthStencilState DepthStencilState { get; }
+
+    /// <summary>
+    /// Gets or sets DepthClipMode.
+    /// </summary>
     public MTLDepthClipMode DepthClipMode { get; }
+
+    /// <summary>
+    /// Gets or sets IsComputePipeline.
+    /// </summary>
     public override bool IsComputePipeline { get; }
+
+    /// <summary>
+    /// Gets or sets ScissorTestEnabled.
+    /// </summary>
     public bool ScissorTestEnabled { get; }
+
+    /// <summary>
+    /// Gets or sets ThreadsPerThreadgroup.
+    /// </summary>
     public MTLSize ThreadsPerThreadgroup { get; } = new(1, 1, 1);
+
+    /// <summary>
+    /// Gets or sets HasStencil.
+    /// </summary>
     public bool HasStencil { get; }
+
+    /// <summary>
+    /// Gets or sets StencilReference.
+    /// </summary>
     public uint StencilReference { get; }
+
+    /// <summary>
+    /// Gets or sets BlendColor.
+    /// </summary>
     public RgbaFloat BlendColor { get; }
+
+    /// <summary>
+    /// Gets or sets IsDisposed.
+    /// </summary>
     public override bool IsDisposed => this._disposed;
+
+    /// <summary>
+    /// Gets or sets Name.
+    /// </summary>
     public override string Name { get; set; }
 
     #region Disposal
 
+    /// <summary>
+    /// Executes Dispose.
+    /// </summary>
     public override void Dispose() {
         if (!this._disposed) {
             if (this.RenderPipelineState.NativePtr != IntPtr.Zero) {
@@ -297,6 +379,9 @@ internal class MtlPipeline : Pipeline {
 
     #endregion
 
+    /// <summary>
+    /// Executes CreateConstantValues.
+    /// </summary>
     private unsafe MTLFunctionConstantValues CreateConstantValues(SpecializationConstant[] specializations) {
         MTLFunctionConstantValues ret = MTLFunctionConstantValues.New();
 
@@ -310,6 +395,9 @@ internal class MtlPipeline : Pipeline {
         return ret;
     }
 
+    /// <summary>
+    /// Executes AddSpecializedFunction.
+    /// </summary>
     private void AddSpecializedFunction(MTLFunction function) {
         this._specializedFunctions ??= new List<MTLFunction>();
         this._specializedFunctions.Add(function);

@@ -5,6 +5,10 @@ using Vortice.Mathematics;
 namespace Veldrith.D3D12;
 
 internal static class D3D12Formats {
+
+    /// <summary>
+    /// Executes ToDxgiFormat.
+    /// </summary>
     internal static Format ToDxgiFormat(PixelFormat format, bool depthFormat = false) {
         switch (format) {
             case PixelFormat.R8UNorm: return Format.R8_UNorm;
@@ -46,10 +50,8 @@ internal static class D3D12Formats {
             case PixelFormat.R32G32B32A32UInt: return Format.R32G32B32A32_UInt;
             case PixelFormat.R32G32B32A32SInt: return Format.R32G32B32A32_SInt;
             case PixelFormat.R32G32B32A32Float: return Format.R32G32B32A32_Float;
-            case PixelFormat.Bc1RgbUNorm:
-            case PixelFormat.Bc1RgbaUNorm: return Format.BC1_UNorm;
-            case PixelFormat.Bc1RgbUNormSRgb:
-            case PixelFormat.Bc1RgbaUNormSRgb: return Format.BC1_UNorm_SRgb;
+            case PixelFormat.Bc1RgbUNorm: case PixelFormat.Bc1RgbaUNorm: return Format.BC1_UNorm;
+            case PixelFormat.Bc1RgbUNormSRgb: case PixelFormat.Bc1RgbaUNormSRgb: return Format.BC1_UNorm_SRgb;
             case PixelFormat.Bc2UNorm: return Format.BC2_UNorm;
             case PixelFormat.Bc2UNormSRgb: return Format.BC2_UNorm_SRgb;
             case PixelFormat.Bc3UNorm: return Format.BC3_UNorm;
@@ -69,6 +71,9 @@ internal static class D3D12Formats {
         }
     }
 
+    /// <summary>
+    /// Executes ToDepthFormat.
+    /// </summary>
     internal static Format ToDepthFormat(PixelFormat format) {
         switch (format) {
             case PixelFormat.R16UNorm: return Format.D16_UNorm;
@@ -79,6 +84,9 @@ internal static class D3D12Formats {
         }
     }
 
+    /// <summary>
+    /// Executes GetViewFormat.
+    /// </summary>
     internal static Format GetViewFormat(Format format) {
         switch (format) {
             case Format.R16_Typeless: return Format.R16_UNorm;
@@ -89,6 +97,9 @@ internal static class D3D12Formats {
         }
     }
 
+    /// <summary>
+    /// Executes ToResourceFlags.
+    /// </summary>
     internal static ResourceFlags ToResourceFlags(TextureUsage usage) {
         ResourceFlags flags = ResourceFlags.None;
         if ((usage & TextureUsage.RenderTarget) == TextureUsage.RenderTarget) {
@@ -106,6 +117,9 @@ internal static class D3D12Formats {
         return flags;
     }
 
+    /// <summary>
+    /// Executes ToDxgiFormat.
+    /// </summary>
     internal static Format ToDxgiFormat(IndexFormat format) {
         switch (format) {
             case IndexFormat.UInt16: return Format.R16_UInt;
@@ -114,6 +128,9 @@ internal static class D3D12Formats {
         }
     }
 
+    /// <summary>
+    /// Executes ToDxgiFormat.
+    /// </summary>
     internal static Format ToDxgiFormat(VertexElementFormat format) {
         switch (format) {
             case VertexElementFormat.Float1: return Format.R32_Float;
@@ -151,6 +168,9 @@ internal static class D3D12Formats {
         }
     }
 
+    /// <summary>
+    /// Executes ToD3DPrimitiveTopology.
+    /// </summary>
     internal static Vortice.Direct3D.PrimitiveTopology ToD3DPrimitiveTopology(PrimitiveTopology topology) {
         switch (topology) {
             case PrimitiveTopology.TriangleList: return Vortice.Direct3D.PrimitiveTopology.TriangleList;
@@ -162,21 +182,21 @@ internal static class D3D12Formats {
         }
     }
 
+    /// <summary>
+    /// Executes ToPrimitiveTopologyType.
+    /// </summary>
     internal static PrimitiveTopologyType ToPrimitiveTopologyType(PrimitiveTopology topology) {
         switch (topology) {
-            case PrimitiveTopology.TriangleList:
-            case PrimitiveTopology.TriangleStrip:
-                return PrimitiveTopologyType.Triangle;
-            case PrimitiveTopology.LineList:
-            case PrimitiveTopology.LineStrip:
-                return PrimitiveTopologyType.Line;
-            case PrimitiveTopology.PointList:
-                return PrimitiveTopologyType.Point;
-            default:
-                throw Illegal.Value<PrimitiveTopology>();
+            case PrimitiveTopology.TriangleList: case PrimitiveTopology.TriangleStrip: return PrimitiveTopologyType.Triangle;
+            case PrimitiveTopology.LineList: case PrimitiveTopology.LineStrip: return PrimitiveTopologyType.Line;
+            case PrimitiveTopology.PointList: return PrimitiveTopologyType.Point;
+            default: throw Illegal.Value<PrimitiveTopology>();
         }
     }
 
+    /// <summary>
+    /// Executes ToFillMode.
+    /// </summary>
     internal static FillMode ToFillMode(PolygonFillMode mode) {
         switch (mode) {
             case PolygonFillMode.Solid: return FillMode.Solid;
@@ -185,6 +205,9 @@ internal static class D3D12Formats {
         }
     }
 
+    /// <summary>
+    /// Executes ToCullMode.
+    /// </summary>
     internal static CullMode ToCullMode(FaceCullMode mode) {
         switch (mode) {
             case FaceCullMode.None: return CullMode.None;
@@ -194,6 +217,9 @@ internal static class D3D12Formats {
         }
     }
 
+    /// <summary>
+    /// Executes ToComparison.
+    /// </summary>
     internal static ComparisonFunction ToComparison(ComparisonKind kind) {
         switch (kind) {
             case ComparisonKind.Never: return ComparisonFunction.Never;
@@ -208,6 +234,9 @@ internal static class D3D12Formats {
         }
     }
 
+    /// <summary>
+    /// Executes ToStencilOp.
+    /// </summary>
     internal static Vortice.Direct3D12.StencilOperation ToStencilOp(StencilOperation op) {
         switch (op) {
             case StencilOperation.Keep: return Vortice.Direct3D12.StencilOperation.Keep;
@@ -222,6 +251,9 @@ internal static class D3D12Formats {
         }
     }
 
+    /// <summary>
+    /// Executes ToBlend.
+    /// </summary>
     internal static Blend ToBlend(BlendFactor factor) {
         switch (factor) {
             case BlendFactor.Zero: return Blend.Zero;
@@ -240,6 +272,9 @@ internal static class D3D12Formats {
         }
     }
 
+    /// <summary>
+    /// Executes ToBlendOp.
+    /// </summary>
     internal static BlendOperation ToBlendOp(BlendFunction function) {
         switch (function) {
             case BlendFunction.Add: return BlendOperation.Add;
@@ -251,6 +286,9 @@ internal static class D3D12Formats {
         }
     }
 
+    /// <summary>
+    /// Executes ToColorWriteMask.
+    /// </summary>
     internal static ColorWriteEnable ToColorWriteMask(ColorWriteMask mask) {
         ColorWriteEnable enable = ColorWriteEnable.None;
         if ((mask & ColorWriteMask.Red) == ColorWriteMask.Red) {
@@ -272,6 +310,9 @@ internal static class D3D12Formats {
         return enable;
     }
 
+    /// <summary>
+    /// Executes ToTextureAddressMode.
+    /// </summary>
     internal static TextureAddressMode ToTextureAddressMode(SamplerAddressMode mode) {
         switch (mode) {
             case SamplerAddressMode.Wrap: return TextureAddressMode.Wrap;
@@ -282,29 +323,27 @@ internal static class D3D12Formats {
         }
     }
 
+    /// <summary>
+    /// Executes ToFilter.
+    /// </summary>
     internal static Filter ToFilter(SamplerFilter filter, bool comparison) {
         switch (filter) {
-            case SamplerFilter.MinPointMagPointMipPoint:
-                return comparison ? Filter.ComparisonMinMagMipPoint : Filter.MinMagMipPoint;
-            case SamplerFilter.MinPointMagPointMipLinear:
-                return comparison ? Filter.ComparisonMinMagPointMipLinear : Filter.MinMagPointMipLinear;
-            case SamplerFilter.MinPointMagLinearMipPoint:
-                return comparison ? Filter.ComparisonMinPointMagLinearMipPoint : Filter.MinPointMagLinearMipPoint;
-            case SamplerFilter.MinPointMagLinearMipLinear:
-                return comparison ? Filter.ComparisonMinPointMagMipLinear : Filter.MinPointMagMipLinear;
-            case SamplerFilter.MinLinearMagPointMipPoint:
-                return comparison ? Filter.ComparisonMinLinearMagMipPoint : Filter.MinLinearMagMipPoint;
-            case SamplerFilter.MinLinearMagPointMipLinear:
-                return comparison ? Filter.ComparisonMinLinearMagPointMipLinear : Filter.MinLinearMagPointMipLinear;
-            case SamplerFilter.MinLinearMagLinearMipPoint:
-                return comparison ? Filter.ComparisonMinMagLinearMipPoint : Filter.MinMagLinearMipPoint;
-            case SamplerFilter.MinLinearMagLinearMipLinear:
-                return comparison ? Filter.ComparisonMinMagMipLinear : Filter.MinMagMipLinear;
+            case SamplerFilter.MinPointMagPointMipPoint: return comparison ? Filter.ComparisonMinMagMipPoint : Filter.MinMagMipPoint;
+            case SamplerFilter.MinPointMagPointMipLinear: return comparison ? Filter.ComparisonMinMagPointMipLinear : Filter.MinMagPointMipLinear;
+            case SamplerFilter.MinPointMagLinearMipPoint: return comparison ? Filter.ComparisonMinPointMagLinearMipPoint : Filter.MinPointMagLinearMipPoint;
+            case SamplerFilter.MinPointMagLinearMipLinear: return comparison ? Filter.ComparisonMinPointMagMipLinear : Filter.MinPointMagMipLinear;
+            case SamplerFilter.MinLinearMagPointMipPoint: return comparison ? Filter.ComparisonMinLinearMagMipPoint : Filter.MinLinearMagMipPoint;
+            case SamplerFilter.MinLinearMagPointMipLinear: return comparison ? Filter.ComparisonMinLinearMagPointMipLinear : Filter.MinLinearMagPointMipLinear;
+            case SamplerFilter.MinLinearMagLinearMipPoint: return comparison ? Filter.ComparisonMinMagLinearMipPoint : Filter.MinMagLinearMipPoint;
+            case SamplerFilter.MinLinearMagLinearMipLinear: return comparison ? Filter.ComparisonMinMagMipLinear : Filter.MinMagMipLinear;
             case SamplerFilter.Anisotropic: return comparison ? Filter.ComparisonAnisotropic : Filter.Anisotropic;
             default: throw Illegal.Value<SamplerFilter>();
         }
     }
 
+    /// <summary>
+    /// Executes ToBorderColor.
+    /// </summary>
     internal static Color4 ToBorderColor(SamplerBorderColor color) {
         switch (color) {
             case SamplerBorderColor.TransparentBlack: return new Color4(0f, 0f, 0f, 0f);

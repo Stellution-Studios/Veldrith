@@ -4,22 +4,46 @@ using Vortice.Direct3D12;
 namespace Veldrith.D3D12;
 
 internal class D3D12Framebuffer : Framebuffer {
+
+    /// <summary>
+    /// Represents the _colorTargetTextures field.
+    /// </summary>
     private readonly D3D12Texture[] _colorTargetTextures;
+
+    /// <summary>
+    /// Represents the _colorTargetViews field.
+    /// </summary>
     private readonly CpuDescriptorHandle[] _colorTargetViews;
+
+    /// <summary>
+    /// Represents the _depthStencilView field.
+    /// </summary>
     private readonly CpuDescriptorHandle? _depthStencilView;
+
+    /// <summary>
+    /// Represents the _dsvHeap field.
+    /// </summary>
     private readonly ID3D12DescriptorHeap _dsvHeap;
+
+    /// <summary>
+    /// Represents the _rtvHeap field.
+    /// </summary>
     private readonly ID3D12DescriptorHeap _rtvHeap;
+
+    /// <summary>
+    /// Represents the _disposed field.
+    /// </summary>
     private bool _disposed;
 
-    public D3D12Framebuffer(D3D12GraphicsDevice gd, ref FramebufferDescription description)
-        : base(description.DepthTarget, description.ColorTargets) {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="D3D12Framebuffer" /> class.
+    /// </summary>
+    public D3D12Framebuffer(D3D12GraphicsDevice gd, ref FramebufferDescription description) : base(description.DepthTarget, description.ColorTargets) {
         this._colorTargetTextures = new D3D12Texture[this.ColorTargets.Count];
         this._colorTargetViews = new CpuDescriptorHandle[this.ColorTargets.Count];
         if (this.ColorTargets.Count > 0) {
-            this._rtvHeap = gd.Device.CreateDescriptorHeap(
-                new DescriptorHeapDescription(DescriptorHeapType.RenderTargetView, (uint)this.ColorTargets.Count));
-            int rtvDescriptorSize =
-                (int)gd.Device.GetDescriptorHandleIncrementSize(DescriptorHeapType.RenderTargetView);
+            this._rtvHeap = gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(DescriptorHeapType.RenderTargetView, (uint)this.ColorTargets.Count));
+            int rtvDescriptorSize = (int)gd.Device.GetDescriptorHandleIncrementSize(DescriptorHeapType.RenderTargetView);
             CpuDescriptorHandle baseRtvHandle = this._rtvHeap.GetCPUDescriptorHandleForHeapStart();
 
             for (int i = 0; i < this.ColorTargets.Count; i++) {
@@ -37,25 +61,40 @@ internal class D3D12Framebuffer : Framebuffer {
 
         if (this.DepthTarget is FramebufferAttachment depthAttachment) {
             this.DepthTargetTexture = Util.AssertSubtype<Texture, D3D12Texture>(depthAttachment.Target);
-            this._dsvHeap =
-                gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(DescriptorHeapType.DepthStencilView, 1));
+            this._dsvHeap = gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(DescriptorHeapType.DepthStencilView, 1));
             CpuDescriptorHandle dsv = this._dsvHeap.GetCPUDescriptorHandleForHeapStart();
             this._depthStencilView = dsv;
 
             if (this.DepthTargetTexture.NativeTexture != null) {
-                DepthStencilViewDescription dsvDescription =
-                    CreateDepthStencilViewDescription(this.DepthTargetTexture, depthAttachment);
+                DepthStencilViewDescription dsvDescription = CreateDepthStencilViewDescription(this.DepthTargetTexture, depthAttachment);
                 gd.Device.CreateDepthStencilView(this.DepthTargetTexture.NativeTexture, dsvDescription, dsv);
             }
         }
     }
 
+    /// <summary>
+    /// Gets or sets IsDisposed.
+    /// </summary>
     public override bool IsDisposed => this._disposed;
+
+    /// <summary>
+    /// Represents the ColorTargetTextures field.
+    /// </summary>
     internal ReadOnlySpan<D3D12Texture> ColorTargetTextures => this._colorTargetTextures;
+
+    /// <summary>
+    /// Gets or sets DepthTargetTexture.
+    /// </summary>
     internal D3D12Texture DepthTargetTexture { get; }
 
+    /// <summary>
+    /// Gets or sets Name.
+    /// </summary>
     public override string Name { get; set; }
 
+    /// <summary>
+    /// Executes TryGetColorTargetView.
+    /// </summary>
     internal bool TryGetColorTargetView(uint index, out CpuDescriptorHandle handle) {
         if (index >= this._colorTargetViews.Length) {
             handle = default;
@@ -66,6 +105,9 @@ internal class D3D12Framebuffer : Framebuffer {
         return this._colorTargetTextures[index]?.NativeTexture != null;
     }
 
+    /// <summary>
+    /// Executes TryGetColorTargetViews.
+    /// </summary>
     internal bool TryGetColorTargetViews(out CpuDescriptorHandle[] handles) {
         handles = this._colorTargetViews;
         if (this._colorTargetViews.Length == 0) {
@@ -81,6 +123,9 @@ internal class D3D12Framebuffer : Framebuffer {
         return true;
     }
 
+    /// <summary>
+    /// Executes TryGetDepthStencilView.
+    /// </summary>
     internal bool TryGetDepthStencilView(out CpuDescriptorHandle handle) {
         if (!this._depthStencilView.HasValue || this.DepthTargetTexture?.NativeTexture == null) {
             handle = default;
@@ -91,6 +136,9 @@ internal class D3D12Framebuffer : Framebuffer {
         return true;
     }
 
+    /// <summary>
+    /// Executes Dispose.
+    /// </summary>
     public override void Dispose() {
         if (this._disposed) {
             return;
@@ -101,8 +149,10 @@ internal class D3D12Framebuffer : Framebuffer {
         this._disposed = true;
     }
 
-    private static RenderTargetViewDescription CreateRenderTargetViewDescription(D3D12Texture texture,
-        FramebufferAttachment attachment) {
+    /// <summary>
+    /// Executes CreateRenderTargetViewDescription.
+    /// </summary>
+    private static RenderTargetViewDescription CreateRenderTargetViewDescription(D3D12Texture texture, FramebufferAttachment attachment) {
         RenderTargetViewDescription description = new() {
             Format = D3D12Formats.GetViewFormat(D3D12Formats.ToDxgiFormat(texture.Format))
         };
@@ -166,15 +216,16 @@ internal class D3D12Framebuffer : Framebuffer {
                     WSize = 1
                 };
                 break;
-            default:
-                throw Illegal.Value<TextureType>();
+            default: throw Illegal.Value<TextureType>();
         }
 
         return description;
     }
 
-    private static DepthStencilViewDescription CreateDepthStencilViewDescription(D3D12Texture texture,
-        FramebufferAttachment attachment) {
+    /// <summary>
+    /// Executes CreateDepthStencilViewDescription.
+    /// </summary>
+    private static DepthStencilViewDescription CreateDepthStencilViewDescription(D3D12Texture texture, FramebufferAttachment attachment) {
         DepthStencilViewDescription description = new() {
             Format = D3D12Formats.ToDepthFormat(texture.Format),
             Flags = DepthStencilViewFlags.None
@@ -229,8 +280,7 @@ internal class D3D12Framebuffer : Framebuffer {
                 }
 
                 break;
-            default:
-                throw new PlatformNotSupportedException("Depth-stencil views are not supported for this texture type.");
+            default: throw new PlatformNotSupportedException("Depth-stencil views are not supported for this texture type.");
         }
 
         return description;

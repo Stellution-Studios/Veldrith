@@ -1,18 +1,48 @@
-﻿using System;
+using System;
 using Veldrith.MetalBindings;
 
 namespace Veldrith.MTL;
 
 internal class MtlSwapchain : Swapchain {
+
+    /// <summary>
+    /// Represents the _framebuffer field.
+    /// </summary>
     private readonly MtlSwapchainFramebuffer _framebuffer;
+
+    /// <summary>
+    /// Represents the gd field.
+    /// </summary>
     private readonly MtlGraphicsDevice gd;
+
+    /// <summary>
+    /// Represents the _disposed field.
+    /// </summary>
     private bool _disposed;
 
+    /// <summary>
+    /// Represents the _drawable field.
+    /// </summary>
     private CAMetalDrawable _drawable;
+
+    /// <summary>
+    /// Represents the _metalLayer field.
+    /// </summary>
     private CAMetalLayer _metalLayer;
+
+    /// <summary>
+    /// Represents the _syncToVerticalBlank field.
+    /// </summary>
     private bool _syncToVerticalBlank;
+
+    /// <summary>
+    /// Represents the _uiView field.
+    /// </summary>
     private UIView _uiView; // Valid only when a UIViewSwapchainSource is used.
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MtlSwapchain" /> class.
+    /// </summary>
     public MtlSwapchain(MtlGraphicsDevice gd, ref SwapchainDescription description) {
         this.gd = gd;
         this._syncToVerticalBlank = description.SyncToVerticalBlank;
@@ -75,21 +105,29 @@ internal class MtlSwapchain : Swapchain {
 
         this.SetSyncToVerticalBlank(this._syncToVerticalBlank);
 
-        this._framebuffer = new MtlSwapchainFramebuffer(
-            gd,
-            this,
-            description.DepthFormat,
-            format);
+        this._framebuffer = new MtlSwapchainFramebuffer(gd, this, description.DepthFormat, format);
 
         this.GetNextDrawable();
     }
 
+    /// <summary>
+    /// Gets or sets Framebuffer.
+    /// </summary>
     public override Framebuffer Framebuffer => this._framebuffer;
 
+    /// <summary>
+    /// Gets or sets IsDisposed.
+    /// </summary>
     public override bool IsDisposed => this._disposed;
 
+    /// <summary>
+    /// Represents the CurrentDrawable field.
+    /// </summary>
     public CAMetalDrawable CurrentDrawable => this._drawable;
 
+    /// <summary>
+    /// Gets or sets SyncToVerticalBlank.
+    /// </summary>
     public override bool SyncToVerticalBlank {
         get => this._syncToVerticalBlank;
         set {
@@ -99,10 +137,16 @@ internal class MtlSwapchain : Swapchain {
         }
     }
 
+    /// <summary>
+    /// Gets or sets Name.
+    /// </summary>
     public override string Name { get; set; }
 
     #region Disposal
 
+    /// <summary>
+    /// Executes Dispose.
+    /// </summary>
     public override void Dispose() {
         if (this._drawable.NativePtr != IntPtr.Zero) {
             ObjectiveCRuntime.release(this._drawable.NativePtr);
@@ -116,6 +160,9 @@ internal class MtlSwapchain : Swapchain {
 
     #endregion
 
+    /// <summary>
+    /// Executes Resize.
+    /// </summary>
     public override void Resize(uint width, uint height) {
         if (this._uiView.NativePtr != IntPtr.Zero) {
             this._metalLayer.frame = this._uiView.frame;
@@ -126,15 +173,24 @@ internal class MtlSwapchain : Swapchain {
         this.GetNextDrawable();
     }
 
+    /// <summary>
+    /// Executes EnsureDrawableAvailable.
+    /// </summary>
     public bool EnsureDrawableAvailable() {
         return !this._drawable.IsNull || this.GetNextDrawable();
     }
 
+    /// <summary>
+    /// Executes InvalidateDrawable.
+    /// </summary>
     public void InvalidateDrawable() {
         ObjectiveCRuntime.release(this._drawable.NativePtr);
         this._drawable = default;
     }
 
+    /// <summary>
+    /// Executes GetNextDrawable.
+    /// </summary>
     private bool GetNextDrawable() {
         if (!this._drawable.IsNull) {
             ObjectiveCRuntime.release(this._drawable.NativePtr);
@@ -153,6 +209,9 @@ internal class MtlSwapchain : Swapchain {
         }
     }
 
+    /// <summary>
+    /// Executes SetSyncToVerticalBlank.
+    /// </summary>
     private void SetSyncToVerticalBlank(bool value) {
         this._syncToVerticalBlank = value;
 

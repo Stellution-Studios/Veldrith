@@ -1,26 +1,72 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using Vulkan;
-using static Vulkan.VulkanNative;
 using static Veldrith.Vk.VulkanUtil;
+using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
 internal unsafe class VkTexture : Texture {
+
+    /// <summary>
+    /// Represents the _imageLayouts field.
+    /// </summary>
     private readonly VkImageLayout[] _imageLayouts;
+
+    /// <summary>
+    /// Represents the _memoryBlock field.
+    /// </summary>
     private readonly VkMemoryBlock _memoryBlock;
+
+    /// <summary>
+    /// Represents the _optimalImage field.
+    /// </summary>
     private readonly VkImage _optimalImage;
+
+    /// <summary>
+    /// Represents the _stagingBuffer field.
+    /// </summary>
     private readonly Vulkan.VkBuffer _stagingBuffer;
 
+    /// <summary>
+    /// Represents the gd field.
+    /// </summary>
     private readonly VkGraphicsDevice gd;
+
+    /// <summary>
+    /// Represents the _destroyed field.
+    /// </summary>
     private bool _destroyed;
+
+    /// <summary>
+    /// Represents the _name field.
+    /// </summary>
     private string _name;
+
+    /// <summary>
+    /// Represents the depth field.
+    /// </summary>
     private uint depth;
+
+    /// <summary>
+    /// Represents the format field.
+    /// </summary>
     private PixelFormat format; // Static for regular images -- may change for shared staging images
+
+    /// <summary>
+    /// Represents the height field.
+    /// </summary>
     private uint height;
 
     // Immutable except for shared staging Textures.
+
+    /// <summary>
+    /// Represents the width field.
+    /// </summary>
     private uint width;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="VkTexture" /> class.
+    /// </summary>
     internal VkTexture(VkGraphicsDevice gd, ref TextureDescription description) {
         this.gd = gd;
         this.width = description.Width;
@@ -37,8 +83,7 @@ internal unsafe class VkTexture : Texture {
         this.Type = description.Type;
         this.SampleCount = description.SampleCount;
         this.VkSampleCount = VkFormats.VdToVkSampleCount(this.SampleCount);
-        this.VkFormat = VkFormats.VdToVkPixelFormat(this.Format,
-            (description.Usage & TextureUsage.DepthStencil) == TextureUsage.DepthStencil);
+        this.VkFormat = VkFormats.VdToVkPixelFormat(this.Format, (description.Usage & TextureUsage.DepthStencil) == TextureUsage.DepthStencil);
 
         bool isStaging = (this.Usage & TextureUsage.Staging) == TextureUsage.Staging;
 
@@ -76,27 +121,16 @@ internal unsafe class VkTexture : Texture {
                 memReqs2.pNext = &dedicatedReqs;
                 this.gd.GetImageMemoryRequirements2(this.gd.Device, &memReqsInfo2, &memReqs2);
                 memoryRequirements = memReqs2.memoryRequirements;
-                prefersDedicatedAllocation = dedicatedReqs.prefersDedicatedAllocation ||
-                                             dedicatedReqs.requiresDedicatedAllocation;
+                prefersDedicatedAllocation = dedicatedReqs.prefersDedicatedAllocation || dedicatedReqs.requiresDedicatedAllocation;
             }
             else {
                 vkGetImageMemoryRequirements(gd.Device, this._optimalImage, out memoryRequirements);
                 prefersDedicatedAllocation = false;
             }
 
-            VkMemoryBlock memoryToken = gd.MemoryManager.Allocate(
-                gd.PhysicalDeviceMemProperties,
-                memoryRequirements.memoryTypeBits,
-                VkMemoryPropertyFlags.DeviceLocal,
-                false,
-                memoryRequirements.size,
-                memoryRequirements.alignment,
-                prefersDedicatedAllocation,
-                this._optimalImage,
-                Vulkan.VkBuffer.Null);
+            VkMemoryBlock memoryToken = gd.MemoryManager.Allocate(gd.PhysicalDeviceMemProperties, memoryRequirements.memoryTypeBits, VkMemoryPropertyFlags.DeviceLocal, false, memoryRequirements.size, memoryRequirements.alignment, prefersDedicatedAllocation, this._optimalImage, Vulkan.VkBuffer.Null);
             this._memoryBlock = memoryToken;
-            result = vkBindImageMemory(gd.Device, this._optimalImage, this._memoryBlock.DeviceMemory,
-                this._memoryBlock.Offset);
+            result = vkBindImageMemory(gd.Device, this._optimalImage, this._memoryBlock.DeviceMemory, this._memoryBlock.Offset);
             CheckResult(result);
 
             this._imageLayouts = new VkImageLayout[subresourceCount];
@@ -106,16 +140,13 @@ internal unsafe class VkTexture : Texture {
         }
         else // isStaging
         {
-            uint depthPitch = FormatHelpers.GetDepthPitch(
-                FormatHelpers.GetRowPitch(this.Width, this.Format), this.Height, this.Format);
+            uint depthPitch = FormatHelpers.GetDepthPitch(FormatHelpers.GetRowPitch(this.Width, this.Format), this.Height, this.Format);
             uint stagingSize = depthPitch * this.Depth;
 
             for (uint level = 1; level < this.MipLevels; level++) {
                 Util.GetMipDimensions(this, level, out uint mipWidth, out uint mipHeight, out uint mipDepth);
 
-                depthPitch = FormatHelpers.GetDepthPitch(
-                    FormatHelpers.GetRowPitch(mipWidth, this.Format),
-                    mipHeight, this.Format);
+                depthPitch = FormatHelpers.GetDepthPitch(FormatHelpers.GetRowPitch(mipWidth, this.Format), mipHeight, this.Format);
 
                 stagingSize += depthPitch * mipDepth;
             }
@@ -139,8 +170,7 @@ internal unsafe class VkTexture : Texture {
                 memReqs2.pNext = &dedicatedReqs;
                 this.gd.GetBufferMemoryRequirements2(this.gd.Device, &memReqInfo2, &memReqs2);
                 bufferMemReqs = memReqs2.memoryRequirements;
-                prefersDedicatedAllocation = dedicatedReqs.prefersDedicatedAllocation ||
-                                             dedicatedReqs.requiresDedicatedAllocation;
+                prefersDedicatedAllocation = dedicatedReqs.prefersDedicatedAllocation || dedicatedReqs.requiresDedicatedAllocation;
             }
             else {
                 vkGetBufferMemoryRequirements(gd.Device, this._stagingBuffer, out bufferMemReqs);
@@ -150,24 +180,13 @@ internal unsafe class VkTexture : Texture {
             // Use "host cached" memory when available, for better performance of GPU -> CPU transfers
             VkMemoryPropertyFlags propertyFlags = VkMemoryPropertyFlags.HostVisible |
                                                   VkMemoryPropertyFlags.HostCoherent | VkMemoryPropertyFlags.HostCached;
-            if (!TryFindMemoryType(this.gd.PhysicalDeviceMemProperties, bufferMemReqs.memoryTypeBits, propertyFlags,
-                    out _)) {
+            if (!TryFindMemoryType(this.gd.PhysicalDeviceMemProperties, bufferMemReqs.memoryTypeBits, propertyFlags, out _)) {
                 propertyFlags ^= VkMemoryPropertyFlags.HostCached;
             }
 
-            this._memoryBlock = this.gd.MemoryManager.Allocate(
-                this.gd.PhysicalDeviceMemProperties,
-                bufferMemReqs.memoryTypeBits,
-                propertyFlags,
-                true,
-                bufferMemReqs.size,
-                bufferMemReqs.alignment,
-                prefersDedicatedAllocation,
-                VkImage.Null,
-                this._stagingBuffer);
+            this._memoryBlock = this.gd.MemoryManager.Allocate(this.gd.PhysicalDeviceMemProperties, bufferMemReqs.memoryTypeBits, propertyFlags, true, bufferMemReqs.size, bufferMemReqs.alignment, prefersDedicatedAllocation, VkImage.Null, this._stagingBuffer);
 
-            result = vkBindBufferMemory(this.gd.Device, this._stagingBuffer, this._memoryBlock.DeviceMemory,
-                this._memoryBlock.Offset);
+            result = vkBindBufferMemory(this.gd.Device, this._stagingBuffer, this._memoryBlock.DeviceMemory, this._memoryBlock.Offset);
             CheckResult(result);
         }
 
@@ -177,16 +196,11 @@ internal unsafe class VkTexture : Texture {
     }
 
     // Used to construct Swapchain textures.
-    internal VkTexture(
-        VkGraphicsDevice gd,
-        uint width,
-        uint height,
-        uint mipLevels,
-        uint arrayLayers,
-        VkFormat vkFormat,
-        TextureUsage usage,
-        TextureSampleCount sampleCount,
-        VkImage existingImage) {
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="VkTexture" /> class.
+    /// </summary>
+    internal VkTexture(VkGraphicsDevice gd, uint width, uint height, uint mipLevels, uint arrayLayers, VkFormat vkFormat, TextureUsage usage, TextureSampleCount sampleCount, VkImage existingImage) {
         Debug.Assert(width > 0 && height > 0);
         this.gd = gd;
         this.MipLevels = mipLevels;
@@ -208,37 +222,99 @@ internal unsafe class VkTexture : Texture {
         this.RefCount = new ResourceRefCount(this.DisposeCore);
     }
 
+    /// <summary>
+    /// Gets or sets Width.
+    /// </summary>
     public override uint Width => this.width;
 
+    /// <summary>
+    /// Gets or sets Height.
+    /// </summary>
     public override uint Height => this.height;
 
+    /// <summary>
+    /// Gets or sets Depth.
+    /// </summary>
     public override uint Depth => this.depth;
 
+    /// <summary>
+    /// Gets or sets Format.
+    /// </summary>
     public override PixelFormat Format => this.format;
 
+    /// <summary>
+    /// Gets or sets MipLevels.
+    /// </summary>
     public override uint MipLevels { get; }
 
+    /// <summary>
+    /// Gets or sets ArrayLayers.
+    /// </summary>
     public override uint ArrayLayers { get; }
+
+    /// <summary>
+    /// Gets or sets ActualArrayLayers.
+    /// </summary>
     public uint ActualArrayLayers { get; }
 
+    /// <summary>
+    /// Gets or sets Usage.
+    /// </summary>
     public override TextureUsage Usage { get; }
 
+    /// <summary>
+    /// Gets or sets Type.
+    /// </summary>
     public override TextureType Type { get; }
 
+    /// <summary>
+    /// Gets or sets SampleCount.
+    /// </summary>
     public override TextureSampleCount SampleCount { get; }
 
+    /// <summary>
+    /// Gets or sets IsDisposed.
+    /// </summary>
     public override bool IsDisposed => this._destroyed;
 
+    /// <summary>
+    /// Represents the OptimalDeviceImage field.
+    /// </summary>
     public VkImage OptimalDeviceImage => this._optimalImage;
+
+    /// <summary>
+    /// Represents the StagingBuffer field.
+    /// </summary>
     public Vulkan.VkBuffer StagingBuffer => this._stagingBuffer;
+
+    /// <summary>
+    /// Represents the Memory field.
+    /// </summary>
     public VkMemoryBlock Memory => this._memoryBlock;
 
+    /// <summary>
+    /// Gets or sets VkFormat.
+    /// </summary>
     public VkFormat VkFormat { get; }
+
+    /// <summary>
+    /// Gets or sets VkSampleCount.
+    /// </summary>
     public VkSampleCountFlags VkSampleCount { get; }
 
+    /// <summary>
+    /// Gets or sets RefCount.
+    /// </summary>
     public ResourceRefCount RefCount { get; }
+
+    /// <summary>
+    /// Gets or sets IsSwapchainTexture.
+    /// </summary>
     public bool IsSwapchainTexture { get; }
 
+    /// <summary>
+    /// Gets or sets Name.
+    /// </summary>
     public override string Name {
         get => this._name;
         set {
@@ -247,6 +323,9 @@ internal unsafe class VkTexture : Texture {
         }
     }
 
+    /// <summary>
+    /// Executes GetSubresourceLayout.
+    /// </summary>
     internal VkSubresourceLayout GetSubresourceLayout(uint subresource) {
         bool staging = this._stagingBuffer.Handle != 0;
         Util.GetMipLevelAndArrayLayer(this, subresource, out uint mipLevel, out uint arrayLayer);
@@ -261,8 +340,7 @@ internal unsafe class VkTexture : Texture {
                 aspectMask = aspect
             };
 
-            vkGetImageSubresourceLayout(this.gd.Device, this._optimalImage, ref imageSubresource,
-                out VkSubresourceLayout layout);
+            vkGetImageSubresourceLayout(this.gd.Device, this._optimalImage, ref imageSubresource, out VkSubresourceLayout layout);
             return layout;
         }
         else {
@@ -282,27 +360,22 @@ internal unsafe class VkTexture : Texture {
         }
     }
 
-    internal void TransitionImageLayout(
-        VkCommandBuffer cb,
-        uint baseMipLevel,
-        uint levelCount,
-        uint baseArrayLayer,
-        uint layerCount,
-        VkImageLayout newLayout) {
+    /// <summary>
+    /// Executes TransitionImageLayout.
+    /// </summary>
+    internal void TransitionImageLayout(VkCommandBuffer cb, uint baseMipLevel, uint levelCount, uint baseArrayLayer, uint layerCount, VkImageLayout newLayout) {
         if (this._stagingBuffer != Vulkan.VkBuffer.Null) {
             return;
         }
 
         VkImageLayout oldLayout = this._imageLayouts[this.CalculateSubresource(baseMipLevel, baseArrayLayer)];
 #if DEBUG
-            for (uint level = 0; level < levelCount; level++)
-            {
-                for (uint layer = 0; layer < layerCount; layer++)
-                {
-                    if (imageLayouts[CalculateSubresource(baseMipLevel + level, baseArrayLayer + layer)] != oldLayout)
-                        throw new VeldridException("Unexpected image layout.");
-                }
+        for (uint level = 0; level < levelCount; level++) {
+            for (uint layer = 0; layer < layerCount; layer++) {
+                if (this._imageLayouts[this.CalculateSubresource(baseMipLevel + level, baseArrayLayer + layer)] != oldLayout)
+                    throw new VeldridException("Unexpected image layout.");
             }
+        }
 #endif
         if (oldLayout != newLayout) {
             VkImageAspectFlags aspectMask;
@@ -316,32 +389,20 @@ internal unsafe class VkTexture : Texture {
                 aspectMask = VkImageAspectFlags.Color;
             }
 
-            VulkanUtil.TransitionImageLayout(
-                cb, this.OptimalDeviceImage,
-                baseMipLevel,
-                levelCount,
-                baseArrayLayer,
-                layerCount,
-                aspectMask,
-                this._imageLayouts[this.CalculateSubresource(baseMipLevel, baseArrayLayer)],
-                newLayout);
+            VulkanUtil.TransitionImageLayout(cb, this.OptimalDeviceImage, baseMipLevel, levelCount, baseArrayLayer, layerCount, aspectMask, this._imageLayouts[this.CalculateSubresource(baseMipLevel, baseArrayLayer)], newLayout);
 
             for (uint level = 0; level < levelCount; level++) {
                 for (uint layer = 0; layer < layerCount; layer++) {
-                    this._imageLayouts[this.CalculateSubresource(baseMipLevel + level, baseArrayLayer + layer)] =
-                        newLayout;
+                    this._imageLayouts[this.CalculateSubresource(baseMipLevel + level, baseArrayLayer + layer)] = newLayout;
                 }
             }
         }
     }
 
-    internal void TransitionImageLayoutNonmatching(
-        VkCommandBuffer cb,
-        uint baseMipLevel,
-        uint levelCount,
-        uint baseArrayLayer,
-        uint layerCount,
-        VkImageLayout newLayout) {
+    /// <summary>
+    /// Executes TransitionImageLayoutNonmatching.
+    /// </summary>
+    internal void TransitionImageLayoutNonmatching(VkCommandBuffer cb, uint baseMipLevel, uint levelCount, uint baseArrayLayer, uint layerCount, VkImageLayout newLayout) {
         if (this._stagingBuffer != Vulkan.VkBuffer.Null) {
             return;
         }
@@ -363,15 +424,7 @@ internal unsafe class VkTexture : Texture {
                         aspectMask = VkImageAspectFlags.Color;
                     }
 
-                    VulkanUtil.TransitionImageLayout(
-                        cb, this.OptimalDeviceImage,
-                        level,
-                        1,
-                        layer,
-                        1,
-                        aspectMask,
-                        oldLayout,
-                        newLayout);
+                    VulkanUtil.TransitionImageLayout(cb, this.OptimalDeviceImage, level, 1, layer, 1, aspectMask, oldLayout, newLayout);
 
                     this._imageLayouts[subresource] = newLayout;
                 }
@@ -379,10 +432,16 @@ internal unsafe class VkTexture : Texture {
         }
     }
 
+    /// <summary>
+    /// Executes GetImageLayout.
+    /// </summary>
     internal VkImageLayout GetImageLayout(uint mipLevel, uint arrayLayer) {
         return this._imageLayouts[this.CalculateSubresource(mipLevel, arrayLayer)];
     }
 
+    /// <summary>
+    /// Executes SetStagingDimensions.
+    /// </summary>
     internal void SetStagingDimensions(uint width, uint height, uint depth, PixelFormat format) {
         Debug.Assert(this._stagingBuffer != Vulkan.VkBuffer.Null);
         Debug.Assert(this.Usage == TextureUsage.Staging);
@@ -392,10 +451,16 @@ internal unsafe class VkTexture : Texture {
         this.format = format;
     }
 
+    /// <summary>
+    /// Executes SetImageLayout.
+    /// </summary>
     internal void SetImageLayout(uint mipLevel, uint arrayLayer, VkImageLayout layout) {
         this._imageLayouts[this.CalculateSubresource(mipLevel, arrayLayer)] = layout;
     }
 
+    /// <summary>
+    /// Executes ClearIfRenderTarget.
+    /// </summary>
     private void ClearIfRenderTarget() {
         // If the image is going to be used as a render target, we need to clear the data before its first use.
         if ((this.Usage & TextureUsage.RenderTarget) != 0) {
@@ -406,12 +471,18 @@ internal unsafe class VkTexture : Texture {
         }
     }
 
+    /// <summary>
+    /// Executes TransitionIfSampled.
+    /// </summary>
     private void TransitionIfSampled() {
         if ((this.Usage & TextureUsage.Sampled) != 0) {
             this.gd.TransitionImageLayout(this, VkImageLayout.ShaderReadOnlyOptimal);
         }
     }
 
+    /// <summary>
+    /// Executes RefCountedDispose.
+    /// </summary>
     private void RefCountedDispose() {
         if (!this._destroyed) {
             base.Dispose();
@@ -432,6 +503,9 @@ internal unsafe class VkTexture : Texture {
         }
     }
 
+    /// <summary>
+    /// Executes DisposeCore.
+    /// </summary>
     private protected override void DisposeCore() {
         this.RefCount.Decrement();
     }

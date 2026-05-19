@@ -4,14 +4,17 @@ using Veldrith.MetalBindings;
 namespace Veldrith.MTL;
 
 internal class MtlSampler : Sampler {
+
+    /// <summary>
+    /// Represents the _disposed field.
+    /// </summary>
     private bool _disposed;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MtlSampler" /> class.
+    /// </summary>
     public MtlSampler(ref SamplerDescription description, MtlGraphicsDevice gd) {
-        MtlFormats.GetMinMagMipFilter(
-            description.Filter,
-            out MTLSamplerMinMagFilter min,
-            out MTLSamplerMinMagFilter mag,
-            out MTLSamplerMipFilter mip);
+        MtlFormats.GetMinMagMipFilter(description.Filter, out MTLSamplerMinMagFilter min, out MTLSamplerMinMagFilter mag, out MTLSamplerMipFilter mip);
 
         MTLSamplerDescriptor mtlDesc = MTLSamplerDescriptor.New();
         mtlDesc.sAddressMode = MtlFormats.VdToMtlAddressMode(description.AddressModeU);
@@ -35,14 +38,26 @@ internal class MtlSampler : Sampler {
         ObjectiveCRuntime.release(mtlDesc.NativePtr);
     }
 
+    /// <summary>
+    /// Gets or sets DeviceSampler.
+    /// </summary>
     public MTLSamplerState DeviceSampler { get; }
 
+    /// <summary>
+    /// Gets or sets IsDisposed.
+    /// </summary>
     public override bool IsDisposed => this._disposed;
 
+    /// <summary>
+    /// Gets or sets Name.
+    /// </summary>
     public override string Name { get; set; }
 
     #region Disposal
 
+    /// <summary>
+    /// Executes Dispose.
+    /// </summary>
     public override void Dispose() {
         if (!this._disposed) {
             this._disposed = true;

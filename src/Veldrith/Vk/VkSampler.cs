@@ -1,19 +1,36 @@
-﻿using Vulkan;
+using Vulkan;
 using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
 internal unsafe class VkSampler : Sampler {
+
+    /// <summary>
+    /// Represents the _sampler field.
+    /// </summary>
     private readonly Vulkan.VkSampler _sampler;
 
+    /// <summary>
+    /// Represents the gd field.
+    /// </summary>
     private readonly VkGraphicsDevice gd;
+
+    /// <summary>
+    /// Represents the _disposed field.
+    /// </summary>
     private bool _disposed;
+
+    /// <summary>
+    /// Represents the _name field.
+    /// </summary>
     private string _name;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="VkSampler" /> class.
+    /// </summary>
     public VkSampler(VkGraphicsDevice gd, ref SamplerDescription description) {
         this.gd = gd;
-        VkFormats.GetFilterParams(description.Filter, out VkFilter minFilter, out VkFilter magFilter,
-            out VkSamplerMipmapMode mipmapMode);
+        VkFormats.GetFilterParams(description.Filter, out VkFilter minFilter, out VkFilter magFilter, out VkSamplerMipmapMode mipmapMode);
 
         VkSamplerCreateInfo samplerCi = new() {
             sType = VkStructureType.SamplerCreateInfo,
@@ -39,12 +56,24 @@ internal unsafe class VkSampler : Sampler {
         this.RefCount = new ResourceRefCount(this.DisposeCore);
     }
 
+    /// <summary>
+    /// Represents the DeviceSampler field.
+    /// </summary>
     public Vulkan.VkSampler DeviceSampler => this._sampler;
 
+    /// <summary>
+    /// Gets or sets RefCount.
+    /// </summary>
     public ResourceRefCount RefCount { get; }
 
+    /// <summary>
+    /// Gets or sets IsDisposed.
+    /// </summary>
     public override bool IsDisposed => this._disposed;
 
+    /// <summary>
+    /// Gets or sets Name.
+    /// </summary>
     public override string Name {
         get => this._name;
         set {
@@ -55,12 +84,18 @@ internal unsafe class VkSampler : Sampler {
 
     #region Disposal
 
+    /// <summary>
+    /// Executes Dispose.
+    /// </summary>
     public override void Dispose() {
         this.RefCount.Decrement();
     }
 
     #endregion
 
+    /// <summary>
+    /// Executes DisposeCore.
+    /// </summary>
     private void DisposeCore() {
         if (!this._disposed) {
             vkDestroySampler(this.gd.Device, this._sampler, null);

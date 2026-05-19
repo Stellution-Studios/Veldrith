@@ -4,26 +4,105 @@ using Vortice.Direct3D12;
 namespace Veldrith.D3D12;
 
 internal sealed class D3D12DeviceBuffer : DeviceBuffer {
+
+    /// <summary>
+    /// Represents the _dynamicMappedPointer field.
+    /// </summary>
     private readonly IntPtr _dynamicMappedPointer;
+
+    /// <summary>
+    /// Represents the _dynamicSnapshotCapacity field.
+    /// </summary>
     private readonly uint _dynamicSnapshotCapacity;
+
+    /// <summary>
+    /// Represents the _dynamicSnapshotEnabled field.
+    /// </summary>
     private readonly bool _dynamicSnapshotEnabled;
+
+    /// <summary>
+    /// Represents the _isDynamic field.
+    /// </summary>
     private readonly bool _isDynamic;
+
+    /// <summary>
+    /// Represents the _isStaging field.
+    /// </summary>
     private readonly bool _isStaging;
+
+    /// <summary>
+    /// Represents the _stagingReadBuffer field.
+    /// </summary>
     private readonly ID3D12Resource _stagingReadBuffer;
+
+    /// <summary>
+    /// Represents the _stagingReadMappedPointer field.
+    /// </summary>
     private readonly IntPtr _stagingReadMappedPointer;
+
+    /// <summary>
+    /// Represents the _stagingWriteBuffer field.
+    /// </summary>
     private readonly ID3D12Resource _stagingWriteBuffer;
+
+    /// <summary>
+    /// Represents the _stagingWriteMappedPointer field.
+    /// </summary>
     private readonly IntPtr _stagingWriteMappedPointer;
+
+    /// <summary>
+    /// Represents the gd field.
+    /// </summary>
     private readonly D3D12GraphicsDevice gd;
+
+    /// <summary>
+    /// Represents the sizeInBytes field.
+    /// </summary>
     private readonly uint sizeInBytes;
+
+    /// <summary>
+    /// Represents the _activeMapMode field.
+    /// </summary>
     private MapMode? _activeMapMode;
+
+    /// <summary>
+    /// Represents the _disposed field.
+    /// </summary>
     private bool _disposed;
+
+    /// <summary>
+    /// Represents the _dynamicBindVersion field.
+    /// </summary>
     private ulong _dynamicBindVersion;
+
+    /// <summary>
+    /// Represents the _dynamicSnapshotBaseOffset field.
+    /// </summary>
     private uint _dynamicSnapshotBaseOffset;
+
+    /// <summary>
+    /// Represents the _dynamicSnapshotInitialized field.
+    /// </summary>
     private bool _dynamicSnapshotInitialized;
+
+    /// <summary>
+    /// Represents the _dynamicSnapshotWriteHead field.
+    /// </summary>
     private uint _dynamicSnapshotWriteHead;
+
+    /// <summary>
+    /// Represents the _stagingReadBufferDirtyFromWriteBuffer field.
+    /// </summary>
     private bool _stagingReadBufferDirtyFromWriteBuffer;
+
+    /// <summary>
+    /// Represents the _stagingWriteBufferDirtyFromReadBuffer field.
+    /// </summary>
     private bool _stagingWriteBufferDirtyFromReadBuffer;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="D3D12DeviceBuffer" /> class.
+    /// </summary>
     public D3D12DeviceBuffer(D3D12GraphicsDevice gd, ref BufferDescription description) {
         this.gd = gd;
         this.SizeInBytes = description.SizeInBytes;
@@ -32,27 +111,14 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         this._isDynamic = (description.Usage & BufferUsage.Dynamic) == BufferUsage.Dynamic;
         this._isStaging = (description.Usage & BufferUsage.Staging) == BufferUsage.Staging;
         this.CanTransitionState = !this._isDynamic && !this._isStaging;
-        this._dynamicSnapshotEnabled = this._isDynamic
-                                       && ((description.Usage & BufferUsage.VertexBuffer) == BufferUsage.VertexBuffer
-                                           || (description.Usage & BufferUsage.IndexBuffer) == BufferUsage.IndexBuffer);
-        this._dynamicSnapshotCapacity = this._dynamicSnapshotEnabled
-            ? CalculateDynamicSnapshotCapacity(description.SizeInBytes)
-            : description.SizeInBytes;
+        this._dynamicSnapshotEnabled = this._isDynamic && ((description.Usage & BufferUsage.VertexBuffer) == BufferUsage.VertexBuffer || (description.Usage & BufferUsage.IndexBuffer) == BufferUsage.IndexBuffer);
+        this._dynamicSnapshotCapacity = this._dynamicSnapshotEnabled ? CalculateDynamicSnapshotCapacity(description.SizeInBytes) : description.SizeInBytes;
 
-        ResourceDescription resourceDescription = ResourceDescription.Buffer(
-            this._dynamicSnapshotEnabled ? this._dynamicSnapshotCapacity : description.SizeInBytes,
-            GetResourceFlags(description.Usage));
+        ResourceDescription resourceDescription = ResourceDescription.Buffer(this._dynamicSnapshotEnabled ? this._dynamicSnapshotCapacity : description.SizeInBytes, GetResourceFlags(description.Usage));
+
         if (this._isStaging) {
-            this._stagingWriteBuffer = gd.Device.CreateCommittedResource(
-                HeapType.Upload,
-                HeapFlags.None,
-                resourceDescription,
-                ResourceStates.GenericRead);
-            this._stagingReadBuffer = gd.Device.CreateCommittedResource(
-                HeapType.Readback,
-                HeapFlags.None,
-                resourceDescription,
-                ResourceStates.CopyDest);
+            this._stagingWriteBuffer = gd.Device.CreateCommittedResource(HeapType.Upload, HeapFlags.None, resourceDescription, ResourceStates.GenericRead);
+            this._stagingReadBuffer = gd.Device.CreateCommittedResource(HeapType.Readback, HeapFlags.None, resourceDescription, ResourceStates.CopyDest);
             this.NativeBuffer = this._stagingWriteBuffer;
 
             unsafe {
@@ -66,11 +132,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
             }
         }
         else if (this._isDynamic) {
-            this.NativeBuffer = gd.Device.CreateCommittedResource(
-                HeapType.Upload,
-                HeapFlags.None,
-                resourceDescription,
-                ResourceStates.GenericRead);
+            this.NativeBuffer = gd.Device.CreateCommittedResource(HeapType.Upload, HeapFlags.None, resourceDescription, ResourceStates.GenericRead);
             unsafe {
                 void* dataPointer = null;
                 this.NativeBuffer.Map(0, &dataPointer).CheckError();
@@ -78,42 +140,85 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
             }
         }
         else {
-            this.NativeBuffer = gd.Device.CreateCommittedResource(
-                HeapType.Default,
-                HeapFlags.None,
-                resourceDescription,
-                ResourceStates.Common);
+            this.NativeBuffer = gd.Device.CreateCommittedResource(HeapType.Default, HeapFlags.None, resourceDescription, ResourceStates.Common);
             this.CurrentState = ResourceStates.Common;
         }
     }
 
+    /// <summary>
+    /// Gets or sets SizeInBytes.
+    /// </summary>
     public override uint SizeInBytes { get; }
+
+    /// <summary>
+    /// Gets or sets Usage.
+    /// </summary>
     public override BufferUsage Usage { get; }
+
+    /// <summary>
+    /// Gets or sets NativeBuffer.
+    /// </summary>
     internal ID3D12Resource NativeBuffer { get; }
 
+    /// <summary>
+    /// Represents the GpuVirtualAddress field.
+    /// </summary>
     internal ulong GpuVirtualAddress => this.NativeBuffer.GPUVirtualAddress;
+
+    /// <summary>
+    /// Gets or sets CurrentNativeSizeInBytes.
+    /// </summary>
     internal uint CurrentNativeSizeInBytes => (uint)Math.Min(uint.MaxValue, this.NativeBuffer.Description.Width);
 
+    /// <summary>
+    /// Gets or sets CurrentState.
+    /// </summary>
     internal ResourceStates CurrentState { get; set; }
+
+    /// <summary>
+    /// Gets or sets CanTransitionState.
+    /// </summary>
     internal bool CanTransitionState { get; }
 
+    /// <summary>
+    /// Represents the BindVersion field.
+    /// </summary>
     internal ulong BindVersion => this._dynamicSnapshotEnabled ? this._dynamicBindVersion : 0UL;
+
+    /// <summary>
+    /// Gets or sets IsDisposed.
+    /// </summary>
     public override bool IsDisposed => this._disposed;
 
+    /// <summary>
+    /// Gets or sets Name.
+    /// </summary>
     public override string Name { get; set; }
 
+    /// <summary>
+    /// Executes GetGpuVirtualAddress.
+    /// </summary>
     internal ulong GetGpuVirtualAddress(uint offset) {
         return this.NativeBuffer.GPUVirtualAddress + this.ResolveNativeOffset(offset);
     }
 
+    /// <summary>
+    /// Executes GetBindableSize.
+    /// </summary>
     internal uint GetBindableSize(uint offset) {
         return offset < this.SizeInBytes ? this.SizeInBytes - offset : 0;
     }
 
+    /// <summary>
+    /// Executes ResolveNativeOffset.
+    /// </summary>
     internal uint ResolveNativeOffset(uint offset) {
         return this._dynamicSnapshotEnabled ? this._dynamicSnapshotBaseOffset + offset : offset;
     }
 
+    /// <summary>
+    /// Executes Dispose.
+    /// </summary>
     public override void Dispose() {
         if (this._disposed) {
             return;
@@ -136,8 +241,10 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         this._disposed = true;
     }
 
-    internal ID3D12Resource Update(ID3D12GraphicsCommandList commandList, IntPtr source, uint destinationOffset,
-        uint sizeInBytes) {
+    /// <summary>
+    /// Executes Update.
+    /// </summary>
+    internal ID3D12Resource Update(ID3D12GraphicsCommandList commandList, IntPtr source, uint destinationOffset, uint sizeInBytes) {
         if (destinationOffset + sizeInBytes > this.SizeInBytes) {
             throw new VeldridException("Buffer update range exceeds the destination buffer size.");
         }
@@ -161,6 +268,9 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         return uploadBuffer;
     }
 
+    /// <summary>
+    /// Executes UpdateDynamicSnapshot.
+    /// </summary>
     private unsafe void UpdateDynamicSnapshot(IntPtr source, uint destinationOffset, uint copySize) {
         if (copySize == 0) {
             return;
@@ -205,10 +315,11 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         }
     }
 
-    internal void CopyTo(ID3D12GraphicsCommandList commandList, D3D12DeviceBuffer destination, uint sourceOffset,
-        uint destinationOffset, uint sizeInBytes) {
-        if (sourceOffset + sizeInBytes > this.SizeInBytes ||
-            destinationOffset + sizeInBytes > destination.SizeInBytes) {
+    /// <summary>
+    /// Executes CopyTo.
+    /// </summary>
+    internal void CopyTo(ID3D12GraphicsCommandList commandList, D3D12DeviceBuffer destination, uint sourceOffset, uint destinationOffset, uint sizeInBytes) {
+        if (sourceOffset + sizeInBytes > this.SizeInBytes || destinationOffset + sizeInBytes > destination.SizeInBytes) {
             throw new VeldridException("Buffer copy range exceeds buffer bounds.");
         }
 
@@ -249,12 +360,18 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         }
     }
 
+    /// <summary>
+    /// Executes Map.
+    /// </summary>
     internal MappedResource Map(MapMode mode) {
         IntPtr pointer = this.GetMapPointer(mode);
         this._activeMapMode = mode;
         return new MappedResource(this, mode, pointer, this.sizeInBytes);
     }
 
+    /// <summary>
+    /// Executes TryGetCpuReadPointer.
+    /// </summary>
     internal bool TryGetCpuReadPointer(out IntPtr pointer) {
         if (this._isStaging) {
             this.EnsureReadBufferIsCurrent();
@@ -271,6 +388,9 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         return false;
     }
 
+    /// <summary>
+    /// Executes Unmap.
+    /// </summary>
     internal void Unmap() {
         if (!this._activeMapMode.HasValue) {
             return;
@@ -291,6 +411,9 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         this._activeMapMode = null;
     }
 
+    /// <summary>
+    /// Executes GetMapPointer.
+    /// </summary>
     private IntPtr GetMapPointer(MapMode mode) {
         if (this._isDynamic) {
             if (mode != MapMode.Write) {
@@ -312,6 +435,9 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         throw new VeldridException("Only Dynamic or Staging buffers can be mapped.");
     }
 
+    /// <summary>
+    /// Executes WriteCpuData.
+    /// </summary>
     private unsafe void WriteCpuData(IntPtr source, uint destinationOffset, uint copySize) {
         if (this._isDynamic) {
             byte* dst = (byte*)this._dynamicMappedPointer + destinationOffset;
@@ -330,12 +456,11 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         throw new VeldridException("CPU updates on default D3D12 buffers require a command-list copy.");
     }
 
+    /// <summary>
+    /// Executes CreateUploadBuffer.
+    /// </summary>
     private ID3D12Resource CreateUploadBuffer(IntPtr source, uint copySize) {
-        ID3D12Resource uploadBuffer = this.gd.Device.CreateCommittedResource(
-            HeapType.Upload,
-            HeapFlags.None,
-            ResourceDescription.Buffer(copySize),
-            ResourceStates.GenericRead);
+        ID3D12Resource uploadBuffer = this.gd.Device.CreateCommittedResource(HeapType.Upload, HeapFlags.None, ResourceDescription.Buffer(copySize), ResourceStates.GenericRead);
 
         unsafe {
             void* mapped = null;
@@ -351,16 +476,17 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         return uploadBuffer;
     }
 
-    private unsafe void CopyOnCpu(D3D12DeviceBuffer destination, uint sourceOffset, uint destinationOffset,
-        uint copySize) {
+    /// <summary>
+    /// Executes CopyOnCpu.
+    /// </summary>
+    private unsafe void CopyOnCpu(D3D12DeviceBuffer destination, uint sourceOffset, uint destinationOffset, uint copySize) {
         if (!this.TryGetCpuReadPointer(out IntPtr sourcePtr)) {
             if (this.CanTransitionState) {
                 this.CopyDefaultSourceToCpuWritableDestination(destination, sourceOffset, destinationOffset, copySize);
                 return;
             }
 
-            throw new PlatformNotSupportedException(
-                "This D3D12 buffer copy direction is unsupported for GPU copy and no CPU source mapping is available.");
+            throw new PlatformNotSupportedException("This D3D12 buffer copy direction is unsupported for GPU copy and no CPU source mapping is available.");
         }
 
         IntPtr destinationPtr;
@@ -371,8 +497,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
             destinationPtr = destination._stagingWriteMappedPointer;
         }
         else {
-            throw new PlatformNotSupportedException(
-                "This D3D12 buffer copy direction is unsupported because the destination cannot be CPU-written.");
+            throw new PlatformNotSupportedException("This D3D12 buffer copy direction is unsupported because the destination cannot be CPU-written.");
         }
 
         byte* src = (byte*)sourcePtr + sourceOffset;
@@ -384,8 +509,10 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         }
     }
 
-    private unsafe void CopyDefaultSourceToCpuWritableDestination(D3D12DeviceBuffer destination, uint sourceOffset,
-        uint destinationOffset, uint copySize) {
+    /// <summary>
+    /// Executes CopyDefaultSourceToCpuWritableDestination.
+    /// </summary>
+    private unsafe void CopyDefaultSourceToCpuWritableDestination(D3D12DeviceBuffer destination, uint sourceOffset, uint destinationOffset, uint copySize) {
         IntPtr destinationPtr;
         if (destination._isDynamic) {
             destinationPtr = destination._dynamicMappedPointer;
@@ -394,35 +521,23 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
             destinationPtr = destination._stagingWriteMappedPointer;
         }
         else {
-            throw new PlatformNotSupportedException(
-                "This D3D12 buffer copy direction is unsupported because the destination cannot be CPU-written.");
+            throw new PlatformNotSupportedException("This D3D12 buffer copy direction is unsupported because the destination cannot be CPU-written.");
         }
 
-        ID3D12Resource readbackBuffer = this.gd.Device.CreateCommittedResource(
-            HeapType.Readback,
-            HeapFlags.None,
-            ResourceDescription.Buffer(copySize),
-            ResourceStates.CopyDest);
+        ID3D12Resource readbackBuffer = this.gd.Device.CreateCommittedResource(HeapType.Readback, HeapFlags.None, ResourceDescription.Buffer(copySize), ResourceStates.CopyDest);
         ID3D12CommandAllocator allocator = this.gd.Device.CreateCommandAllocator(CommandListType.Direct);
-        ID3D12GraphicsCommandList commandList =
-            this.gd.Device.CreateCommandList<ID3D12GraphicsCommandList>(0, CommandListType.Direct, allocator);
+        ID3D12GraphicsCommandList commandList = this.gd.Device.CreateCommandList<ID3D12GraphicsCommandList>(0, CommandListType.Direct, allocator);
         try {
             ResourceStates previousState = this.CurrentState;
             if (this.CanTransitionState && previousState != ResourceStates.CopySource) {
-                ResourceBarrier toCopySource = ResourceBarrier.BarrierTransition(
-                    this.NativeBuffer,
-                    previousState,
-                    ResourceStates.CopySource);
+                ResourceBarrier toCopySource = ResourceBarrier.BarrierTransition(this.NativeBuffer, previousState, ResourceStates.CopySource);
                 commandList.ResourceBarrier(new[] { toCopySource });
             }
 
             commandList.CopyBufferRegion(readbackBuffer, 0, this.NativeBuffer, sourceOffset, copySize);
 
             if (this.CanTransitionState && previousState != ResourceStates.CopySource) {
-                ResourceBarrier fromCopySource = ResourceBarrier.BarrierTransition(
-                    this.NativeBuffer,
-                    ResourceStates.CopySource,
-                    previousState);
+                ResourceBarrier fromCopySource = ResourceBarrier.BarrierTransition(this.NativeBuffer, ResourceStates.CopySource, previousState);
                 commandList.ResourceBarrier(new[] { fromCopySource });
             }
 
@@ -453,6 +568,9 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         }
     }
 
+    /// <summary>
+    /// Executes GetCopySourceResource.
+    /// </summary>
     private ID3D12Resource GetCopySourceResource() {
         if (this.CanTransitionState || this._isDynamic) {
             return this.NativeBuffer;
@@ -466,6 +584,9 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         return null;
     }
 
+    /// <summary>
+    /// Executes GetCopyDestinationResource.
+    /// </summary>
     private ID3D12Resource GetCopyDestinationResource() {
         if (this.CanTransitionState) {
             return this.NativeBuffer;
@@ -478,21 +599,25 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         return null;
     }
 
+    /// <summary>
+    /// Executes EnsureReadBufferIsCurrent.
+    /// </summary>
     private void EnsureReadBufferIsCurrent() {
         if (!this._isStaging || !this._stagingReadBufferDirtyFromWriteBuffer) {
             return;
         }
 
         unsafe {
-            Buffer.MemoryCopy(
-                this._stagingWriteMappedPointer.ToPointer(),
-                this._stagingReadMappedPointer.ToPointer(), this.sizeInBytes, this.sizeInBytes);
+            Buffer.MemoryCopy(this._stagingWriteMappedPointer.ToPointer(), this._stagingReadMappedPointer.ToPointer(), this.sizeInBytes, this.sizeInBytes);
         }
 
         this._stagingReadBufferDirtyFromWriteBuffer = false;
         this._stagingWriteBufferDirtyFromReadBuffer = false;
     }
 
+    /// <summary>
+    /// Executes EnsureWriteBufferIsCurrent.
+    /// </summary>
     private void EnsureWriteBufferIsCurrent() {
         if (!this._isStaging || !this._stagingWriteBufferDirtyFromReadBuffer) {
             return;
@@ -501,29 +626,33 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         this.SyncReadBufferToWriteBuffer();
     }
 
+    /// <summary>
+    /// Executes SyncReadBufferToWriteBuffer.
+    /// </summary>
     private void SyncReadBufferToWriteBuffer() {
         unsafe {
-            Buffer.MemoryCopy(
-                this._stagingReadMappedPointer.ToPointer(),
-                this._stagingWriteMappedPointer.ToPointer(), this.sizeInBytes, this.sizeInBytes);
+            Buffer.MemoryCopy(this._stagingReadMappedPointer.ToPointer(), this._stagingWriteMappedPointer.ToPointer(), this.sizeInBytes, this.sizeInBytes);
         }
 
         this._stagingWriteBufferDirtyFromReadBuffer = false;
         this._stagingReadBufferDirtyFromWriteBuffer = false;
     }
 
+    /// <summary>
+    /// Executes Transition.
+    /// </summary>
     private void Transition(ID3D12GraphicsCommandList commandList, ResourceStates from, ResourceStates to) {
         if (from == to || !this.CanTransitionState) {
             return;
         }
 
-        ResourceBarrier barrier = ResourceBarrier.BarrierTransition(
-            this.NativeBuffer,
-            from,
-            to);
+        ResourceBarrier barrier = ResourceBarrier.BarrierTransition(this.NativeBuffer, from, to);
         commandList.ResourceBarrier(new[] { barrier });
     }
 
+    /// <summary>
+    /// Executes CalculateDynamicSnapshotCapacity.
+    /// </summary>
     private static uint CalculateDynamicSnapshotCapacity(uint logicalSize) {
         const ulong maxSnapshotBytes = 256UL * 1024UL * 1024UL;
         ulong doubled = logicalSize * 2UL;
@@ -538,6 +667,9 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         return (uint)finalSize;
     }
 
+    /// <summary>
+    /// Executes AlignUp.
+    /// </summary>
     private static uint AlignUp(uint value, uint alignment) {
         if (alignment == 0) {
             return value;
@@ -547,6 +679,9 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         return remainder == 0 ? value : value + (alignment - remainder);
     }
 
+    /// <summary>
+    /// Executes GetResourceFlags.
+    /// </summary>
     private static ResourceFlags GetResourceFlags(BufferUsage usage) {
         if ((usage & BufferUsage.StructuredBufferReadWrite) == BufferUsage.StructuredBufferReadWrite) {
             return ResourceFlags.AllowUnorderedAccess;

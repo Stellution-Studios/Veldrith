@@ -3,7 +3,14 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrith.MetalBindings;
 
+/// <summary>
+/// Represents the MTLPipelineBufferDescriptorArray struct.
+/// </summary>
 public struct MTLPipelineBufferDescriptorArray {
+
+    /// <summary>
+    /// Represents the NativePtr field.
+    /// </summary>
     public readonly IntPtr NativePtr;
 
     public MTLPipelineBufferDescriptor this[uint index] {

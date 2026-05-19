@@ -1,16 +1,34 @@
-﻿using Vulkan;
-using static Vulkan.VulkanNative;
+using Vulkan;
 using static Veldrith.Vk.VulkanUtil;
+using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
 internal unsafe class VkResourceLayout : ResourceLayout {
+
+    /// <summary>
+    /// Represents the _dsl field.
+    /// </summary>
     private readonly VkDescriptorSetLayout _dsl;
 
+    /// <summary>
+    /// Represents the gd field.
+    /// </summary>
     private readonly VkGraphicsDevice gd;
+
+    /// <summary>
+    /// Represents the _disposed field.
+    /// </summary>
     private bool _disposed;
+
+    /// <summary>
+    /// Represents the _name field.
+    /// </summary>
     private string _name;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="VkResourceLayout" /> class.
+    /// </summary>
     public VkResourceLayout(VkGraphicsDevice gd, ref ResourceLayoutDescription description)
         : base(ref description) {
         this.gd = gd;
@@ -70,14 +88,7 @@ internal unsafe class VkResourceLayout : ResourceLayout {
             }
         }
 
-        this.DescriptorResourceCounts = new DescriptorResourceCounts(
-            uniformBufferCount,
-            uniformBufferDynamicCount,
-            sampledImageCount,
-            samplerCount,
-            storageBufferCount,
-            storageBufferDynamicCount,
-            storageImageCount);
+        this.DescriptorResourceCounts = new DescriptorResourceCounts(uniformBufferCount, uniformBufferDynamicCount, sampledImageCount, samplerCount, storageBufferCount, storageBufferDynamicCount, storageImageCount);
 
         dslCi.bindingCount = (uint)elements.Length;
         dslCi.pBindings = bindings;
@@ -86,14 +97,34 @@ internal unsafe class VkResourceLayout : ResourceLayout {
         CheckResult(result);
     }
 
+    /// <summary>
+    /// Represents the DescriptorSetLayout field.
+    /// </summary>
     public VkDescriptorSetLayout DescriptorSetLayout => this._dsl;
+
+    /// <summary>
+    /// Gets or sets DescriptorTypes.
+    /// </summary>
     public VkDescriptorType[] DescriptorTypes { get; }
 
+    /// <summary>
+    /// Gets or sets DescriptorResourceCounts.
+    /// </summary>
     public DescriptorResourceCounts DescriptorResourceCounts { get; }
+
+    /// <summary>
+    /// Gets or sets DynamicBufferCount.
+    /// </summary>
     public new int DynamicBufferCount { get; }
 
+    /// <summary>
+    /// Gets or sets IsDisposed.
+    /// </summary>
     public override bool IsDisposed => this._disposed;
 
+    /// <summary>
+    /// Gets or sets Name.
+    /// </summary>
     public override string Name {
         get => this._name;
         set {
@@ -104,6 +135,9 @@ internal unsafe class VkResourceLayout : ResourceLayout {
 
     #region Disposal
 
+    /// <summary>
+    /// Executes Dispose.
+    /// </summary>
     public override void Dispose() {
         if (!this._disposed) {
             this._disposed = true;

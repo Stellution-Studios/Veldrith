@@ -3,16 +3,17 @@ using System;
 namespace Veldrith;
 
 /// <summary>
-///     Describes an individual output attachment and its format.
+/// Describes an individual output attachment and its format.
 /// </summary>
 public struct OutputAttachmentDescription : IEquatable<OutputAttachmentDescription> {
+
     /// <summary>
-    ///     The format of the <see cref="Texture" /> attachment.
+    /// The format of the <see cref="Texture" /> attachment.
     /// </summary>
     public PixelFormat Format;
 
     /// <summary>
-    ///     Constructs a new <see cref="OutputAttachmentDescription" />.
+    /// Constructs a new <see cref="OutputAttachmentDescription" />.
     /// </summary>
     /// <param name="format">THe format of the <see cref="Texture" /> attachment.</param>
     public OutputAttachmentDescription(PixelFormat format) {
@@ -20,7 +21,7 @@ public struct OutputAttachmentDescription : IEquatable<OutputAttachmentDescripti
     }
 
     /// <summary>
-    ///     Element-wise equality.
+    /// Element-wise equality.
     /// </summary>
     /// <param name="other">The instance to compare to.</param>
     /// <returns>True if all elements are equal; false otherswise.</returns>
@@ -29,7 +30,7 @@ public struct OutputAttachmentDescription : IEquatable<OutputAttachmentDescripti
     }
 
     /// <summary>
-    ///     Returns the hash code for this instance.
+    /// Returns the hash code for this instance.
     /// </summary>
     /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
     public override int GetHashCode() {

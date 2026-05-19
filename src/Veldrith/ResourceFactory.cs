@@ -1,27 +1,28 @@
 namespace Veldrith;
 
-/// <summary>
-///     A device object responsible for the creation of graphics resources.
-/// </summary>
 public abstract class ResourceFactory {
     /// <summary></summary>
     /// <param name="features"></param>
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ResourceFactory" /> class.
+    /// </summary>
     protected ResourceFactory(GraphicsDeviceFeatures features) {
         this.Features = features;
     }
 
     /// <summary>
-    ///     Gets the <see cref="GraphicsBackend" /> of this instance.
+    /// Gets the <see cref="GraphicsBackend" /> of this instance.
     /// </summary>
     public abstract GraphicsBackend BackendType { get; }
 
     /// <summary>
-    ///     Gets the <see cref="GraphicsDeviceFeatures" /> this instance was created with.
+    /// Gets the <see cref="GraphicsDeviceFeatures" /> this instance was created with.
     /// </summary>
     public GraphicsDeviceFeatures Features { get; }
 
     /// <summary>
-    ///     Creates a new <see cref="Pipeline" />.
+    /// Creates a new <see cref="Pipeline" />.
     /// </summary>
     /// <param name="description">The desired properties of the created object.</param>
     /// <returns>A new <see cref="Pipeline" />.</returns>
@@ -30,20 +31,18 @@ public abstract class ResourceFactory {
     }
 
     /// <summary>
-    ///     Creates a new <see cref="Pipeline" /> object.
+    /// Creates a new <see cref="Pipeline" /> object.
     /// </summary>
     /// <param name="description">The desired properties of the created object.</param>
     /// <returns>A new <see cref="Pipeline" /> which, when bound to a CommandList, is used to dispatch draw commands.</returns>
     public Pipeline CreateGraphicsPipeline(ref GraphicsPipelineDescription description) {
 #if VALIDATE_USAGE
         if (!description.RasterizerState.DepthClipEnabled && !this.Features.DepthClipDisable) {
-            throw new VeldridException(
-                "RasterizerState.DepthClipEnabled must be true if GraphicsDeviceFeatures.DepthClipDisable is not supported.");
+            throw new VeldridException("RasterizerState.DepthClipEnabled must be true if GraphicsDeviceFeatures.DepthClipDisable is not supported.");
         }
 
         if (description.RasterizerState.FillMode == PolygonFillMode.Wireframe && !this.Features.FillModeWireframe) {
-            throw new VeldridException(
-                "PolygonFillMode.Wireframe requires GraphicsDeviceFeatures.FillModeWireframe.");
+            throw new VeldridException("PolygonFillMode.Wireframe requires GraphicsDeviceFeatures.FillModeWireframe.");
         }
 
         if (!this.Features.IndependentBlend) {
@@ -52,8 +51,7 @@ public abstract class ResourceFactory {
 
                 for (int i = 1; i < description.BlendState.AttachmentStates.Length; i++) {
                     if (!attachmentState.Equals(description.BlendState.AttachmentStates[i])) {
-                        throw new VeldridException(
-                            "If GraphcsDeviceFeatures.IndependentBlend is false, then all members of BlendState.AttachmentStates must be equal.");
+                        throw new VeldridException("If GraphcsDeviceFeatures.IndependentBlend is false, then all members of BlendState.AttachmentStates must be equal.");
                     }
                 }
             }
@@ -65,13 +63,11 @@ public abstract class ResourceFactory {
 
             foreach (VertexElementDescription elementDesc in layoutDesc.Elements) {
                 if (hasExplicitLayout && elementDesc.Offset == 0) {
-                    throw new VeldridException(
-                        "If any vertex element has an explicit offset, then all elements must have an explicit offset.");
+                    throw new VeldridException("If any vertex element has an explicit offset, then all elements must have an explicit offset.");
                 }
 
                 if (elementDesc.Offset != 0 && elementDesc.Offset < minOffset) {
-                    throw new VeldridException(
-                        $"Vertex element \"{elementDesc.Name}\" has an explicit offset which overlaps with the previous element.");
+                    throw new VeldridException($"Vertex element \"{elementDesc.Name}\" has an explicit offset which overlaps with the previous element.");
                 }
 
                 minOffset = elementDesc.Offset + FormatSizeHelpers.GetSizeInBytes(elementDesc.Format);
@@ -79,8 +75,7 @@ public abstract class ResourceFactory {
             }
 
             if (minOffset > layoutDesc.Stride) {
-                throw new VeldridException(
-                    $"The vertex layout's stride ({layoutDesc.Stride}) is less than the full size of the vertex ({minOffset})");
+                throw new VeldridException($"The vertex layout's stride ({layoutDesc.Stride}) is less than the full size of the vertex ({minOffset})");
             }
         }
 #endif
@@ -88,7 +83,7 @@ public abstract class ResourceFactory {
     }
 
     /// <summary>
-    ///     Creates a new compute <see cref="Pipeline" /> object.
+    /// Creates a new compute <see cref="Pipeline" /> object.
     /// </summary>
     /// <param name="description">The desirede properties of the created object.</param>
     /// <returns>A new <see cref="Pipeline" /> which, when bound to a CommandList, is used to dispatch compute commands.</returns>
@@ -97,14 +92,14 @@ public abstract class ResourceFactory {
     }
 
     /// <summary>
-    ///     Creates a new compute <see cref="Pipeline" /> object.
+    /// Creates a new compute <see cref="Pipeline" /> object.
     /// </summary>
     /// <param name="description">The desirede properties of the created object.</param>
     /// <returns>A new <see cref="Pipeline" /> which, when bound to a CommandList, is used to dispatch compute commands.</returns>
     public abstract Pipeline CreateComputePipeline(ref ComputePipelineDescription description);
 
     /// <summary>
-    ///     Creates a new <see cref="Framebuffer" />.
+    /// Creates a new <see cref="Framebuffer" />.
     /// </summary>
     /// <param name="description">The desired properties of the created object.</param>
     /// <returns>A new <see cref="Framebuffer" />.</returns>
@@ -113,14 +108,14 @@ public abstract class ResourceFactory {
     }
 
     /// <summary>
-    ///     Creates a new <see cref="Framebuffer" />.
+    /// Creates a new <see cref="Framebuffer" />.
     /// </summary>
     /// <param name="description">The desired properties of the created object.</param>
     /// <returns>A new <see cref="Framebuffer" />.</returns>
     public abstract Framebuffer CreateFramebuffer(ref FramebufferDescription description);
 
     /// <summary>
-    ///     Creates a new <see cref="Texture" />.
+    /// Creates a new <see cref="Texture" />.
     /// </summary>
     /// <param name="description">The desired properties of the created object.</param>
     /// <returns>A new <see cref="Texture" />.</returns>
@@ -129,7 +124,7 @@ public abstract class ResourceFactory {
     }
 
     /// <summary>
-    ///     Creates a new <see cref="Texture" />.
+    /// Creates a new <see cref="Texture" />.
     /// </summary>
     /// <param name="description">The desired properties of the created object.</param>
     /// <returns>A new <see cref="Texture" />.</returns>
@@ -146,8 +141,7 @@ public abstract class ResourceFactory {
 
         if ((description.Type == TextureType.Texture1D || description.Type == TextureType.Texture3D)
             && description.SampleCount != TextureSampleCount.Count1) {
-            throw new VeldridException(
-                $"1D and 3D Textures must use {nameof(TextureSampleCount)}.{nameof(TextureSampleCount.Count1)}.");
+            throw new VeldridException($"1D and 3D Textures must use {nameof(TextureSampleCount)}.{nameof(TextureSampleCount.Count1)}.");
         }
 
         if (description.Type == TextureType.Texture1D && !this.Features.Texture1D) {
@@ -155,63 +149,56 @@ public abstract class ResourceFactory {
         }
 
         if ((description.Usage & TextureUsage.Staging) != 0 && description.Usage != TextureUsage.Staging) {
-            throw new VeldridException(
-                $"{nameof(TextureUsage)}.{nameof(TextureUsage.Staging)} cannot be combined with any other flags.");
+            throw new VeldridException($"{nameof(TextureUsage)}.{nameof(TextureUsage.Staging)} cannot be combined with any other flags.");
         }
 
-        if ((description.Usage & TextureUsage.DepthStencil) != 0 &&
-            (description.Usage & TextureUsage.GenerateMipmaps) != 0) {
-            throw new VeldridException(
-                $"{nameof(TextureUsage)}.{nameof(TextureUsage.DepthStencil)} and {nameof(TextureUsage)}.{nameof(TextureUsage.GenerateMipmaps)} cannot be combined.");
+        if ((description.Usage & TextureUsage.DepthStencil) != 0 && (description.Usage & TextureUsage.GenerateMipmaps) != 0) {
+            throw new VeldridException($"{nameof(TextureUsage)}.{nameof(TextureUsage.DepthStencil)} and {nameof(TextureUsage)}.{nameof(TextureUsage.GenerateMipmaps)} cannot be combined.");
         }
 #endif
         return this.CreateTextureCore(ref description);
     }
 
     /// <summary>
-    ///     Creates a new <see cref="Texture" /> from an existing native texture.
+    /// Creates a new <see cref="Texture" /> from an existing native texture.
     /// </summary>
     /// <param name="nativeTexture">A backend-specific handle identifying an existing native texture. See remarks.</param>
     /// <param name="description">The properties of the existing Texture.</param>
     /// <returns>A new <see cref="Texture" /> wrapping the existing native texture.</returns>
     /// <remarks>
-    ///     The nativeTexture parameter is backend-specific, and the type of data passed in depends on which graphics API is
-    ///     being used.
-    ///     When using the Vulkan backend, nativeTexture must be a valid VkImage handle.
-    ///     When using the Metal backend, nativeTexture must be a valid MTLTexture pointer.
-    ///     When using the D3D11 backend, nativeTexture must be a valid pointer to an ID3D11Texture1D, ID3D11Texture2D, or
-    ///     ID3D11Texture3D.
-    ///     When using the OpenGL backend, nativeTexture must be a valid OpenGL texture name.
-    ///     The properties of the Texture will be determined from the <see cref="TextureDescription" /> passed in. These
-    ///     properties must match the true properties of the existing native texture.
+    /// The nativeTexture parameter is backend-specific, and the type of data passed in depends on which graphics API is
+    /// being used.
+    /// When using the Vulkan backend, nativeTexture must be a valid VkImage handle.
+    /// When using the Direct3D12 backend, nativeTexture must be a valid ID3D12Resource pointer representing a texture.
+    /// When using the Metal backend, nativeTexture must be a valid MTLTexture pointer.
+    /// The properties of the Texture will be determined from the <see cref="TextureDescription" /> passed in. These
+    /// properties must match the true properties of the existing native texture.
     /// </remarks>
     public Texture CreateTexture(ulong nativeTexture, TextureDescription description) {
         return this.CreateTextureCore(nativeTexture, ref description);
     }
 
     /// <summary>
-    ///     Creates a new <see cref="Texture" /> from an existing native texture.
+    /// Creates a new <see cref="Texture" /> from an existing native texture.
     /// </summary>
     /// <param name="nativeTexture">A backend-specific handle identifying an existing native texture. See remarks.</param>
     /// <param name="description">The properties of the existing Texture.</param>
     /// <returns>A new <see cref="Texture" /> wrapping the existing native texture.</returns>
     /// <remarks>
-    ///     The nativeTexture parameter is backend-specific, and the type of data passed in depends on which graphics API is
-    ///     being used.
-    ///     When using the Vulkan backend, nativeTexture must be a valid VkImage handle.
-    ///     When using the Metal backend, nativeTexture must be a valid MTLTexture pointer.
-    ///     When using the D3D11 backend, nativeTexture must be a valid pointer to an ID3D11Texture1D, ID3D11Texture2D, or
-    ///     ID3D11Texture3D.
-    ///     When using the OpenGL backend, nativeTexture must be a valid OpenGL texture name.
-    ///     The properties of the Texture will be determined from the <see cref="TextureDescription" /> passed in. These
-    ///     properties must match the true properties of the existing native texture.
+    /// The nativeTexture parameter is backend-specific, and the type of data passed in depends on which graphics API is
+    /// being used.
+    /// When using the Vulkan backend, nativeTexture must be a valid VkImage handle.
+    /// When using the Direct3D12 backend, nativeTexture must be a valid ID3D12Resource pointer representing a texture.
+    /// When using the Metal backend, nativeTexture must be a valid MTLTexture pointer.
+    /// The properties of the Texture will be determined from the <see cref="TextureDescription" /> passed in. These
+    /// properties must match the true properties of the existing native texture.
     /// </remarks>
     public Texture CreateTexture(ulong nativeTexture, ref TextureDescription description) {
         return this.CreateTextureCore(nativeTexture, ref description);
     }
 
     /// <summary>
-    ///     Creates a new <see cref="TextureView" />.
+    /// Creates a new <see cref="TextureView" />.
     /// </summary>
     /// <param name="target">The target <see cref="Texture" /> used in the new view.</param>
     /// <returns>A new <see cref="TextureView" />.</returns>
@@ -220,7 +207,7 @@ public abstract class ResourceFactory {
     }
 
     /// <summary>
-    ///     Creates a new <see cref="TextureView" />.
+    /// Creates a new <see cref="TextureView" />.
     /// </summary>
     /// <param name="description">The desired properties of the created object.</param>
     /// <returns>A new <see cref="TextureView" />.</returns>
@@ -229,7 +216,7 @@ public abstract class ResourceFactory {
     }
 
     /// <summary>
-    ///     Creates a new <see cref="TextureView" />.
+    /// Creates a new <see cref="TextureView" />.
     /// </summary>
     /// <param name="description">The desired properties of the created object.</param>
     /// <returns>A new <see cref="TextureView" />.</returns>
@@ -240,29 +227,22 @@ public abstract class ResourceFactory {
                                        description.Target.MipLevels
                                        || description.BaseArrayLayer + description.ArrayLayers >
                                        description.Target.ArrayLayers) {
-            throw new VeldridException(
-                "TextureView mip level and array layer range must be contained in the target Texture.");
+            throw new VeldridException("TextureView mip level and array layer range must be contained in the target Texture.");
         }
 
         if ((description.Target.Usage & TextureUsage.Sampled) == 0
             && (description.Target.Usage & TextureUsage.Storage) == 0) {
-            throw new VeldridException(
-                "To create a TextureView, the target texture must have either Sampled or Storage usage flags.");
+            throw new VeldridException("To create a TextureView, the target texture must have either Sampled or Storage usage flags.");
         }
 
-        if (!this.Features.SubsetTextureView &&
-            (description.BaseMipLevel != 0 || description.MipLevels != description.Target.MipLevels
-                                           || description.BaseArrayLayer != 0 ||
-                                           description.ArrayLayers != description.Target.ArrayLayers)) {
+        if (!this.Features.SubsetTextureView && (description.BaseMipLevel != 0 || description.MipLevels != description.Target.MipLevels
+                                           || description.BaseArrayLayer != 0 || description.ArrayLayers != description.Target.ArrayLayers)) {
             throw new VeldridException("GraphicsDevice does not support subset TextureViews.");
         }
 
         if (description.Format != null && description.Format != description.Target.Format) {
             if (!FormatHelpers.IsFormatViewCompatible(description.Format.Value, description.Target.Format)) {
-                throw new VeldridException(
-                    $"Cannot create a TextureView with format {description.Format.Value} targeting a Texture with format " +
-                    $"{description.Target.Format}. A TextureView's format must have the same size and number of " +
-                    "components as the underlying Texture's format, or the same format.");
+                throw new VeldridException($"Cannot create a TextureView with format {description.Format.Value} targeting a Texture with format " + $"{description.Target.Format}. A TextureView's format must have the same size and number of " + "components as the underlying Texture's format, or the same format.");
             }
         }
 #endif
@@ -271,7 +251,7 @@ public abstract class ResourceFactory {
     }
 
     /// <summary>
-    ///     Creates a new <see cref="DeviceBuffer" />.
+    /// Creates a new <see cref="DeviceBuffer" />.
     /// </summary>
     /// <param name="description">The desired properties of the created object.</param>
     /// <returns>A new <see cref="DeviceBuffer" />.</returns>
@@ -280,7 +260,7 @@ public abstract class ResourceFactory {
     }
 
     /// <summary>
-    ///     Creates a new <see cref="DeviceBuffer" />.
+    /// Creates a new <see cref="DeviceBuffer" />.
     /// </summary>
     /// <param name="description">The desired properties of the created object.</param>
     /// <returns>A new <see cref="DeviceBuffer" />.</returns>
@@ -298,17 +278,14 @@ public abstract class ResourceFactory {
                 throw new VeldridException("Structured Buffer objects must have a non-zero StructureByteStride.");
             }
 
-            if ((usage & BufferUsage.StructuredBufferReadWrite) != 0 &&
-                usage != BufferUsage.StructuredBufferReadWrite) {
-                throw new VeldridException(
-                    $"{nameof(BufferUsage)}.{nameof(BufferUsage.StructuredBufferReadWrite)} cannot be combined with any other flag.");
+            if ((usage & BufferUsage.StructuredBufferReadWrite) != 0 && usage != BufferUsage.StructuredBufferReadWrite) {
+                throw new VeldridException($"{nameof(BufferUsage)}.{nameof(BufferUsage.StructuredBufferReadWrite)} cannot be combined with any other flag.");
             }
 
             if ((usage & BufferUsage.VertexBuffer) != 0
                 || (usage & BufferUsage.IndexBuffer) != 0
                 || (usage & BufferUsage.IndirectBuffer) != 0) {
-                throw new VeldridException(
-                    $"Read-Only Structured Buffer objects cannot specify {nameof(BufferUsage)}.{nameof(BufferUsage.VertexBuffer)}, {nameof(BufferUsage)}.{nameof(BufferUsage.IndexBuffer)}, or {nameof(BufferUsage)}.{nameof(BufferUsage.IndirectBuffer)}.");
+                throw new VeldridException($"Read-Only Structured Buffer objects cannot specify {nameof(BufferUsage)}.{nameof(BufferUsage.VertexBuffer)}, {nameof(BufferUsage)}.{nameof(BufferUsage.IndexBuffer)}, or {nameof(BufferUsage)}.{nameof(BufferUsage.IndirectBuffer)}.");
             }
         }
         else if (description.StructureByteStride != 0) {
@@ -327,7 +304,7 @@ public abstract class ResourceFactory {
     }
 
     /// <summary>
-    ///     Creates a new <see cref="Sampler" />.
+    /// Creates a new <see cref="Sampler" />.
     /// </summary>
     /// <param name="description">The desired properties of the created object.</param>
     /// <returns>A new <see cref="Sampler" />.</returns>
@@ -336,20 +313,18 @@ public abstract class ResourceFactory {
     }
 
     /// <summary>
-    ///     Creates a new <see cref="Sampler" />.
+    /// Creates a new <see cref="Sampler" />.
     /// </summary>
     /// <param name="description">The desired properties of the created object.</param>
     /// <returns>A new <see cref="Sampler" />.</returns>
     public Sampler CreateSampler(ref SamplerDescription description) {
 #if VALIDATE_USAGE
         if (!this.Features.SamplerLodBias && description.LodBias != 0) {
-            throw new VeldridException(
-                "GraphicsDevice does not support Sampler LOD bias. SamplerDescription.LodBias must be 0.");
+            throw new VeldridException("GraphicsDevice does not support Sampler LOD bias. SamplerDescription.LodBias must be 0.");
         }
 
         if (!this.Features.SamplerAnisotropy && description.Filter == SamplerFilter.Anisotropic) {
-            throw new VeldridException(
-                "SamplerFilter.Anisotropic cannot be used unless GraphicsDeviceFeatures.SamplerAnisotropy is supported.");
+            throw new VeldridException("SamplerFilter.Anisotropic cannot be used unless GraphicsDeviceFeatures.SamplerAnisotropy is supported.");
         }
 #endif
 
@@ -357,7 +332,7 @@ public abstract class ResourceFactory {
     }
 
     /// <summary>
-    ///     Creates a new <see cref="Shader" />.
+    /// Creates a new <see cref="Shader" />.
     /// </summary>
     /// <param name="description">The desired properties of the created object.</param>
     /// <returns>A new <see cref="Shader" />.</returns>
@@ -366,7 +341,7 @@ public abstract class ResourceFactory {
     }
 
     /// <summary>
-    ///     Creates a new <see cref="Shader" />.
+    /// Creates a new <see cref="Shader" />.
     /// </summary>
     /// <param name="description">The desired properties of the created object.</param>
     /// <returns>A new <see cref="Shader" />.</returns>
@@ -390,7 +365,7 @@ public abstract class ResourceFactory {
     }
 
     /// <summary>
-    ///     Creates a new <see cref="CommandList" />.
+    /// Creates a new <see cref="CommandList" />.
     /// </summary>
     /// <returns>A new <see cref="CommandList" />.</returns>
     public CommandList CreateCommandList() {
@@ -398,7 +373,7 @@ public abstract class ResourceFactory {
     }
 
     /// <summary>
-    ///     Creates a new <see cref="CommandList" />.
+    /// Creates a new <see cref="CommandList" />.
     /// </summary>
     /// <param name="description">The desired properties of the created object.</param>
     /// <returns>A new <see cref="CommandList" />.</returns>
@@ -407,14 +382,14 @@ public abstract class ResourceFactory {
     }
 
     /// <summary>
-    ///     Creates a new <see cref="CommandList" />.
+    /// Creates a new <see cref="CommandList" />.
     /// </summary>
     /// <param name="description">The desired properties of the created object.</param>
     /// <returns>A new <see cref="CommandList" />.</returns>
     public abstract CommandList CreateCommandList(ref CommandListDescription description);
 
     /// <summary>
-    ///     Creates a new <see cref="ResourceLayout" />.
+    /// Creates a new <see cref="ResourceLayout" />.
     /// </summary>
     /// <param name="description">The desired properties of the created object.</param>
     /// <returns>A new <see cref="ResourceLayout" />.</returns>
@@ -423,14 +398,14 @@ public abstract class ResourceFactory {
     }
 
     /// <summary>
-    ///     Creates a new <see cref="ResourceLayout" />.
+    /// Creates a new <see cref="ResourceLayout" />.
     /// </summary>
     /// <param name="description">The desired properties of the created object.</param>
     /// <returns>A new <see cref="ResourceLayout" />.</returns>
     public abstract ResourceLayout CreateResourceLayout(ref ResourceLayoutDescription description);
 
     /// <summary>
-    ///     Creates a new <see cref="ResourceSet" />.
+    /// Creates a new <see cref="ResourceSet" />.
     /// </summary>
     /// <param name="description">The desired properties of the created object.</param>
     /// <returns>A new <see cref="ResourceSet" />.</returns>
@@ -439,21 +414,21 @@ public abstract class ResourceFactory {
     }
 
     /// <summary>
-    ///     Creates a new <see cref="ResourceSet" />.
+    /// Creates a new <see cref="ResourceSet" />.
     /// </summary>
     /// <param name="description">The desired properties of the created object.</param>
     /// <returns>A new <see cref="ResourceSet" />.</returns>
     public abstract ResourceSet CreateResourceSet(ref ResourceSetDescription description);
 
     /// <summary>
-    ///     Creates a new <see cref="Fence" /> in the given state.
+    /// Creates a new <see cref="Fence" /> in the given state.
     /// </summary>
     /// <param name="signaled">A value indicating whether the Fence should be in the signaled state when created.</param>
     /// <returns>A new <see cref="Fence" />.</returns>
     public abstract Fence CreateFence(bool signaled);
 
     /// <summary>
-    ///     Creates a new <see cref="Swapchain" />.
+    /// Creates a new <see cref="Swapchain" />.
     /// </summary>
     /// <param name="description">The desired properties of the created object.</param>
     /// <returns>A new <see cref="Swapchain" />.</returns>
@@ -462,7 +437,7 @@ public abstract class ResourceFactory {
     }
 
     /// <summary>
-    ///     Creates a new <see cref="Swapchain" />.
+    /// Creates a new <see cref="Swapchain" />.
     /// </summary>
     /// <param name="description">The desired properties of the created object.</param>
     /// <returns>A new <see cref="Swapchain" />.</returns>
@@ -471,15 +446,24 @@ public abstract class ResourceFactory {
     /// <summary></summary>
     /// <param name="description"></param>
     /// <returns></returns>
+
+    /// <summary>
+    /// Executes CreateGraphicsPipelineCore.
+    /// </summary>
     protected abstract Pipeline CreateGraphicsPipelineCore(ref GraphicsPipelineDescription description);
 
     /// <summary></summary>
     /// <param name="nativeTexture"></param>
     /// <param name="description"></param>
     /// <returns></returns>
+
+    /// <summary>
+    /// Executes CreateTextureCore.
+    /// </summary>
     protected abstract Texture CreateTextureCore(ulong nativeTexture, ref TextureDescription description);
 
     // TODO: private protected
+
     /// <summary>
     /// </summary>
     /// <param name="description"></param>
@@ -487,6 +471,7 @@ public abstract class ResourceFactory {
     protected abstract Texture CreateTextureCore(ref TextureDescription description);
 
     // TODO: private protected
+
     /// <summary>
     /// </summary>
     /// <param name="description"></param>
@@ -494,6 +479,7 @@ public abstract class ResourceFactory {
     protected abstract TextureView CreateTextureViewCore(ref TextureViewDescription description);
 
     // TODO: private protected
+
     /// <summary>
     /// </summary>
     /// <param name="description"></param>
@@ -503,10 +489,18 @@ public abstract class ResourceFactory {
     /// <summary></summary>
     /// <param name="description"></param>
     /// <returns></returns>
+
+    /// <summary>
+    /// Executes CreateSamplerCore.
+    /// </summary>
     protected abstract Sampler CreateSamplerCore(ref SamplerDescription description);
 
     /// <summary></summary>
     /// <param name="description"></param>
     /// <returns></returns>
+
+    /// <summary>
+    /// Executes CreateShaderCore.
+    /// </summary>
     protected abstract Shader CreateShaderCore(ref ShaderDescription description);
 }

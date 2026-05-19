@@ -10,16 +10,17 @@ using SpvcResult = Silk.NET.SPIRV.Cross.Result;
 
 namespace Veldrith.SPIRV;
 
-/// <summary>
-///     Internal engine that drives SPIR-V cross-compilation via the Silk.NET SPIRV-Cross C API.
-///     Handles resource collection, binding remapping, combined image-sampler synthesis,
-///     stage I/O renaming, vertex input reflection, and resource layout building.
-/// </summary>
 internal static unsafe class SpirvCrossCompiler {
+
+    /// <summary>
+    /// Represents the s_cross field.
+    /// </summary>
     private static readonly Cross s_cross = Cross.GetApi();
 
-    internal static VertexFragmentCompilationResult CompileVertexFragment(
-        byte[] vsSpirv, byte[] fsSpirv, CrossCompileTarget target, CrossCompileOptions options) {
+    /// <summary>
+    /// Executes CompileVertexFragment.
+    /// </summary>
+    internal static VertexFragmentCompilationResult CompileVertexFragment(byte[] vsSpirv, byte[] fsSpirv, CrossCompileTarget target, CrossCompileOptions options) {
         Cross cross = s_cross;
         SpvcContext* ctx = null;
         try {
@@ -56,14 +57,10 @@ internal static unsafe class SpirvCrossCompiler {
                 RemapBindingsHlslMsl(cross, allResources, vsCompiler, fsCompiler, target);
             }
 
-            if (target == CrossCompileTarget.GLSL || target == CrossCompileTarget.ESSL) {
+            if (target == CrossCompileTarget.GLSL) {
                 BuildCombinedImageSamplers(cross, vsCompiler);
                 BuildCombinedImageSamplers(cross, fsCompiler);
                 RenameStageIO(cross, vsCompiler, fsCompiler);
-            }
-
-            if (target == CrossCompileTarget.ESSL) {
-                RemapBindingsEssl(cross, vsCompiler, fsCompiler, allResources);
             }
 
             byte* vsSource = null;
@@ -89,8 +86,10 @@ internal static unsafe class SpirvCrossCompiler {
         }
     }
 
-    internal static ComputeCompilationResult CompileCompute(
-        byte[] csSpirv, CrossCompileTarget target, CrossCompileOptions options) {
+    /// <summary>
+    /// Executes CompileCompute.
+    /// </summary>
+    internal static ComputeCompilationResult CompileCompute(byte[] csSpirv, CrossCompileTarget target, CrossCompileOptions options) {
         Cross cross = s_cross;
         SpvcContext* ctx = null;
         try {
@@ -115,12 +114,8 @@ internal static unsafe class SpirvCrossCompiler {
                 RemapBindingsHlslMsl(cross, allResources, csCompiler, null, target);
             }
 
-            if (target == CrossCompileTarget.GLSL || target == CrossCompileTarget.ESSL) {
+            if (target == CrossCompileTarget.GLSL) {
                 BuildCombinedImageSamplers(cross, csCompiler);
-            }
-
-            if (target == CrossCompileTarget.ESSL) {
-                RemapBindingsEsslSingleStage(cross, csCompiler, allResources);
             }
 
             byte* csSource = null;
@@ -143,10 +138,24 @@ internal static unsafe class SpirvCrossCompiler {
 
     #region Types
 
+    /// <summary>
+    /// Executes BindingKey.
+    /// </summary>
     private readonly struct BindingKey(uint set, uint binding) : IComparable<BindingKey> {
+
+        /// <summary>
+        /// Represents the Set field.
+        /// </summary>
         public readonly uint Set = set;
+
+        /// <summary>
+        /// Represents the Binding field.
+        /// </summary>
         public readonly uint Binding = binding;
 
+        /// <summary>
+        /// Executes CompareTo.
+        /// </summary>
         public int CompareTo(BindingKey other) {
             int c = this.Set.CompareTo(other.Set);
             return c != 0 ? c : this.Binding.CompareTo(other.Binding);
@@ -154,8 +163,20 @@ internal static unsafe class SpirvCrossCompiler {
     }
 
     private class ResourceInfo {
+
+        /// <summary>
+        /// Represents the IDs field.
+        /// </summary>
         public readonly uint[] IDs = new uint[2]; // 0 = VS/CS, 1 = FS
+
+        /// <summary>
+        /// Represents the Kind field.
+        /// </summary>
         public ResourceKind Kind;
+
+        /// <summary>
+        /// Represents the Name field.
+        /// </summary>
         public string Name;
     }
 
@@ -163,6 +184,9 @@ internal static unsafe class SpirvCrossCompiler {
 
     #region Compiler Setup
 
+    /// <summary>
+    /// Executes Check.
+    /// </summary>
     private static void Check(Cross cross, SpvcContext* ctx, SpvcResult result) {
         if (result != SpvcResult.Success) {
             string msg = "SPIRV-Cross error";
@@ -177,19 +201,22 @@ internal static unsafe class SpirvCrossCompiler {
         }
     }
 
+    /// <summary>
+    /// Executes GetSpvcBackend.
+    /// </summary>
     private static SpvcBackend GetSpvcBackend(CrossCompileTarget target) {
         return target switch {
             CrossCompileTarget.HLSL => SpvcBackend.Hlsl,
             CrossCompileTarget.GLSL => SpvcBackend.Glsl,
-            CrossCompileTarget.ESSL => SpvcBackend.Glsl,
             CrossCompileTarget.MSL => SpvcBackend.Msl,
             _ => throw new SpirvCompilationException($"Invalid CrossCompileTarget: {target}")
         };
     }
 
-    private static void SetCompilerOptions(
-        Cross cross, SpvcCompiler* compiler, CrossCompileTarget target, CrossCompileOptions options,
-        bool isCompute, bool hasStorageResources) {
+    /// <summary>
+    /// Executes SetCompilerOptions.
+    /// </summary>
+    private static void SetCompilerOptions(Cross cross, SpvcCompiler* compiler, CrossCompileTarget target, CrossCompileOptions options, bool isCompute, bool hasStorageResources) {
         CompilerOptions* opts = null;
         Check(cross, null, cross.CompilerCreateCompilerOptions(compiler, &opts));
 
@@ -208,28 +235,22 @@ internal static unsafe class SpirvCrossCompiler {
                 break;
 
             case CrossCompileTarget.GLSL: {
-                uint version = isCompute || hasStorageResources ? 430u : 330u;
-                cross.CompilerOptionsSetUint(opts, CompilerOption.GlslVersion, version);
-                cross.CompilerOptionsSetBool(opts, CompilerOption.GlslES, 0);
-                cross.CompilerOptionsSetBool(opts, CompilerOption.GlslEnable420PackExtension, 0);
-                break;
-            }
+                    uint version = isCompute || hasStorageResources ? 430u : 330u;
+                    cross.CompilerOptionsSetUint(opts, CompilerOption.GlslVersion, version);
+                    cross.CompilerOptionsSetBool(opts, CompilerOption.GlslES, 0);
+                    cross.CompilerOptionsSetBool(opts, CompilerOption.GlslEnable420PackExtension, 0);
+                    break;
+                }
 
-            case CrossCompileTarget.ESSL: {
-                uint version = isCompute || hasStorageResources ? 310u : 300u;
-                cross.CompilerOptionsSetUint(opts, CompilerOption.GlslVersion, version);
-                cross.CompilerOptionsSetBool(opts, CompilerOption.GlslES, 1);
-                cross.CompilerOptionsSetBool(opts, CompilerOption.GlslEnable420PackExtension, 0);
-                break;
-            }
-
-            case CrossCompileTarget.MSL:
-                break;
+            case CrossCompileTarget.MSL: break;
         }
 
         Check(cross, null, cross.CompilerInstallCompilerOptions(compiler, opts));
     }
 
+    /// <summary>
+    /// Executes SetSpecializations.
+    /// </summary>
     private static void SetSpecializations(Cross cross, SpvcCompiler* compiler, CrossCompileOptions options) {
         if (options.Specializations.Length == 0) {
             return;
@@ -263,41 +284,32 @@ internal static unsafe class SpirvCrossCompiler {
     #region Resource Collection
 
     /// <summary>
-    ///     Collects all resources from a shader into the shared resource map.
-    ///     Returns true if the shader uses storage buffers or storage images.
+    /// Collects all resources from a shader into the shared resource map.
+    /// Returns true if the shader uses storage buffers or storage images.
     /// </summary>
-    private static bool CollectResources(
-        Cross cross, SpvcCompiler* compiler,
-        SortedDictionary<BindingKey, ResourceInfo> allResources,
-        uint idIndex, bool normalizeResourceNames) {
+    private static bool CollectResources(Cross cross, SpvcCompiler* compiler, SortedDictionary<BindingKey, ResourceInfo> allResources, uint idIndex, bool normalizeResourceNames) {
         SpvcResources* resources = null;
         Check(cross, null, cross.CompilerCreateShaderResources(compiler, &resources));
 
         bool hasStorage = false;
 
-        AddResourcesOfType(cross, compiler, resources, ResourceType.UniformBuffer,
-            allResources, idIndex, normalizeResourceNames, ResourceKind.UniformBuffer);
+        AddResourcesOfType(cross, compiler, resources, ResourceType.UniformBuffer, allResources, idIndex, normalizeResourceNames, ResourceKind.UniformBuffer);
 
-        hasStorage |= AddStorageBuffers(cross, compiler, resources,
-            allResources, idIndex, normalizeResourceNames);
+        hasStorage |= AddStorageBuffers(cross, compiler, resources, allResources, idIndex, normalizeResourceNames);
 
-        AddResourcesOfType(cross, compiler, resources, ResourceType.SeparateImage,
-            allResources, idIndex, normalizeResourceNames, ResourceKind.TextureReadOnly);
+        AddResourcesOfType(cross, compiler, resources, ResourceType.SeparateImage, allResources, idIndex, normalizeResourceNames, ResourceKind.TextureReadOnly);
 
-        hasStorage |= AddResourcesOfType(cross, compiler, resources, ResourceType.StorageImage,
-            allResources, idIndex, normalizeResourceNames, ResourceKind.TextureReadWrite);
+        hasStorage |= AddResourcesOfType(cross, compiler, resources, ResourceType.StorageImage, allResources, idIndex, normalizeResourceNames, ResourceKind.TextureReadWrite);
 
-        AddResourcesOfType(cross, compiler, resources, ResourceType.SeparateSamplers,
-            allResources, idIndex, normalizeResourceNames, ResourceKind.Sampler);
+        AddResourcesOfType(cross, compiler, resources, ResourceType.SeparateSamplers, allResources, idIndex, normalizeResourceNames, ResourceKind.Sampler);
 
         return hasStorage;
     }
 
-    private static bool AddResourcesOfType(
-        Cross cross, SpvcCompiler* compiler, SpvcResources* resources,
-        ResourceType resourceType,
-        SortedDictionary<BindingKey, ResourceInfo> allResources,
-        uint idIndex, bool normalizeResourceNames, ResourceKind kind) {
+    /// <summary>
+    /// Executes AddResourcesOfType.
+    /// </summary>
+    private static bool AddResourcesOfType(Cross cross, SpvcCompiler* compiler, SpvcResources* resources, ResourceType resourceType, SortedDictionary<BindingKey, ResourceInfo> allResources, uint idIndex, bool normalizeResourceNames, ResourceKind kind) {
         ReflectedResource* resourceList = null;
         nuint resourceCount = 0;
         cross.ResourcesGetResourceListForType(resources, resourceType, &resourceList, &resourceCount);
@@ -309,8 +321,7 @@ internal static unsafe class SpirvCrossCompiler {
             uint set = cross.CompilerGetDecoration(compiler, resource.Id, Decoration.DescriptorSet);
             uint binding = cross.CompilerGetDecoration(compiler, resource.Id, Decoration.Binding);
 
-            string name = GetOrSetResourceName(cross, compiler, ref resource, kind,
-                set, binding, normalizeResourceNames);
+            string name = GetOrSetResourceName(cross, compiler, ref resource, kind, set, binding, normalizeResourceNames);
 
             InsertResource(allResources, set, binding, resource.Id, idIndex, name, kind);
         }
@@ -318,10 +329,10 @@ internal static unsafe class SpirvCrossCompiler {
         return any;
     }
 
-    private static bool AddStorageBuffers(
-        Cross cross, SpvcCompiler* compiler, SpvcResources* resources,
-        SortedDictionary<BindingKey, ResourceInfo> allResources,
-        uint idIndex, bool normalizeResourceNames) {
+    /// <summary>
+    /// Executes AddStorageBuffers.
+    /// </summary>
+    private static bool AddStorageBuffers(Cross cross, SpvcCompiler* compiler, SpvcResources* resources, SortedDictionary<BindingKey, ResourceInfo> allResources, uint idIndex, bool normalizeResourceNames) {
         ReflectedResource* resourceList = null;
         nuint resourceCount = 0;
         cross.ResourcesGetResourceListForType(resources, ResourceType.StorageBuffer, &resourceList, &resourceCount);
@@ -354,9 +365,10 @@ internal static unsafe class SpirvCrossCompiler {
         return any;
     }
 
-    private static string GetOrSetResourceName(
-        Cross cross, SpvcCompiler* compiler, ref ReflectedResource resource,
-        ResourceKind kind, uint set, uint binding, bool normalizeResourceNames) {
+    /// <summary>
+    /// Executes GetOrSetResourceName.
+    /// </summary>
+    private static string GetOrSetResourceName(Cross cross, SpvcCompiler* compiler, ref ReflectedResource resource, ResourceKind kind, uint set, uint binding, bool normalizeResourceNames) {
         if (normalizeResourceNames) {
             string name = $"vdspv_{set}_{binding}";
             uint nameTarget = kind == ResourceKind.UniformBuffer ? resource.BaseTypeId : resource.Id;
@@ -367,21 +379,18 @@ internal static unsafe class SpirvCrossCompiler {
         return GetNativeName(cross, compiler, resource.Id, resource.BaseTypeId);
     }
 
-    private static void InsertResource(
-        SortedDictionary<BindingKey, ResourceInfo> allResources,
-        uint set, uint binding, uint resourceId, uint idIndex, string name, ResourceKind kind) {
+    /// <summary>
+    /// Executes InsertResource.
+    /// </summary>
+    private static void InsertResource(SortedDictionary<BindingKey, ResourceInfo> allResources, uint set, uint binding, uint resourceId, uint idIndex, string name, ResourceKind kind) {
         BindingKey key = new(set, binding);
         if (allResources.TryGetValue(key, out ResourceInfo? existing)) {
             if (existing.IDs[idIndex] != 0) {
-                throw new SpirvCompilationException(
-                    $"The same binding slot ({set}, {binding}) was used by multiple distinct resources. " +
-                    $"First resource: {existing.Name}. Second resource: {name}");
+                throw new SpirvCompilationException($"The same binding slot ({set}, {binding}) was used by multiple distinct resources. " + $"First resource: {existing.Name}. Second resource: {name}");
             }
 
             if (existing.Kind != kind) {
-                throw new SpirvCompilationException(
-                    $"The same binding slot ({set}, {binding}) was used by multiple resources with " +
-                    $"incompatible types: \"{existing.Kind}\" and \"{kind}\".");
+                throw new SpirvCompilationException($"The same binding slot ({set}, {binding}) was used by multiple resources with " + $"incompatible types: \"{existing.Kind}\" and \"{kind}\".");
             }
 
             existing.IDs[idIndex] = resourceId;
@@ -397,37 +406,29 @@ internal static unsafe class SpirvCrossCompiler {
 
     #region Binding Remapping
 
-    private static uint GetResourceIndex(
-        CrossCompileTarget target, ResourceKind kind,
-        ref uint bufferIndex, ref uint textureIndex, ref uint uavIndex, ref uint samplerIndex) {
+    /// <summary>
+    /// Executes GetResourceIndex.
+    /// </summary>
+    private static uint GetResourceIndex(CrossCompileTarget target, ResourceKind kind, ref uint bufferIndex, ref uint textureIndex, ref uint uavIndex, ref uint samplerIndex) {
         switch (kind) {
-            case ResourceKind.UniformBuffer:
-                return bufferIndex++;
-            case ResourceKind.StructuredBufferReadWrite:
-                return target == CrossCompileTarget.MSL ? bufferIndex++ : uavIndex++;
-            case ResourceKind.TextureReadWrite:
-                return target == CrossCompileTarget.MSL ? textureIndex++ : uavIndex++;
-            case ResourceKind.TextureReadOnly:
-                return textureIndex++;
-            case ResourceKind.StructuredBufferReadOnly:
-                return target == CrossCompileTarget.MSL ? bufferIndex++ : textureIndex++;
-            case ResourceKind.Sampler:
-                return samplerIndex++;
-            default:
-                throw new SpirvCompilationException($"Invalid ResourceKind: {kind}");
+            case ResourceKind.UniformBuffer: return bufferIndex++;
+            case ResourceKind.StructuredBufferReadWrite: return target == CrossCompileTarget.MSL ? bufferIndex++ : uavIndex++;
+            case ResourceKind.TextureReadWrite: return target == CrossCompileTarget.MSL ? textureIndex++ : uavIndex++;
+            case ResourceKind.TextureReadOnly: return textureIndex++;
+            case ResourceKind.StructuredBufferReadOnly: return target == CrossCompileTarget.MSL ? bufferIndex++ : textureIndex++;
+            case ResourceKind.Sampler: return samplerIndex++;
+            default: throw new SpirvCompilationException($"Invalid ResourceKind: {kind}");
         }
     }
 
-    private static void RemapBindingsHlslMsl(
-        Cross cross,
-        SortedDictionary<BindingKey, ResourceInfo> allResources,
-        SpvcCompiler* compiler0, SpvcCompiler* compiler1,
-        CrossCompileTarget target) {
+    /// <summary>
+    /// Executes RemapBindingsHlslMsl.
+    /// </summary>
+    private static void RemapBindingsHlslMsl(Cross cross, SortedDictionary<BindingKey, ResourceInfo> allResources, SpvcCompiler* compiler0, SpvcCompiler* compiler1, CrossCompileTarget target) {
         uint bufferIndex = 0, textureIndex = 0, uavIndex = 0, samplerIndex = 0;
 
         foreach (KeyValuePair<BindingKey, ResourceInfo> kvp in allResources) {
-            uint index = GetResourceIndex(target, kvp.Value.Kind,
-                ref bufferIndex, ref textureIndex, ref uavIndex, ref samplerIndex);
+            uint index = GetResourceIndex(target, kvp.Value.Kind, ref bufferIndex, ref textureIndex, ref uavIndex, ref samplerIndex);
 
             uint id0 = kvp.Value.IDs[0];
             if (id0 != 0) {
@@ -443,72 +444,13 @@ internal static unsafe class SpirvCrossCompiler {
         }
     }
 
-    private static void RemapBindingsEssl(
-        Cross cross, SpvcCompiler* vsCompiler, SpvcCompiler* fsCompiler,
-        SortedDictionary<BindingKey, ResourceInfo> allResources) {
-        // Unset binding on VS uniform buffers
-        SpvcResources* vsResources = null;
-        Check(cross, null, cross.CompilerCreateShaderResources(vsCompiler, &vsResources));
-        ReflectedResource* vsUBOs = null;
-        nuint vsUBOCount = 0;
-        cross.ResourcesGetResourceListForType(vsResources, ResourceType.UniformBuffer, &vsUBOs, &vsUBOCount);
-        for (nuint i = 0; i < vsUBOCount; i++) {
-            cross.CompilerUnsetDecoration(vsCompiler, vsUBOs[i].Id, Decoration.Binding);
-        }
-
-        // Reassign storage buffer and storage image bindings
-        uint bufferIndex = 0, imageIndex = 0;
-        foreach (KeyValuePair<BindingKey, ResourceInfo> kvp in allResources) {
-            if (kvp.Value.Kind == ResourceKind.StructuredBufferReadOnly || kvp.Value.Kind == ResourceKind.StructuredBufferReadWrite) {
-                uint id = bufferIndex++;
-                if (kvp.Value.IDs[0] != 0) {
-                    cross.CompilerSetDecoration(vsCompiler, kvp.Value.IDs[0], Decoration.Binding, id);
-                }
-
-                if (kvp.Value.IDs[1] != 0) {
-                    cross.CompilerSetDecoration(fsCompiler, kvp.Value.IDs[1], Decoration.Binding, id);
-                }
-            }
-            else if (kvp.Value.Kind == ResourceKind.TextureReadWrite) {
-                uint id = imageIndex++;
-                if (kvp.Value.IDs[0] != 0) {
-                    cross.CompilerSetDecoration(vsCompiler, kvp.Value.IDs[0], Decoration.Binding, id);
-                }
-
-                if (kvp.Value.IDs[1] != 0) {
-                    cross.CompilerSetDecoration(fsCompiler, kvp.Value.IDs[1], Decoration.Binding, id);
-                }
-            }
-        }
-    }
-
-    private static void RemapBindingsEsslSingleStage(
-        Cross cross, SpvcCompiler* compiler,
-        SortedDictionary<BindingKey, ResourceInfo> allResources) {
-        SpvcResources* resources = null;
-        Check(cross, null, cross.CompilerCreateShaderResources(compiler, &resources));
-        ReflectedResource* ubos = null;
-        nuint uboCount = 0;
-        cross.ResourcesGetResourceListForType(resources, ResourceType.UniformBuffer, &ubos, &uboCount);
-        for (nuint i = 0; i < uboCount; i++) {
-            cross.CompilerUnsetDecoration(compiler, ubos[i].Id, Decoration.Binding);
-        }
-
-        uint bufferIndex = 0, imageIndex = 0;
-        foreach (KeyValuePair<BindingKey, ResourceInfo> kvp in allResources) {
-            if (kvp.Value.Kind == ResourceKind.StructuredBufferReadOnly || kvp.Value.Kind == ResourceKind.StructuredBufferReadWrite) {
-                cross.CompilerSetDecoration(compiler, kvp.Value.IDs[0], Decoration.Binding, bufferIndex++);
-            }
-            else if (kvp.Value.Kind == ResourceKind.TextureReadWrite) {
-                cross.CompilerSetDecoration(compiler, kvp.Value.IDs[0], Decoration.Binding, imageIndex++);
-            }
-        }
-    }
-
     #endregion
 
-    #region GLSL/ESSL Specific
+    #region GLSL Specific
 
+    /// <summary>
+    /// Executes BuildCombinedImageSamplers.
+    /// </summary>
     private static void BuildCombinedImageSamplers(Cross cross, SpvcCompiler* compiler) {
         uint dummySamplerId = 0;
         Check(cross, null, cross.CompilerBuildDummySamplerForCombinedImages(compiler, &dummySamplerId));
@@ -526,6 +468,9 @@ internal static unsafe class SpirvCrossCompiler {
         }
     }
 
+    /// <summary>
+    /// Executes RenameStageIO.
+    /// </summary>
     private static void RenameStageIO(Cross cross, SpvcCompiler* vsCompiler, SpvcCompiler* fsCompiler) {
         // Rename vertex outputs to vdspv_fsinN
         SpvcResources* vsResources = null;
@@ -556,6 +501,9 @@ internal static unsafe class SpirvCrossCompiler {
 
     #region Reflection
 
+    /// <summary>
+    /// Executes ReflectVertexInputs.
+    /// </summary>
     private static VertexElementDescription[] ReflectVertexInputs(Cross cross, SpvcCompiler* compiler) {
         SpvcResources* resources = null;
         Check(cross, null, cross.CompilerCreateShaderResources(compiler, &resources));
@@ -608,17 +556,16 @@ internal static unsafe class SpirvCrossCompiler {
                 _ => throw new SpirvCompilationException($"Unhandled SPIR-V vertex input data type: {baseType}")
             };
 
-            elements[location] = new VertexElementDescription(
-                name,
-                VertexElementSemantic.TextureCoordinate,
-                format);
+            elements[location] = new VertexElementDescription(name, VertexElementSemantic.TextureCoordinate, format);
         }
 
         return elements;
     }
 
-    private static ResourceLayoutDescription[] BuildResourceLayouts(
-        SortedDictionary<BindingKey, ResourceInfo> allResources, bool isCompute) {
+    /// <summary>
+    /// Executes BuildResourceLayouts.
+    /// </summary>
+    private static ResourceLayoutDescription[] BuildResourceLayouts(SortedDictionary<BindingKey, ResourceInfo> allResources, bool isCompute) {
         uint setCount = 0;
         Dictionary<uint, uint> setSizes = new();
 
@@ -644,11 +591,7 @@ internal static unsafe class SpirvCrossCompiler {
             uint size = setSizes.TryGetValue(i, out uint s) ? s : 0;
             ResourceLayoutElementDescription[] elements = new ResourceLayoutElementDescription[size];
             for (uint j = 0; j < size; j++) {
-                elements[j] = new ResourceLayoutElementDescription(
-                    null,
-                    ResourceKind.UniformBuffer,
-                    ShaderStages.None,
-                    (ResourceLayoutElementOptions)2); // "Unused" marker
+                elements[j] = new ResourceLayoutElementDescription(null, ResourceKind.UniformBuffer, ShaderStages.None, (ResourceLayoutElementOptions)2); // "Unused" marker
             }
 
             layouts[i].Elements = elements;
@@ -664,10 +607,7 @@ internal static unsafe class SpirvCrossCompiler {
                 stages |= ShaderStages.Fragment;
             }
 
-            layouts[kvp.Key.Set].Elements[kvp.Key.Binding] = new ResourceLayoutElementDescription(
-                kvp.Value.Name,
-                kvp.Value.Kind,
-                stages);
+            layouts[kvp.Key.Set].Elements[kvp.Key.Binding] = new ResourceLayoutElementDescription(kvp.Value.Name, kvp.Value.Kind, stages);
         }
 
         return layouts;
@@ -677,6 +617,9 @@ internal static unsafe class SpirvCrossCompiler {
 
     #region Native String Helpers
 
+    /// <summary>
+    /// Executes GetNativeName.
+    /// </summary>
     private static string GetNativeName(Cross cross, SpvcCompiler* compiler, uint id, uint fallbackId) {
         byte* namePtr = cross.CompilerGetName(compiler, id);
         string name = namePtr != null ? Marshal.PtrToStringUTF8((nint)namePtr) ?? "" : "";
@@ -688,6 +631,9 @@ internal static unsafe class SpirvCrossCompiler {
         return name;
     }
 
+    /// <summary>
+    /// Executes SetNativeName.
+    /// </summary>
     private static void SetNativeName(Cross cross, SpvcCompiler* compiler, uint id, string name) {
         byte[] nameBytes = Encoding.UTF8.GetBytes(name + '\0');
         fixed (byte* namePtr = nameBytes) {
@@ -695,6 +641,9 @@ internal static unsafe class SpirvCrossCompiler {
         }
     }
 
+    /// <summary>
+    /// Executes HasBufferBlockDecoration.
+    /// </summary>
     private static bool HasBufferBlockDecoration(Cross cross, SpvcCompiler* compiler, uint id, Decoration decoration) {
         Decoration* decorations = null;
         nuint count = 0;

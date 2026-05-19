@@ -3,33 +3,34 @@ using System;
 namespace Veldrith;
 
 /// <summary>
-///     Describes a single element of a vertex.
+/// Describes a single element of a vertex.
 /// </summary>
 public struct VertexElementDescription : IEquatable<VertexElementDescription> {
+
     /// <summary>
-    ///     The name of the element.
+    /// The name of the element.
     /// </summary>
     public string Name;
 
     /// <summary>
-    ///     The semantic type of the element.
-    ///     NOTE: When using Veldrith.SPIRV, all vertex elements will use
-    ///     <see cref="VertexElementSemantic.TextureCoordinate" />.
+    /// The semantic type of the element.
+    /// NOTE: When using Veldrith.SPIRV, all vertex elements will use
+    /// <see cref="VertexElementSemantic.TextureCoordinate" />.
     /// </summary>
     public VertexElementSemantic Semantic;
 
     /// <summary>
-    ///     The format of the element.
+    /// The format of the element.
     /// </summary>
     public VertexElementFormat Format;
 
     /// <summary>
-    ///     The offset in bytes from the beginning of the vertex.
+    /// The offset in bytes from the beginning of the vertex.
     /// </summary>
     public uint Offset;
 
     /// <summary>
-    ///     Constructs a new VertexElementDescription describing a per-vertex element.
+    /// Constructs a new VertexElementDescription describing a per-vertex element.
     /// </summary>
     /// <param name="name">The name of the element.</param>
     /// <param name="semantic">The semantic type of the element.</param>
@@ -38,15 +39,12 @@ public struct VertexElementDescription : IEquatable<VertexElementDescription> {
         : this(name, format, semantic) { }
 
     /// <summary>
-    ///     Constructs a new VertexElementDescription.
+    /// Constructs a new VertexElementDescription.
     /// </summary>
     /// <param name="name">The name of the element.</param>
     /// <param name="semantic">The semantic type of the element.</param>
     /// <param name="format">The format of the element.</param>
-    public VertexElementDescription(
-        string name,
-        VertexElementFormat format,
-        VertexElementSemantic semantic) {
+    public VertexElementDescription(string name, VertexElementFormat format, VertexElementSemantic semantic) {
         this.Name = name;
         this.Format = format;
         this.Semantic = semantic;
@@ -54,17 +52,13 @@ public struct VertexElementDescription : IEquatable<VertexElementDescription> {
     }
 
     /// <summary>
-    ///     Constructs a new VertexElementDescription.
+    /// Constructs a new VertexElementDescription.
     /// </summary>
     /// <param name="name">The name of the element.</param>
     /// <param name="semantic">The semantic type of the element.</param>
     /// <param name="format">The format of the element.</param>
     /// <param name="offset">The offset in bytes from the beginning of the vertex.</param>
-    public VertexElementDescription(
-        string name,
-        VertexElementSemantic semantic,
-        VertexElementFormat format,
-        uint offset) {
+    public VertexElementDescription(string name, VertexElementSemantic semantic, VertexElementFormat format, uint offset) {
         this.Name = name;
         this.Format = format;
         this.Semantic = semantic;
@@ -72,7 +66,7 @@ public struct VertexElementDescription : IEquatable<VertexElementDescription> {
     }
 
     /// <summary>
-    ///     Element-wise equality.
+    /// Element-wise equality.
     /// </summary>
     /// <param name="other">The instance to compare to.</param>
     /// <returns>True if all elements are equal; false otherswise.</returns>
@@ -84,14 +78,10 @@ public struct VertexElementDescription : IEquatable<VertexElementDescription> {
     }
 
     /// <summary>
-    ///     Returns the hash code for this instance.
+    /// Returns the hash code for this instance.
     /// </summary>
     /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
     public override int GetHashCode() {
-        return HashHelper.Combine(
-            this.Name.GetHashCode(),
-            (int)this.Format,
-            (int)this.Semantic,
-            (int)this.Offset);
+        return HashHelper.Combine(this.Name.GetHashCode(), (int)this.Format, (int)this.Semantic, (int)this.Offset);
     }
 }

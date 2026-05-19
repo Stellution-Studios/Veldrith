@@ -1,13 +1,12 @@
-﻿using System;
+using System;
 
 namespace Veldrith;
 
-/// <summary>
-///     A device resource used to bind a particular set of <see cref="IBindableResource" /> objects to a
-///     <see cref="CommandList" />.
-///     See <see cref="ResourceSetDescription" />.
-/// </summary>
 public abstract class ResourceSet : IDeviceResource, IDisposable {
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ResourceSet" /> class.
+    /// </summary>
     internal ResourceSet(ref ResourceSetDescription description) {
 #if VALIDATE_USAGE
         this.Layout = description.Layout;
@@ -16,27 +15,35 @@ public abstract class ResourceSet : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    ///     A bool indicating whether this instance has been disposed.
+    /// A bool indicating whether this instance has been disposed.
     /// </summary>
     public abstract bool IsDisposed { get; }
 
     /// <summary>
-    ///     A string identifying this instance. Can be used to differentiate between objects in graphics debuggers and other
-    ///     tools.
+    /// A string identifying this instance. Can be used to differentiate between objects in graphics debuggers and other
+    /// tools.
     /// </summary>
     public abstract string Name { get; set; }
 
     #region Disposal
 
     /// <summary>
-    ///     Frees unmanaged device resources controlled by this instance.
+    /// Frees unmanaged device resources controlled by this instance.
     /// </summary>
     public abstract void Dispose();
 
     #endregion
 
 #if VALIDATE_USAGE
+
+    /// <summary>
+    /// Gets or sets Layout.
+    /// </summary>
     internal ResourceLayout Layout { get; }
+
+    /// <summary>
+    /// Gets or sets Resources.
+    /// </summary>
     internal IBindableResource[] Resources { get; }
 #endif
 }

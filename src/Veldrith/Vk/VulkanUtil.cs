@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using Vulkan;
 using static Vulkan.VulkanNative;
@@ -6,18 +6,32 @@ using static Vulkan.VulkanNative;
 namespace Veldrith.Vk;
 
 internal static unsafe class VulkanUtil {
+
+    /// <summary>
+    /// Represents the _s_is_vulkan_loaded field.
+    /// </summary>
     private static readonly Lazy<bool> _s_is_vulkan_loaded = new(TryLoadVulkan);
+
+    /// <summary>
+    /// Represents the _s_instance_extensions field.
+    /// </summary>
     private static readonly Lazy<string[]> _s_instance_extensions = new(EnumerateInstanceExtensions);
 
     [Conditional("DEBUG")]
+
+    /// <summary>
+    /// Executes CheckResult.
+    /// </summary>
     public static void CheckResult(VkResult result) {
         if (result != VkResult.Success) {
             throw new VeldridException("Unsuccessful VkResult: " + result);
         }
     }
 
-    public static bool TryFindMemoryType(VkPhysicalDeviceMemoryProperties memProperties, uint typeFilter,
-        VkMemoryPropertyFlags properties, out uint typeIndex) {
+    /// <summary>
+    /// Executes TryFindMemoryType.
+    /// </summary>
+    public static bool TryFindMemoryType(VkPhysicalDeviceMemoryProperties memProperties, uint typeFilter, VkMemoryPropertyFlags properties, out uint typeIndex) {
         typeIndex = 0;
 
         for (int i = 0; i < memProperties.memoryTypeCount; i++) {
@@ -31,6 +45,9 @@ internal static unsafe class VulkanUtil {
         return false;
     }
 
+    /// <summary>
+    /// Executes EnumerateInstanceLayers.
+    /// </summary>
     public static string[] EnumerateInstanceLayers() {
         uint propCount = 0;
         VkResult result = vkEnumerateInstanceLayerProperties(ref propCount, null);
@@ -53,24 +70,24 @@ internal static unsafe class VulkanUtil {
         return ret;
     }
 
+    /// <summary>
+    /// Executes GetInstanceExtensions.
+    /// </summary>
     public static string[] GetInstanceExtensions() {
         return _s_instance_extensions.Value;
     }
 
+    /// <summary>
+    /// Executes IsVulkanLoaded.
+    /// </summary>
     public static bool IsVulkanLoaded() {
         return _s_is_vulkan_loaded.Value;
     }
 
-    public static void TransitionImageLayout(
-        VkCommandBuffer cb,
-        VkImage image,
-        uint baseMipLevel,
-        uint levelCount,
-        uint baseArrayLayer,
-        uint layerCount,
-        VkImageAspectFlags aspectMask,
-        VkImageLayout oldLayout,
-        VkImageLayout newLayout) {
+    /// <summary>
+    /// Executes TransitionImageLayout.
+    /// </summary>
+    public static void TransitionImageLayout(VkCommandBuffer cb, VkImage image, uint baseMipLevel, uint levelCount, uint baseArrayLayer, uint layerCount, VkImageAspectFlags aspectMask, VkImageLayout oldLayout, VkImageLayout newLayout) {
         Debug.Assert(oldLayout != newLayout);
         VkImageMemoryBarrier barrier = VkImageMemoryBarrier.New();
         barrier.oldLayout = oldLayout;
@@ -87,8 +104,7 @@ internal static unsafe class VulkanUtil {
         VkPipelineStageFlags srcStageFlags = VkPipelineStageFlags.None;
         VkPipelineStageFlags dstStageFlags = VkPipelineStageFlags.None;
 
-        if ((oldLayout == VkImageLayout.Undefined || oldLayout == VkImageLayout.Preinitialized) &&
-            newLayout == VkImageLayout.TransferDstOptimal) {
+        if ((oldLayout == VkImageLayout.Undefined || oldLayout == VkImageLayout.Preinitialized) && newLayout == VkImageLayout.TransferDstOptimal) {
             barrier.srcAccessMask = VkAccessFlags.None;
             barrier.dstAccessMask = VkAccessFlags.TransferWrite;
             srcStageFlags = VkPipelineStageFlags.TopOfPipe;
@@ -173,15 +189,13 @@ internal static unsafe class VulkanUtil {
             srcStageFlags = VkPipelineStageFlags.ColorAttachmentOutput;
             dstStageFlags = VkPipelineStageFlags.Transfer;
         }
-        else if (oldLayout == VkImageLayout.ColorAttachmentOptimal &&
-                 newLayout == VkImageLayout.ShaderReadOnlyOptimal) {
+        else if (oldLayout == VkImageLayout.ColorAttachmentOptimal && newLayout == VkImageLayout.ShaderReadOnlyOptimal) {
             barrier.srcAccessMask = VkAccessFlags.ColorAttachmentWrite;
             barrier.dstAccessMask = VkAccessFlags.ShaderRead;
             srcStageFlags = VkPipelineStageFlags.ColorAttachmentOutput;
             dstStageFlags = VkPipelineStageFlags.FragmentShader;
         }
-        else if (oldLayout == VkImageLayout.DepthStencilAttachmentOptimal &&
-                 newLayout == VkImageLayout.ShaderReadOnlyOptimal) {
+        else if (oldLayout == VkImageLayout.DepthStencilAttachmentOptimal && newLayout == VkImageLayout.ShaderReadOnlyOptimal) {
             barrier.srcAccessMask = VkAccessFlags.DepthStencilAttachmentWrite;
             barrier.dstAccessMask = VkAccessFlags.ShaderRead;
             srcStageFlags = VkPipelineStageFlags.LateFragmentTests;
@@ -205,8 +219,7 @@ internal static unsafe class VulkanUtil {
             srcStageFlags = VkPipelineStageFlags.Transfer;
             dstStageFlags = VkPipelineStageFlags.ColorAttachmentOutput;
         }
-        else if (oldLayout == VkImageLayout.TransferDstOptimal &&
-                 newLayout == VkImageLayout.DepthStencilAttachmentOptimal) {
+        else if (oldLayout == VkImageLayout.TransferDstOptimal && newLayout == VkImageLayout.DepthStencilAttachmentOptimal) {
             barrier.srcAccessMask = VkAccessFlags.TransferWrite;
             barrier.dstAccessMask = VkAccessFlags.DepthStencilAttachmentWrite;
             srcStageFlags = VkPipelineStageFlags.Transfer;
@@ -234,16 +247,12 @@ internal static unsafe class VulkanUtil {
             Debug.Fail("Invalid image layout transition.");
         }
 
-        vkCmdPipelineBarrier(
-            cb,
-            srcStageFlags,
-            dstStageFlags,
-            VkDependencyFlags.None,
-            0, null,
-            0, null,
-            1, &barrier);
+        vkCmdPipelineBarrier(cb, srcStageFlags, dstStageFlags, VkDependencyFlags.None, 0, null, 0, null, 1, &barrier);
     }
 
+    /// <summary>
+    /// Executes EnumerateInstanceExtensions.
+    /// </summary>
     private static string[] EnumerateInstanceExtensions() {
         if (!IsVulkanLoaded()) {
             return Array.Empty<string>();
@@ -273,6 +282,9 @@ internal static unsafe class VulkanUtil {
         return ret;
     }
 
+    /// <summary>
+    /// Executes TryLoadVulkan.
+    /// </summary>
     private static bool TryLoadVulkan() {
         try {
             uint propCount;
@@ -286,6 +298,10 @@ internal static unsafe class VulkanUtil {
 }
 
 internal static unsafe class VkPhysicalDeviceMemoryPropertiesEx {
+
+    /// <summary>
+    /// Executes GetMemoryType.
+    /// </summary>
     public static VkMemoryType GetMemoryType(this VkPhysicalDeviceMemoryProperties memoryProperties, uint index) {
         return (&memoryProperties.memoryTypes_0)[index];
     }

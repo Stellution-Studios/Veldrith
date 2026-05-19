@@ -6,75 +6,285 @@ using Veldrith.MetalBindings;
 namespace Veldrith.MTL;
 
 internal unsafe class MtlCommandList : CommandList {
+
+    /// <summary>
+    /// Represents the _availableStagingBuffers field.
+    /// </summary>
     private readonly List<MtlBuffer> _availableStagingBuffers = new();
+
+    /// <summary>
+    /// Represents the _boundComputeBuffers field.
+    /// </summary>
     private readonly Dictionary<UIntPtr, DeviceBufferRange> _boundComputeBuffers = new();
+
+    /// <summary>
+    /// Represents the _boundComputeSamplers field.
+    /// </summary>
     private readonly Dictionary<UIntPtr, MTLSamplerState> _boundComputeSamplers = new();
+
+    /// <summary>
+    /// Represents the _boundComputeTextures field.
+    /// </summary>
     private readonly Dictionary<UIntPtr, MTLTexture> _boundComputeTextures = new();
+
+    /// <summary>
+    /// Represents the _boundFragmentBuffers field.
+    /// </summary>
     private readonly Dictionary<UIntPtr, DeviceBufferRange> _boundFragmentBuffers = new();
+
+    /// <summary>
+    /// Represents the _boundFragmentSamplers field.
+    /// </summary>
     private readonly Dictionary<UIntPtr, MTLSamplerState> _boundFragmentSamplers = new();
+
+    /// <summary>
+    /// Represents the _boundFragmentTextures field.
+    /// </summary>
     private readonly Dictionary<UIntPtr, MTLTexture> _boundFragmentTextures = new();
 
+    /// <summary>
+    /// Represents the _boundVertexBuffers field.
+    /// </summary>
     private readonly Dictionary<UIntPtr, DeviceBufferRange> _boundVertexBuffers = new();
 
+    /// <summary>
+    /// Represents the _boundVertexSamplers field.
+    /// </summary>
     private readonly Dictionary<UIntPtr, MTLSamplerState> _boundVertexSamplers = new();
 
+    /// <summary>
+    /// Represents the _boundVertexTextures field.
+    /// </summary>
     private readonly Dictionary<UIntPtr, MTLTexture> _boundVertexTextures = new();
+
+    /// <summary>
+    /// Represents the _completionFences field.
+    /// </summary>
     private readonly CommandBufferUsageList<MtlFence> _completionFences = new();
+
+    /// <summary>
+    /// Represents the _submittedCommandsLock field.
+    /// </summary>
     private readonly object _submittedCommandsLock = new();
+
+    /// <summary>
+    /// Represents the _submittedStagingBuffers field.
+    /// </summary>
     private readonly CommandBufferUsageList<MtlBuffer> _submittedStagingBuffers = new();
+
+    /// <summary>
+    /// Represents the gd field.
+    /// </summary>
     private readonly MtlGraphicsDevice gd;
+
+    /// <summary>
+    /// Represents the _activeScissorRects field.
+    /// </summary>
     private MTLScissorRect[] _activeScissorRects = Array.Empty<MTLScissorRect>();
+
+    /// <summary>
+    /// Represents the _bce field.
+    /// </summary>
     private MTLBlitCommandEncoder _bce;
+
+    /// <summary>
+    /// Represents the _cce field.
+    /// </summary>
     private MTLComputeCommandEncoder _cce;
+
+    /// <summary>
+    /// Represents the _clearColors field.
+    /// </summary>
     private RgbaFloat?[] _clearColors = Array.Empty<RgbaFloat?>();
+
+    /// <summary>
+    /// Represents the _clearDepth field.
+    /// </summary>
     private (float depth, byte stencil)? _clearDepth;
+
+    /// <summary>
+    /// Represents the _computePipeline field.
+    /// </summary>
     private MtlPipeline _computePipeline;
+
+    /// <summary>
+    /// Represents the _computeResourceSetCount field.
+    /// </summary>
     private uint _computeResourceSetCount;
+
+    /// <summary>
+    /// Represents the _computeResourceSets field.
+    /// </summary>
     private BoundResourceSetInfo[] _computeResourceSets;
+
+    /// <summary>
+    /// Represents the _computeResourceSetsActive field.
+    /// </summary>
     private bool[] _computeResourceSetsActive;
+
+    /// <summary>
+    /// Represents the _currentFramebufferEverActive field.
+    /// </summary>
     private bool _currentFramebufferEverActive;
+
+    /// <summary>
+    /// Represents the _disposed field.
+    /// </summary>
     private bool _disposed;
+
+    /// <summary>
+    /// Represents the _graphicsPipeline field.
+    /// </summary>
     private MtlPipeline _graphicsPipeline;
+
+    /// <summary>
+    /// Represents the _graphicsResourceSetCount field.
+    /// </summary>
     private uint _graphicsResourceSetCount;
+
+    /// <summary>
+    /// Represents the _graphicsResourceSets field.
+    /// </summary>
     private BoundResourceSetInfo[] _graphicsResourceSets;
+
+    /// <summary>
+    /// Represents the _graphicsResourceSetsActive field.
+    /// </summary>
     private bool[] _graphicsResourceSetsActive;
+
+    /// <summary>
+    /// Represents the _ibOffset field.
+    /// </summary>
     private uint _ibOffset;
+
+    /// <summary>
+    /// Represents the _indexBuffer field.
+    /// </summary>
     private MtlBuffer _indexBuffer;
+
+    /// <summary>
+    /// Represents the _indexType field.
+    /// </summary>
     private MTLIndexType _indexType;
+
+    /// <summary>
+    /// Represents the _lastComputePipeline field.
+    /// </summary>
     private MtlPipeline _lastComputePipeline;
+
+    /// <summary>
+    /// Represents the _lastGraphicsPipeline field.
+    /// </summary>
     private MtlPipeline _lastGraphicsPipeline;
+
+    /// <summary>
+    /// Represents the _mtlFramebuffer field.
+    /// </summary>
     private MtlFramebuffer _mtlFramebuffer;
+
+    /// <summary>
+    /// Represents the _nonVertexBufferCount field.
+    /// </summary>
     private uint _nonVertexBufferCount;
+
+    /// <summary>
+    /// Represents the _rce field.
+    /// </summary>
     private MTLRenderCommandEncoder _rce;
+
+    /// <summary>
+    /// Represents the _scissorRects field.
+    /// </summary>
     private MTLScissorRect[] _scissorRects = Array.Empty<MTLScissorRect>();
+
+    /// <summary>
+    /// Represents the _vbOffsets field.
+    /// </summary>
     private uint[] _vbOffsets;
+
+    /// <summary>
+    /// Represents the _vbOffsetsActive field.
+    /// </summary>
     private bool[] _vbOffsetsActive;
+
+    /// <summary>
+    /// Represents the _vertexBufferCount field.
+    /// </summary>
     private uint _vertexBufferCount;
+
+    /// <summary>
+    /// Represents the _vertexBuffers field.
+    /// </summary>
     private MtlBuffer[] _vertexBuffers;
+
+    /// <summary>
+    /// Represents the _vertexBuffersActive field.
+    /// </summary>
     private bool[] _vertexBuffersActive;
+
+    /// <summary>
+    /// Represents the _viewportCount field.
+    /// </summary>
     private uint _viewportCount;
+
+    /// <summary>
+    /// Represents the _viewports field.
+    /// </summary>
     private MTLViewport[] _viewports = Array.Empty<MTLViewport>();
+
+    /// <summary>
+    /// Represents the _viewportsChanged field.
+    /// </summary>
     private bool _viewportsChanged;
+
+    /// <summary>
+    /// Represents the cb field.
+    /// </summary>
     private MTLCommandBuffer cb;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MtlCommandList" /> class.
+    /// </summary>
     public MtlCommandList(ref CommandListDescription description, MtlGraphicsDevice gd)
-        : base(ref description, gd.Features, gd.UniformBufferMinOffsetAlignment,
-            gd.StructuredBufferMinOffsetAlignment) {
+        : base(ref description, gd.Features, gd.UniformBufferMinOffsetAlignment, gd.StructuredBufferMinOffsetAlignment) {
         this.gd = gd;
     }
 
+    /// <summary>
+    /// Represents the CommandBuffer field.
+    /// </summary>
     public MTLCommandBuffer CommandBuffer => this.cb;
 
+    /// <summary>
+    /// Gets or sets IsDisposed.
+    /// </summary>
     public override bool IsDisposed => this._disposed;
 
+    /// <summary>
+    /// Gets or sets Name.
+    /// </summary>
     public override string Name { get; set; }
 
+    /// <summary>
+    /// Represents the renderEncoderActive field.
+    /// </summary>
     private bool renderEncoderActive => !this._rce.IsNull;
+
+    /// <summary>
+    /// Represents the blitEncoderActive field.
+    /// </summary>
     private bool blitEncoderActive => !this._bce.IsNull;
+
+    /// <summary>
+    /// Represents the computeEncoderActive field.
+    /// </summary>
     private bool computeEncoderActive => !this._cce.IsNull;
 
     #region Disposal
 
+    /// <summary>
+    /// Executes Dispose.
+    /// </summary>
     public override void Dispose() {
         if (!this._disposed) {
             this._disposed = true;
@@ -100,6 +310,9 @@ internal unsafe class MtlCommandList : CommandList {
 
     #endregion
 
+    /// <summary>
+    /// Executes Commit.
+    /// </summary>
     public MTLCommandBuffer Commit() {
         this.cb.commit();
         MTLCommandBuffer ret = this.cb;
@@ -107,6 +320,9 @@ internal unsafe class MtlCommandList : CommandList {
         return ret;
     }
 
+    /// <summary>
+    /// Executes Begin.
+    /// </summary>
     public override void Begin() {
         if (this.cb.NativePtr != IntPtr.Zero) {
             ObjectiveCRuntime.release(this.cb.NativePtr);
@@ -120,13 +336,17 @@ internal unsafe class MtlCommandList : CommandList {
         this.ClearCachedState();
     }
 
+    /// <summary>
+    /// Executes Dispatch.
+    /// </summary>
     public override void Dispatch(uint groupCountX, uint groupCountY, uint groupCountZ) {
         this.PreComputeCommand();
-        this._cce.dispatchThreadGroups(
-            new MTLSize(groupCountX, groupCountY, groupCountZ),
-            this._computePipeline.ThreadsPerThreadgroup);
+        this._cce.dispatchThreadGroups(new MTLSize(groupCountX, groupCountY, groupCountZ), this._computePipeline.ThreadsPerThreadgroup);
     }
 
+    /// <summary>
+    /// Executes End.
+    /// </summary>
     public override void End() {
         this.EnsureNoBlitEncoder();
         this.EnsureNoComputeEncoder();
@@ -138,21 +358,24 @@ internal unsafe class MtlCommandList : CommandList {
         this.EnsureNoRenderPass();
     }
 
+    /// <summary>
+    /// Executes SetScissorRect.
+    /// </summary>
     public override void SetScissorRect(uint index, uint x, uint y, uint width, uint height) {
         this._scissorRects[index] = new MTLScissorRect(x, y, width, height);
     }
 
+    /// <summary>
+    /// Executes SetViewport.
+    /// </summary>
     public override void SetViewport(uint index, ref Viewport viewport) {
         this._viewportsChanged = true;
-        this._viewports[index] = new MTLViewport(
-            viewport.X,
-            viewport.Y,
-            viewport.Width,
-            viewport.Height,
-            viewport.MinDepth,
-            viewport.MaxDepth);
+        this._viewports[index] = new MTLViewport(viewport.X, viewport.Y, viewport.Width, viewport.Height, viewport.MinDepth, viewport.MaxDepth);
     }
 
+    /// <summary>
+    /// Executes SetCompletionFence.
+    /// </summary>
     public void SetCompletionFence(MTLCommandBuffer cb, MtlFence fence) {
         lock (this._submittedCommandsLock) {
             Debug.Assert(!this._completionFences.Contains(cb));
@@ -160,6 +383,9 @@ internal unsafe class MtlCommandList : CommandList {
         }
     }
 
+    /// <summary>
+    /// Executes OnCompleted.
+    /// </summary>
     public void OnCompleted(MTLCommandBuffer cb) {
         lock (this._submittedCommandsLock) {
             foreach (MtlFence fence in this._completionFences.EnumerateAndRemove(cb)) {
@@ -172,12 +398,10 @@ internal unsafe class MtlCommandList : CommandList {
         }
     }
 
-    protected override void CopyBufferCore(
-        DeviceBuffer source,
-        uint sourceOffset,
-        DeviceBuffer destination,
-        uint destinationOffset,
-        uint sizeInBytes) {
+    /// <summary>
+    /// Executes CopyBufferCore.
+    /// </summary>
+    protected override void CopyBufferCore(DeviceBuffer source, uint sourceOffset, DeviceBuffer destination, uint destinationOffset, uint sizeInBytes) {
         MtlBuffer mtlSrc = Util.AssertSubtype<DeviceBuffer, MtlBuffer>(source);
         MtlBuffer mtlDst = Util.AssertSubtype<DeviceBuffer, MtlBuffer>(destination);
 
@@ -198,17 +422,14 @@ internal unsafe class MtlCommandList : CommandList {
         }
         else {
             this.EnsureBlitEncoder();
-            this._bce.copy(
-                mtlSrc.DeviceBuffer, sourceOffset,
-                mtlDst.DeviceBuffer, destinationOffset,
-                sizeInBytes);
+            this._bce.copy(mtlSrc.DeviceBuffer, sourceOffset, mtlDst.DeviceBuffer, destinationOffset, sizeInBytes);
         }
     }
 
-    protected override void CopyTextureCore(
-        Texture source, uint srcX, uint srcY, uint srcZ, uint srcMipLevel, uint srcBaseArrayLayer,
-        Texture destination, uint dstX, uint dstY, uint dstZ, uint dstMipLevel, uint dstBaseArrayLayer,
-        uint width, uint height, uint depth, uint layerCount) {
+    /// <summary>
+    /// Executes CopyTextureCore.
+    /// </summary>
+    protected override void CopyTextureCore(Texture source, uint srcX, uint srcY, uint srcZ, uint srcMipLevel, uint srcBaseArrayLayer, Texture destination, uint dstX, uint dstY, uint dstZ, uint dstMipLevel, uint dstBaseArrayLayer, uint width, uint height, uint depth, uint layerCount) {
         this.EnsureBlitEncoder();
         MtlTexture srcMtlTexture = Util.AssertSubtype<Texture, MtlTexture>(source);
         MtlTexture dstMtlTexture = Util.AssertSubtype<Texture, MtlTexture>(destination);
@@ -231,15 +452,8 @@ internal unsafe class MtlCommandList : CommandList {
                     ? FormatSizeHelpers.GetSizeInBytes(srcMtlTexture.Format)
                     : FormatHelpers.GetBlockSizeInBytes(srcMtlTexture.Format);
 
-                ulong srcSubresourceBase = Util.ComputeSubresourceOffset(
-                    srcMtlTexture,
-                    srcMipLevel,
-                    layer + srcBaseArrayLayer);
-                srcMtlTexture.GetSubresourceLayout(
-                    srcMipLevel,
-                    srcBaseArrayLayer + layer,
-                    out uint srcRowPitch,
-                    out uint srcDepthPitch);
+                ulong srcSubresourceBase = Util.ComputeSubresourceOffset(srcMtlTexture, srcMipLevel, layer + srcBaseArrayLayer);
+                srcMtlTexture.GetSubresourceLayout(srcMipLevel, srcBaseArrayLayer + layer, out uint srcRowPitch, out uint srcDepthPitch);
                 ulong sourceOffset = srcSubresourceBase
                                      + srcDepthPitch * srcZ
                                      + srcRowPitch * compressedSrcY
@@ -258,40 +472,17 @@ internal unsafe class MtlCommandList : CommandList {
                     srcDepthPitch = 0;
                 }
 
-                this._bce.copyFromBuffer(
-                    srcBuffer,
-                    (UIntPtr)sourceOffset,
-                    srcRowPitch,
-                    srcDepthPitch,
-                    sourceSize,
-                    dstTexture,
-                    dstBaseArrayLayer + layer,
-                    dstMipLevel,
-                    new MTLOrigin(dstX, dstY, dstZ), this.gd.MetalFeatures.IsMacOS);
+                this._bce.copyFromBuffer(srcBuffer, (UIntPtr)sourceOffset, srcRowPitch, srcDepthPitch, sourceSize, dstTexture, dstBaseArrayLayer + layer, dstMipLevel, new MTLOrigin(dstX, dstY, dstZ), this.gd.MetalFeatures.IsMacOS);
             }
         }
         else if (srcIsStaging) {
             for (uint layer = 0; layer < layerCount; layer++) {
                 // Staging -> Staging
-                ulong srcSubresourceBase = Util.ComputeSubresourceOffset(
-                    srcMtlTexture,
-                    srcMipLevel,
-                    layer + srcBaseArrayLayer);
-                srcMtlTexture.GetSubresourceLayout(
-                    srcMipLevel,
-                    srcBaseArrayLayer + layer,
-                    out uint srcRowPitch,
-                    out uint srcDepthPitch);
+                ulong srcSubresourceBase = Util.ComputeSubresourceOffset(srcMtlTexture, srcMipLevel, layer + srcBaseArrayLayer);
+                srcMtlTexture.GetSubresourceLayout(srcMipLevel, srcBaseArrayLayer + layer, out uint srcRowPitch, out uint srcDepthPitch);
 
-                ulong dstSubresourceBase = Util.ComputeSubresourceOffset(
-                    dstMtlTexture,
-                    dstMipLevel,
-                    layer + dstBaseArrayLayer);
-                dstMtlTexture.GetSubresourceLayout(
-                    dstMipLevel,
-                    dstBaseArrayLayer + layer,
-                    out uint dstRowPitch,
-                    out uint dstDepthPitch);
+                ulong dstSubresourceBase = Util.ComputeSubresourceOffset(dstMtlTexture, dstMipLevel, layer + dstBaseArrayLayer);
+                dstMtlTexture.GetSubresourceLayout(dstMipLevel, dstBaseArrayLayer + layer, out uint dstRowPitch, out uint dstDepthPitch);
 
                 uint blockSize = FormatHelpers.IsCompressedFormat(dstMtlTexture.Format) ? 4u : 1u;
 
@@ -309,12 +500,7 @@ internal unsafe class MtlCommandList : CommandList {
                                                  + dstDepthPitch * (zz + dstZ)
                                                  + dstRowPitch * (yy + dstY)
                                                  + pixelSize * dstX;
-                            this._bce.copy(
-                                srcMtlTexture.StagingBuffer,
-                                (UIntPtr)srcRowOffset,
-                                dstMtlTexture.StagingBuffer,
-                                (UIntPtr)dstRowOffset,
-                                copySize);
+                            this._bce.copy(srcMtlTexture.StagingBuffer, (UIntPtr)srcRowOffset, dstMtlTexture.StagingBuffer, (UIntPtr)dstRowOffset, copySize);
                         }
                     }
                 }
@@ -341,12 +527,7 @@ internal unsafe class MtlCommandList : CommandList {
                                                  + dstDepthPitch * (zz + dstZ)
                                                  + dstRowPitch * (row + compressedDstY)
                                                  + blockSizeInBytes * compressedDstX;
-                            this._bce.copy(
-                                srcMtlTexture.StagingBuffer,
-                                (UIntPtr)srcRowOffset,
-                                dstMtlTexture.StagingBuffer,
-                                (UIntPtr)dstRowOffset,
-                                rowPitch);
+                            this._bce.copy(srcMtlTexture.StagingBuffer, (UIntPtr)srcRowOffset, dstMtlTexture.StagingBuffer, (UIntPtr)dstRowOffset, rowPitch);
                         }
                     }
                 }
@@ -358,11 +539,7 @@ internal unsafe class MtlCommandList : CommandList {
             MTLSize srcSize = new(width, height, depth);
 
             for (uint layer = 0; layer < layerCount; layer++) {
-                dstMtlTexture.GetSubresourceLayout(
-                    dstMipLevel,
-                    dstBaseArrayLayer + layer,
-                    out uint dstBytesPerRow,
-                    out uint dstBytesPerImage);
+                dstMtlTexture.GetSubresourceLayout(dstMipLevel, dstBaseArrayLayer + layer, out uint dstBytesPerRow, out uint dstBytesPerImage);
 
                 Util.GetMipDimensions(srcMtlTexture, dstMipLevel, out uint mipWidth, out uint mipHeight, out uint _);
                 uint blockSize = FormatHelpers.IsCompressedFormat(srcMtlTexture.Format) ? 4u : 1u;
@@ -381,62 +558,43 @@ internal unsafe class MtlCommandList : CommandList {
                                   + compressedDstY * rowPitch
                                   + compressedDstX * blockSizeInBytes;
 
-                this._bce.copyTextureToBuffer(
-                    srcMtlTexture.DeviceTexture,
-                    srcBaseArrayLayer + layer,
-                    srcMipLevel,
-                    srcOrigin,
-                    srcSize,
-                    dstMtlTexture.StagingBuffer,
-                    (UIntPtr)dstOffset,
-                    dstBytesPerRow,
-                    dstBytesPerImage);
+                this._bce.copyTextureToBuffer(srcMtlTexture.DeviceTexture, srcBaseArrayLayer + layer, srcMipLevel, srcOrigin, srcSize, dstMtlTexture.StagingBuffer, (UIntPtr)dstOffset, dstBytesPerRow, dstBytesPerImage);
             }
         }
         else {
             // Normal -> Normal
             for (uint layer = 0; layer < layerCount; layer++) {
-                this._bce.copyFromTexture(
-                    srcMtlTexture.DeviceTexture,
-                    srcBaseArrayLayer + layer,
-                    srcMipLevel,
-                    new MTLOrigin(srcX, srcY, srcZ),
-                    new MTLSize(width, height, depth),
-                    dstMtlTexture.DeviceTexture,
-                    dstBaseArrayLayer + layer,
-                    dstMipLevel,
-                    new MTLOrigin(dstX, dstY, dstZ), this.gd.MetalFeatures.IsMacOS);
+                this._bce.copyFromTexture(srcMtlTexture.DeviceTexture, srcBaseArrayLayer + layer, srcMipLevel, new MTLOrigin(srcX, srcY, srcZ), new MTLSize(width, height, depth), dstMtlTexture.DeviceTexture, dstBaseArrayLayer + layer, dstMipLevel, new MTLOrigin(dstX, dstY, dstZ), this.gd.MetalFeatures.IsMacOS);
             }
         }
     }
 
+    /// <summary>
+    /// Executes DispatchIndirectCore.
+    /// </summary>
     protected override void DispatchIndirectCore(DeviceBuffer indirectBuffer, uint offset) {
         MtlBuffer mtlBuffer = Util.AssertSubtype<DeviceBuffer, MtlBuffer>(indirectBuffer);
         this.PreComputeCommand();
-        this._cce.dispatchThreadgroupsWithIndirectBuffer(
-            mtlBuffer.DeviceBuffer,
-            offset,
-            this._computePipeline.ThreadsPerThreadgroup);
+        this._cce.dispatchThreadgroupsWithIndirectBuffer(mtlBuffer.DeviceBuffer, offset, this._computePipeline.ThreadsPerThreadgroup);
     }
 
-    protected override void DrawIndexedIndirectCore(DeviceBuffer indirectBuffer, uint offset, uint drawCount,
-        uint stride) {
+    /// <summary>
+    /// Executes DrawIndexedIndirectCore.
+    /// </summary>
+    protected override void DrawIndexedIndirectCore(DeviceBuffer indirectBuffer, uint offset, uint drawCount, uint stride) {
         if (this.PreDrawCommand()) {
             MtlBuffer mtlBuffer = Util.AssertSubtype<DeviceBuffer, MtlBuffer>(indirectBuffer);
 
             for (uint i = 0; i < drawCount; i++) {
                 uint currentOffset = i * stride + offset;
-                this._rce.drawIndexedPrimitives(
-                    this._graphicsPipeline.PrimitiveType,
-                    this._indexType,
-                    this._indexBuffer.DeviceBuffer,
-                    this._ibOffset,
-                    mtlBuffer.DeviceBuffer,
-                    currentOffset);
+                this._rce.drawIndexedPrimitives(this._graphicsPipeline.PrimitiveType, this._indexType, this._indexBuffer.DeviceBuffer, this._ibOffset, mtlBuffer.DeviceBuffer, currentOffset);
             }
         }
     }
 
+    /// <summary>
+    /// Executes DrawIndirectCore.
+    /// </summary>
     protected override void DrawIndirectCore(DeviceBuffer indirectBuffer, uint offset, uint drawCount, uint stride) {
         if (this.PreDrawCommand()) {
             MtlBuffer mtlBuffer = Util.AssertSubtype<DeviceBuffer, MtlBuffer>(indirectBuffer);
@@ -448,6 +606,9 @@ internal unsafe class MtlCommandList : CommandList {
         }
     }
 
+    /// <summary>
+    /// Executes ResolveTextureCore.
+    /// </summary>
     protected override void ResolveTextureCore(Texture source, Texture destination) {
         // TODO: This approach destroys the contents of the source Texture (according to the docs).
         this.EnsureNoBlitEncoder();
@@ -471,8 +632,10 @@ internal unsafe class MtlCommandList : CommandList {
         ObjectiveCRuntime.release(rpDesc.NativePtr);
     }
 
-    protected override void SetComputeResourceSetCore(uint slot, ResourceSet set, uint dynamicOffsetCount,
-        ref uint dynamicOffsets) {
+    /// <summary>
+    /// Executes SetComputeResourceSetCore.
+    /// </summary>
+    protected override void SetComputeResourceSetCore(uint slot, ResourceSet set, uint dynamicOffsetCount, ref uint dynamicOffsets) {
         if (!this._computeResourceSets[slot].Equals(set, dynamicOffsetCount, ref dynamicOffsets)) {
             this._computeResourceSets[slot].Offsets.Dispose();
             this._computeResourceSets[slot] = new BoundResourceSetInfo(set, dynamicOffsetCount, ref dynamicOffsets);
@@ -480,6 +643,9 @@ internal unsafe class MtlCommandList : CommandList {
         }
     }
 
+    /// <summary>
+    /// Executes SetFramebufferCore.
+    /// </summary>
     protected override void SetFramebufferCore(Framebuffer fb) {
         if (!this._currentFramebufferEverActive && this._mtlFramebuffer != null) {
             // This ensures that any submitted clear values will be used even if nothing has been drawn.
@@ -502,8 +668,10 @@ internal unsafe class MtlCommandList : CommandList {
         this._currentFramebufferEverActive = false;
     }
 
-    protected override void SetGraphicsResourceSetCore(uint slot, ResourceSet rs, uint dynamicOffsetCount,
-        ref uint dynamicOffsets) {
+    /// <summary>
+    /// Executes SetGraphicsResourceSetCore.
+    /// </summary>
+    protected override void SetGraphicsResourceSetCore(uint slot, ResourceSet rs, uint dynamicOffsetCount, ref uint dynamicOffsets) {
         if (!this._graphicsResourceSets[slot].Equals(rs, dynamicOffsetCount, ref dynamicOffsets)) {
             this._graphicsResourceSets[slot].Offsets.Dispose();
             this._graphicsResourceSets[slot] = new BoundResourceSetInfo(rs, dynamicOffsetCount, ref dynamicOffsets);
@@ -511,6 +679,9 @@ internal unsafe class MtlCommandList : CommandList {
         }
     }
 
+    /// <summary>
+    /// Executes PreDrawCommand.
+    /// </summary>
     private bool PreDrawCommand() {
         if (this.EnsureRenderPass()) {
             if (this._viewportsChanged) {
@@ -524,8 +695,7 @@ internal unsafe class MtlCommandList : CommandList {
 
             Debug.Assert(this._graphicsPipeline != null);
 
-            if (this._graphicsPipeline.RenderPipelineState.NativePtr !=
-                this._lastGraphicsPipeline?.RenderPipelineState.NativePtr) {
+            if (this._graphicsPipeline.RenderPipelineState.NativePtr != this._lastGraphicsPipeline?.RenderPipelineState.NativePtr) {
                 this._rce.setRenderPipelineState(this._graphicsPipeline.RenderPipelineState);
             }
 
@@ -547,8 +717,7 @@ internal unsafe class MtlCommandList : CommandList {
             }
 
             if (this.Framebuffer.DepthTarget != null) {
-                if (this._graphicsPipeline.DepthStencilState.NativePtr !=
-                    this._lastGraphicsPipeline?.DepthStencilState.NativePtr) {
+                if (this._graphicsPipeline.DepthStencilState.NativePtr != this._lastGraphicsPipeline?.DepthStencilState.NativePtr) {
                     this._rce.setDepthStencilState(this._graphicsPipeline.DepthStencilState);
                 }
 
@@ -575,10 +744,7 @@ internal unsafe class MtlCommandList : CommandList {
                     UIntPtr index = this._graphicsPipeline.ResourceBindingModel == ResourceBindingModel.Improved
                         ? this._nonVertexBufferCount + i
                         : i;
-                    this._rce.setVertexBuffer(
-                        this._vertexBuffers[i].DeviceBuffer,
-                        this._vbOffsets[i],
-                        index);
+                    this._rce.setVertexBuffer(this._vertexBuffers[i].DeviceBuffer, this._vbOffsets[i], index);
 
                     this._vertexBuffersActive[i] = true;
                     this._vbOffsetsActive[i] = true;
@@ -589,9 +755,7 @@ internal unsafe class MtlCommandList : CommandList {
                         ? this._nonVertexBufferCount + i
                         : i;
 
-                    this._rce.setVertexBufferOffset(
-                        this._vbOffsets[i],
-                        index);
+                    this._rce.setVertexBufferOffset(this._vbOffsets[i], index);
 
                     this._vbOffsetsActive[i] = true;
                 }
@@ -603,6 +767,9 @@ internal unsafe class MtlCommandList : CommandList {
         return false;
     }
 
+    /// <summary>
+    /// Executes FlushViewports.
+    /// </summary>
     private void FlushViewports() {
         if (this.gd.MetalFeatures.IsSupported(MTLFeatureSet.macOS_GPUFamily1_v3)) {
             fixed (MTLViewport* viewportsPtr = &this._viewports[0]) {
@@ -614,6 +781,9 @@ internal unsafe class MtlCommandList : CommandList {
         }
     }
 
+    /// <summary>
+    /// Executes FlushScissorRects.
+    /// </summary>
     private void FlushScissorRects() {
         if (this.gd.MetalFeatures.IsSupported(MTLFeatureSet.macOS_GPUFamily1_v3)) {
             bool scissorRectsChanged = false;
@@ -638,11 +808,13 @@ internal unsafe class MtlCommandList : CommandList {
         }
     }
 
+    /// <summary>
+    /// Executes PreComputeCommand.
+    /// </summary>
     private void PreComputeCommand() {
         this.EnsureComputeEncoder();
 
-        if (this._computePipeline.ComputePipelineState.NativePtr !=
-            this._lastComputePipeline?.ComputePipelineState.NativePtr) {
+        if (this._computePipeline.ComputePipelineState.NativePtr != this._lastComputePipeline?.ComputePipelineState.NativePtr) {
             this._cce.setComputePipelineState(this._computePipeline.ComputePipelineState);
         }
 
@@ -656,6 +828,9 @@ internal unsafe class MtlCommandList : CommandList {
         }
     }
 
+    /// <summary>
+    /// Executes GetFreeStagingBuffer.
+    /// </summary>
     private MtlBuffer GetFreeStagingBuffer(uint sizeInBytes) {
         lock (this._submittedCommandsLock) {
             foreach (MtlBuffer buffer in this._availableStagingBuffers) {
@@ -666,12 +841,14 @@ internal unsafe class MtlCommandList : CommandList {
             }
         }
 
-        DeviceBuffer staging = this.gd.ResourceFactory.CreateBuffer(
-            new BufferDescription(sizeInBytes, BufferUsage.Staging));
+        DeviceBuffer staging = this.gd.ResourceFactory.CreateBuffer(new BufferDescription(sizeInBytes, BufferUsage.Staging));
 
         return Util.AssertSubtype<DeviceBuffer, MtlBuffer>(staging);
     }
 
+    /// <summary>
+    /// Executes ActivateGraphicsResourceSet.
+    /// </summary>
     private void ActivateGraphicsResourceSet(uint slot, BoundResourceSetInfo brsi) {
         Debug.Assert(this.renderEncoderActive);
         MtlResourceSet mtlRs = Util.AssertSubtype<ResourceSet, MtlResourceSet>(brsi.Set);
@@ -690,10 +867,10 @@ internal unsafe class MtlCommandList : CommandList {
 
             switch (bindingInfo.Kind) {
                 case ResourceKind.UniformBuffer: {
-                    DeviceBufferRange range = Util.GetBufferRange(resource, bufferOffset);
-                    this.BindBuffer(range, slot, bindingInfo.Slot, bindingInfo.Stages);
-                    break;
-                }
+                        DeviceBufferRange range = Util.GetBufferRange(resource, bufferOffset);
+                        this.BindBuffer(range, slot, bindingInfo.Slot, bindingInfo.Stages);
+                        break;
+                    }
 
                 case ResourceKind.TextureReadOnly:
                     TextureView texView = Util.GetTextureView(this.gd, resource);
@@ -713,23 +890,25 @@ internal unsafe class MtlCommandList : CommandList {
                     break;
 
                 case ResourceKind.StructuredBufferReadOnly: {
-                    DeviceBufferRange range = Util.GetBufferRange(resource, bufferOffset);
-                    this.BindBuffer(range, slot, bindingInfo.Slot, bindingInfo.Stages);
-                    break;
-                }
+                        DeviceBufferRange range = Util.GetBufferRange(resource, bufferOffset);
+                        this.BindBuffer(range, slot, bindingInfo.Slot, bindingInfo.Stages);
+                        break;
+                    }
 
                 case ResourceKind.StructuredBufferReadWrite: {
-                    DeviceBufferRange range = Util.GetBufferRange(resource, bufferOffset);
-                    this.BindBuffer(range, slot, bindingInfo.Slot, bindingInfo.Stages);
-                    break;
-                }
+                        DeviceBufferRange range = Util.GetBufferRange(resource, bufferOffset);
+                        this.BindBuffer(range, slot, bindingInfo.Slot, bindingInfo.Stages);
+                        break;
+                    }
 
-                default:
-                    throw Illegal.Value<ResourceKind>();
+                default: throw Illegal.Value<ResourceKind>();
             }
         }
     }
 
+    /// <summary>
+    /// Executes ActivateComputeResourceSet.
+    /// </summary>
     private void ActivateComputeResourceSet(uint slot, BoundResourceSetInfo brsi) {
         Debug.Assert(this.computeEncoderActive);
         MtlResourceSet mtlRs = Util.AssertSubtype<ResourceSet, MtlResourceSet>(brsi.Set);
@@ -748,10 +927,10 @@ internal unsafe class MtlCommandList : CommandList {
 
             switch (bindingInfo.Kind) {
                 case ResourceKind.UniformBuffer: {
-                    DeviceBufferRange range = Util.GetBufferRange(resource, bufferOffset);
-                    this.BindBuffer(range, slot, bindingInfo.Slot, bindingInfo.Stages);
-                    break;
-                }
+                        DeviceBufferRange range = Util.GetBufferRange(resource, bufferOffset);
+                        this.BindBuffer(range, slot, bindingInfo.Slot, bindingInfo.Stages);
+                        break;
+                    }
 
                 case ResourceKind.TextureReadOnly:
                     TextureView texView = Util.GetTextureView(this.gd, resource);
@@ -771,23 +950,25 @@ internal unsafe class MtlCommandList : CommandList {
                     break;
 
                 case ResourceKind.StructuredBufferReadOnly: {
-                    DeviceBufferRange range = Util.GetBufferRange(resource, bufferOffset);
-                    this.BindBuffer(range, slot, bindingInfo.Slot, bindingInfo.Stages);
-                    break;
-                }
+                        DeviceBufferRange range = Util.GetBufferRange(resource, bufferOffset);
+                        this.BindBuffer(range, slot, bindingInfo.Slot, bindingInfo.Stages);
+                        break;
+                    }
 
                 case ResourceKind.StructuredBufferReadWrite: {
-                    DeviceBufferRange range = Util.GetBufferRange(resource, bufferOffset);
-                    this.BindBuffer(range, slot, bindingInfo.Slot, bindingInfo.Stages);
-                    break;
-                }
+                        DeviceBufferRange range = Util.GetBufferRange(resource, bufferOffset);
+                        this.BindBuffer(range, slot, bindingInfo.Slot, bindingInfo.Stages);
+                        break;
+                    }
 
-                default:
-                    throw Illegal.Value<ResourceKind>();
+                default: throw Illegal.Value<ResourceKind>();
             }
         }
     }
 
+    /// <summary>
+    /// Executes BindBuffer.
+    /// </summary>
     private void BindBuffer(DeviceBufferRange range, uint set, uint slot, ShaderStages stages) {
         MtlBuffer mtlBuffer = Util.AssertSubtype<DeviceBuffer, MtlBuffer>(range.Buffer);
         uint baseBuffer = this.GetBufferBase(set, stages != ShaderStages.Compute);
@@ -795,8 +976,7 @@ internal unsafe class MtlCommandList : CommandList {
         if (stages == ShaderStages.Compute) {
             UIntPtr index = slot + baseBuffer;
 
-            if (!this._boundComputeBuffers.TryGetValue(index, out DeviceBufferRange boundBuffer) ||
-                !range.Equals(boundBuffer)) {
+            if (!this._boundComputeBuffers.TryGetValue(index, out DeviceBufferRange boundBuffer) || !range.Equals(boundBuffer)) {
                 this._cce.setBuffer(mtlBuffer.DeviceBuffer, range.Offset, slot + baseBuffer);
                 this._boundComputeBuffers[index] = range;
             }
@@ -807,8 +987,7 @@ internal unsafe class MtlCommandList : CommandList {
                     ? slot + baseBuffer
                     : slot + this._vertexBufferCount + baseBuffer;
 
-                if (!this._boundVertexBuffers.TryGetValue(index, out DeviceBufferRange boundBuffer) ||
-                    boundBuffer.Buffer != range.Buffer) {
+                if (!this._boundVertexBuffers.TryGetValue(index, out DeviceBufferRange boundBuffer) || boundBuffer.Buffer != range.Buffer) {
                     this._rce.setVertexBuffer(mtlBuffer.DeviceBuffer, range.Offset, index);
                     this._boundVertexBuffers[index] = range;
                 }
@@ -821,8 +1000,7 @@ internal unsafe class MtlCommandList : CommandList {
             if ((stages & ShaderStages.Fragment) == ShaderStages.Fragment) {
                 UIntPtr index = slot + baseBuffer;
 
-                if (!this._boundFragmentBuffers.TryGetValue(index, out DeviceBufferRange boundBuffer) ||
-                    boundBuffer.Buffer != range.Buffer) {
+                if (!this._boundFragmentBuffers.TryGetValue(index, out DeviceBufferRange boundBuffer) || boundBuffer.Buffer != range.Buffer) {
                     this._rce.setFragmentBuffer(mtlBuffer.DeviceBuffer, range.Offset, slot + baseBuffer);
                     this._boundFragmentBuffers[index] = range;
                 }
@@ -834,61 +1012,61 @@ internal unsafe class MtlCommandList : CommandList {
         }
     }
 
+    /// <summary>
+    /// Executes BindTexture.
+    /// </summary>
     private void BindTexture(MtlTextureView mtlTexView, uint set, uint slot, ShaderStages stages) {
         uint baseTexture = this.GetTextureBase(set, stages != ShaderStages.Compute);
         UIntPtr index = slot + baseTexture;
 
-        if (stages == ShaderStages.Compute &&
-            (!this._boundComputeTextures.TryGetValue(index, out MTLTexture computeTexture) ||
-             computeTexture.NativePtr != mtlTexView.TargetDeviceTexture.NativePtr)) {
+        if (stages == ShaderStages.Compute && (!this._boundComputeTextures.TryGetValue(index, out MTLTexture computeTexture) || computeTexture.NativePtr != mtlTexView.TargetDeviceTexture.NativePtr)) {
             this._cce.setTexture(mtlTexView.TargetDeviceTexture, index);
             this._boundComputeTextures[index] = mtlTexView.TargetDeviceTexture;
         }
 
         if ((stages & ShaderStages.Vertex) == ShaderStages.Vertex
-            && (!this._boundVertexTextures.TryGetValue(index, out MTLTexture vertexTexture) ||
-                vertexTexture.NativePtr != mtlTexView.TargetDeviceTexture.NativePtr)) {
+            && (!this._boundVertexTextures.TryGetValue(index, out MTLTexture vertexTexture) || vertexTexture.NativePtr != mtlTexView.TargetDeviceTexture.NativePtr)) {
             this._rce.setVertexTexture(mtlTexView.TargetDeviceTexture, index);
             this._boundVertexTextures[index] = mtlTexView.TargetDeviceTexture;
         }
 
         if ((stages & ShaderStages.Fragment) == ShaderStages.Fragment
-            && (!this._boundFragmentTextures.TryGetValue(index, out MTLTexture fragmentTexture) ||
-                fragmentTexture.NativePtr != mtlTexView.TargetDeviceTexture.NativePtr)) {
+            && (!this._boundFragmentTextures.TryGetValue(index, out MTLTexture fragmentTexture) || fragmentTexture.NativePtr != mtlTexView.TargetDeviceTexture.NativePtr)) {
             this._rce.setFragmentTexture(mtlTexView.TargetDeviceTexture, index);
             this._boundFragmentTextures[index] = mtlTexView.TargetDeviceTexture;
         }
     }
 
+    /// <summary>
+    /// Executes BindSampler.
+    /// </summary>
     private void BindSampler(MtlSampler mtlSampler, uint set, uint slot, ShaderStages stages) {
         uint baseSampler = this.GetSamplerBase(set, stages != ShaderStages.Compute);
         UIntPtr index = slot + baseSampler;
 
-        if (stages == ShaderStages.Compute &&
-            (!this._boundComputeSamplers.TryGetValue(index, out MTLSamplerState computeSampler) ||
-             computeSampler.NativePtr != mtlSampler.DeviceSampler.NativePtr)) {
+        if (stages == ShaderStages.Compute && (!this._boundComputeSamplers.TryGetValue(index, out MTLSamplerState computeSampler) || computeSampler.NativePtr != mtlSampler.DeviceSampler.NativePtr)) {
             this._cce.setSamplerState(mtlSampler.DeviceSampler, index);
             this._boundComputeSamplers[index] = mtlSampler.DeviceSampler;
         }
 
         if ((stages & ShaderStages.Vertex) == ShaderStages.Vertex
-            && (!this._boundVertexSamplers.TryGetValue(index, out MTLSamplerState vertexSampler) ||
-                vertexSampler.NativePtr != mtlSampler.DeviceSampler.NativePtr)) {
+            && (!this._boundVertexSamplers.TryGetValue(index, out MTLSamplerState vertexSampler) || vertexSampler.NativePtr != mtlSampler.DeviceSampler.NativePtr)) {
             this._rce.setVertexSamplerState(mtlSampler.DeviceSampler, index);
             this._boundVertexSamplers[index] = mtlSampler.DeviceSampler;
         }
 
         if ((stages & ShaderStages.Fragment) == ShaderStages.Fragment
-            && (!this._boundFragmentSamplers.TryGetValue(index, out MTLSamplerState fragmentSampler) ||
-                fragmentSampler.NativePtr != mtlSampler.DeviceSampler.NativePtr)) {
+            && (!this._boundFragmentSamplers.TryGetValue(index, out MTLSamplerState fragmentSampler) || fragmentSampler.NativePtr != mtlSampler.DeviceSampler.NativePtr)) {
             this._rce.setFragmentSamplerState(mtlSampler.DeviceSampler, index);
             this._boundFragmentSamplers[index] = mtlSampler.DeviceSampler;
         }
     }
 
+    /// <summary>
+    /// Executes GetBufferBase.
+    /// </summary>
     private uint GetBufferBase(uint set, bool graphics) {
-        MtlResourceLayout[] layouts =
-            graphics ? this._graphicsPipeline.ResourceLayouts : this._computePipeline.ResourceLayouts;
+        MtlResourceLayout[] layouts = graphics ? this._graphicsPipeline.ResourceLayouts : this._computePipeline.ResourceLayouts;
         uint ret = 0;
 
         for (int i = 0; i < set; i++) {
@@ -899,9 +1077,11 @@ internal unsafe class MtlCommandList : CommandList {
         return ret;
     }
 
+    /// <summary>
+    /// Executes GetTextureBase.
+    /// </summary>
     private uint GetTextureBase(uint set, bool graphics) {
-        MtlResourceLayout[] layouts =
-            graphics ? this._graphicsPipeline.ResourceLayouts : this._computePipeline.ResourceLayouts;
+        MtlResourceLayout[] layouts = graphics ? this._graphicsPipeline.ResourceLayouts : this._computePipeline.ResourceLayouts;
         uint ret = 0;
 
         for (int i = 0; i < set; i++) {
@@ -912,9 +1092,11 @@ internal unsafe class MtlCommandList : CommandList {
         return ret;
     }
 
+    /// <summary>
+    /// Executes GetSamplerBase.
+    /// </summary>
     private uint GetSamplerBase(uint set, bool graphics) {
-        MtlResourceLayout[] layouts =
-            graphics ? this._graphicsPipeline.ResourceLayouts : this._computePipeline.ResourceLayouts;
+        MtlResourceLayout[] layouts = graphics ? this._graphicsPipeline.ResourceLayouts : this._computePipeline.ResourceLayouts;
         uint ret = 0;
 
         for (int i = 0; i < set; i++) {
@@ -925,6 +1107,9 @@ internal unsafe class MtlCommandList : CommandList {
         return ret;
     }
 
+    /// <summary>
+    /// Executes EnsureRenderPass.
+    /// </summary>
     private bool EnsureRenderPass() {
         Debug.Assert(this._mtlFramebuffer != null);
         this.EnsureNoBlitEncoder();
@@ -932,9 +1117,11 @@ internal unsafe class MtlCommandList : CommandList {
         return this.renderEncoderActive || this.BeginCurrentRenderPass();
     }
 
+    /// <summary>
+    /// Executes BeginCurrentRenderPass.
+    /// </summary>
     private bool BeginCurrentRenderPass() {
-        if (this._mtlFramebuffer is MtlSwapchainFramebuffer swapchainFramebuffer &&
-            !swapchainFramebuffer.EnsureDrawableAvailable()) {
+        if (this._mtlFramebuffer is MtlSwapchainFramebuffer swapchainFramebuffer && !swapchainFramebuffer.EnsureDrawableAvailable()) {
             return false;
         }
 
@@ -955,8 +1142,7 @@ internal unsafe class MtlCommandList : CommandList {
             depthAttachment.loadAction = MTLLoadAction.Clear;
             depthAttachment.clearDepth = this._clearDepth.Value.depth;
 
-            if (this._mtlFramebuffer.DepthTarget != null &&
-                FormatHelpers.IsStencilFormat(this._mtlFramebuffer.DepthTarget.Value.Target.Format)) {
+            if (this._mtlFramebuffer.DepthTarget != null && FormatHelpers.IsStencilFormat(this._mtlFramebuffer.DepthTarget.Value.Target.Format)) {
                 MTLRenderPassStencilAttachmentDescriptor stencilAttachment = rpDesc.stencilAttachment;
                 stencilAttachment.loadAction = MTLLoadAction.Clear;
                 stencilAttachment.clearStencil = this._clearDepth.Value.stencil;
@@ -976,6 +1162,9 @@ internal unsafe class MtlCommandList : CommandList {
         return true;
     }
 
+    /// <summary>
+    /// Executes EnsureNoRenderPass.
+    /// </summary>
     private void EnsureNoRenderPass() {
         if (this.renderEncoderActive) {
             this.EndCurrentRenderPass();
@@ -984,6 +1173,9 @@ internal unsafe class MtlCommandList : CommandList {
         Debug.Assert(!this.renderEncoderActive);
     }
 
+    /// <summary>
+    /// Executes EndCurrentRenderPass.
+    /// </summary>
     private void EndCurrentRenderPass() {
         this._rce.endEncoding();
         ObjectiveCRuntime.release(this._rce.NativePtr);
@@ -1005,6 +1197,9 @@ internal unsafe class MtlCommandList : CommandList {
         this._viewportsChanged = true;
     }
 
+    /// <summary>
+    /// Executes EnsureBlitEncoder.
+    /// </summary>
     private void EnsureBlitEncoder() {
         if (!this.blitEncoderActive) {
             this.EnsureNoRenderPass();
@@ -1021,6 +1216,9 @@ internal unsafe class MtlCommandList : CommandList {
         Debug.Assert(!this.computeEncoderActive);
     }
 
+    /// <summary>
+    /// Executes EnsureNoBlitEncoder.
+    /// </summary>
     private void EnsureNoBlitEncoder() {
         if (this.blitEncoderActive) {
             this._bce.endEncoding();
@@ -1031,6 +1229,9 @@ internal unsafe class MtlCommandList : CommandList {
         Debug.Assert(!this.blitEncoderActive);
     }
 
+    /// <summary>
+    /// Executes EnsureComputeEncoder.
+    /// </summary>
     private void EnsureComputeEncoder() {
         if (!this.computeEncoderActive) {
             this.EnsureNoBlitEncoder();
@@ -1047,6 +1248,9 @@ internal unsafe class MtlCommandList : CommandList {
         Debug.Assert(!this.blitEncoderActive);
     }
 
+    /// <summary>
+    /// Executes EnsureNoComputeEncoder.
+    /// </summary>
     private void EnsureNoComputeEncoder() {
         if (this.computeEncoderActive) {
             this._cce.endEncoding();
@@ -1064,66 +1268,56 @@ internal unsafe class MtlCommandList : CommandList {
         Debug.Assert(!this.computeEncoderActive);
     }
 
+    /// <summary>
+    /// Executes ClearColorTargetCore.
+    /// </summary>
     private protected override void ClearColorTargetCore(uint index, RgbaFloat clearColor) {
         this.EnsureNoRenderPass();
         this._clearColors[index] = clearColor;
     }
 
+    /// <summary>
+    /// Executes ClearDepthStencilCore.
+    /// </summary>
     private protected override void ClearDepthStencilCore(float depth, byte stencil) {
         this.EnsureNoRenderPass();
         this._clearDepth = (depth, stencil);
     }
 
-    private protected override void DrawCore(uint vertexCount, uint instanceCount, uint vertexStart,
-        uint instanceStart) {
+    /// <summary>
+    /// Executes DrawCore.
+    /// </summary>
+    private protected override void DrawCore(uint vertexCount, uint instanceCount, uint vertexStart, uint instanceStart) {
         if (this.PreDrawCommand()) {
             if (instanceStart == 0) {
-                this._rce.drawPrimitives(
-                    this._graphicsPipeline.PrimitiveType,
-                    vertexStart,
-                    vertexCount,
-                    instanceCount);
+                this._rce.drawPrimitives(this._graphicsPipeline.PrimitiveType, vertexStart, vertexCount, instanceCount);
             }
             else {
-                this._rce.drawPrimitives(
-                    this._graphicsPipeline.PrimitiveType,
-                    vertexStart,
-                    vertexCount,
-                    instanceCount,
-                    instanceStart);
+                this._rce.drawPrimitives(this._graphicsPipeline.PrimitiveType, vertexStart, vertexCount, instanceCount, instanceStart);
             }
         }
     }
 
-    private protected override void DrawIndexedCore(uint indexCount, uint instanceCount, uint indexStart,
-        int vertexOffset, uint instanceStart) {
+    /// <summary>
+    /// Executes DrawIndexedCore.
+    /// </summary>
+    private protected override void DrawIndexedCore(uint indexCount, uint instanceCount, uint indexStart, int vertexOffset, uint instanceStart) {
         if (this.PreDrawCommand()) {
             uint indexSize = this._indexType == MTLIndexType.UInt16 ? 2u : 4u;
             uint indexBufferOffset = indexSize * indexStart + this._ibOffset;
 
             if (vertexOffset == 0 && instanceStart == 0) {
-                this._rce.drawIndexedPrimitives(
-                    this._graphicsPipeline.PrimitiveType,
-                    indexCount,
-                    this._indexType,
-                    this._indexBuffer.DeviceBuffer,
-                    indexBufferOffset,
-                    instanceCount);
+                this._rce.drawIndexedPrimitives(this._graphicsPipeline.PrimitiveType, indexCount, this._indexType, this._indexBuffer.DeviceBuffer, indexBufferOffset, instanceCount);
             }
             else {
-                this._rce.drawIndexedPrimitives(
-                    this._graphicsPipeline.PrimitiveType,
-                    indexCount,
-                    this._indexType,
-                    this._indexBuffer.DeviceBuffer,
-                    indexBufferOffset,
-                    instanceCount,
-                    vertexOffset,
-                    instanceStart);
+                this._rce.drawIndexedPrimitives(this._graphicsPipeline.PrimitiveType, indexCount, this._indexType, this._indexBuffer.DeviceBuffer, indexBufferOffset, instanceCount, vertexOffset, instanceStart);
             }
         }
     }
 
+    /// <summary>
+    /// Executes SetPipelineCore.
+    /// </summary>
     private protected override void SetPipelineCore(Pipeline pipeline) {
         if (pipeline.IsComputePipeline && this._computePipeline != pipeline) {
             this._computePipeline = Util.AssertSubtype<Pipeline, MtlPipeline>(pipeline);
@@ -1151,11 +1345,12 @@ internal unsafe class MtlCommandList : CommandList {
         }
     }
 
-    private protected override void UpdateBufferCore(DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source,
-        uint sizeInBytes) {
+    /// <summary>
+    /// Executes UpdateBufferCore.
+    /// </summary>
+    private protected override void UpdateBufferCore(DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes) {
         bool useComputeCopy = bufferOffsetInBytes % 4 != 0
-                              || (sizeInBytes % 4 != 0 && bufferOffsetInBytes != 0 &&
-                                  sizeInBytes != buffer.SizeInBytes);
+                              || (sizeInBytes % 4 != 0 && bufferOffsetInBytes != 0 && sizeInBytes != buffer.SizeInBytes);
 
         MtlBuffer dstMtlBuffer = Util.AssertSubtype<DeviceBuffer, MtlBuffer>(buffer);
         MtlBuffer staging = this.GetFreeStagingBuffer(sizeInBytes);
@@ -1169,10 +1364,7 @@ internal unsafe class MtlCommandList : CommandList {
             Debug.Assert(bufferOffsetInBytes % 4 == 0);
             uint sizeRoundFactor = (4 - sizeInBytes % 4) % 4;
             this.EnsureBlitEncoder();
-            this._bce.copy(
-                staging.DeviceBuffer, UIntPtr.Zero,
-                dstMtlBuffer.DeviceBuffer, bufferOffsetInBytes,
-                sizeInBytes + sizeRoundFactor);
+            this._bce.copy(staging.DeviceBuffer, UIntPtr.Zero, dstMtlBuffer.DeviceBuffer, bufferOffsetInBytes, sizeInBytes + sizeRoundFactor);
         }
 
         lock (this._submittedCommandsLock) {
@@ -1180,6 +1372,9 @@ internal unsafe class MtlCommandList : CommandList {
         }
     }
 
+    /// <summary>
+    /// Executes GenerateMipmapsCore.
+    /// </summary>
     private protected override void GenerateMipmapsCore(Texture texture) {
         Debug.Assert(texture.MipLevels > 1);
         this.EnsureBlitEncoder();
@@ -1187,12 +1382,18 @@ internal unsafe class MtlCommandList : CommandList {
         this._bce.generateMipmapsForTexture(mtlTex.DeviceTexture);
     }
 
+    /// <summary>
+    /// Executes SetIndexBufferCore.
+    /// </summary>
     private protected override void SetIndexBufferCore(DeviceBuffer buffer, IndexFormat format, uint offset) {
         this._indexBuffer = Util.AssertSubtype<DeviceBuffer, MtlBuffer>(buffer);
         this._ibOffset = offset;
         this._indexType = MtlFormats.VdToMtlIndexFormat(format);
     }
 
+    /// <summary>
+    /// Executes SetVertexBufferCore.
+    /// </summary>
     private protected override void SetVertexBufferCore(uint index, DeviceBuffer buffer, uint offset) {
         Util.EnsureArrayMinimumSize(ref this._vertexBuffers, index + 1);
         Util.EnsureArrayMinimumSize(ref this._vbOffsets, index + 1);
@@ -1211,6 +1412,9 @@ internal unsafe class MtlCommandList : CommandList {
         }
     }
 
+    /// <summary>
+    /// Executes PushDebugGroupCore.
+    /// </summary>
     private protected override void PushDebugGroupCore(string name) {
         NSString nsName = NSString.New(name);
         if (!this._bce.IsNull) {
@@ -1226,6 +1430,9 @@ internal unsafe class MtlCommandList : CommandList {
         ObjectiveCRuntime.release(nsName);
     }
 
+    /// <summary>
+    /// Executes PopDebugGroupCore.
+    /// </summary>
     private protected override void PopDebugGroupCore() {
         if (!this._bce.IsNull) {
             this._bce.popDebugGroup();
@@ -1238,6 +1445,9 @@ internal unsafe class MtlCommandList : CommandList {
         }
     }
 
+    /// <summary>
+    /// Executes InsertDebugMarkerCore.
+    /// </summary>
     private protected override void InsertDebugMarkerCore(string name) {
         NSString nsName = NSString.New(name);
         if (!this._bce.IsNull) {

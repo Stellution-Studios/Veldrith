@@ -5,24 +5,51 @@ using System.Text;
 namespace Veldrith.D3D12;
 
 internal sealed class D3D12Shader : Shader {
+
+    /// <summary>
+    /// Represents the _disposed field.
+    /// </summary>
     private bool _disposed;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="D3D12Shader" /> class.
+    /// </summary>
     public D3D12Shader(ref ShaderDescription description)
         : base(description.Stage, description.EntryPoint) {
         this.ShaderBytes = EnsureDxbcBytecode(description);
         this.Debug = description.Debug;
     }
 
+    /// <summary>
+    /// Gets or sets ShaderBytes.
+    /// </summary>
     public byte[] ShaderBytes { get; }
+
+    /// <summary>
+    /// Gets or sets Debug.
+    /// </summary>
     public bool Debug { get; }
+
+    /// <summary>
+    /// Gets or sets IsDisposed.
+    /// </summary>
     public override bool IsDisposed => this._disposed;
 
+    /// <summary>
+    /// Gets or sets Name.
+    /// </summary>
     public override string Name { get; set; }
 
+    /// <summary>
+    /// Executes Dispose.
+    /// </summary>
     public override void Dispose() {
         this._disposed = true;
     }
 
+    /// <summary>
+    /// Executes EnsureDxbcBytecode.
+    /// </summary>
     private static byte[] EnsureDxbcBytecode(ShaderDescription description) {
         byte[] source = description.ShaderBytes ?? Array.Empty<byte>();
         if (source.Length >= 4
@@ -38,39 +65,27 @@ internal sealed class D3D12Shader : Shader {
         return CompileHlsl(sourceText, description.EntryPoint, targetProfile);
     }
 
+    /// <summary>
+    /// Executes GetTargetProfile.
+    /// </summary>
     private static string GetTargetProfile(ShaderStages stage) {
         switch (stage) {
-            case ShaderStages.Vertex:
-                return "vs_5_0";
-            case ShaderStages.Fragment:
-                return "ps_5_0";
-            case ShaderStages.Geometry:
-                return "gs_5_0";
-            case ShaderStages.TessellationControl:
-                return "hs_5_0";
-            case ShaderStages.TessellationEvaluation:
-                return "ds_5_0";
-            case ShaderStages.Compute:
-                return "cs_5_0";
-            default:
-                throw new VeldridException($"Unsupported D3D12 shader stage: {stage}.");
+            case ShaderStages.Vertex: return "vs_5_0";
+            case ShaderStages.Fragment: return "ps_5_0";
+            case ShaderStages.Geometry: return "gs_5_0";
+            case ShaderStages.TessellationControl: return "hs_5_0";
+            case ShaderStages.TessellationEvaluation: return "ds_5_0";
+            case ShaderStages.Compute: return "cs_5_0";
+            default: throw new VeldridException($"Unsupported D3D12 shader stage: {stage}.");
         }
     }
 
+    /// <summary>
+    /// Executes CompileHlsl.
+    /// </summary>
     private static byte[] CompileHlsl(string sourceCode, string entryPoint, string target) {
         byte[] sourceBytes = Encoding.UTF8.GetBytes(sourceCode ?? string.Empty);
-        int result = D3DCompile(
-            sourceBytes,
-            (nuint)sourceBytes.Length,
-            null,
-            IntPtr.Zero,
-            IntPtr.Zero,
-            entryPoint,
-            target,
-            0,
-            0,
-            out IntPtr codeBlobPtr,
-            out IntPtr errorBlobPtr);
+        int result = D3DCompile(sourceBytes, (nuint)sourceBytes.Length, null, IntPtr.Zero, IntPtr.Zero, entryPoint, target, 0, 0, out IntPtr codeBlobPtr, out IntPtr errorBlobPtr);
 
         string errorMessage = null;
         if (errorBlobPtr != IntPtr.Zero) {
@@ -90,8 +105,7 @@ internal sealed class D3D12Shader : Shader {
         }
 
         if (result < 0 || codeBlobPtr == IntPtr.Zero) {
-            throw new VeldridException(
-                $"Failed to compile D3D12 shader entry '{entryPoint}' target '{target}'. {errorMessage}");
+            throw new VeldridException($"Failed to compile D3D12 shader entry '{entryPoint}' target '{target}'. {errorMessage}");
         }
 
         try {
@@ -108,18 +122,11 @@ internal sealed class D3D12Shader : Shader {
     }
 
     [DllImport("d3dcompiler_47.dll", CharSet = CharSet.Ansi)]
-    private static extern int D3DCompile(
-        byte[] srcData,
-        nuint srcDataSize,
-        string sourceName,
-        IntPtr defines,
-        IntPtr include,
-        string entryPoint,
-        string target,
-        uint flags1,
-        uint flags2,
-        out IntPtr code,
-        out IntPtr errorMsgs);
+
+    /// <summary>
+    /// Executes D3DCompile.
+    /// </summary>
+    private static extern int D3DCompile(byte[] srcData, nuint srcDataSize, string sourceName, IntPtr defines, IntPtr include, string entryPoint, string target, uint flags1, uint flags2, out IntPtr code, out IntPtr errorMsgs);
 
     [ComImport]
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]

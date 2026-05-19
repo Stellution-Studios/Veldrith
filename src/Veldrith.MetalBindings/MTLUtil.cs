@@ -3,6 +3,10 @@ using System.Text;
 namespace Veldrith.MetalBindings;
 
 public static class MTLUtil {
+
+    /// <summary>
+    /// Executes GetUtf8String.
+    /// </summary>
     public static unsafe string GetUtf8String(byte* stringStart) {
         int characters = 0;
         while (stringStart[characters] != 0) {

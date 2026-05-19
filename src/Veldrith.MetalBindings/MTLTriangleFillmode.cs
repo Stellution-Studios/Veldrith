@@ -1,6 +1,5 @@
-﻿namespace Veldrith.MetalBindings;
+namespace Veldrith.MetalBindings;
 
 public enum MTLTriangleFillMode : uint {
-    Fill = 0,
-    Lines = 1
+    Fill = 0, Lines = 1
 }

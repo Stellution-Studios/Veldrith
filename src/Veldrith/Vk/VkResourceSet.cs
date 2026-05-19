@@ -1,18 +1,39 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Vulkan;
 using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
 internal unsafe class VkResourceSet : ResourceSet {
+
+    /// <summary>
+    /// Represents the _descriptorAllocationToken field.
+    /// </summary>
     private readonly DescriptorAllocationToken _descriptorAllocationToken;
+
+    /// <summary>
+    /// Represents the _descriptorCounts field.
+    /// </summary>
     private readonly DescriptorResourceCounts _descriptorCounts;
 
+    /// <summary>
+    /// Represents the gd field.
+    /// </summary>
     private readonly VkGraphicsDevice gd;
 
+    /// <summary>
+    /// Represents the _destroyed field.
+    /// </summary>
     private bool _destroyed;
+
+    /// <summary>
+    /// Represents the _name field.
+    /// </summary>
     private string _name;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="VkResourceSet" /> class.
+    /// </summary>
     public VkResourceSet(VkGraphicsDevice gd, ref ResourceSetDescription description)
         : base(ref description) {
         this.gd = gd;
@@ -39,8 +60,7 @@ internal unsafe class VkResourceSet : ResourceSet {
             descriptorWrites[i].dstSet = this._descriptorAllocationToken.Set;
 
             if (type == VkDescriptorType.UniformBuffer || type == VkDescriptorType.UniformBufferDynamic
-                                                       || type == VkDescriptorType.StorageBuffer ||
-                                                       type == VkDescriptorType.StorageBufferDynamic) {
+                                                       || type == VkDescriptorType.StorageBuffer || type == VkDescriptorType.StorageBufferDynamic) {
                 DeviceBufferRange range = Util.GetBufferRange(boundResources[i], 0);
                 VkBuffer rangedVkBuffer = Util.AssertSubtype<DeviceBuffer, VkBuffer>(range.Buffer);
                 bufferInfos[i].buffer = rangedVkBuffer.DeviceBuffer;
@@ -78,16 +98,39 @@ internal unsafe class VkResourceSet : ResourceSet {
         vkUpdateDescriptorSets(this.gd.Device, descriptorWriteCount, descriptorWrites, 0, null);
     }
 
+    /// <summary>
+    /// Represents the DescriptorSet field.
+    /// </summary>
     public VkDescriptorSet DescriptorSet => this._descriptorAllocationToken.Set;
+
+    /// <summary>
+    /// Gets or sets SampledTextures.
+    /// </summary>
     public List<VkTexture> SampledTextures { get; } = new();
 
+    /// <summary>
+    /// Gets or sets StorageTextures.
+    /// </summary>
     public List<VkTexture> StorageTextures { get; } = new();
 
+    /// <summary>
+    /// Gets or sets RefCount.
+    /// </summary>
     public ResourceRefCount RefCount { get; }
+
+    /// <summary>
+    /// Gets or sets RefCounts.
+    /// </summary>
     public List<ResourceRefCount> RefCounts { get; } = new();
 
+    /// <summary>
+    /// Gets or sets IsDisposed.
+    /// </summary>
     public override bool IsDisposed => this._destroyed;
 
+    /// <summary>
+    /// Gets or sets Name.
+    /// </summary>
     public override string Name {
         get => this._name;
         set {
@@ -98,12 +141,18 @@ internal unsafe class VkResourceSet : ResourceSet {
 
     #region Disposal
 
+    /// <summary>
+    /// Executes Dispose.
+    /// </summary>
     public override void Dispose() {
         this.RefCount.Decrement();
     }
 
     #endregion
 
+    /// <summary>
+    /// Executes DisposeCore.
+    /// </summary>
     private void DisposeCore() {
         if (!this._destroyed) {
             this._destroyed = true;

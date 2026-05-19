@@ -1,26 +1,27 @@
-﻿namespace Veldrith;
+namespace Veldrith;
 
 /// <summary>
-///     Represents a single output of a <see cref="Framebuffer" />. May be a color or depth attachment.
+/// Represents a single output of a <see cref="Framebuffer" />. May be a color or depth attachment.
 /// </summary>
 public struct FramebufferAttachment {
+
     /// <summary>
-    ///     The target <see cref="Texture" /> which will be rendered to.
+    /// The target <see cref="Texture" /> which will be rendered to.
     /// </summary>
     public Texture Target { get; }
 
     /// <summary>
-    ///     The target array layer.
+    /// The target array layer.
     /// </summary>
     public uint ArrayLayer { get; }
 
     /// <summary>
-    ///     The target mip level.
+    /// The target mip level.
     /// </summary>
     public uint MipLevel { get; }
 
     /// <summary>
-    ///     Constructs a new FramebufferAttachment.
+    /// Constructs a new FramebufferAttachment.
     /// </summary>
     /// <param name="target">The target <see cref="Texture" /> which will be rendered to.</param>
     /// <param name="arrayLayer">The target array layer.</param>
@@ -31,7 +32,7 @@ public struct FramebufferAttachment {
     }
 
     /// <summary>
-    ///     Constructs a new FramebufferAttachment.
+    /// Constructs a new FramebufferAttachment.
     /// </summary>
     /// <param name="target">The target <see cref="Texture" /> which will be rendered to.</param>
     /// <param name="arrayLayer">The target array layer.</param>

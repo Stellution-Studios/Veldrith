@@ -1,37 +1,41 @@
-﻿using System;
+using System;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace Veldrith;
 
 /// <summary>
-///     A color stored in four 32-bit floating-point values, in RGBA component order.
+/// A color stored in four 32-bit floating-point values, in RGBA component order.
 /// </summary>
 public struct RgbaFloat : IEquatable<RgbaFloat> {
+
+    /// <summary>
+    /// Represents the channels field.
+    /// </summary>
     private readonly Vector4 channels;
 
     /// <summary>
-    ///     The red component.
+    /// The red component.
     /// </summary>
     public float R => this.channels.X;
 
     /// <summary>
-    ///     The green component.
+    /// The green component.
     /// </summary>
     public float G => this.channels.Y;
 
     /// <summary>
-    ///     The blue component.
+    /// The blue component.
     /// </summary>
     public float B => this.channels.Z;
 
     /// <summary>
-    ///     The alpha component.
+    /// The alpha component.
     /// </summary>
     public float A => this.channels.W;
 
     /// <summary>
-    ///     Constructs a new RgbaFloat from the given components.
+    /// Constructs a new RgbaFloat from the given components.
     /// </summary>
     /// <param name="r">The red component.</param>
     /// <param name="g">The green component.</param>
@@ -42,7 +46,7 @@ public struct RgbaFloat : IEquatable<RgbaFloat> {
     }
 
     /// <summary>
-    ///     Constructs a new RgbaFloat from the XYZW components of a vector.
+    /// Constructs a new RgbaFloat from the XYZW components of a vector.
     /// </summary>
     /// <param name="channels">The vector containing the color components.</param>
     public RgbaFloat(Vector4 channels) {
@@ -50,82 +54,82 @@ public struct RgbaFloat : IEquatable<RgbaFloat> {
     }
 
     /// <summary>
-    ///     The total size, in bytes, of an RgbaFloat value.
+    /// The total size, in bytes, of an RgbaFloat value.
     /// </summary>
     public static readonly int SIZE_IN_BYTES = 16;
 
     /// <summary>
-    ///     Red (1, 0, 0, 1)
+    /// Red (1, 0, 0, 1)
     /// </summary>
     public static readonly RgbaFloat RED = new(1, 0, 0, 1);
 
     /// <summary>
-    ///     Dark Red (0.6f, 0, 0, 1)
+    /// Dark Red (0.6f, 0, 0, 1)
     /// </summary>
     public static readonly RgbaFloat DARK_RED = new(0.6f, 0, 0, 1);
 
     /// <summary>
-    ///     Green (0, 1, 0, 1)
+    /// Green (0, 1, 0, 1)
     /// </summary>
     public static readonly RgbaFloat GREEN = new(0, 1, 0, 1);
 
     /// <summary>
-    ///     Blue (0, 0, 1, 1)
+    /// Blue (0, 0, 1, 1)
     /// </summary>
     public static readonly RgbaFloat BLUE = new(0, 0, 1, 1);
 
     /// <summary>
-    ///     Yellow (1, 1, 0, 1)
+    /// Yellow (1, 1, 0, 1)
     /// </summary>
     public static readonly RgbaFloat YELLOW = new(1, 1, 0, 1);
 
     /// <summary>
-    ///     Grey (0.25f, 0.25f, 0.25f, 1)
+    /// Grey (0.25f, 0.25f, 0.25f, 1)
     /// </summary>
     public static readonly RgbaFloat GREY = new(.25f, .25f, .25f, 1);
 
     /// <summary>
-    ///     Light Grey (0.65f, 0.65f, 0.65f, 1)
+    /// Light Grey (0.65f, 0.65f, 0.65f, 1)
     /// </summary>
     public static readonly RgbaFloat LIGHT_GREY = new(.65f, .65f, .65f, 1);
 
     /// <summary>
-    ///     Cyan (0, 1, 1, 1)
+    /// Cyan (0, 1, 1, 1)
     /// </summary>
     public static readonly RgbaFloat CYAN = new(0, 1, 1, 1);
 
     /// <summary>
-    ///     White (1, 1, 1, 1)
+    /// White (1, 1, 1, 1)
     /// </summary>
     public static readonly RgbaFloat WHITE = new(1, 1, 1, 1);
 
     /// <summary>
-    ///     Cornflower Blue (0.3921f, 0.5843f, 0.9294f, 1)
+    /// Cornflower Blue (0.3921f, 0.5843f, 0.9294f, 1)
     /// </summary>
     public static readonly RgbaFloat CORNFLOWER_BLUE = new(0.3921f, 0.5843f, 0.9294f, 1);
 
     /// <summary>
-    ///     Clear (0, 0, 0, 0)
+    /// Clear (0, 0, 0, 0)
     /// </summary>
     public static readonly RgbaFloat CLEAR = new(0, 0, 0, 0);
 
     /// <summary>
-    ///     Black (0, 0, 0, 1)
+    /// Black (0, 0, 0, 1)
     /// </summary>
     public static readonly RgbaFloat BLACK = new(0, 0, 0, 1);
 
     /// <summary>
-    ///     Pink (1, 0.45f, 0.75f, 1)
+    /// Pink (1, 0.45f, 0.75f, 1)
     /// </summary>
     public static readonly RgbaFloat PINK = new(1f, 0.45f, 0.75f, 1);
 
     /// <summary>
-    ///     Orange (1, 0.36f, 0, 1)
+    /// Orange (1, 0.36f, 0, 1)
     /// </summary>
     public static readonly RgbaFloat ORANGE = new(1f, 0.36f, 0f, 1);
 
     /// <summary>
-    ///     Converts this RgbaFloat into a Vector4.
+    /// Converts this RgbaFloat into a Vector4.
     /// </summary>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -134,7 +138,7 @@ public struct RgbaFloat : IEquatable<RgbaFloat> {
     }
 
     /// <summary>
-    ///     Element-wise equality.
+    /// Element-wise equality.
     /// </summary>
     /// <param name="other">The instance to compare to.</param>
     /// <returns>True if all elements are equal; false otherswise.</returns>
@@ -144,7 +148,7 @@ public struct RgbaFloat : IEquatable<RgbaFloat> {
     }
 
     /// <summary>
-    ///     Determines whether the specified object is equal to the current object.
+    /// Determines whether the specified object is equal to the current object.
     /// </summary>
     /// <param name="obj">The object to compare with the current object.</param>
     /// <returns>true if the specified object is equal to the current object; otherwise, false.</returns>
@@ -153,17 +157,16 @@ public struct RgbaFloat : IEquatable<RgbaFloat> {
     }
 
     /// <summary>
-    ///     Returns the hash code for this instance.
+    /// Returns the hash code for this instance.
     /// </summary>
     /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public override int GetHashCode() {
-        return HashHelper.Combine(this.R.GetHashCode(), this.G.GetHashCode(), this.B.GetHashCode(),
-            this.A.GetHashCode());
+        return HashHelper.Combine(this.R.GetHashCode(), this.G.GetHashCode(), this.B.GetHashCode(), this.A.GetHashCode());
     }
 
     /// <summary>
-    ///     Returns a string representation of this color.
+    /// Returns a string representation of this color.
     /// </summary>
     /// <returns></returns>
     public override string ToString() {
@@ -171,7 +174,7 @@ public struct RgbaFloat : IEquatable<RgbaFloat> {
     }
 
     /// <summary>
-    ///     Element-wise equality.
+    /// Element-wise equality.
     /// </summary>
     /// <param name="left">The first value.</param>
     /// <param name="right">The second value.</param>
@@ -181,7 +184,7 @@ public struct RgbaFloat : IEquatable<RgbaFloat> {
     }
 
     /// <summary>
-    ///     Element-wise inequality.
+    /// Element-wise inequality.
     /// </summary>
     /// <param name="left">The first value.</param>
     /// <param name="right">The second value.</param>

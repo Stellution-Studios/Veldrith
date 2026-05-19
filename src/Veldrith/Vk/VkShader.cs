@@ -1,17 +1,35 @@
-﻿using System;
+using System;
 using Vulkan;
-using static Vulkan.VulkanNative;
 using static Veldrith.Vk.VulkanUtil;
+using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
 internal unsafe class VkShader : Shader {
+
+    /// <summary>
+    /// Represents the _shaderModule field.
+    /// </summary>
     private readonly VkShaderModule _shaderModule;
 
+    /// <summary>
+    /// Represents the gd field.
+    /// </summary>
     private readonly VkGraphicsDevice gd;
+
+    /// <summary>
+    /// Represents the _disposed field.
+    /// </summary>
     private bool _disposed;
+
+    /// <summary>
+    /// Represents the _name field.
+    /// </summary>
     private string _name;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="VkShader" /> class.
+    /// </summary>
     public VkShader(VkGraphicsDevice gd, ref ShaderDescription description)
         : base(description.Stage, description.EntryPoint) {
         this.gd = gd;
@@ -26,10 +44,19 @@ internal unsafe class VkShader : Shader {
         }
     }
 
+    /// <summary>
+    /// Represents the ShaderModule field.
+    /// </summary>
     public VkShaderModule ShaderModule => this._shaderModule;
 
+    /// <summary>
+    /// Gets or sets IsDisposed.
+    /// </summary>
     public override bool IsDisposed => this._disposed;
 
+    /// <summary>
+    /// Gets or sets Name.
+    /// </summary>
     public override string Name {
         get => this._name;
         set {
@@ -40,6 +67,9 @@ internal unsafe class VkShader : Shader {
 
     #region Disposal
 
+    /// <summary>
+    /// Executes Dispose.
+    /// </summary>
     public override void Dispose() {
         if (!this._disposed) {
             this._disposed = true;

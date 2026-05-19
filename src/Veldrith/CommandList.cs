@@ -5,85 +5,90 @@ using System.Runtime.InteropServices;
 
 namespace Veldrith;
 
-/// <summary>
-///     A device resource which allows the recording of graphics commands, which can later be executed by a
-///     <see cref="GraphicsDevice" />.
-///     Before graphics commands can be issued, the <see cref="Begin" /> method must be invoked.
-///     When the <see cref="CommandList" /> is ready to be executed, <see cref="End" /> must be invoked, and then
-///     <see cref="GraphicsDevice.SubmitCommands(CommandList)" /> should be used.
-///     NOTE: The use of <see cref="CommandList" /> is not thread-safe. Access to the <see cref="CommandList" /> must be
-///     externally synchronized.
-///     There are some limitations dictating proper usage and ordering of graphics commands. For example, a
-///     <see cref="Veldrith.Framebuffer" />, <see cref="Pipeline" />, vertex buffer, and index buffer must all be
-///     bound before a call to <see cref="DrawIndexed(uint, uint, uint, int, uint)" /> will succeed.
-///     These limitations are described in each function, where applicable.
-///     <see cref="CommandList" /> instances cannot be executed multiple times per-recording. When executed by a
-///     <see cref="GraphicsDevice" />, they must be reset and commands must be issued again.
-///     See <see cref="CommandListDescription" />.
-/// </summary>
 public abstract class CommandList : IDeviceResource, IDisposable {
+
+    /// <summary>
+    /// Represents the _structuredBufferAlignment field.
+    /// </summary>
     private readonly uint _structuredBufferAlignment;
+
+    /// <summary>
+    /// Represents the _uniformBufferAlignment field.
+    /// </summary>
     private readonly uint _uniformBufferAlignment;
 
+    /// <summary>
+    /// Represents the features field.
+    /// </summary>
     private readonly GraphicsDeviceFeatures features;
+
+    /// <summary>
+    /// Represents the ComputePipeline field.
+    /// </summary>
     private protected Pipeline ComputePipeline;
 
+    /// <summary>
+    /// Represents the Framebuffer field.
+    /// </summary>
     private protected Framebuffer Framebuffer;
+
+    /// <summary>
+    /// Represents the GraphicsPipeline field.
+    /// </summary>
     private protected Pipeline GraphicsPipeline;
 
-    internal CommandList(
-        ref CommandListDescription description,
-        GraphicsDeviceFeatures features,
-        uint uniformAlignment,
-        uint structuredAlignment) {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CommandList" /> class.
+    /// </summary>
+    internal CommandList(ref CommandListDescription description, GraphicsDeviceFeatures features, uint uniformAlignment, uint structuredAlignment) {
         this.features = features;
         this._uniformBufferAlignment = uniformAlignment;
         this._structuredBufferAlignment = structuredAlignment;
     }
 
     /// <summary>
-    ///     A bool indicating whether this instance has been disposed.
+    /// A bool indicating whether this instance has been disposed.
     /// </summary>
     public abstract bool IsDisposed { get; }
 
     /// <summary>
-    ///     A string identifying this instance. Can be used to differentiate between objects in graphics debuggers and other
-    ///     tools.
+    /// A string identifying this instance. Can be used to differentiate between objects in graphics debuggers and other
+    /// tools.
     /// </summary>
     public abstract string Name { get; set; }
 
     #region Disposal
 
     /// <summary>
-    ///     Frees unmanaged device resources controlled by this instance.
+    /// Frees unmanaged device resources controlled by this instance.
     /// </summary>
     public abstract void Dispose();
 
     #endregion
 
     /// <summary>
-    ///     Puts this <see cref="CommandList" /> into the initial state.
-    ///     This function must be called before other graphics commands can be issued.
-    ///     Begin must only be called if it has not been previously called, if <see cref="End" /> has been called,
-    ///     or if <see cref="GraphicsDevice.SubmitCommands(CommandList)" /> has been called on this instance.
+    /// Puts this <see cref="CommandList" /> into the initial state.
+    /// This function must be called before other graphics commands can be issued.
+    /// Begin must only be called if it has not been previously called, if <see cref="End" /> has been called,
+    /// or if <see cref="GraphicsDevice.SubmitCommands(CommandList)" /> has been called on this instance.
     /// </summary>
     public abstract void Begin();
 
     /// <summary>
-    ///     Completes this list of graphics commands, putting it into an executable state for a <see cref="GraphicsDevice" />.
-    ///     This function must only be called after <see cref="Begin" /> has been called.
-    ///     It is an error to call this function in succession, unless <see cref="Begin" /> has been called in between
-    ///     invocations.
+    /// Completes this list of graphics commands, putting it into an executable state for a <see cref="GraphicsDevice" />.
+    /// This function must only be called after <see cref="Begin" /> has been called.
+    /// It is an error to call this function in succession, unless <see cref="Begin" /> has been called in between
+    /// invocations.
     /// </summary>
     public abstract void End();
 
     /// <summary>
-    ///     Sets the active <see cref="Pipeline" /> used for rendering.
-    ///     When drawing, the active <see cref="Pipeline" /> must be compatible with the bound
-    ///     <see cref="Veldrith.Framebuffer" />,
-    ///     <see cref="ResourceSet" />, and <see cref="DeviceBuffer" /> objects.
-    ///     When a new Pipeline is set, the previously-bound ResourceSets on this CommandList become invalidated and must be
-    ///     re-bound.
+    /// Sets the active <see cref="Pipeline" /> used for rendering.
+    /// When drawing, the active <see cref="Pipeline" /> must be compatible with the bound
+    /// <see cref="Veldrith.Framebuffer" />,
+    /// <see cref="ResourceSet" />, and <see cref="DeviceBuffer" /> objects.
+    /// When a new Pipeline is set, the previously-bound ResourceSets on this CommandList become invalidated and must be
+    /// re-bound.
     /// </summary>
     /// <param name="pipeline">The new <see cref="Pipeline" /> object.</param>
     public void SetPipeline(Pipeline pipeline) {
@@ -98,11 +103,11 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    ///     Sets the active <see cref="DeviceBuffer" /> for the given index.
-    ///     When drawing, the bound <see cref="DeviceBuffer" /> objects must be compatible with the bound
-    ///     <see cref="Pipeline" />.
-    ///     The given buffer must be non-null. It is not necessary to un-bind vertex buffers for Pipelines which will not
-    ///     use them. All extra vertex buffers are simply ignored.
+    /// Sets the active <see cref="DeviceBuffer" /> for the given index.
+    /// When drawing, the bound <see cref="DeviceBuffer" /> objects must be compatible with the bound
+    /// <see cref="Pipeline" />.
+    /// The given buffer must be non-null. It is not necessary to un-bind vertex buffers for Pipelines which will not
+    /// use them. All extra vertex buffers are simply ignored.
     /// </summary>
     /// <param name="index">The buffer slot.</param>
     /// <param name="buffer">The new <see cref="DeviceBuffer" />.</param>
@@ -111,30 +116,29 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    ///     Sets the active <see cref="DeviceBuffer" /> for the given index.
-    ///     When drawing, the bound <see cref="DeviceBuffer" /> objects must be compatible with the bound
-    ///     <see cref="Pipeline" />.
-    ///     The given buffer must be non-null. It is not necessary to un-bind vertex buffers for Pipelines which will not
-    ///     use them. All extra vertex buffers are simply ignored.
+    /// Sets the active <see cref="DeviceBuffer" /> for the given index.
+    /// When drawing, the bound <see cref="DeviceBuffer" /> objects must be compatible with the bound
+    /// <see cref="Pipeline" />.
+    /// The given buffer must be non-null. It is not necessary to un-bind vertex buffers for Pipelines which will not
+    /// use them. All extra vertex buffers are simply ignored.
     /// </summary>
     /// <param name="index">The buffer slot.</param>
     /// <param name="buffer">The new <see cref="DeviceBuffer" />.</param>
     /// <param name="offset">
-    ///     The offset from the start of the buffer, in bytes, from which data will start to be read.
+    /// The offset from the start of the buffer, in bytes, from which data will start to be read.
     /// </param>
     public void SetVertexBuffer(uint index, DeviceBuffer buffer, uint offset) {
 #if VALIDATE_USAGE
         if ((buffer.Usage & BufferUsage.VertexBuffer) == 0) {
-            throw new VeldridException(
-                "Buffer cannot be bound as a vertex buffer because it was not created with BufferUsage.VertexBuffer.");
+            throw new VeldridException("Buffer cannot be bound as a vertex buffer because it was not created with BufferUsage.VertexBuffer.");
         }
 #endif
         this.SetVertexBufferCore(index, buffer, offset);
     }
 
     /// <summary>
-    ///     Sets the active <see cref="DeviceBuffer" />.
-    ///     When drawing, an <see cref="DeviceBuffer" /> must be bound.
+    /// Sets the active <see cref="DeviceBuffer" />.
+    /// When drawing, an <see cref="DeviceBuffer" /> must be bound.
     /// </summary>
     /// <param name="buffer">The new <see cref="DeviceBuffer" />.</param>
     /// <param name="format">The format of data in the <see cref="DeviceBuffer" />.</param>
@@ -143,19 +147,18 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    ///     Sets the active <see cref="DeviceBuffer" />.
-    ///     When drawing, an <see cref="DeviceBuffer" /> must be bound.
+    /// Sets the active <see cref="DeviceBuffer" />.
+    /// When drawing, an <see cref="DeviceBuffer" /> must be bound.
     /// </summary>
     /// <param name="buffer">The new <see cref="DeviceBuffer" />.</param>
     /// <param name="format">The format of data in the <see cref="DeviceBuffer" />.</param>
     /// <param name="offset">
-    ///     The offset from the start of the buffer, in bytes, from which data will start to be read.
+    /// The offset from the start of the buffer, in bytes, from which data will start to be read.
     /// </param>
     public void SetIndexBuffer(DeviceBuffer buffer, IndexFormat format, uint offset) {
 #if VALIDATE_USAGE
         if ((buffer.Usage & BufferUsage.IndexBuffer) == 0) {
-            throw new VeldridException(
-                "Buffer cannot be bound as an index buffer because it was not created with BufferUsage.IndexBuffer.");
+            throw new VeldridException("Buffer cannot be bound as an index buffer because it was not created with BufferUsage.IndexBuffer.");
         }
 
         this.indexBuffer = buffer;
@@ -165,8 +168,8 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    ///     Sets the active <see cref="ResourceSet" /> for the given index. This ResourceSet is only active for the graphics
-    ///     Pipeline.
+    /// Sets the active <see cref="ResourceSet" /> for the given index. This ResourceSet is only active for the graphics
+    /// Pipeline.
     /// </summary>
     /// <param name="slot">The resource slot.</param>
     /// <param name="rs">The new <see cref="ResourceSet" />.</param>
@@ -175,55 +178,53 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    ///     Sets the active <see cref="ResourceSet" /> for the given index. This ResourceSet is only active for the graphics
-    ///     Pipeline.
+    /// Sets the active <see cref="ResourceSet" /> for the given index. This ResourceSet is only active for the graphics
+    /// Pipeline.
     /// </summary>
     /// <param name="slot">The resource slot.</param>
     /// <param name="rs">The new <see cref="ResourceSet" />.</param>
     /// <param name="dynamicOffsets">
-    ///     An array containing the offsets to apply to the dynamic
-    ///     buffers contained in the <see cref="ResourceSet" />. The number of elements in this array must be equal to the
-    ///     number
-    ///     of dynamic buffers (<see cref="ResourceLayoutElementOptions.DynamicBinding" />) contained in the
-    ///     <see cref="ResourceSet" />. These offsets are applied in the order that dynamic buffer
-    ///     elements appear in the <see cref="ResourceSet" />. Each of these offsets must be a multiple of either
-    ///     <see cref="GraphicsDevice.UniformBufferMinOffsetAlignment" /> or
-    ///     <see cref="GraphicsDevice.StructuredBufferMinOffsetAlignment" />, depending on the kind of resource.
+    /// An array containing the offsets to apply to the dynamic
+    /// buffers contained in the <see cref="ResourceSet" />. The number of elements in this array must be equal to the
+    /// number
+    /// of dynamic buffers (<see cref="ResourceLayoutElementOptions.DynamicBinding" />) contained in the
+    /// <see cref="ResourceSet" />. These offsets are applied in the order that dynamic buffer
+    /// elements appear in the <see cref="ResourceSet" />. Each of these offsets must be a multiple of either
+    /// <see cref="GraphicsDevice.UniformBufferMinOffsetAlignment" /> or
+    /// <see cref="GraphicsDevice.StructuredBufferMinOffsetAlignment" />, depending on the kind of resource.
     /// </param>
     public void SetGraphicsResourceSet(uint slot, ResourceSet rs, uint[] dynamicOffsets) {
         this.SetGraphicsResourceSet(slot, rs, (uint)dynamicOffsets.Length, ref dynamicOffsets[0]);
     }
 
     /// <summary>
-    ///     Sets the active <see cref="ResourceSet" /> for the given index. This ResourceSet is only active for the graphics
-    ///     Pipeline.
+    /// Sets the active <see cref="ResourceSet" /> for the given index. This ResourceSet is only active for the graphics
+    /// Pipeline.
     /// </summary>
     /// <param name="slot">The resource slot.</param>
     /// <param name="rs">The new <see cref="ResourceSet" />.</param>
     /// <param name="dynamicOffsetsCount">
-    ///     The number of dynamic offsets being used. This must be equal to the number of
-    ///     dynamic buffers (<see cref="ResourceLayoutElementOptions.DynamicBinding" />) contained in the
-    ///     <see cref="ResourceSet" />.
+    /// The number of dynamic offsets being used. This must be equal to the number of
+    /// dynamic buffers (<see cref="ResourceLayoutElementOptions.DynamicBinding" />) contained in the
+    /// <see cref="ResourceSet" />.
     /// </param>
     /// <param name="dynamicOffsets">
-    ///     A reference to the first of a series of offsets which will be applied to the dynamic
-    ///     buffers contained in the <see cref="ResourceSet" />. These offsets are applied in the order that dynamic buffer
-    ///     elements appear in the <see cref="ResourceSet" />. Each of these offsets must be a multiple of either
-    ///     <see cref="GraphicsDevice.UniformBufferMinOffsetAlignment" /> or
-    ///     <see cref="GraphicsDevice.StructuredBufferMinOffsetAlignment" />, depending on the kind of resource.
+    /// A reference to the first of a series of offsets which will be applied to the dynamic
+    /// buffers contained in the <see cref="ResourceSet" />. These offsets are applied in the order that dynamic buffer
+    /// elements appear in the <see cref="ResourceSet" />. Each of these offsets must be a multiple of either
+    /// <see cref="GraphicsDevice.UniformBufferMinOffsetAlignment" /> or
+    /// <see cref="GraphicsDevice.StructuredBufferMinOffsetAlignment" />, depending on the kind of resource.
     /// </param>
     public void SetGraphicsResourceSet(uint slot, ResourceSet rs, uint dynamicOffsetsCount, ref uint dynamicOffsets) {
 #if VALIDATE_USAGE
         if (this.GraphicsPipeline == null) {
-            throw new VeldridException(
-                $"A graphics Pipeline must be active before {nameof(SetGraphicsResourceSet)} can be called.");
+            throw new VeldridException($"A graphics Pipeline must be active before {nameof(SetGraphicsResourceSet)} can be called.");
         }
 
         int layoutsCount = this.GraphicsPipeline.ResourceLayouts.Length;
 
         if (layoutsCount <= slot) {
-            throw new VeldridException(
-                $"Failed to bind ResourceSet to slot {slot}. The active graphics Pipeline only contains {layoutsCount} ResourceLayouts.");
+            throw new VeldridException($"Failed to bind ResourceSet to slot {slot}. The active graphics Pipeline only contains {layoutsCount} ResourceLayouts.");
         }
 
         ResourceLayout layout = this.GraphicsPipeline.ResourceLayouts[slot];
@@ -232,8 +233,7 @@ public abstract class CommandList : IDeviceResource, IDisposable {
         int setLength = layoutDesc.Elements.Length;
 
         if (pipelineLength != setLength) {
-            throw new VeldridException(
-                $"Failed to bind ResourceSet to slot {slot}. The number of resources in the ResourceSet ({setLength}) does not match the number expected by the active Pipeline ({pipelineLength}).");
+            throw new VeldridException($"Failed to bind ResourceSet to slot {slot}. The number of resources in the ResourceSet ({setLength}) does not match the number expected by the active Pipeline ({pipelineLength}).");
         }
 
         for (int i = 0; i < pipelineLength; i++) {
@@ -241,16 +241,12 @@ public abstract class CommandList : IDeviceResource, IDisposable {
             ResourceKind setKind = layoutDesc.Elements[i].Kind;
 
             if (pipelineKind != setKind) {
-                throw new VeldridException(
-                    $"Failed to bind ResourceSet to slot {slot}. Resource element {i} was of the incorrect type. The bound Pipeline expects {pipelineKind}, but the ResourceSet contained {setKind}.");
+                throw new VeldridException($"Failed to bind ResourceSet to slot {slot}. Resource element {i} was of the incorrect type. The bound Pipeline expects {pipelineKind}, but the ResourceSet contained {setKind}.");
             }
         }
 
         if (rs.Layout.DynamicBufferCount != dynamicOffsetsCount) {
-            throw new VeldridException(
-                "A dynamic offset must be provided for each resource that specifies " +
-                $"{nameof(ResourceLayoutElementOptions)}.{nameof(ResourceLayoutElementOptions.DynamicBinding)}. " +
-                $"{rs.Layout.DynamicBufferCount} offsets were expected, but only {dynamicOffsetsCount} were provided.");
+            throw new VeldridException("A dynamic offset must be provided for each resource that specifies " + $"{nameof(ResourceLayoutElementOptions)}.{nameof(ResourceLayoutElementOptions.DynamicBinding)}. " + $"{rs.Layout.DynamicBufferCount} offsets were expected, but only {dynamicOffsetsCount} were provided.");
         }
 
         uint dynamicOffsetIndex = 0;
@@ -265,10 +261,7 @@ public abstract class CommandList : IDeviceResource, IDisposable {
                 DeviceBufferRange range = Util.GetBufferRange(rs.Resources[i], desiredOffset);
 
                 if (range.Offset % requiredAlignment != 0) {
-                    throw new VeldridException(
-                        $"The effective offset of the buffer in slot {i} does not meet the alignment " +
-                        $"requirements of this device. The offset must be a multiple of {requiredAlignment}, but it is " +
-                        $"{range.Offset}");
+                    throw new VeldridException($"The effective offset of the buffer in slot {i} does not meet the alignment " + $"requirements of this device. The offset must be a multiple of {requiredAlignment}, but it is " + $"{range.Offset}");
                 }
             }
         }
@@ -278,8 +271,8 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    ///     Sets the active <see cref="ResourceSet" /> for the given index. This ResourceSet is only active for the compute
-    ///     <see cref="Pipeline" />.
+    /// Sets the active <see cref="ResourceSet" /> for the given index. This ResourceSet is only active for the compute
+    /// <see cref="Pipeline" />.
     /// </summary>
     /// <param name="slot">The resource slot.</param>
     /// <param name="rs">The new <see cref="ResourceSet" />.</param>
@@ -288,52 +281,50 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    ///     Sets the active <see cref="ResourceSet" /> for the given index. This ResourceSet is only active for the compute
-    ///     <see cref="Pipeline" />.
+    /// Sets the active <see cref="ResourceSet" /> for the given index. This ResourceSet is only active for the compute
+    /// <see cref="Pipeline" />.
     /// </summary>
     /// <param name="slot">The resource slot.</param>
     /// <param name="rs">The new <see cref="ResourceSet" />.</param>
     /// <param name="dynamicOffsets">
-    ///     An array containing the offsets to apply to the dynamic buffers contained in the
-    ///     <see cref="ResourceSet" />. The number of elements in this array must be equal to the number of dynamic buffers
-    ///     (<see cref="ResourceLayoutElementOptions.DynamicBinding" />) contained in the <see cref="ResourceSet" />. These
-    ///     offsets
-    ///     are applied in the order that dynamic buffer elements appear in the <see cref="ResourceSet" />.
+    /// An array containing the offsets to apply to the dynamic buffers contained in the
+    /// <see cref="ResourceSet" />. The number of elements in this array must be equal to the number of dynamic buffers
+    /// (<see cref="ResourceLayoutElementOptions.DynamicBinding" />) contained in the <see cref="ResourceSet" />. These
+    /// offsets
+    /// are applied in the order that dynamic buffer elements appear in the <see cref="ResourceSet" />.
     /// </param>
     public void SetComputeResourceSet(uint slot, ResourceSet rs, uint[] dynamicOffsets) {
         this.SetComputeResourceSet(slot, rs, (uint)dynamicOffsets.Length, ref dynamicOffsets[0]);
     }
 
     /// <summary>
-    ///     Sets the active <see cref="ResourceSet" /> for the given index. This ResourceSet is only active for the compute
-    ///     <see cref="Pipeline" />.
+    /// Sets the active <see cref="ResourceSet" /> for the given index. This ResourceSet is only active for the compute
+    /// <see cref="Pipeline" />.
     /// </summary>
     /// <param name="slot">The resource slot.</param>
     /// <param name="rs">The new <see cref="ResourceSet" />.</param>
     /// <param name="dynamicOffsetsCount">
-    ///     The number of dynamic offsets being used. This must be equal to the number of
-    ///     dynamic buffers (<see cref="ResourceLayoutElementOptions.DynamicBinding" />) contained in the
-    ///     <see cref="ResourceSet" />.
+    /// The number of dynamic offsets being used. This must be equal to the number of
+    /// dynamic buffers (<see cref="ResourceLayoutElementOptions.DynamicBinding" />) contained in the
+    /// <see cref="ResourceSet" />.
     /// </param>
     /// <param name="dynamicOffsets">
-    ///     A reference to the first of a series of offsets which will be applied to the dynamic
-    ///     buffers contained in the <see cref="ResourceSet" />. These offsets are applied in the order that dynamic buffer
-    ///     elements appear in the <see cref="ResourceSet" />. Each of these offsets must be a multiple of either
-    ///     <see cref="GraphicsDevice.UniformBufferMinOffsetAlignment" /> or
-    ///     <see cref="GraphicsDevice.StructuredBufferMinOffsetAlignment" />, depending on the kind of resource.
+    /// A reference to the first of a series of offsets which will be applied to the dynamic
+    /// buffers contained in the <see cref="ResourceSet" />. These offsets are applied in the order that dynamic buffer
+    /// elements appear in the <see cref="ResourceSet" />. Each of these offsets must be a multiple of either
+    /// <see cref="GraphicsDevice.UniformBufferMinOffsetAlignment" /> or
+    /// <see cref="GraphicsDevice.StructuredBufferMinOffsetAlignment" />, depending on the kind of resource.
     /// </param>
     public void SetComputeResourceSet(uint slot, ResourceSet rs, uint dynamicOffsetsCount, ref uint dynamicOffsets) {
 #if VALIDATE_USAGE
         if (this.ComputePipeline == null) {
-            throw new VeldridException(
-                $"A compute Pipeline must be active before {nameof(SetComputeResourceSet)} can be called.");
+            throw new VeldridException($"A compute Pipeline must be active before {nameof(SetComputeResourceSet)} can be called.");
         }
 
         int layoutsCount = this.ComputePipeline.ResourceLayouts.Length;
 
         if (layoutsCount <= slot) {
-            throw new VeldridException(
-                $"Failed to bind ResourceSet to slot {slot}. The active compute Pipeline only contains {layoutsCount} ResourceLayouts.");
+            throw new VeldridException($"Failed to bind ResourceSet to slot {slot}. The active compute Pipeline only contains {layoutsCount} ResourceLayouts.");
         }
 
         ResourceLayout layout = this.ComputePipeline.ResourceLayouts[slot];
@@ -341,8 +332,7 @@ public abstract class CommandList : IDeviceResource, IDisposable {
         int setLength = rs.Layout.Description.Elements.Length;
 
         if (pipelineLength != setLength) {
-            throw new VeldridException(
-                $"Failed to bind ResourceSet to slot {slot}. The number of resources in the ResourceSet ({setLength}) does not match the number expected by the active Pipeline ({pipelineLength}).");
+            throw new VeldridException($"Failed to bind ResourceSet to slot {slot}. The number of resources in the ResourceSet ({setLength}) does not match the number expected by the active Pipeline ({pipelineLength}).");
         }
 
         for (int i = 0; i < pipelineLength; i++) {
@@ -350,8 +340,7 @@ public abstract class CommandList : IDeviceResource, IDisposable {
             ResourceKind setKind = rs.Layout.Description.Elements[i].Kind;
 
             if (pipelineKind != setKind) {
-                throw new VeldridException(
-                    $"Failed to bind ResourceSet to slot {slot}. Resource element {i} was of the incorrect type. The bound Pipeline expects {pipelineKind}, but the ResourceSet contained {setKind}.");
+                throw new VeldridException($"Failed to bind ResourceSet to slot {slot}. Resource element {i} was of the incorrect type. The bound Pipeline expects {pipelineKind}, but the ResourceSet contained {setKind}.");
             }
         }
 #endif
@@ -359,10 +348,10 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    ///     Sets the active <see cref="Veldrith.Framebuffer" /> which will be rendered to.
-    ///     When drawing, the active <see cref="Veldrith.Framebuffer" /> must be compatible with the active
-    ///     <see cref="Pipeline" />.
-    ///     A compatible <see cref="Pipeline" /> has the same number of output attachments with matching formats.
+    /// Sets the active <see cref="Veldrith.Framebuffer" /> which will be rendered to.
+    /// When drawing, the active <see cref="Veldrith.Framebuffer" /> must be compatible with the active
+    /// <see cref="Pipeline" />.
+    /// A compatible <see cref="Pipeline" /> has the same number of output attachments with matching formats.
     /// </summary>
     /// <param name="fb">The new <see cref="Veldrith.Framebuffer" />.</param>
     public void SetFramebuffer(Framebuffer fb) {
@@ -375,9 +364,9 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    ///     Clears the color target at the given index of the active <see cref="Veldrith.Framebuffer" />.
-    ///     The index given must be less than the number of color attachments in the active <see cref="Veldrith.Framebuffer" />
-    ///     .
+    /// Clears the color target at the given index of the active <see cref="Veldrith.Framebuffer" />.
+    /// The index given must be less than the number of color attachments in the active <see cref="Veldrith.Framebuffer" />
+    /// .
     /// </summary>
     /// <param name="index">The color target index.</param>
     /// <param name="clearColor">The value to clear the target to.</param>
@@ -388,17 +377,16 @@ public abstract class CommandList : IDeviceResource, IDisposable {
         }
 
         if (this.Framebuffer.ColorTargets.Count <= index) {
-            throw new VeldridException(
-                "ClearColorTarget index must be less than the current Framebuffer's color target count.");
+            throw new VeldridException("ClearColorTarget index must be less than the current Framebuffer's color target count.");
         }
 #endif
         this.ClearColorTargetCore(index, clearColor);
     }
 
     /// <summary>
-    ///     Clears the depth-stencil target of the active <see cref="Veldrith.Framebuffer" />.
-    ///     The active <see cref="Veldrith.Framebuffer" /> must have a depth attachment.
-    ///     With this overload, the stencil buffer is cleared to 0.
+    /// Clears the depth-stencil target of the active <see cref="Veldrith.Framebuffer" />.
+    /// The active <see cref="Veldrith.Framebuffer" /> must have a depth attachment.
+    /// With this overload, the stencil buffer is cleared to 0.
     /// </summary>
     /// <param name="depth">The value to clear the depth buffer to.</param>
     public void ClearDepthStencil(float depth) {
@@ -406,8 +394,8 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    ///     Clears the depth-stencil target of the active <see cref="Veldrith.Framebuffer" />.
-    ///     The active <see cref="Veldrith.Framebuffer" /> must have a depth attachment.
+    /// Clears the depth-stencil target of the active <see cref="Veldrith.Framebuffer" />.
+    /// The active <see cref="Veldrith.Framebuffer" /> must have a depth attachment.
     /// </summary>
     /// <param name="depth">The value to clear the depth buffer to.</param>
     /// <param name="stencil">The value to clear the stencil buffer to.</param>
@@ -418,8 +406,7 @@ public abstract class CommandList : IDeviceResource, IDisposable {
         }
 
         if (this.Framebuffer.DepthTarget == null) {
-            throw new VeldridException(
-                "The current Framebuffer has no depth target, so ClearDepthStencil cannot be used.");
+            throw new VeldridException("The current Framebuffer has no depth target, so ClearDepthStencil cannot be used.");
         }
 #endif
 
@@ -427,7 +414,7 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    ///     Sets all active viewports to cover the entire active <see cref="Veldrith.Framebuffer" />.
+    /// Sets all active viewports to cover the entire active <see cref="Veldrith.Framebuffer" />.
     /// </summary>
     public void SetFullViewports() {
         this.SetViewport(0, new Viewport(0, 0, this.Framebuffer.Width, this.Framebuffer.Height, 0, 1));
@@ -438,7 +425,7 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    ///     Sets the active viewport at the given index to cover the entire active <see cref="Veldrith.Framebuffer" />.
+    /// Sets the active viewport at the given index to cover the entire active <see cref="Veldrith.Framebuffer" />.
     /// </summary>
     /// <param name="index">The color target index.</param>
     public void SetFullViewport(uint index) {
@@ -446,9 +433,9 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    ///     Sets the active <see cref="Viewport" /> at the given index.
-    ///     The index given must be less than the number of color attachments in the active <see cref="Veldrith.Framebuffer" />
-    ///     .
+    /// Sets the active <see cref="Viewport" /> at the given index.
+    /// The index given must be less than the number of color attachments in the active <see cref="Veldrith.Framebuffer" />
+    /// .
     /// </summary>
     /// <param name="index">The color target index.</param>
     /// <param name="viewport">The new <see cref="Viewport" />.</param>
@@ -457,16 +444,16 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    ///     Sets the active <see cref="Viewport" /> at the given index.
-    ///     The index given must be less than the number of color attachments in the active <see cref="Veldrith.Framebuffer" />
-    ///     .
+    /// Sets the active <see cref="Viewport" /> at the given index.
+    /// The index given must be less than the number of color attachments in the active <see cref="Veldrith.Framebuffer" />
+    /// .
     /// </summary>
     /// <param name="index">The color target index.</param>
     /// <param name="viewport">The new <see cref="Viewport" />.</param>
     public abstract void SetViewport(uint index, ref Viewport viewport);
 
     /// <summary>
-    ///     Sets all active scissor rectangles to cover the active <see cref="Veldrith.Framebuffer" />.
+    /// Sets all active scissor rectangles to cover the active <see cref="Veldrith.Framebuffer" />.
     /// </summary>
     public void SetFullScissorRects() {
         this.SetScissorRect(0, 0, 0, this.Framebuffer.Width, this.Framebuffer.Height);
@@ -477,7 +464,7 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    ///     Sets the active scissor rectangle at the given index to cover the active <see cref="Veldrith.Framebuffer" />.
+    /// Sets the active scissor rectangle at the given index to cover the active <see cref="Veldrith.Framebuffer" />.
     /// </summary>
     /// <param name="index">The color target index.</param>
     public void SetFullScissorRect(uint index) {
@@ -485,9 +472,9 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    ///     Sets the active scissor rectangle at the given index.
-    ///     The index given must be less than the number of color attachments in the active <see cref="Veldrith.Framebuffer" />
-    ///     .
+    /// Sets the active scissor rectangle at the given index.
+    /// The index given must be less than the number of color attachments in the active <see cref="Veldrith.Framebuffer" />
+    /// .
     /// </summary>
     /// <param name="index">The color target index.</param>
     /// <param name="x">The X value of the scissor rectangle.</param>
@@ -497,7 +484,7 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     public abstract void SetScissorRect(uint index, uint x, uint y, uint width, uint height);
 
     /// <summary>
-    ///     Draws primitives from the currently-bound state in this CommandList. An index Buffer is not used.
+    /// Draws primitives from the currently-bound state in this CommandList. An index Buffer is not used.
     /// </summary>
     /// <param name="vertexCount">The number of vertices.</param>
     public void Draw(uint vertexCount) {
@@ -505,7 +492,7 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    ///     Draws primitives from the currently-bound state in this CommandList. An index Buffer is not used.
+    /// Draws primitives from the currently-bound state in this CommandList. An index Buffer is not used.
     /// </summary>
     /// <param name="vertexCount">The number of vertices.</param>
     /// <param name="instanceCount">The number of instances.</param>
@@ -517,7 +504,7 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    ///     Draws indexed primitives from the currently-bound state in this <see cref="CommandList" />.
+    /// Draws indexed primitives from the currently-bound state in this <see cref="CommandList" />.
     /// </summary>
     /// <param name="indexCount">The number of indices.</param>
     public void DrawIndexed(uint indexCount) {
@@ -525,15 +512,14 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    ///     Draws indexed primitives from the currently-bound state in this <see cref="CommandList" />.
+    /// Draws indexed primitives from the currently-bound state in this <see cref="CommandList" />.
     /// </summary>
     /// <param name="indexCount">The number of indices.</param>
     /// <param name="instanceCount">The number of instances.</param>
     /// <param name="indexStart">The number of indices to skip in the active index buffer.</param>
     /// <param name="vertexOffset">The base vertex value, which is added to each index value read from the index buffer.</param>
     /// <param name="instanceStart">The starting instance value.</param>
-    public void DrawIndexed(uint indexCount, uint instanceCount, uint indexStart, int vertexOffset,
-        uint instanceStart) {
+    public void DrawIndexed(uint indexCount, uint instanceCount, uint indexStart, int vertexOffset, uint instanceStart) {
         this.validateIndexBuffer(indexCount);
         this.preDrawValidation();
 
@@ -551,22 +537,22 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    ///     Issues indirect draw commands based on the information contained in the given indirect <see cref="DeviceBuffer" />.
-    ///     The information stored in the indirect Buffer should conform to the structure of
-    ///     <see cref="IndirectDrawArguments" />.
+    /// Issues indirect draw commands based on the information contained in the given indirect <see cref="DeviceBuffer" />.
+    /// The information stored in the indirect Buffer should conform to the structure of
+    /// <see cref="IndirectDrawArguments" />.
     /// </summary>
     /// <param name="indirectBuffer">
-    ///     The indirect Buffer to read from. Must have been created with the
-    ///     <see cref="BufferUsage.IndirectBuffer" /> flag.
+    /// The indirect Buffer to read from. Must have been created with the
+    /// <see cref="BufferUsage.IndirectBuffer" /> flag.
     /// </param>
     /// <param name="offset">
-    ///     An offset, in bytes, from the start of the indirect buffer from which the draw commands will be
-    ///     read. This value must be a multiple of 4.
+    /// An offset, in bytes, from the start of the indirect buffer from which the draw commands will be
+    /// read. This value must be a multiple of 4.
     /// </param>
     /// <param name="drawCount">The number of draw commands to read and issue from the indirect Buffer.</param>
     /// <param name="stride">
-    ///     The stride, in bytes, between consecutive draw commands in the indirect Buffer. This value must
-    ///     be a multiple of four, and must be larger than the size of <see cref="IndirectDrawArguments" />.
+    /// The stride, in bytes, between consecutive draw commands in the indirect Buffer. This value must
+    /// be a multiple of four, and must be larger than the size of <see cref="IndirectDrawArguments" />.
     /// </param>
     public unsafe void DrawIndirect(DeviceBuffer indirectBuffer, uint offset, uint drawCount, uint stride) {
         this.validateDrawIndirectSupport();
@@ -579,23 +565,23 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    ///     Issues indirect, indexed draw commands based on the information contained in the given indirect
-    ///     <see cref="DeviceBuffer" />.
-    ///     The information stored in the indirect Buffer should conform to the structure of
-    ///     <see cref="IndirectDrawIndexedArguments" />.
+    /// Issues indirect, indexed draw commands based on the information contained in the given indirect
+    /// <see cref="DeviceBuffer" />.
+    /// The information stored in the indirect Buffer should conform to the structure of
+    /// <see cref="IndirectDrawIndexedArguments" />.
     /// </summary>
     /// <param name="indirectBuffer">
-    ///     The indirect Buffer to read from. Must have been created with the
-    ///     <see cref="BufferUsage.IndirectBuffer" /> flag.
+    /// The indirect Buffer to read from. Must have been created with the
+    /// <see cref="BufferUsage.IndirectBuffer" /> flag.
     /// </param>
     /// <param name="offset">
-    ///     An offset, in bytes, from the start of the indirect buffer from which the draw commands will be
-    ///     read. This value must be a multiple of 4.
+    /// An offset, in bytes, from the start of the indirect buffer from which the draw commands will be
+    /// read. This value must be a multiple of 4.
     /// </param>
     /// <param name="drawCount">The number of draw commands to read and issue from the indirect Buffer.</param>
     /// <param name="stride">
-    ///     The stride, in bytes, between consecutive draw commands in the indirect Buffer. This value must
-    ///     be a multiple of four, and must be larger than the size of <see cref="IndirectDrawIndexedArguments" />.
+    /// The stride, in bytes, between consecutive draw commands in the indirect Buffer. This value must
+    /// be a multiple of four, and must be larger than the size of <see cref="IndirectDrawIndexedArguments" />.
     /// </param>
     public unsafe void DrawIndexedIndirect(DeviceBuffer indirectBuffer, uint offset, uint drawCount, uint stride) {
         this.validateDrawIndirectSupport();
@@ -608,7 +594,7 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    ///     Dispatches a compute operation from the currently-bound compute state of this Pipeline.
+    /// Dispatches a compute operation from the currently-bound compute state of this Pipeline.
     /// </summary>
     /// <param name="groupCountX">The X dimension of the compute thread groups that are dispatched.</param>
     /// <param name="groupCountY">The Y dimension of the compute thread groups that are dispatched.</param>
@@ -616,17 +602,17 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     public abstract void Dispatch(uint groupCountX, uint groupCountY, uint groupCountZ);
 
     /// <summary>
-    ///     Issues an indirect compute dispatch command based on the information contained in the given indirect
-    ///     <see cref="DeviceBuffer" />. The information stored in the indirect Buffer should conform to the structure of
-    ///     <see cref="IndirectDispatchArguments" />.
+    /// Issues an indirect compute dispatch command based on the information contained in the given indirect
+    /// <see cref="DeviceBuffer" />. The information stored in the indirect Buffer should conform to the structure of
+    /// <see cref="IndirectDispatchArguments" />.
     /// </summary>
     /// <param name="indirectBuffer">
-    ///     The indirect Buffer to read from. Must have been created with the
-    ///     <see cref="BufferUsage.IndirectBuffer" /> flag.
+    /// The indirect Buffer to read from. Must have been created with the
+    /// <see cref="BufferUsage.IndirectBuffer" /> flag.
     /// </param>
     /// <param name="offset">
-    ///     An offset, in bytes, from the start of the indirect buffer from which the draw commands will be
-    ///     read. This value must be a multiple of 4.
+    /// An offset, in bytes, from the start of the indirect buffer from which the draw commands will be
+    /// read. This value must be a multiple of 4.
     /// </param>
     public void DispatchIndirect(DeviceBuffer indirectBuffer, uint offset) {
         validateIndirectBuffer(indirectBuffer);
@@ -635,26 +621,24 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    ///     Resolves a multisampled source <see cref="Texture" /> into a non-multisampled destination <see cref="Texture" />.
+    /// Resolves a multisampled source <see cref="Texture" /> into a non-multisampled destination <see cref="Texture" />.
     /// </summary>
     /// <param name="source">
-    ///     The source of the resolve operation. Must be a multisampled <see cref="Texture" />
-    ///     (<see cref="Texture.SampleCount" /> > 1).
+    /// The source of the resolve operation. Must be a multisampled <see cref="Texture" />
+    /// (<see cref="Texture.SampleCount" /> > 1).
     /// </param>
     /// <param name="destination">
-    ///     The destination of the resolve operation. Must be a non-multisampled <see cref="Texture" />
-    ///     (<see cref="Texture.SampleCount" /> == 1).
+    /// The destination of the resolve operation. Must be a non-multisampled <see cref="Texture" />
+    /// (<see cref="Texture.SampleCount" /> == 1).
     /// </param>
     public void ResolveTexture(Texture source, Texture destination) {
 #if VALIDATE_USAGE
         if (source.SampleCount == TextureSampleCount.Count1) {
-            throw new VeldridException(
-                $"The {nameof(source)} parameter of {nameof(this.ResolveTexture)} must be a multisample texture.");
+            throw new VeldridException($"The {nameof(source)} parameter of {nameof(this.ResolveTexture)} must be a multisample texture.");
         }
 
         if (destination.SampleCount != TextureSampleCount.Count1) {
-            throw new VeldridException(
-                $"The {nameof(destination)} parameter of {nameof(this.ResolveTexture)} must be a non-multisample texture. Instead, it is a texture with {FormatHelpers.GetSampleCountUInt32(source.SampleCount)} samples.");
+            throw new VeldridException($"The {nameof(destination)} parameter of {nameof(this.ResolveTexture)} must be a non-multisample texture. Instead, it is a texture with {FormatHelpers.GetSampleCountUInt32(source.SampleCount)} samples.");
         }
 #endif
 
@@ -662,140 +646,115 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    ///     Updates a <see cref="DeviceBuffer" /> region with new data.
-    ///     This function must be used with a blittable value type <typeparamref name="T" />.
+    /// Updates a <see cref="DeviceBuffer" /> region with new data.
+    /// This function must be used with a blittable value type <typeparamref name="T" />.
     /// </summary>
     /// <typeparam name="T">The type of data to upload.</typeparam>
     /// <param name="buffer">The resource to update.</param>
     /// <param name="bufferOffsetInBytes">
-    ///     An offset, in bytes, from the beginning of the <see cref="DeviceBuffer" /> storage, at
-    ///     which new data will be uploaded.
+    /// An offset, in bytes, from the beginning of the <see cref="DeviceBuffer" /> storage, at
+    /// which new data will be uploaded.
     /// </param>
     /// <param name="source">The value to upload.</param>
-    public unsafe void UpdateBuffer<T>(
-        DeviceBuffer buffer,
-        uint bufferOffsetInBytes,
-        T source) where T : unmanaged {
+    public unsafe void UpdateBuffer<T>(DeviceBuffer buffer, uint bufferOffsetInBytes, T source) where T : unmanaged {
         this.UpdateBuffer(buffer, bufferOffsetInBytes, (IntPtr)(&source), (uint)sizeof(T));
     }
 
     /// <summary>
-    ///     Updates a <see cref="DeviceBuffer" /> region with new data.
-    ///     This function must be used with a blittable value type <typeparamref name="T" />.
+    /// Updates a <see cref="DeviceBuffer" /> region with new data.
+    /// This function must be used with a blittable value type <typeparamref name="T" />.
     /// </summary>
     /// <typeparam name="T">The type of data to upload.</typeparam>
     /// <param name="buffer">The resource to update.</param>
     /// <param name="bufferOffsetInBytes">
-    ///     An offset, in bytes, from the beginning of the <see cref="DeviceBuffer" />'s storage, at
-    ///     which new data will be uploaded.
+    /// An offset, in bytes, from the beginning of the <see cref="DeviceBuffer" />'s storage, at
+    /// which new data will be uploaded.
     /// </param>
     /// <param name="source">A reference to the single value to upload.</param>
-    public unsafe void UpdateBuffer<T>(
-        DeviceBuffer buffer,
-        uint bufferOffsetInBytes,
-        ref T source) where T : unmanaged {
+    public unsafe void UpdateBuffer<T>(DeviceBuffer buffer, uint bufferOffsetInBytes, ref T source) where T : unmanaged {
         fixed (T* ptr = &source) {
             this.UpdateBuffer(buffer, bufferOffsetInBytes, (IntPtr)ptr, Util.USizeOf<T>());
         }
     }
 
     /// <summary>
-    ///     Updates a <see cref="DeviceBuffer" /> region with new data.
-    ///     This function must be used with a blittable value type <typeparamref name="T" />.
+    /// Updates a <see cref="DeviceBuffer" /> region with new data.
+    /// This function must be used with a blittable value type <typeparamref name="T" />.
     /// </summary>
     /// <typeparam name="T">The type of data to upload.</typeparam>
     /// <param name="buffer">The resource to update.</param>
     /// <param name="bufferOffsetInBytes">
-    ///     An offset, in bytes, from the beginning of the <see cref="DeviceBuffer" />'s storage, at
-    ///     which new data will be uploaded.
+    /// An offset, in bytes, from the beginning of the <see cref="DeviceBuffer" />'s storage, at
+    /// which new data will be uploaded.
     /// </param>
     /// <param name="source">A reference to the first of a series of values to upload.</param>
     /// <param name="sizeInBytes">The total size of the uploaded data, in bytes.</param>
-    public unsafe void UpdateBuffer<T>(
-        DeviceBuffer buffer,
-        uint bufferOffsetInBytes,
-        ref T source,
-        uint sizeInBytes) where T : unmanaged {
+    public unsafe void UpdateBuffer<T>(DeviceBuffer buffer, uint bufferOffsetInBytes, ref T source, uint sizeInBytes) where T : unmanaged {
         fixed (T* ptr = &source) {
             this.UpdateBuffer(buffer, bufferOffsetInBytes, (IntPtr)ptr, sizeInBytes);
         }
     }
 
     /// <summary>
-    ///     Updates a <see cref="DeviceBuffer" /> region with new data.
-    ///     This function must be used with a blittable value type <typeparamref name="T" />.
+    /// Updates a <see cref="DeviceBuffer" /> region with new data.
+    /// This function must be used with a blittable value type <typeparamref name="T" />.
     /// </summary>
     /// <typeparam name="T">The type of data to upload.</typeparam>
     /// <param name="buffer">The resource to update.</param>
     /// <param name="bufferOffsetInBytes">
-    ///     An offset, in bytes, from the beginning of the <see cref="DeviceBuffer" />'s storage, at
-    ///     which new data will be uploaded.
+    /// An offset, in bytes, from the beginning of the <see cref="DeviceBuffer" />'s storage, at
+    /// which new data will be uploaded.
     /// </param>
     /// <param name="source">An array containing the data to upload.</param>
-    public void UpdateBuffer<T>(
-        DeviceBuffer buffer,
-        uint bufferOffsetInBytes,
-        T[] source) where T : unmanaged {
+    public void UpdateBuffer<T>(DeviceBuffer buffer, uint bufferOffsetInBytes, T[] source) where T : unmanaged {
         this.UpdateBuffer(buffer, bufferOffsetInBytes, (ReadOnlySpan<T>)source);
     }
 
     /// <summary>
-    ///     Updates a <see cref="DeviceBuffer" /> region with new data.
-    ///     This function must be used with a blittable value type <typeparamref name="T" />.
+    /// Updates a <see cref="DeviceBuffer" /> region with new data.
+    /// This function must be used with a blittable value type <typeparamref name="T" />.
     /// </summary>
     /// <typeparam name="T">The type of data to upload.</typeparam>
     /// <param name="buffer">The resource to update.</param>
     /// <param name="bufferOffsetInBytes">
-    ///     An offset, in bytes, from the beginning of the <see cref="DeviceBuffer" />'s storage, at
-    ///     which new data will be uploaded.
+    /// An offset, in bytes, from the beginning of the <see cref="DeviceBuffer" />'s storage, at
+    /// which new data will be uploaded.
     /// </param>
     /// <param name="source">An readonly span containing the data to upload.</param>
-    public unsafe void UpdateBuffer<T>(
-        DeviceBuffer buffer,
-        uint bufferOffsetInBytes,
-        ReadOnlySpan<T> source) where T : unmanaged {
+    public unsafe void UpdateBuffer<T>(DeviceBuffer buffer, uint bufferOffsetInBytes, ReadOnlySpan<T> source) where T : unmanaged {
         fixed (void* pin = &MemoryMarshal.GetReference(source)) {
             this.UpdateBuffer(buffer, bufferOffsetInBytes, (IntPtr)pin, (uint)(sizeof(T) * source.Length));
         }
     }
 
     /// <summary>
-    ///     Updates a <see cref="DeviceBuffer" /> region with new data.
-    ///     This function must be used with a blittable value type <typeparamref name="T" />.
+    /// Updates a <see cref="DeviceBuffer" /> region with new data.
+    /// This function must be used with a blittable value type <typeparamref name="T" />.
     /// </summary>
     /// <typeparam name="T">The type of data to upload.</typeparam>
     /// <param name="buffer">The resource to update.</param>
     /// <param name="bufferOffsetInBytes">
-    ///     An offset, in bytes, from the beginning of the <see cref="DeviceBuffer" />'s storage, at
-    ///     which new data will be uploaded.
+    /// An offset, in bytes, from the beginning of the <see cref="DeviceBuffer" />'s storage, at
+    /// which new data will be uploaded.
     /// </param>
     /// <param name="source">An span containing the data to upload.</param>
-    public void UpdateBuffer<T>(
-        DeviceBuffer buffer,
-        uint bufferOffsetInBytes,
-        Span<T> source) where T : unmanaged {
+    public void UpdateBuffer<T>(DeviceBuffer buffer, uint bufferOffsetInBytes, Span<T> source) where T : unmanaged {
         this.UpdateBuffer(buffer, bufferOffsetInBytes, (ReadOnlySpan<T>)source);
     }
 
     /// <summary>
-    ///     Updates a <see cref="DeviceBuffer" /> region with new data.
+    /// Updates a <see cref="DeviceBuffer" /> region with new data.
     /// </summary>
     /// <param name="buffer">The resource to update.</param>
     /// <param name="bufferOffsetInBytes">
-    ///     An offset, in bytes, from the beginning of the <see cref="DeviceBuffer" />'s storage, at
-    ///     which new data will be uploaded.
+    /// An offset, in bytes, from the beginning of the <see cref="DeviceBuffer" />'s storage, at
+    /// which new data will be uploaded.
     /// </param>
     /// <param name="source">A pointer to the start of the data to upload.</param>
     /// <param name="sizeInBytes">The total size of the uploaded data, in bytes.</param>
-    public void UpdateBuffer(
-        DeviceBuffer buffer,
-        uint bufferOffsetInBytes,
-        IntPtr source,
-        uint sizeInBytes) {
+    public void UpdateBuffer(DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes) {
         if (bufferOffsetInBytes + sizeInBytes > buffer.SizeInBytes) {
-            throw new VeldridException(
-                $"The DeviceBuffer's capacity ({buffer.SizeInBytes}) is not large enough to store the amount of " +
-                $"data specified ({sizeInBytes}) at the given offset ({bufferOffsetInBytes}).");
+            throw new VeldridException($"The DeviceBuffer's capacity ({buffer.SizeInBytes}) is not large enough to store the amount of " + $"data specified ({sizeInBytes}) at the given offset ({bufferOffsetInBytes}).");
         }
 
         if (sizeInBytes == 0) {
@@ -806,18 +765,17 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    ///     Copies a region from the source <see cref="DeviceBuffer" /> to another region in the destination
-    ///     <see cref="DeviceBuffer" />.
+    /// Copies a region from the source <see cref="DeviceBuffer" /> to another region in the destination
+    /// <see cref="DeviceBuffer" />.
     /// </summary>
     /// <param name="source">The source <see cref="DeviceBuffer" /> from which data will be copied.</param>
     /// <param name="sourceOffset">An offset into <paramref name="source" /> at which the copy region begins.</param>
     /// <param name="destination">The destination <see cref="DeviceBuffer" /> into which data will be copied.</param>
     /// <param name="destinationOffset">
-    ///     An offset into <paramref name="destination" /> at which the data will be copied.
+    /// An offset into <paramref name="destination" /> at which the data will be copied.
     /// </param>
     /// <param name="sizeInBytes">The number of bytes to copy.</param>
-    public void CopyBuffer(DeviceBuffer source, uint sourceOffset, DeviceBuffer destination, uint destinationOffset,
-        uint sizeInBytes) {
+    public void CopyBuffer(DeviceBuffer source, uint sourceOffset, DeviceBuffer destination, uint destinationOffset, uint sizeInBytes) {
 #if VALIDATE_USAGE
 #endif
         if (sizeInBytes == 0) {
@@ -828,7 +786,7 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    ///     Copies all subresources from one <see cref="Texture" /> to another.
+    /// Copies all subresources from one <see cref="Texture" /> to another.
     /// </summary>
     /// <param name="source">The source of Texture data.</param>
     /// <param name="destination">The destination of Texture data.</param>
@@ -841,10 +799,8 @@ public abstract class CommandList : IDeviceResource, IDisposable {
             ? destination.ArrayLayers * 6
             : destination.ArrayLayers;
         if (effectiveSrcArrayLayers != effectiveDstArrayLayers || source.MipLevels != destination.MipLevels
-                                                               || source.SampleCount != destination.SampleCount ||
-                                                               source.Width != destination.Width
-                                                               || source.Height != destination.Height ||
-                                                               source.Depth != destination.Depth
+                                                               || source.SampleCount != destination.SampleCount || source.Width != destination.Width
+                                                               || source.Height != destination.Height || source.Depth != destination.Depth
                                                                || source.Format != destination.Format) {
             throw new VeldridException("Source and destination Textures are not compatible to be copied.");
         }
@@ -852,16 +808,12 @@ public abstract class CommandList : IDeviceResource, IDisposable {
 
         for (uint level = 0; level < source.MipLevels; level++) {
             Util.GetMipDimensions(source, level, out uint mipWidth, out uint mipHeight, out uint mipDepth);
-            this.CopyTexture(
-                source, 0, 0, 0, level, 0,
-                destination, 0, 0, 0, level, 0,
-                mipWidth, mipHeight, mipDepth,
-                effectiveSrcArrayLayers);
+            this.CopyTexture(source, 0, 0, 0, level, 0, destination, 0, 0, 0, level, 0, mipWidth, mipHeight, mipDepth, effectiveSrcArrayLayers);
         }
     }
 
     /// <summary>
-    ///     Copies one subresource from one <see cref="Texture" /> to another.
+    /// Copies one subresource from one <see cref="Texture" /> to another.
     /// </summary>
     /// <param name="source">The source of Texture data.</param>
     /// <param name="destination">The destination of Texture data.</param>
@@ -876,29 +828,22 @@ public abstract class CommandList : IDeviceResource, IDisposable {
             ? destination.ArrayLayers * 6
             : destination.ArrayLayers;
         if (source.SampleCount != destination.SampleCount || source.Width != destination.Width
-                                                          || source.Height != destination.Height ||
-                                                          source.Depth != destination.Depth
+                                                          || source.Height != destination.Height || source.Depth != destination.Depth
                                                           || source.Format != destination.Format) {
             throw new VeldridException("Source and destination Textures are not compatible to be copied.");
         }
 
-        if (mipLevel >= source.MipLevels || mipLevel >= destination.MipLevels ||
-            arrayLayer >= effectiveSrcArrayLayers || arrayLayer >= effectiveDstArrayLayers) {
-            throw new VeldridException(
-                $"{nameof(mipLevel)} and {nameof(arrayLayer)} must be less than the given Textures' mip level count and array layer count.");
+        if (mipLevel >= source.MipLevels || mipLevel >= destination.MipLevels || arrayLayer >= effectiveSrcArrayLayers || arrayLayer >= effectiveDstArrayLayers) {
+            throw new VeldridException($"{nameof(mipLevel)} and {nameof(arrayLayer)} must be less than the given Textures' mip level count and array layer count.");
         }
 #endif
 
         Util.GetMipDimensions(source, mipLevel, out uint width, out uint height, out uint depth);
-        this.CopyTexture(
-            source, 0, 0, 0, mipLevel, arrayLayer,
-            destination, 0, 0, 0, mipLevel, arrayLayer,
-            width, height, depth,
-            1);
+        this.CopyTexture(source, 0, 0, 0, mipLevel, arrayLayer, destination, 0, 0, 0, mipLevel, arrayLayer, width, height, depth, 1);
     }
 
     /// <summary>
-    ///     Copies a region from one <see cref="Texture" /> into another.
+    /// Copies a region from one <see cref="Texture" /> into another.
     /// </summary>
     /// <param name="source">The source <see cref="Texture" /> from which data is copied.</param>
     /// <param name="srcX">The X coordinate of the source copy region.</param>
@@ -916,17 +861,7 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     /// <param name="height">The height in texels of the copy region.</param>
     /// <param name="depth">The depth in texels of the copy region.</param>
     /// <param name="layerCount">The number of array layers to copy.</param>
-    public void CopyTexture(
-        Texture source,
-        uint srcX, uint srcY, uint srcZ,
-        uint srcMipLevel,
-        uint srcBaseArrayLayer,
-        Texture destination,
-        uint dstX, uint dstY, uint dstZ,
-        uint dstMipLevel,
-        uint dstBaseArrayLayer,
-        uint width, uint height, uint depth,
-        uint layerCount) {
+    public void CopyTexture(Texture source, uint srcX, uint srcY, uint srcZ, uint srcMipLevel, uint srcBaseArrayLayer, Texture destination, uint dstX, uint dstY, uint dstZ, uint dstMipLevel, uint dstBaseArrayLayer, uint width, uint height, uint depth, uint layerCount) {
 #if VALIDATE_USAGE
         if (width == 0 || height == 0 || depth == 0) {
             throw new VeldridException("The given copy region is empty.");
@@ -953,8 +888,7 @@ public abstract class CommandList : IDeviceResource, IDisposable {
         }
 
         if (srcMipLevel >= source.MipLevels) {
-            throw new VeldridException(
-                $"{nameof(srcMipLevel)} must be less than the number of mip levels in the source Texture.");
+            throw new VeldridException($"{nameof(srcMipLevel)} must be less than the number of mip levels in the source Texture.");
         }
 
         uint effectiveSrcArrayLayers = (source.Usage & TextureUsage.Cubemap) != 0
@@ -965,8 +899,7 @@ public abstract class CommandList : IDeviceResource, IDisposable {
         }
 
         if (dstMipLevel >= destination.MipLevels) {
-            throw new VeldridException(
-                $"{nameof(dstMipLevel)} must be less than the number of mip levels in the destination Texture.");
+            throw new VeldridException($"{nameof(dstMipLevel)} must be less than the number of mip levels in the destination Texture.");
         }
 
         uint effectiveDstArrayLayers = (destination.Usage & TextureUsage.Cubemap) != 0
@@ -976,35 +909,24 @@ public abstract class CommandList : IDeviceResource, IDisposable {
             throw new VeldridException("An invalid mip range was given for the destination Texture.");
         }
 #endif
-        this.CopyTextureCore(
-            source,
-            srcX, srcY, srcZ,
-            srcMipLevel,
-            srcBaseArrayLayer,
-            destination,
-            dstX, dstY, dstZ,
-            dstMipLevel,
-            dstBaseArrayLayer,
-            width, height, depth,
-            layerCount);
+        this.CopyTextureCore(source, srcX, srcY, srcZ, srcMipLevel, srcBaseArrayLayer, destination, dstX, dstY, dstZ, dstMipLevel, dstBaseArrayLayer, width, height, depth, layerCount);
     }
 
     /// <summary>
-    ///     Generates mipmaps for the given <see cref="Texture" />. The largest mipmap is used to generate all of the lower
-    ///     mipmap
-    ///     levels contained in the Texture. The previous contents of all lower mipmap levels are overwritten by this
-    ///     operation.
-    ///     The target Texture must have been created with <see cref="TextureUsage" />.
-    ///     <see cref="TextureUsage.GenerateMipmaps" />.
+    /// Generates mipmaps for the given <see cref="Texture" />. The largest mipmap is used to generate all of the lower
+    /// mipmap
+    /// levels contained in the Texture. The previous contents of all lower mipmap levels are overwritten by this
+    /// operation.
+    /// The target Texture must have been created with <see cref="TextureUsage" />.
+    /// <see cref="TextureUsage.GenerateMipmaps" />.
     /// </summary>
     /// <param name="texture">
-    ///     The <see cref="Texture" /> to generate mipmaps for. This Texture must have been created with
-    ///     <see cref="TextureUsage" />.<see cref="TextureUsage.GenerateMipmaps" />.
+    /// The <see cref="Texture" /> to generate mipmaps for. This Texture must have been created with
+    /// <see cref="TextureUsage" />.<see cref="TextureUsage.GenerateMipmaps" />.
     /// </param>
     public void GenerateMipmaps(Texture texture) {
         if ((texture.Usage & TextureUsage.GenerateMipmaps) == 0) {
-            throw new VeldridException(
-                $"{nameof(this.GenerateMipmaps)} requires a target Texture with {nameof(TextureUsage)}.{nameof(TextureUsage.GenerateMipmaps)}");
+            throw new VeldridException($"{nameof(this.GenerateMipmaps)} requires a target Texture with {nameof(TextureUsage)}.{nameof(TextureUsage.GenerateMipmaps)}");
         }
 
         if (texture.MipLevels > 1) {
@@ -1013,11 +935,11 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    ///     Pushes a debug group at the current position in the <see cref="CommandList" />. This allows subsequent commands to
-    ///     be
-    ///     categorized and filtered when viewed in external debugging tools. This method can be called multiple times in order
-    ///     to create nested debug groupings. Each call to PushDebugGroup must be followed by a matching call to
-    ///     <see cref="PopDebugGroup" />.
+    /// Pushes a debug group at the current position in the <see cref="CommandList" />. This allows subsequent commands to
+    /// be
+    /// categorized and filtered when viewed in external debugging tools. This method can be called multiple times in order
+    /// to create nested debug groupings. Each call to PushDebugGroup must be followed by a matching call to
+    /// <see cref="PopDebugGroup" />.
     /// </summary>
     /// <param name="name">The name of the group. This is an opaque identifier used for display by graphics debuggers.</param>
     public void PushDebugGroup(string name) {
@@ -1025,22 +947,25 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    ///     Pops the current debug group. This method must only be called after <see cref="PushDebugGroup(string)" /> has been
-    ///     called on this instance.
+    /// Pops the current debug group. This method must only be called after <see cref="PushDebugGroup(string)" /> has been
+    /// called on this instance.
     /// </summary>
     public void PopDebugGroup() {
         this.PopDebugGroupCore();
     }
 
     /// <summary>
-    ///     Inserts a debug marker into the CommandList at the current position. This is used by graphics debuggers to identify
-    ///     points of interest in a command stream.
+    /// Inserts a debug marker into the CommandList at the current position. This is used by graphics debuggers to identify
+    /// points of interest in a command stream.
     /// </summary>
     /// <param name="name">The name of the marker. This is an opaque identifier used for display by graphics debuggers.</param>
     public void InsertDebugMarker(string name) {
         this.InsertDebugMarkerCore(name);
     }
 
+    /// <summary>
+    /// Executes ClearCachedState.
+    /// </summary>
     internal void ClearCachedState() {
         this.Framebuffer = null;
         this.GraphicsPipeline = null;
@@ -1051,32 +976,33 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     // TODO: private protected
+
     /// <summary>
     /// </summary>
     /// <param name="slot"></param>
     /// <param name="rs"></param>
     /// <param name="dynamicOffsets"></param>
     /// <param name="dynamicOffsetsCount"></param>
-    protected abstract void SetGraphicsResourceSetCore(uint slot, ResourceSet rs, uint dynamicOffsetsCount,
-        ref uint dynamicOffsets);
+    protected abstract void SetGraphicsResourceSetCore(uint slot, ResourceSet rs, uint dynamicOffsetsCount, ref uint dynamicOffsets);
 
     // TODO: private protected
+
     /// <summary>
     /// </summary>
     /// <param name="slot"></param>
     /// <param name="set"></param>
     /// <param name="dynamicOffsetsCount"></param>
     /// <param name="dynamicOffsets"></param>
-    protected abstract void SetComputeResourceSetCore(uint slot, ResourceSet set, uint dynamicOffsetsCount,
-        ref uint dynamicOffsets);
+    protected abstract void SetComputeResourceSetCore(uint slot, ResourceSet set, uint dynamicOffsetsCount, ref uint dynamicOffsets);
 
     /// <summary>
-    ///     Performs API-specific handling of the <see cref="Veldrith.Framebuffer" /> resource.
+    /// Performs API-specific handling of the <see cref="Veldrith.Framebuffer" /> resource.
     /// </summary>
     /// <param name="fb"></param>
     protected abstract void SetFramebufferCore(Framebuffer fb);
 
     // TODO: private protected
+
     /// <summary>
     /// </summary>
     /// <param name="indirectBuffer"></param>
@@ -1086,16 +1012,17 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     protected abstract void DrawIndirectCore(DeviceBuffer indirectBuffer, uint offset, uint drawCount, uint stride);
 
     // TODO: private protected
+
     /// <summary>
     /// </summary>
     /// <param name="indirectBuffer"></param>
     /// <param name="offset"></param>
     /// <param name="drawCount"></param>
     /// <param name="stride"></param>
-    protected abstract void DrawIndexedIndirectCore(DeviceBuffer indirectBuffer, uint offset, uint drawCount,
-        uint stride);
+    protected abstract void DrawIndexedIndirectCore(DeviceBuffer indirectBuffer, uint offset, uint drawCount, uint stride);
 
     // TODO: private protected
+
     /// <summary>
     /// </summary>
     /// <param name="indirectBuffer"></param>
@@ -1103,15 +1030,15 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     protected abstract void DispatchIndirectCore(DeviceBuffer indirectBuffer, uint offset);
 
     /// <summary>
-    ///     Resolves a multisampled source <see cref="Texture" /> into a non-multisampled destination <see cref="Texture" />.
+    /// Resolves a multisampled source <see cref="Texture" /> into a non-multisampled destination <see cref="Texture" />.
     /// </summary>
     /// <param name="source">
-    ///     The source of the resolve operation. Must be a multisampled <see cref="Texture" />
-    ///     (<see cref="Texture.SampleCount" /> > 1).
+    /// The source of the resolve operation. Must be a multisampled <see cref="Texture" />
+    /// (<see cref="Texture.SampleCount" /> > 1).
     /// </param>
     /// <param name="destination">
-    ///     The destination of the resolve operation. Must be a non-multisampled <see cref="Texture" />
-    ///     (<see cref="Texture.SampleCount" /> == 1).
+    /// The destination of the resolve operation. Must be a non-multisampled <see cref="Texture" />
+    /// (<see cref="Texture.SampleCount" /> == 1).
     /// </param>
     protected abstract void ResolveTextureCore(Texture source, Texture destination);
 
@@ -1122,8 +1049,7 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     /// <param name="destination"></param>
     /// <param name="destinationOffset"></param>
     /// <param name="sizeInBytes"></param>
-    protected abstract void CopyBufferCore(DeviceBuffer source, uint sourceOffset, DeviceBuffer destination,
-        uint destinationOffset, uint sizeInBytes);
+    protected abstract void CopyBufferCore(DeviceBuffer source, uint sourceOffset, DeviceBuffer destination, uint destinationOffset, uint sizeInBytes);
 
     /// <summary>
     /// </summary>
@@ -1143,19 +1069,13 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     /// <param name="height"></param>
     /// <param name="depth"></param>
     /// <param name="layerCount"></param>
-    protected abstract void CopyTextureCore(
-        Texture source,
-        uint srcX, uint srcY, uint srcZ,
-        uint srcMipLevel,
-        uint srcBaseArrayLayer,
-        Texture destination,
-        uint dstX, uint dstY, uint dstZ,
-        uint dstMipLevel,
-        uint dstBaseArrayLayer,
-        uint width, uint height, uint depth,
-        uint layerCount);
+    protected abstract void CopyTextureCore(Texture source, uint srcX, uint srcY, uint srcZ, uint srcMipLevel, uint srcBaseArrayLayer, Texture destination, uint dstX, uint dstY, uint dstZ, uint dstMipLevel, uint dstBaseArrayLayer, uint width, uint height, uint depth, uint layerCount);
 
     [Conditional("VALIDATE_USAGE")]
+
+    /// <summary>
+    /// Executes validateIndirectOffset.
+    /// </summary>
     private static void validateIndirectOffset(uint offset) {
         if (offset % 4 != 0) {
             throw new VeldridException($"{nameof(offset)} must be a multiple of 4.");
@@ -1163,22 +1083,32 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     [Conditional("VALIDATE_USAGE")]
+
+    /// <summary>
+    /// Executes validateIndirectBuffer.
+    /// </summary>
     private static void validateIndirectBuffer(DeviceBuffer indirectBuffer) {
         if ((indirectBuffer.Usage & BufferUsage.IndirectBuffer) != BufferUsage.IndirectBuffer) {
-            throw new VeldridException(
-                $"{nameof(indirectBuffer)} parameter must have been created with BufferUsage.IndirectBuffer. Instead, it was {indirectBuffer.Usage}.");
+            throw new VeldridException($"{nameof(indirectBuffer)} parameter must have been created with BufferUsage.IndirectBuffer. Instead, it was {indirectBuffer.Usage}.");
         }
     }
 
     [Conditional("VALIDATE_USAGE")]
+
+    /// <summary>
+    /// Executes validateIndirectStride.
+    /// </summary>
     private static void validateIndirectStride(uint stride, int argumentSize) {
         if (stride < argumentSize || stride % 4 != 0) {
-            throw new VeldridException(
-                $"{nameof(stride)} parameter must be a multiple of 4, and must be larger than the size of the corresponding argument structure.");
+            throw new VeldridException($"{nameof(stride)} parameter must be a multiple of 4, and must be larger than the size of the corresponding argument structure.");
         }
     }
 
     [Conditional("VALIDATE_USAGE")]
+
+    /// <summary>
+    /// Executes validateDrawIndirectSupport.
+    /// </summary>
     private void validateDrawIndirectSupport() {
         if (!this.features.DrawIndirect) {
             throw new VeldridException("Indirect drawing is not supported by this device.");
@@ -1186,24 +1116,30 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     [Conditional("VALIDATE_USAGE")]
+
+    /// <summary>
+    /// Executes validateIndexBuffer.
+    /// </summary>
     private void validateIndexBuffer(uint indexCount) {
 #if VALIDATE_USAGE
         if (this.indexBuffer == null) {
-            throw new VeldridException(
-                $"An index buffer must be bound before {nameof(CommandList)}.{nameof(DrawIndexed)} can be called.");
+            throw new VeldridException($"An index buffer must be bound before {nameof(CommandList)}.{nameof(DrawIndexed)} can be called.");
         }
 
         uint indexFormatSize = this.indexFormat == IndexFormat.UInt16 ? 2u : 4u;
         uint bytesNeeded = indexCount * indexFormatSize;
 
         if (this.indexBuffer.SizeInBytes < bytesNeeded) {
-            throw new VeldridException(
-                $"The active index buffer does not contain enough data to satisfy the given draw command. {bytesNeeded} bytes are needed, but the buffer only contains {this.indexBuffer.SizeInBytes}.");
+            throw new VeldridException($"The active index buffer does not contain enough data to satisfy the given draw command. {bytesNeeded} bytes are needed, but the buffer only contains {this.indexBuffer.SizeInBytes}.");
         }
 #endif
     }
 
     [Conditional("VALIDATE_USAGE")]
+
+    /// <summary>
+    /// Executes preDrawValidation.
+    /// </summary>
     private void preDrawValidation() {
 #if VALIDATE_USAGE
 
@@ -1212,49 +1148,85 @@ public abstract class CommandList : IDeviceResource, IDisposable {
         }
 
         if (this.Framebuffer == null) {
-            throw new VeldridException(
-                $"A {nameof(Veldrith.Framebuffer)} must be set in order to issue draw commands.");
+            throw new VeldridException($"A {nameof(Veldrith.Framebuffer)} must be set in order to issue draw commands.");
         }
 
         if (!this.GraphicsPipeline.GraphicsOutputDescription.Equals(this.Framebuffer.OutputDescription)) {
-            throw new VeldridException(
-                $"The {nameof(OutputDescription)} of the current graphics {nameof(Pipeline)} is not compatible with the current {nameof(Veldrith.Framebuffer)}.");
+            throw new VeldridException($"The {nameof(OutputDescription)} of the current graphics {nameof(Pipeline)} is not compatible with the current {nameof(Veldrith.Framebuffer)}.");
         }
 #endif
     }
 
+    /// <summary>
+    /// Executes SetPipelineCore.
+    /// </summary>
     private protected abstract void SetPipelineCore(Pipeline pipeline);
 
+    /// <summary>
+    /// Executes SetVertexBufferCore.
+    /// </summary>
     private protected abstract void SetVertexBufferCore(uint index, DeviceBuffer buffer, uint offset);
 
+    /// <summary>
+    /// Executes SetIndexBufferCore.
+    /// </summary>
     private protected abstract void SetIndexBufferCore(DeviceBuffer buffer, IndexFormat format, uint offset);
 
+    /// <summary>
+    /// Executes ClearColorTargetCore.
+    /// </summary>
     private protected abstract void ClearColorTargetCore(uint index, RgbaFloat clearColor);
 
+    /// <summary>
+    /// Executes ClearDepthStencilCore.
+    /// </summary>
     private protected abstract void ClearDepthStencilCore(float depth, byte stencil);
 
-    private protected abstract void DrawCore(uint vertexCount, uint instanceCount, uint vertexStart,
-        uint instanceStart);
+    /// <summary>
+    /// Executes DrawCore.
+    /// </summary>
+    private protected abstract void DrawCore(uint vertexCount, uint instanceCount, uint vertexStart, uint instanceStart);
 
-    private protected abstract void DrawIndexedCore(uint indexCount, uint instanceCount, uint indexStart,
-        int vertexOffset, uint instanceStart);
+    /// <summary>
+    /// Executes DrawIndexedCore.
+    /// </summary>
+    private protected abstract void DrawIndexedCore(uint indexCount, uint instanceCount, uint indexStart, int vertexOffset, uint instanceStart);
 
-    private protected abstract void UpdateBufferCore(
-        DeviceBuffer buffer,
-        uint bufferOffsetInBytes,
-        IntPtr source,
-        uint sizeInBytes);
+    /// <summary>
+    /// Executes UpdateBufferCore.
+    /// </summary>
+    private protected abstract void UpdateBufferCore(DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes);
 
+    /// <summary>
+    /// Executes GenerateMipmapsCore.
+    /// </summary>
     private protected abstract void GenerateMipmapsCore(Texture texture);
 
+    /// <summary>
+    /// Executes PushDebugGroupCore.
+    /// </summary>
     private protected abstract void PushDebugGroupCore(string name);
 
+    /// <summary>
+    /// Executes PopDebugGroupCore.
+    /// </summary>
     private protected abstract void PopDebugGroupCore();
 
+    /// <summary>
+    /// Executes InsertDebugMarkerCore.
+    /// </summary>
     private protected abstract void InsertDebugMarkerCore(string name);
 
 #if VALIDATE_USAGE
+
+    /// <summary>
+    /// Represents the indexBuffer field.
+    /// </summary>
     private DeviceBuffer indexBuffer;
+
+    /// <summary>
+    /// Represents the indexFormat field.
+    /// </summary>
     private IndexFormat indexFormat;
 #endif
 }

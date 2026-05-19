@@ -3,57 +3,58 @@ using System;
 namespace Veldrith;
 
 /// <summary>
-///     A <see cref="Pipeline" /> component describing the properties of the depth stencil state.
+/// A <see cref="Pipeline" /> component describing the properties of the depth stencil state.
 /// </summary>
 public struct DepthStencilStateDescription : IEquatable<DepthStencilStateDescription> {
+
     /// <summary>
-    ///     Controls whether depth testing is enabled.
+    /// Controls whether depth testing is enabled.
     /// </summary>
     public bool DepthTestEnabled;
 
     /// <summary>
-    ///     Controls whether new depth values are written to the depth buffer.
+    /// Controls whether new depth values are written to the depth buffer.
     /// </summary>
     public bool DepthWriteEnabled;
 
     /// <summary>
-    ///     The <see cref="ComparisonKind" /> used when considering new depth values.
+    /// The <see cref="ComparisonKind" /> used when considering new depth values.
     /// </summary>
     public ComparisonKind DepthComparison;
 
     /// <summary>
-    ///     Controls whether the stencil test is enabled.
+    /// Controls whether the stencil test is enabled.
     /// </summary>
     public bool StencilTestEnabled;
 
     /// <summary>
-    ///     Controls how stencil tests are handled for pixels whose surface faces towards the camera.
+    /// Controls how stencil tests are handled for pixels whose surface faces towards the camera.
     /// </summary>
     public StencilBehaviorDescription StencilFront;
 
     /// <summary>
-    ///     Controls how stencil tests are handled for pixels whose surface faces away from the camera.
+    /// Controls how stencil tests are handled for pixels whose surface faces away from the camera.
     /// </summary>
     public StencilBehaviorDescription StencilBack;
 
     /// <summary>
-    ///     Controls the portion of the stencil buffer used for reading.
+    /// Controls the portion of the stencil buffer used for reading.
     /// </summary>
     public byte StencilReadMask;
 
     /// <summary>
-    ///     Controls the portion of the stencil buffer used for writing.
+    /// Controls the portion of the stencil buffer used for writing.
     /// </summary>
     public byte StencilWriteMask;
 
     /// <summary>
-    ///     The reference value to use when doing a stencil test.
+    /// The reference value to use when doing a stencil test.
     /// </summary>
     public uint StencilReference;
 
     /// <summary>
-    ///     Constructs a new <see cref="DepthStencilStateDescription" />. This describes a depth-stencil state with no stencil
-    ///     testing enabled.
+    /// Constructs a new <see cref="DepthStencilStateDescription" />. This describes a depth-stencil state with no stencil
+    /// testing enabled.
     /// </summary>
     /// <param name="depthTestEnabled">Controls whether depth testing is enabled.</param>
     /// <param name="depthWriteEnabled">Controls whether new depth values are written to the depth buffer.</param>
@@ -72,8 +73,8 @@ public struct DepthStencilStateDescription : IEquatable<DepthStencilStateDescrip
     }
 
     /// <summary>
-    ///     Constructs a new <see cref="DepthStencilStateDescription" />. This describes a depth-stencil state with no stencil
-    ///     testing enabled.
+    /// Constructs a new <see cref="DepthStencilStateDescription" />. This describes a depth-stencil state with no stencil
+    /// testing enabled.
     /// </summary>
     /// <param name="depthTestEnabled">Controls whether depth testing is enabled.</param>
     /// <param name="depthWriteEnabled">Controls whether new depth values are written to the depth buffer.</param>
@@ -84,16 +85,7 @@ public struct DepthStencilStateDescription : IEquatable<DepthStencilStateDescrip
     /// <param name="stencilReadMask">Controls the portion of the stencil buffer used for reading.</param>
     /// <param name="stencilWriteMask">Controls the portion of the stencil buffer used for writing.</param>
     /// <param name="stencilReference">The reference value to use when doing a stencil test.</param>
-    public DepthStencilStateDescription(
-        bool depthTestEnabled,
-        bool depthWriteEnabled,
-        ComparisonKind comparisonKind,
-        bool stencilTestEnabled,
-        StencilBehaviorDescription stencilFront,
-        StencilBehaviorDescription stencilBack,
-        byte stencilReadMask,
-        byte stencilWriteMask,
-        uint stencilReference) {
+    public DepthStencilStateDescription(bool depthTestEnabled, bool depthWriteEnabled, ComparisonKind comparisonKind, bool stencilTestEnabled, StencilBehaviorDescription stencilFront, StencilBehaviorDescription stencilBack, byte stencilReadMask, byte stencilWriteMask, uint stencilReference) {
         this.DepthTestEnabled = depthTestEnabled;
         this.DepthWriteEnabled = depthWriteEnabled;
         this.DepthComparison = comparisonKind;
@@ -107,12 +99,12 @@ public struct DepthStencilStateDescription : IEquatable<DepthStencilStateDescrip
     }
 
     /// <summary>
-    ///     Describes a depth-only depth stencil state which uses a <see cref="ComparisonKind.LessEqual" /> comparison.
-    ///     The stencil test is disabled.
-    ///     Settings:
-    ///     DepthTestEnabled = true
-    ///     DepthWriteEnabled = true
-    ///     ComparisonKind = DepthComparisonKind.LessEqual
+    /// Describes a depth-only depth stencil state which uses a <see cref="ComparisonKind.LessEqual" /> comparison.
+    /// The stencil test is disabled.
+    /// Settings:
+    /// DepthTestEnabled = true
+    /// DepthWriteEnabled = true
+    /// ComparisonKind = DepthComparisonKind.LessEqual
     /// </summary>
     public static readonly DepthStencilStateDescription DEPTH_ONLY_LESS_EQUAL = new() {
         DepthTestEnabled = true,
@@ -121,13 +113,13 @@ public struct DepthStencilStateDescription : IEquatable<DepthStencilStateDescrip
     };
 
     /// <summary>
-    ///     Describes a depth-only depth stencil state which uses a <see cref="ComparisonKind.LessEqual" /> comparison, and
-    ///     disables writing to the depth buffer.
-    ///     The stencil test is disabled.
-    ///     Settings:
-    ///     DepthTestEnabled = true
-    ///     DepthWriteEnabled = false
-    ///     ComparisonKind = DepthComparisonKind.LessEqual
+    /// Describes a depth-only depth stencil state which uses a <see cref="ComparisonKind.LessEqual" /> comparison, and
+    /// disables writing to the depth buffer.
+    /// The stencil test is disabled.
+    /// Settings:
+    /// DepthTestEnabled = true
+    /// DepthWriteEnabled = false
+    /// ComparisonKind = DepthComparisonKind.LessEqual
     /// </summary>
     public static readonly DepthStencilStateDescription DEPTH_ONLY_LESS_EQUAL_READ = new() {
         DepthTestEnabled = true,
@@ -136,12 +128,12 @@ public struct DepthStencilStateDescription : IEquatable<DepthStencilStateDescrip
     };
 
     /// <summary>
-    ///     Describes a depth-only depth stencil state which uses a <see cref="ComparisonKind.GreaterEqual" /> comparison.
-    ///     The stencil test is disabled.
-    ///     Settings:
-    ///     DepthTestEnabled = true
-    ///     DepthWriteEnabled = true
-    ///     ComparisonKind = DepthComparisonKind.GreaterEqual
+    /// Describes a depth-only depth stencil state which uses a <see cref="ComparisonKind.GreaterEqual" /> comparison.
+    /// The stencil test is disabled.
+    /// Settings:
+    /// DepthTestEnabled = true
+    /// DepthWriteEnabled = true
+    /// ComparisonKind = DepthComparisonKind.GreaterEqual
     /// </summary>
     public static readonly DepthStencilStateDescription DEPTH_ONLY_GREATER_EQUAL = new() {
         DepthTestEnabled = true,
@@ -150,12 +142,12 @@ public struct DepthStencilStateDescription : IEquatable<DepthStencilStateDescrip
     };
 
     /// <summary>
-    ///     Describes a depth-only depth stencil state which uses a <see cref="ComparisonKind.GreaterEqual" /> comparison, and
-    ///     disables writing to the depth buffer. The stencil test is disabled.
-    ///     Settings:
-    ///     DepthTestEnabled = true
-    ///     DepthWriteEnabled = false
-    ///     ComparisonKind = DepthComparisonKind.GreaterEqual
+    /// Describes a depth-only depth stencil state which uses a <see cref="ComparisonKind.GreaterEqual" /> comparison, and
+    /// disables writing to the depth buffer. The stencil test is disabled.
+    /// Settings:
+    /// DepthTestEnabled = true
+    /// DepthWriteEnabled = false
+    /// ComparisonKind = DepthComparisonKind.GreaterEqual
     /// </summary>
     public static readonly DepthStencilStateDescription DEPTH_ONLY_GREATER_EQUAL_READ = new() {
         DepthTestEnabled = true,
@@ -164,12 +156,12 @@ public struct DepthStencilStateDescription : IEquatable<DepthStencilStateDescrip
     };
 
     /// <summary>
-    ///     Describes a depth-only depth stencil state in which depth testing and writing is disabled.
-    ///     The stencil test is disabled.
-    ///     Settings:
-    ///     DepthTestEnabled = false
-    ///     DepthWriteEnabled = false
-    ///     ComparisonKind = DepthComparisonKind.LessEqual
+    /// Describes a depth-only depth stencil state in which depth testing and writing is disabled.
+    /// The stencil test is disabled.
+    /// Settings:
+    /// DepthTestEnabled = false
+    /// DepthWriteEnabled = false
+    /// ComparisonKind = DepthComparisonKind.LessEqual
     /// </summary>
     public static readonly DepthStencilStateDescription DISABLED = new() {
         DepthTestEnabled = false,
@@ -178,7 +170,7 @@ public struct DepthStencilStateDescription : IEquatable<DepthStencilStateDescrip
     };
 
     /// <summary>
-    ///     Element-wise equality.
+    /// Element-wise equality.
     /// </summary>
     /// <param name="other">The instance to compare to.</param>
     /// <returns>True if all elements are equal; false otherswise.</returns>
@@ -195,19 +187,10 @@ public struct DepthStencilStateDescription : IEquatable<DepthStencilStateDescrip
     }
 
     /// <summary>
-    ///     Returns the hash code for this instance.
+    /// Returns the hash code for this instance.
     /// </summary>
     /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
     public override int GetHashCode() {
-        return HashHelper.Combine(
-            this.DepthTestEnabled.GetHashCode(),
-            this.DepthWriteEnabled.GetHashCode(),
-            (int)this.DepthComparison,
-            this.StencilTestEnabled.GetHashCode(),
-            this.StencilFront.GetHashCode(),
-            this.StencilBack.GetHashCode(),
-            this.StencilReadMask.GetHashCode(),
-            this.StencilWriteMask.GetHashCode(),
-            this.StencilReference.GetHashCode());
+        return HashHelper.Combine(this.DepthTestEnabled.GetHashCode(), this.DepthWriteEnabled.GetHashCode(), (int)this.DepthComparison, this.StencilTestEnabled.GetHashCode(), this.StencilFront.GetHashCode(), this.StencilBack.GetHashCode(), this.StencilReadMask.GetHashCode(), this.StencilWriteMask.GetHashCode(), this.StencilReference.GetHashCode());
     }
 }

@@ -1,19 +1,45 @@
 using System.Runtime.CompilerServices;
 using Vulkan;
-using static Vulkan.VulkanNative;
 using static Veldrith.Vk.VulkanUtil;
+using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
 internal unsafe class VkPipeline : Pipeline {
+
+    /// <summary>
+    /// Represents the _devicePipeline field.
+    /// </summary>
     private readonly Vulkan.VkPipeline _devicePipeline;
+
+    /// <summary>
+    /// Represents the _pipelineLayout field.
+    /// </summary>
     private readonly VkPipelineLayout _pipelineLayout;
+
+    /// <summary>
+    /// Represents the _renderPass field.
+    /// </summary>
     private readonly VkRenderPass _renderPass;
 
+    /// <summary>
+    /// Represents the gd field.
+    /// </summary>
     private readonly VkGraphicsDevice gd;
+
+    /// <summary>
+    /// Represents the _destroyed field.
+    /// </summary>
     private bool _destroyed;
+
+    /// <summary>
+    /// Represents the _name field.
+    /// </summary>
     private string _name;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="VkPipeline" /> class.
+    /// </summary>
     public VkPipeline(VkGraphicsDevice gd, ref GraphicsPipelineDescription description)
         : base(ref description) {
         this.gd = gd;
@@ -127,8 +153,7 @@ internal unsafe class VkPipeline : Pipeline {
         }
 
         VkVertexInputBindingDescription* bindingDescs = stackalloc VkVertexInputBindingDescription[(int)bindingCount];
-        VkVertexInputAttributeDescription* attributeDescs =
-            stackalloc VkVertexInputAttributeDescription[(int)attributeCount];
+        VkVertexInputAttributeDescription* attributeDescs = stackalloc VkVertexInputAttributeDescription[(int)attributeCount];
 
         int targetIndex = 0;
         int targetLocation = 0;
@@ -316,8 +341,7 @@ internal unsafe class VkPipeline : Pipeline {
 
         pipelineCi.renderPass = this._renderPass;
 
-        VkResult result = vkCreateGraphicsPipelines(this.gd.Device, VkPipelineCache.Null, 1, ref pipelineCi, null,
-            out this._devicePipeline);
+        VkResult result = vkCreateGraphicsPipelines(this.gd.Device, VkPipelineCache.Null, 1, ref pipelineCi, null, out this._devicePipeline);
         CheckResult(result);
 
         this.ResourceSetCount = (uint)description.ResourceLayouts.Length;
@@ -327,6 +351,9 @@ internal unsafe class VkPipeline : Pipeline {
         }
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="VkPipeline" /> class.
+    /// </summary>
     public VkPipeline(VkGraphicsDevice gd, ref ComputePipelineDescription description)
         : base(ref description) {
         this.gd = gd;
@@ -391,13 +418,7 @@ internal unsafe class VkPipeline : Pipeline {
         stageCi.pSpecializationInfo = &specializationInfo;
         pipelineCi.stage = stageCi;
 
-        VkResult result = vkCreateComputePipelines(
-            this.gd.Device,
-            VkPipelineCache.Null,
-            1,
-            ref pipelineCi,
-            null,
-            out this._devicePipeline);
+        VkResult result = vkCreateComputePipelines(this.gd.Device, VkPipelineCache.Null, 1, ref pipelineCi, null, out this._devicePipeline);
         CheckResult(result);
 
         this.ResourceSetCount = (uint)description.ResourceLayouts.Length;
@@ -407,20 +428,49 @@ internal unsafe class VkPipeline : Pipeline {
         }
     }
 
+    /// <summary>
+    /// Represents the DevicePipeline field.
+    /// </summary>
     public Vulkan.VkPipeline DevicePipeline => this._devicePipeline;
 
+    /// <summary>
+    /// Represents the PipelineLayout field.
+    /// </summary>
     public VkPipelineLayout PipelineLayout => this._pipelineLayout;
 
+    /// <summary>
+    /// Gets or sets ResourceSetCount.
+    /// </summary>
     public uint ResourceSetCount { get; }
+
+    /// <summary>
+    /// Gets or sets DynamicOffsetsCount.
+    /// </summary>
     public uint DynamicOffsetsCount { get; }
+
+    /// <summary>
+    /// Gets or sets ScissorTestEnabled.
+    /// </summary>
     public bool ScissorTestEnabled { get; }
 
+    /// <summary>
+    /// Gets or sets IsComputePipeline.
+    /// </summary>
     public override bool IsComputePipeline { get; }
 
+    /// <summary>
+    /// Gets or sets RefCount.
+    /// </summary>
     public ResourceRefCount RefCount { get; }
 
+    /// <summary>
+    /// Gets or sets IsDisposed.
+    /// </summary>
     public override bool IsDisposed => this._destroyed;
 
+    /// <summary>
+    /// Gets or sets Name.
+    /// </summary>
     public override string Name {
         get => this._name;
         set {
@@ -431,12 +481,18 @@ internal unsafe class VkPipeline : Pipeline {
 
     #region Disposal
 
+    /// <summary>
+    /// Executes Dispose.
+    /// </summary>
     public override void Dispose() {
         this.RefCount.Decrement();
     }
 
     #endregion
 
+    /// <summary>
+    /// Executes DisposeCore.
+    /// </summary>
     private void DisposeCore() {
         if (!this._destroyed) {
             this._destroyed = true;

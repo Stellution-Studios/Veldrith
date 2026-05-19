@@ -1,22 +1,56 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Diagnostics;
 using Vulkan;
-using static Vulkan.VulkanNative;
 using static Veldrith.Vk.VulkanUtil;
+using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
 internal unsafe class VkFramebuffer : VkFramebufferBase {
+
+    /// <summary>
+    /// Represents the _attachmentViews field.
+    /// </summary>
     private readonly List<VkImageView> _attachmentViews = new();
+
+    /// <summary>
+    /// Represents the _deviceFramebuffer field.
+    /// </summary>
     private readonly Vulkan.VkFramebuffer _deviceFramebuffer;
+
+    /// <summary>
+    /// Represents the _renderPassClear field.
+    /// </summary>
     private readonly VkRenderPass _renderPassClear;
+
+    /// <summary>
+    /// Represents the _renderPassNoClear field.
+    /// </summary>
     private readonly VkRenderPass _renderPassNoClear;
+
+    /// <summary>
+    /// Represents the _renderPassNoClearLoad field.
+    /// </summary>
     private readonly VkRenderPass _renderPassNoClearLoad;
 
+    /// <summary>
+    /// Represents the gd field.
+    /// </summary>
     private readonly VkGraphicsDevice gd;
+
+    /// <summary>
+    /// Represents the _destroyed field.
+    /// </summary>
     private bool _destroyed;
+
+    /// <summary>
+    /// Represents the _name field.
+    /// </summary>
     private string _name;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="VkFramebuffer" /> class.
+    /// </summary>
     public VkFramebuffer(VkGraphicsDevice gd, ref FramebufferDescription description, bool isPresented)
         : base(description.DepthTarget, description.ColorTargets) {
         this.gd = gd;
@@ -104,8 +138,7 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
         renderPassCi.dependencyCount = 1;
         renderPassCi.pDependencies = &subpassDependency;
 
-        VkResult creationResult =
-            vkCreateRenderPass(this.gd.Device, ref renderPassCi, null, out this._renderPassNoClear);
+        VkResult creationResult = vkCreateRenderPass(this.gd.Device, ref renderPassCi, null, out this._renderPassNoClear);
         CheckResult(creationResult);
 
         for (int i = 0; i < colorAttachmentCount; i++) {
@@ -158,11 +191,7 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
             imageViewCi.image = vkColorTarget.OptimalDeviceImage;
             imageViewCi.format = vkColorTarget.VkFormat;
             imageViewCi.viewType = VkImageViewType.Image2D;
-            imageViewCi.subresourceRange = new VkImageSubresourceRange(
-                VkImageAspectFlags.Color,
-                description.ColorTargets[i].MipLevel,
-                1,
-                description.ColorTargets[i].ArrayLayer);
+            imageViewCi.subresourceRange = new VkImageSubresourceRange(VkImageAspectFlags.Color, description.ColorTargets[i].MipLevel, 1, description.ColorTargets[i].ArrayLayer);
             VkImageView* dest = fbAttachments + i;
             VkResult result = vkCreateImageView(this.gd.Device, ref imageViewCi, null, dest);
             CheckResult(result);
@@ -179,11 +208,7 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
             depthViewCi.viewType = description.DepthTarget.Value.Target.ArrayLayers == 1
                 ? VkImageViewType.Image2D
                 : VkImageViewType.Image2DArray;
-            depthViewCi.subresourceRange = new VkImageSubresourceRange(
-                hasStencil ? VkImageAspectFlags.Depth | VkImageAspectFlags.Stencil : VkImageAspectFlags.Depth,
-                description.DepthTarget.Value.MipLevel,
-                1,
-                description.DepthTarget.Value.ArrayLayer);
+            depthViewCi.subresourceRange = new VkImageSubresourceRange(hasStencil ? VkImageAspectFlags.Depth | VkImageAspectFlags.Stencil : VkImageAspectFlags.Depth, description.DepthTarget.Value.MipLevel, 1, description.DepthTarget.Value.ArrayLayer);
             VkImageView* dest = fbAttachments + (fbAttachmentsCount - 1);
             VkResult result = vkCreateImageView(this.gd.Device, ref depthViewCi, null, dest);
             CheckResult(result);
@@ -203,12 +228,7 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
             mipLevel = this.DepthTarget.Value.MipLevel;
         }
 
-        Util.GetMipDimensions(
-            dimTex,
-            mipLevel,
-            out uint mipWidth,
-            out uint mipHeight,
-            out _);
+        Util.GetMipDimensions(dimTex, mipLevel, out uint mipWidth, out uint mipHeight, out _);
 
         fbCi.width = mipWidth;
         fbCi.height = mipHeight;
@@ -228,18 +248,49 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
         this.AttachmentCount += (uint)this.ColorTargets.Count;
     }
 
+    /// <summary>
+    /// Gets or sets CurrentFramebuffer.
+    /// </summary>
     public override Vulkan.VkFramebuffer CurrentFramebuffer => this._deviceFramebuffer;
+
+    /// <summary>
+    /// Gets or sets RenderPassNoClearInit.
+    /// </summary>
     public override VkRenderPass RenderPassNoClearInit => this._renderPassNoClear;
+
+    /// <summary>
+    /// Gets or sets RenderPassNoClearLoad.
+    /// </summary>
     public override VkRenderPass RenderPassNoClearLoad => this._renderPassNoClearLoad;
+
+    /// <summary>
+    /// Gets or sets RenderPassClear.
+    /// </summary>
     public override VkRenderPass RenderPassClear => this._renderPassClear;
 
+    /// <summary>
+    /// Gets or sets RenderableWidth.
+    /// </summary>
     public override uint RenderableWidth => this.Width;
+
+    /// <summary>
+    /// Gets or sets RenderableHeight.
+    /// </summary>
     public override uint RenderableHeight => this.Height;
 
+    /// <summary>
+    /// Gets or sets AttachmentCount.
+    /// </summary>
     public override uint AttachmentCount { get; }
 
+    /// <summary>
+    /// Gets or sets IsDisposed.
+    /// </summary>
     public override bool IsDisposed => this._destroyed;
 
+    /// <summary>
+    /// Gets or sets Name.
+    /// </summary>
     public override string Name {
         get => this._name;
         set {
@@ -248,6 +299,9 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
         }
     }
 
+    /// <summary>
+    /// Executes TransitionToIntermediateLayout.
+    /// </summary>
     public override void TransitionToIntermediateLayout(VkCommandBuffer cb) {
         for (int i = 0; i < this.ColorTargets.Count; i++) {
             FramebufferAttachment ca = this.ColorTargets[i];
@@ -257,22 +311,20 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
 
         if (this.DepthTarget != null) {
             VkTexture vkTex = Util.AssertSubtype<Texture, VkTexture>(this.DepthTarget.Value.Target);
-            vkTex.SetImageLayout(this.DepthTarget.Value.MipLevel, this.DepthTarget.Value.ArrayLayer,
-                VkImageLayout.DepthStencilAttachmentOptimal);
+            vkTex.SetImageLayout(this.DepthTarget.Value.MipLevel, this.DepthTarget.Value.ArrayLayer, VkImageLayout.DepthStencilAttachmentOptimal);
         }
     }
 
+    /// <summary>
+    /// Executes TransitionToFinalLayout.
+    /// </summary>
     public override void TransitionToFinalLayout(VkCommandBuffer cb) {
         for (int i = 0; i < this.ColorTargets.Count; i++) {
             FramebufferAttachment ca = this.ColorTargets[i];
             VkTexture vkTex = Util.AssertSubtype<Texture, VkTexture>(ca.Target);
 
             if ((vkTex.Usage & TextureUsage.Sampled) != 0) {
-                vkTex.TransitionImageLayout(
-                    cb,
-                    ca.MipLevel, 1,
-                    ca.ArrayLayer, 1,
-                    VkImageLayout.ShaderReadOnlyOptimal);
+                vkTex.TransitionImageLayout(cb, ca.MipLevel, 1, ca.ArrayLayer, 1, VkImageLayout.ShaderReadOnlyOptimal);
             }
         }
 
@@ -280,13 +332,14 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
             VkTexture vkTex = Util.AssertSubtype<Texture, VkTexture>(this.DepthTarget.Value.Target);
 
             if ((vkTex.Usage & TextureUsage.Sampled) != 0) {
-                vkTex.TransitionImageLayout(
-                    cb, this.DepthTarget.Value.MipLevel, 1, this.DepthTarget.Value.ArrayLayer, 1,
-                    VkImageLayout.ShaderReadOnlyOptimal);
+                vkTex.TransitionImageLayout(cb, this.DepthTarget.Value.MipLevel, 1, this.DepthTarget.Value.ArrayLayer, 1, VkImageLayout.ShaderReadOnlyOptimal);
             }
         }
     }
 
+    /// <summary>
+    /// Executes DisposeCore.
+    /// </summary>
     protected override void DisposeCore() {
         if (!this._destroyed) {
             vkDestroyFramebuffer(this.gd.Device, this._deviceFramebuffer, null);

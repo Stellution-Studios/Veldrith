@@ -1,6 +1,5 @@
 namespace Veldrith.MetalBindings;
 
 public enum MTLSamplerMinMagFilter {
-    Nearest = 0,
-    Linear = 1
+    Nearest = 0, Linear = 1
 }

@@ -7,14 +7,40 @@ using Vortice.DXGI;
 namespace Veldrith.D3D12;
 
 internal sealed class D3D12Pipeline : Pipeline {
+
+    /// <summary>
+    /// Represents the _pipelineResourceLayouts field.
+    /// </summary>
     private readonly ResourceLayout[] _pipelineResourceLayouts;
 
+    /// <summary>
+    /// Represents the gd field.
+    /// </summary>
     private readonly D3D12GraphicsDevice gd;
+
+    /// <summary>
+    /// Represents the _disposed field.
+    /// </summary>
     private bool _disposed;
+
+    /// <summary>
+    /// Represents the _rootBindings field.
+    /// </summary>
     private RootBindingInfo[][] _rootBindings = Array.Empty<RootBindingInfo[]>();
+
+    /// <summary>
+    /// Represents the _rootBindingValid field.
+    /// </summary>
     private bool[][] _rootBindingValid = Array.Empty<bool[]>();
+
+    /// <summary>
+    /// Represents the _usingSetRegisterSpaces field.
+    /// </summary>
     private bool _usingSetRegisterSpaces;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="D3D12Pipeline" /> class.
+    /// </summary>
     public D3D12Pipeline(D3D12GraphicsDevice gd, ref GraphicsPipelineDescription description)
         : base(ref description) {
         this.gd = gd;
@@ -38,6 +64,9 @@ internal sealed class D3D12Pipeline : Pipeline {
         }
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="D3D12Pipeline" /> class.
+    /// </summary>
     public D3D12Pipeline(D3D12GraphicsDevice gd, ref ComputePipelineDescription description)
         : base(ref description) {
         this.gd = gd;
@@ -53,16 +82,49 @@ internal sealed class D3D12Pipeline : Pipeline {
         }
     }
 
+    /// <summary>
+    /// Gets or sets IsComputePipeline.
+    /// </summary>
     public override bool IsComputePipeline { get; }
+
+    /// <summary>
+    /// Gets or sets PipelineState.
+    /// </summary>
     public ID3D12PipelineState PipelineState { get; private set; }
+
+    /// <summary>
+    /// Gets or sets RootSignature.
+    /// </summary>
     public ID3D12RootSignature RootSignature { get; private set; }
+
+    /// <summary>
+    /// Gets or sets PrimitiveTopology.
+    /// </summary>
     public Vortice.Direct3D.PrimitiveTopology PrimitiveTopology { get; }
+
+    /// <summary>
+    /// Gets or sets PrimitiveTopologyType.
+    /// </summary>
     public PrimitiveTopologyType PrimitiveTopologyType { get; }
+
+    /// <summary>
+    /// Gets or sets VertexStrides.
+    /// </summary>
     public uint[] VertexStrides { get; } = Array.Empty<uint>();
+
+    /// <summary>
+    /// Gets or sets IsDisposed.
+    /// </summary>
     public override bool IsDisposed => this._disposed;
 
+    /// <summary>
+    /// Gets or sets Name.
+    /// </summary>
     public override string Name { get; set; }
 
+    /// <summary>
+    /// Executes Dispose.
+    /// </summary>
     public override void Dispose() {
         if (this._disposed) {
             return;
@@ -72,14 +134,23 @@ internal sealed class D3D12Pipeline : Pipeline {
         this._disposed = true;
     }
 
+    /// <summary>
+    /// Executes TryGetGraphicsRootBinding.
+    /// </summary>
     internal bool TryGetGraphicsRootBinding(uint set, uint element, out RootBindingInfo bindingInfo) {
         return this.TryGetRootBinding(set, element, out bindingInfo);
     }
 
+    /// <summary>
+    /// Executes TryGetComputeRootBinding.
+    /// </summary>
     internal bool TryGetComputeRootBinding(uint set, uint element, out RootBindingInfo bindingInfo) {
         return this.TryGetRootBinding(set, element, out bindingInfo);
     }
 
+    /// <summary>
+    /// Executes CreateRootSignature.
+    /// </summary>
     private void CreateRootSignature(ResourceLayout[] resourceLayouts, bool useSetRegisterSpaces) {
         this._usingSetRegisterSpaces = useSetRegisterSpaces;
         List<RootParameter> rootParameters = new();
@@ -91,8 +162,7 @@ internal sealed class D3D12Pipeline : Pipeline {
 
         if (resourceLayouts != null) {
             for (uint setIndex = 0; setIndex < resourceLayouts.Length; setIndex++) {
-                D3D12ResourceLayout resourceLayout =
-                    Util.AssertSubtype<ResourceLayout, D3D12ResourceLayout>(resourceLayouts[setIndex]);
+                D3D12ResourceLayout resourceLayout = Util.AssertSubtype<ResourceLayout, D3D12ResourceLayout>(resourceLayouts[setIndex]);
                 ResourceLayoutElementDescription[] elements = resourceLayout.Elements;
                 for (uint elementIndex = 0; elementIndex < elements.Length; elementIndex++) {
                     ResourceLayoutElementDescription element = elements[elementIndex];
@@ -100,12 +170,7 @@ internal sealed class D3D12Pipeline : Pipeline {
                     // SPIR-V -> HLSL remapping in Veldrith.SPIRV assigns binding indices
                     // globally per resource-kind (CBV/SRV/UAV/Sampler), not per set.
                     // Keep register numbering global here for both space modes.
-                    shaderRegister = AllocateShaderRegister(
-                        element.Kind,
-                        ref globalCbvRegister,
-                        ref globalSrvRegister,
-                        ref globalUavRegister,
-                        ref globalSamplerRegister);
+                    shaderRegister = AllocateShaderRegister(element.Kind, ref globalCbvRegister, ref globalSrvRegister, ref globalUavRegister, ref globalSamplerRegister);
 
                     uint registerSpace = useSetRegisterSpaces ? setIndex : 0u;
                     bool descriptorTable = UsesDescriptorTable(element.Kind);
@@ -119,14 +184,12 @@ internal sealed class D3D12Pipeline : Pipeline {
                     else {
                         RootParameterType parameterType = GetRootParameterType(element.Kind);
                         RootDescriptor rootDescriptor = new(shaderRegister, registerSpace);
-                        rootParameter = new RootParameter(parameterType, rootDescriptor,
-                            ToShaderVisibility(element.Stages));
+                        rootParameter = new RootParameter(parameterType, rootDescriptor, ToShaderVisibility(element.Stages));
                     }
 
                     uint rootParameterIndex = (uint)rootParameters.Count;
                     rootParameters.Add(rootParameter);
-                    this._rootBindings[setIndex][elementIndex] =
-                        new RootBindingInfo(rootParameterIndex, element.Kind, descriptorTable);
+                    this._rootBindings[setIndex][elementIndex] = new RootBindingInfo(rootParameterIndex, element.Kind, descriptorTable);
                     this._rootBindingValid[setIndex][elementIndex] = true;
                 }
             }
@@ -136,14 +199,14 @@ internal sealed class D3D12Pipeline : Pipeline {
             ? RootSignatureFlags.None
             : RootSignatureFlags.AllowInputAssemblerInputLayout;
 
-        RootSignatureDescription rootSignatureDescription = new(
-            rootSignatureFlags,
-            rootParameters.ToArray(),
-            Array.Empty<StaticSamplerDescription>());
+        RootSignatureDescription rootSignatureDescription = new(rootSignatureFlags, rootParameters.ToArray(), Array.Empty<StaticSamplerDescription>());
         string cacheKey = BuildRootSignatureCacheKey(resourceLayouts, useSetRegisterSpaces, this.IsComputePipeline);
         this.RootSignature = this.gd.GetOrCreateRootSignature(cacheKey, in rootSignatureDescription);
     }
 
+    /// <summary>
+    /// Executes RecreateRootSignatureWithoutSetSpaces.
+    /// </summary>
     private void RecreateRootSignatureWithoutSetSpaces() {
         if (!this._usingSetRegisterSpaces) {
             return;
@@ -152,28 +215,22 @@ internal sealed class D3D12Pipeline : Pipeline {
         this.CreateRootSignature(this._pipelineResourceLayouts, false);
     }
 
-    private static uint AllocateShaderRegister(
-        ResourceKind resourceKind,
-        ref uint nextCbvRegister,
-        ref uint nextSrvRegister,
-        ref uint nextUavRegister,
-        ref uint nextSamplerRegister) {
+    /// <summary>
+    /// Executes AllocateShaderRegister.
+    /// </summary>
+    private static uint AllocateShaderRegister(ResourceKind resourceKind, ref uint nextCbvRegister, ref uint nextSrvRegister, ref uint nextUavRegister, ref uint nextSamplerRegister) {
         switch (resourceKind) {
-            case ResourceKind.UniformBuffer:
-                return nextCbvRegister++;
-            case ResourceKind.StructuredBufferReadOnly:
-            case ResourceKind.TextureReadOnly:
-                return nextSrvRegister++;
-            case ResourceKind.StructuredBufferReadWrite:
-            case ResourceKind.TextureReadWrite:
-                return nextUavRegister++;
-            case ResourceKind.Sampler:
-                return nextSamplerRegister++;
-            default:
-                throw Illegal.Value<ResourceKind>();
+            case ResourceKind.UniformBuffer: return nextCbvRegister++;
+            case ResourceKind.StructuredBufferReadOnly: case ResourceKind.TextureReadOnly: return nextSrvRegister++;
+            case ResourceKind.StructuredBufferReadWrite: case ResourceKind.TextureReadWrite: return nextUavRegister++;
+            case ResourceKind.Sampler: return nextSamplerRegister++;
+            default: throw Illegal.Value<ResourceKind>();
         }
     }
 
+    /// <summary>
+    /// Executes TryGetRootBinding.
+    /// </summary>
     private bool TryGetRootBinding(uint set, uint element, out RootBindingInfo bindingInfo) {
         if (set < (uint)this._rootBindings.Length
             && element < (uint)this._rootBindings[set].Length
@@ -186,6 +243,9 @@ internal sealed class D3D12Pipeline : Pipeline {
         return false;
     }
 
+    /// <summary>
+    /// Executes InitializeRootBindingTables.
+    /// </summary>
     private void InitializeRootBindingTables(ResourceLayout[] resourceLayouts) {
         if (resourceLayouts == null || resourceLayouts.Length == 0) {
             this._rootBindings = Array.Empty<RootBindingInfo[]>();
@@ -196,16 +256,17 @@ internal sealed class D3D12Pipeline : Pipeline {
         this._rootBindings = new RootBindingInfo[resourceLayouts.Length][];
         this._rootBindingValid = new bool[resourceLayouts.Length][];
         for (int setIndex = 0; setIndex < resourceLayouts.Length; setIndex++) {
-            D3D12ResourceLayout resourceLayout =
-                Util.AssertSubtype<ResourceLayout, D3D12ResourceLayout>(resourceLayouts[setIndex]);
+            D3D12ResourceLayout resourceLayout = Util.AssertSubtype<ResourceLayout, D3D12ResourceLayout>(resourceLayouts[setIndex]);
             int elementCount = resourceLayout.Elements.Length;
             this._rootBindings[setIndex] = new RootBindingInfo[elementCount];
             this._rootBindingValid[setIndex] = new bool[elementCount];
         }
     }
 
-    private static string BuildRootSignatureCacheKey(ResourceLayout[] resourceLayouts, bool useSetRegisterSpaces,
-        bool isComputePipeline) {
+    /// <summary>
+    /// Executes BuildRootSignatureCacheKey.
+    /// </summary>
+    private static string BuildRootSignatureCacheKey(ResourceLayout[] resourceLayouts, bool useSetRegisterSpaces, bool isComputePipeline) {
         StringBuilder sb = new(256);
         sb.Append(isComputePipeline ? 'C' : 'G');
         sb.Append(useSetRegisterSpaces ? 'S' : 'N');
@@ -218,8 +279,7 @@ internal sealed class D3D12Pipeline : Pipeline {
         sb.Append(resourceLayouts.Length);
         for (int setIndex = 0; setIndex < resourceLayouts.Length; setIndex++) {
             sb.Append(';');
-            D3D12ResourceLayout layout =
-                Util.AssertSubtype<ResourceLayout, D3D12ResourceLayout>(resourceLayouts[setIndex]);
+            D3D12ResourceLayout layout = Util.AssertSubtype<ResourceLayout, D3D12ResourceLayout>(resourceLayouts[setIndex]);
             ResourceLayoutElementDescription[] elements = layout.Elements;
             sb.Append(elements.Length);
             for (int elementIndex = 0; elementIndex < elements.Length; elementIndex++) {
@@ -236,6 +296,9 @@ internal sealed class D3D12Pipeline : Pipeline {
         return sb.ToString();
     }
 
+    /// <summary>
+    /// Executes CreateComputePipelineState.
+    /// </summary>
     private void CreateComputePipelineState(ref ComputePipelineDescription description) {
         D3D12Shader d3d12Shader = Util.AssertSubtype<Shader, D3D12Shader>(description.ComputeShader);
         ComputePipelineStateDescription psoDescription = new() {
@@ -246,42 +309,43 @@ internal sealed class D3D12Pipeline : Pipeline {
         this.PipelineState = this.gd.Device.CreateComputePipelineState(psoDescription);
     }
 
+    /// <summary>
+    /// Executes GetRootParameterType.
+    /// </summary>
     private static RootParameterType GetRootParameterType(ResourceKind resourceKind) {
         switch (resourceKind) {
-            case ResourceKind.UniformBuffer:
-                return RootParameterType.ConstantBufferView;
-            case ResourceKind.StructuredBufferReadOnly:
-                return RootParameterType.ShaderResourceView;
-            case ResourceKind.StructuredBufferReadWrite:
-                return RootParameterType.UnorderedAccessView;
-            case ResourceKind.TextureReadOnly:
-            case ResourceKind.TextureReadWrite:
-            case ResourceKind.Sampler:
-                throw new VeldridException("Texture and Sampler resources must use descriptor tables.");
-            default:
-                throw Illegal.Value<ResourceKind>();
+            case ResourceKind.UniformBuffer: return RootParameterType.ConstantBufferView;
+            case ResourceKind.StructuredBufferReadOnly: return RootParameterType.ShaderResourceView;
+            case ResourceKind.StructuredBufferReadWrite: return RootParameterType.UnorderedAccessView;
+            case ResourceKind.TextureReadOnly: case ResourceKind.TextureReadWrite: case ResourceKind.Sampler: throw new VeldridException("Texture and Sampler resources must use descriptor tables.");
+            default: throw Illegal.Value<ResourceKind>();
         }
     }
 
+    /// <summary>
+    /// Executes UsesDescriptorTable.
+    /// </summary>
     private static bool UsesDescriptorTable(ResourceKind resourceKind) {
         return resourceKind == ResourceKind.TextureReadOnly
                || resourceKind == ResourceKind.TextureReadWrite
                || resourceKind == ResourceKind.Sampler;
     }
 
+    /// <summary>
+    /// Executes GetDescriptorRangeType.
+    /// </summary>
     private static DescriptorRangeType GetDescriptorRangeType(ResourceKind resourceKind) {
         switch (resourceKind) {
-            case ResourceKind.TextureReadOnly:
-                return DescriptorRangeType.ShaderResourceView;
-            case ResourceKind.TextureReadWrite:
-                return DescriptorRangeType.UnorderedAccessView;
-            case ResourceKind.Sampler:
-                return DescriptorRangeType.Sampler;
-            default:
-                throw new VeldridException("Only texture and sampler resources use descriptor ranges.");
+            case ResourceKind.TextureReadOnly: return DescriptorRangeType.ShaderResourceView;
+            case ResourceKind.TextureReadWrite: return DescriptorRangeType.UnorderedAccessView;
+            case ResourceKind.Sampler: return DescriptorRangeType.Sampler;
+            default: throw new VeldridException("Only texture and sampler resources use descriptor ranges.");
         }
     }
 
+    /// <summary>
+    /// Executes ToShaderVisibility.
+    /// </summary>
     private static ShaderVisibility ToShaderVisibility(ShaderStages stages) {
         if (stages == ShaderStages.Vertex) {
             return ShaderVisibility.Vertex;
@@ -306,6 +370,9 @@ internal sealed class D3D12Pipeline : Pipeline {
         return ShaderVisibility.All;
     }
 
+    /// <summary>
+    /// Executes CreateGraphicsPipelineState.
+    /// </summary>
     private void CreateGraphicsPipelineState(ref GraphicsPipelineDescription description) {
         ReadOnlyMemory<byte> vertexShader = default;
         ReadOnlyMemory<byte> pixelShader = default;
@@ -350,8 +417,7 @@ internal sealed class D3D12Pipeline : Pipeline {
             SampleMask = uint.MaxValue,
             PrimitiveTopologyType = this.PrimitiveTopologyType,
             InputLayout = new InputLayoutDescription(inputElements),
-            SampleDescription =
-                new SampleDescription(FormatHelpers.GetSampleCountUInt32(description.Outputs.SampleCount), 0)
+            SampleDescription = new SampleDescription(FormatHelpers.GetSampleCountUInt32(description.Outputs.SampleCount), 0)
         };
 
         int colorCount = Math.Min(description.Outputs.ColorAttachments.Length, 8);
@@ -370,23 +436,13 @@ internal sealed class D3D12Pipeline : Pipeline {
             this.PipelineState = this.gd.Device.CreateGraphicsPipelineState(psoDescription);
         }
         catch (Exception ex) {
-            throw new VeldridException(
-                $"D3D12 graphics PSO creation failed. " +
-                $"VS={(vertexShader.IsEmpty ? "missing" : vertexShader.Length.ToString())}, " +
-                $"PS={(pixelShader.IsEmpty ? "missing" : pixelShader.Length.ToString())}, " +
-                $"GS={(geometryShader.IsEmpty ? "none" : geometryShader.Length.ToString())}, " +
-                $"HS={(hullShader.IsEmpty ? "none" : hullShader.Length.ToString())}, " +
-                $"DS={(domainShader.IsEmpty ? "none" : domainShader.Length.ToString())}, " +
-                $"InputElements={inputElements.Length}, " +
-                $"ColorTargets={colorCount}, " +
-                $"DepthFormat={psoDescription.DepthStencilFormat}, " +
-                $"SampleCount={FormatHelpers.GetSampleCountUInt32(description.Outputs.SampleCount)}, " +
-                $"PrimitiveTopology={description.PrimitiveTopology}, " +
-                $"UseSetRegisterSpaces={this._usingSetRegisterSpaces}.",
-                ex);
+            throw new VeldridException($"D3D12 graphics PSO creation failed. " + $"VS={(vertexShader.IsEmpty ? "missing" : vertexShader.Length.ToString())}, " + $"PS={(pixelShader.IsEmpty ? "missing" : pixelShader.Length.ToString())}, " + $"GS={(geometryShader.IsEmpty ? "none" : geometryShader.Length.ToString())}, " + $"HS={(hullShader.IsEmpty ? "none" : hullShader.Length.ToString())}, " + $"DS={(domainShader.IsEmpty ? "none" : domainShader.Length.ToString())}, " + $"InputElements={inputElements.Length}, " + $"ColorTargets={colorCount}, " + $"DepthFormat={psoDescription.DepthStencilFormat}, " + $"SampleCount={FormatHelpers.GetSampleCountUInt32(description.Outputs.SampleCount)}, " + $"PrimitiveTopology={description.PrimitiveTopology}, " + $"UseSetRegisterSpaces={this._usingSetRegisterSpaces}.", ex);
         }
     }
 
+    /// <summary>
+    /// Executes BuildBlendState.
+    /// </summary>
     private static BlendDescription BuildBlendState(ref BlendStateDescription description) {
         BlendDescription blendDescription = BlendDescription.Opaque;
         blendDescription.AlphaToCoverageEnable = description.AlphaToCoverageEnabled;
@@ -412,6 +468,9 @@ internal sealed class D3D12Pipeline : Pipeline {
         return blendDescription;
     }
 
+    /// <summary>
+    /// Executes BuildRasterizerState.
+    /// </summary>
     private static RasterizerDescription BuildRasterizerState(ref RasterizerStateDescription description) {
         return new RasterizerDescription {
             FillMode = D3D12Formats.ToFillMode(description.FillMode),
@@ -425,6 +484,9 @@ internal sealed class D3D12Pipeline : Pipeline {
         };
     }
 
+    /// <summary>
+    /// Executes BuildDepthStencilState.
+    /// </summary>
     private static DepthStencilDescription BuildDepthStencilState(ref DepthStencilStateDescription description) {
         return new DepthStencilDescription {
             DepthEnable = description.DepthTestEnabled,
@@ -433,19 +495,14 @@ internal sealed class D3D12Pipeline : Pipeline {
             StencilEnable = description.StencilTestEnabled,
             StencilReadMask = description.StencilReadMask,
             StencilWriteMask = description.StencilWriteMask,
-            FrontFace = new DepthStencilOperationDescription(
-                D3D12Formats.ToStencilOp(description.StencilFront.Fail),
-                D3D12Formats.ToStencilOp(description.StencilFront.DepthFail),
-                D3D12Formats.ToStencilOp(description.StencilFront.Pass),
-                D3D12Formats.ToComparison(description.StencilFront.Comparison)),
-            BackFace = new DepthStencilOperationDescription(
-                D3D12Formats.ToStencilOp(description.StencilBack.Fail),
-                D3D12Formats.ToStencilOp(description.StencilBack.DepthFail),
-                D3D12Formats.ToStencilOp(description.StencilBack.Pass),
-                D3D12Formats.ToComparison(description.StencilBack.Comparison))
+            FrontFace = new DepthStencilOperationDescription(D3D12Formats.ToStencilOp(description.StencilFront.Fail), D3D12Formats.ToStencilOp(description.StencilFront.DepthFail), D3D12Formats.ToStencilOp(description.StencilFront.Pass), D3D12Formats.ToComparison(description.StencilFront.Comparison)),
+            BackFace = new DepthStencilOperationDescription(D3D12Formats.ToStencilOp(description.StencilBack.Fail), D3D12Formats.ToStencilOp(description.StencilBack.DepthFail), D3D12Formats.ToStencilOp(description.StencilBack.Pass), D3D12Formats.ToComparison(description.StencilBack.Comparison))
         };
     }
 
+    /// <summary>
+    /// Executes BuildInputElements.
+    /// </summary>
     private static InputElementDescription[] BuildInputElements(VertexLayoutDescription[] vertexLayouts) {
         if (vertexLayouts == null || vertexLayouts.Length == 0) {
             return Array.Empty<InputElementDescription>();
@@ -463,14 +520,7 @@ internal sealed class D3D12Pipeline : Pipeline {
                     ? InputClassification.PerVertexData
                     : InputClassification.PerInstanceData;
 
-                elements.Add(new InputElementDescription(
-                    "TEXCOORD",
-                    semanticIndex,
-                    D3D12Formats.ToDxgiFormat(element.Format),
-                    offset,
-                    slot,
-                    slotClass,
-                    layout.InstanceStepRate));
+                elements.Add(new InputElementDescription("TEXCOORD", semanticIndex, D3D12Formats.ToDxgiFormat(element.Format), offset, slot, slotClass, layout.InstanceStepRate));
 
                 semanticIndex++;
                 currentOffset += FormatSizeHelpers.GetSizeInBytes(element.Format);
@@ -480,15 +530,33 @@ internal sealed class D3D12Pipeline : Pipeline {
         return elements.ToArray();
     }
 
+    /// <summary>
+    /// Represents the RootBindingInfo struct.
+    /// </summary>
     internal readonly struct RootBindingInfo {
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RootBindingInfo" /> class.
+        /// </summary>
         public RootBindingInfo(uint rootParameterIndex, ResourceKind kind, bool descriptorTable) {
             this.RootParameterIndex = rootParameterIndex;
             this.Kind = kind;
             this.DescriptorTable = descriptorTable;
         }
 
+        /// <summary>
+        /// Gets or sets RootParameterIndex.
+        /// </summary>
         public uint RootParameterIndex { get; }
+
+        /// <summary>
+        /// Gets or sets Kind.
+        /// </summary>
         public ResourceKind Kind { get; }
+
+        /// <summary>
+        /// Gets or sets DescriptorTable.
+        /// </summary>
         public bool DescriptorTable { get; }
     }
 }

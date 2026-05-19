@@ -5,14 +5,40 @@ using static Vulkan.VulkanNative;
 namespace Veldrith.Vk;
 
 internal unsafe class VkBuffer : DeviceBuffer {
+
+    /// <summary>
+    /// Represents the _bufferMemoryRequirements field.
+    /// </summary>
     private readonly VkMemoryRequirements _bufferMemoryRequirements;
+
+    /// <summary>
+    /// Represents the _deviceBuffer field.
+    /// </summary>
     private readonly Vulkan.VkBuffer _deviceBuffer;
+
+    /// <summary>
+    /// Represents the _memory field.
+    /// </summary>
     private readonly VkMemoryBlock _memory;
 
+    /// <summary>
+    /// Represents the gd field.
+    /// </summary>
     private readonly VkGraphicsDevice gd;
+
+    /// <summary>
+    /// Represents the _destroyed field.
+    /// </summary>
     private bool _destroyed;
+
+    /// <summary>
+    /// Represents the _name field.
+    /// </summary>
     private string _name;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="VkBuffer" /> class.
+    /// </summary>
     public VkBuffer(VkGraphicsDevice gd, uint sizeInBytes, BufferUsage usage, string callerMember = null) {
         this.gd = gd;
         this.SizeInBytes = sizeInBytes;
@@ -56,8 +82,7 @@ internal unsafe class VkBuffer : DeviceBuffer {
             memReqs2.pNext = &dedicatedReqs;
             this.gd.GetBufferMemoryRequirements2(this.gd.Device, &memReqInfo2, &memReqs2);
             this._bufferMemoryRequirements = memReqs2.memoryRequirements;
-            prefersDedicatedAllocation =
-                dedicatedReqs.prefersDedicatedAllocation || dedicatedReqs.requiresDedicatedAllocation;
+            prefersDedicatedAllocation = dedicatedReqs.prefersDedicatedAllocation || dedicatedReqs.requiresDedicatedAllocation;
         }
         else {
             vkGetBufferMemoryRequirements(gd.Device, this._deviceBuffer, out this._bufferMemoryRequirements);
@@ -67,33 +92,19 @@ internal unsafe class VkBuffer : DeviceBuffer {
         bool isStaging = (usage & BufferUsage.Staging) == BufferUsage.Staging;
         bool hostVisible = isStaging || (usage & BufferUsage.Dynamic) == BufferUsage.Dynamic;
 
-        VkMemoryPropertyFlags memoryPropertyFlags =
-            hostVisible
+        VkMemoryPropertyFlags memoryPropertyFlags = hostVisible
                 ? VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent
                 : VkMemoryPropertyFlags.DeviceLocal;
 
         if (isStaging) {
             // Use "host cached" memory for staging when available, for better performance of GPU -> CPU transfers
-            bool hostCachedAvailable = TryFindMemoryType(
-                gd.PhysicalDeviceMemProperties,
-                this._bufferMemoryRequirements.memoryTypeBits,
-                memoryPropertyFlags | VkMemoryPropertyFlags.HostCached,
-                out _);
+            bool hostCachedAvailable = TryFindMemoryType(gd.PhysicalDeviceMemProperties, this._bufferMemoryRequirements.memoryTypeBits, memoryPropertyFlags | VkMemoryPropertyFlags.HostCached, out _);
             if (hostCachedAvailable) {
                 memoryPropertyFlags |= VkMemoryPropertyFlags.HostCached;
             }
         }
 
-        VkMemoryBlock memoryToken = gd.MemoryManager.Allocate(
-            gd.PhysicalDeviceMemProperties,
-            this._bufferMemoryRequirements.memoryTypeBits,
-            memoryPropertyFlags,
-            hostVisible,
-            this._bufferMemoryRequirements.size,
-            this._bufferMemoryRequirements.alignment,
-            prefersDedicatedAllocation,
-            VkImage.Null,
-            this._deviceBuffer);
+        VkMemoryBlock memoryToken = gd.MemoryManager.Allocate(gd.PhysicalDeviceMemProperties, this._bufferMemoryRequirements.memoryTypeBits, memoryPropertyFlags, hostVisible, this._bufferMemoryRequirements.size, this._bufferMemoryRequirements.alignment, prefersDedicatedAllocation, VkImage.Null, this._deviceBuffer);
         this._memory = memoryToken;
         result = vkBindBufferMemory(gd.Device, this._deviceBuffer, this._memory.DeviceMemory, this._memory.Offset);
         CheckResult(result);
@@ -101,17 +112,44 @@ internal unsafe class VkBuffer : DeviceBuffer {
         this.RefCount = new ResourceRefCount(this.DisposeCore);
     }
 
+    /// <summary>
+    /// Gets or sets RefCount.
+    /// </summary>
     public ResourceRefCount RefCount { get; }
+
+    /// <summary>
+    /// Gets or sets IsDisposed.
+    /// </summary>
     public override bool IsDisposed => this._destroyed;
 
+    /// <summary>
+    /// Gets or sets SizeInBytes.
+    /// </summary>
     public override uint SizeInBytes { get; }
+
+    /// <summary>
+    /// Gets or sets Usage.
+    /// </summary>
     public override BufferUsage Usage { get; }
 
+    /// <summary>
+    /// Represents the DeviceBuffer field.
+    /// </summary>
     public Vulkan.VkBuffer DeviceBuffer => this._deviceBuffer;
+
+    /// <summary>
+    /// Represents the Memory field.
+    /// </summary>
     public VkMemoryBlock Memory => this._memory;
 
+    /// <summary>
+    /// Represents the BufferMemoryRequirements field.
+    /// </summary>
     public VkMemoryRequirements BufferMemoryRequirements => this._bufferMemoryRequirements;
 
+    /// <summary>
+    /// Gets or sets Name.
+    /// </summary>
     public override string Name {
         get => this._name;
         set {
@@ -122,12 +160,18 @@ internal unsafe class VkBuffer : DeviceBuffer {
 
     #region Disposal
 
+    /// <summary>
+    /// Executes Dispose.
+    /// </summary>
     public override void Dispose() {
         this.RefCount.Decrement();
     }
 
     #endregion
 
+    /// <summary>
+    /// Executes DisposeCore.
+    /// </summary>
     private void DisposeCore() {
         if (!this._destroyed) {
             this._destroyed = true;

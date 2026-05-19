@@ -4,23 +4,90 @@ using Vortice.DXGI;
 namespace Veldrith.D3D12;
 
 internal sealed class D3D12Swapchain : Swapchain {
+
+    /// <summary>
+    /// Represents the _bufferCount field.
+    /// </summary>
     private readonly int _bufferCount = 3;
+
+    /// <summary>
+    /// Represents the _canTear field.
+    /// </summary>
     private readonly bool _canTear;
+
+    /// <summary>
+    /// Represents the _hasNativeSwapchain field.
+    /// </summary>
     private readonly bool _hasNativeSwapchain;
+
+    /// <summary>
+    /// Represents the _nativeColorFormat field.
+    /// </summary>
     private readonly Format _nativeColorFormat;
+
+    /// <summary>
+    /// Represents the gd field.
+    /// </summary>
     private readonly D3D12GraphicsDevice gd;
+
+    /// <summary>
+    /// Represents the _allowTearing field.
+    /// </summary>
     private bool _allowTearing;
+
+    /// <summary>
+    /// Represents the _backBufferResources field.
+    /// </summary>
     private ID3D12Resource[] _backBufferResources;
+
+    /// <summary>
+    /// Represents the _backBufferRtvs field.
+    /// </summary>
     private CpuDescriptorHandle[] _backBufferRtvs;
+
+    /// <summary>
+    /// Represents the _backBufferStates field.
+    /// </summary>
     private ResourceStates[] _backBufferStates;
+
+    /// <summary>
+    /// Represents the _colorTexture field.
+    /// </summary>
     private Texture _colorTexture;
+
+    /// <summary>
+    /// Represents the _depthTexture field.
+    /// </summary>
     private Texture _depthTexture;
+
+    /// <summary>
+    /// Represents the _disposed field.
+    /// </summary>
     private bool _disposed;
+
+    /// <summary>
+    /// Represents the _dxgiSwapChain field.
+    /// </summary>
     private IDXGISwapChain3 _dxgiSwapChain;
+
+    /// <summary>
+    /// Represents the _framebuffer field.
+    /// </summary>
     private Framebuffer _framebuffer;
+
+    /// <summary>
+    /// Represents the _rtvDescriptorSize field.
+    /// </summary>
     private int _rtvDescriptorSize;
+
+    /// <summary>
+    /// Represents the _rtvHeap field.
+    /// </summary>
     private ID3D12DescriptorHeap _rtvHeap;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="D3D12Swapchain" /> class.
+    /// </summary>
     public D3D12Swapchain(D3D12GraphicsDevice gd, ref SwapchainDescription description) {
         this.gd = gd;
         this.SyncToVerticalBlank = description.SyncToVerticalBlank;
@@ -33,10 +100,24 @@ internal sealed class D3D12Swapchain : Swapchain {
         this.CreateAttachments(description.Width, description.Height, description.DepthFormat, description.ColorSrgb);
     }
 
+    /// <summary>
+    /// Gets or sets Framebuffer.
+    /// </summary>
     public override Framebuffer Framebuffer => this._framebuffer;
+
+    /// <summary>
+    /// Gets or sets IsDisposed.
+    /// </summary>
     public override bool IsDisposed => this._disposed;
+
+    /// <summary>
+    /// Gets or sets SyncToVerticalBlank.
+    /// </summary>
     public override bool SyncToVerticalBlank { get; set; }
 
+    /// <summary>
+    /// Gets or sets AllowTearing.
+    /// </summary>
     internal bool AllowTearing {
         get => this._allowTearing;
         set {
@@ -55,8 +136,14 @@ internal sealed class D3D12Swapchain : Swapchain {
         }
     }
 
+    /// <summary>
+    /// Gets or sets Name.
+    /// </summary>
     public override string Name { get; set; }
 
+    /// <summary>
+    /// Executes Dispose.
+    /// </summary>
     public override void Dispose() {
         if (this._disposed) {
             return;
@@ -70,6 +157,9 @@ internal sealed class D3D12Swapchain : Swapchain {
         this._depthTexture?.Dispose();
     }
 
+    /// <summary>
+    /// Executes Resize.
+    /// </summary>
     public override void Resize(uint width, uint height) {
         if (width == 0 || height == 0) {
             return;
@@ -77,22 +167,23 @@ internal sealed class D3D12Swapchain : Swapchain {
 
         bool useDepth = this._depthTexture != null;
         PixelFormat? depthFormat = useDepth ? this._depthTexture.Format : null;
-        bool srgb = this._colorTexture.Format == PixelFormat.B8G8R8A8UNormSRgb ||
-                    this._colorTexture.Format == PixelFormat.R8G8B8A8UNormSRgb;
+        bool srgb = this._colorTexture.Format == PixelFormat.B8G8R8A8UNormSRgb || this._colorTexture.Format == PixelFormat.R8G8B8A8UNormSRgb;
 
         this._framebuffer.Dispose();
         this._colorTexture.Dispose();
         this._depthTexture?.Dispose();
         if (this._hasNativeSwapchain) {
             this.DisposeNativeResources();
-            this._dxgiSwapChain.ResizeBuffers((uint)this._bufferCount, width, height, this._nativeColorFormat,
-                SwapChainFlags.None);
+            this._dxgiSwapChain.ResizeBuffers((uint)this._bufferCount, width, height, this._nativeColorFormat, SwapChainFlags.None);
             this.CreateNativeRenderTargets();
         }
 
         this.CreateAttachments(width, height, depthFormat, srgb);
     }
 
+    /// <summary>
+    /// Executes Present.
+    /// </summary>
     internal void Present() {
         if (this._hasNativeSwapchain) {
             PresentFlags presentFlags = PresentFlags.None;
@@ -104,15 +195,16 @@ internal sealed class D3D12Swapchain : Swapchain {
         }
     }
 
+    /// <summary>
+    /// Executes CreateAttachments.
+    /// </summary>
     private void CreateAttachments(uint width, uint height, PixelFormat? depthFormat, bool srgb) {
         PixelFormat colorFormat = srgb ? PixelFormat.B8G8R8A8UNormSRgb : PixelFormat.B8G8R8A8UNorm;
-        TextureDescription colorDesc = TextureDescription.Texture2D(width, height, 1, 1, colorFormat,
-            TextureUsage.RenderTarget | TextureUsage.Sampled);
+        TextureDescription colorDesc = TextureDescription.Texture2D(width, height, 1, 1, colorFormat, TextureUsage.RenderTarget | TextureUsage.Sampled);
         this._colorTexture = this.gd.ResourceFactory.CreateTexture(colorDesc);
 
         if (depthFormat != null) {
-            TextureDescription depthDesc =
-                TextureDescription.Texture2D(width, height, 1, 1, depthFormat.Value, TextureUsage.DepthStencil);
+            TextureDescription depthDesc = TextureDescription.Texture2D(width, height, 1, 1, depthFormat.Value, TextureUsage.DepthStencil);
             this._depthTexture = this.gd.ResourceFactory.CreateTexture(depthDesc);
         }
         else {
@@ -128,6 +220,9 @@ internal sealed class D3D12Swapchain : Swapchain {
         }
     }
 
+    /// <summary>
+    /// Executes TryCreateNativeSwapchain.
+    /// </summary>
     private bool TryCreateNativeSwapchain(ref SwapchainDescription description) {
         if (description.Source is not Win32SwapchainSource win32Source) {
             return false;
@@ -148,16 +243,17 @@ internal sealed class D3D12Swapchain : Swapchain {
             Flags = flags
         };
 
-        IDXGISwapChain1 swapChain1 =
-            this.gd.DxgiFactory.CreateSwapChainForHwnd(this.gd.CommandQueue, win32Source.Hwnd, swapChainDesc);
+        IDXGISwapChain1 swapChain1 = this.gd.DxgiFactory.CreateSwapChainForHwnd(this.gd.CommandQueue, win32Source.Hwnd, swapChainDesc);
         this._dxgiSwapChain = swapChain1.QueryInterface<IDXGISwapChain3>();
         swapChain1.Dispose();
         this.CreateNativeRenderTargets();
         return true;
     }
 
-    internal bool TryGetCurrentBackBuffer(out ID3D12Resource resource, out CpuDescriptorHandle rtv, out int index,
-        out ResourceStates state) {
+    /// <summary>
+    /// Executes TryGetCurrentBackBuffer.
+    /// </summary>
+    internal bool TryGetCurrentBackBuffer(out ID3D12Resource resource, out CpuDescriptorHandle rtv, out int index, out ResourceStates state) {
         if (!this._hasNativeSwapchain || this._dxgiSwapChain == null) {
             resource = null;
             rtv = default;
@@ -173,16 +269,19 @@ internal sealed class D3D12Swapchain : Swapchain {
         return true;
     }
 
+    /// <summary>
+    /// Executes SetBackBufferState.
+    /// </summary>
     internal void SetBackBufferState(int index, ResourceStates state) {
         this._backBufferStates[index] = state;
     }
 
+    /// <summary>
+    /// Executes CreateNativeRenderTargets.
+    /// </summary>
     private void CreateNativeRenderTargets() {
-        this._rtvDescriptorSize =
-            (int)this.gd.Device.GetDescriptorHandleIncrementSize(DescriptorHeapType.RenderTargetView);
-        this._rtvHeap =
-            this.gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(DescriptorHeapType.RenderTargetView,
-                (uint)this._bufferCount));
+        this._rtvDescriptorSize = (int)this.gd.Device.GetDescriptorHandleIncrementSize(DescriptorHeapType.RenderTargetView);
+        this._rtvHeap = this.gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(DescriptorHeapType.RenderTargetView, (uint)this._bufferCount));
         this._backBufferResources = new ID3D12Resource[this._bufferCount];
         this._backBufferRtvs = new CpuDescriptorHandle[this._bufferCount];
         this._backBufferStates = new ResourceStates[this._bufferCount];
@@ -197,17 +296,22 @@ internal sealed class D3D12Swapchain : Swapchain {
         }
     }
 
+    /// <summary>
+    /// Executes RecreateNativeSwapchain.
+    /// </summary>
     private void RecreateNativeSwapchain(uint width, uint height) {
         if (!this._hasNativeSwapchain || this._dxgiSwapChain == null) {
             return;
         }
 
         this.DisposeNativeResources();
-        this._dxgiSwapChain.ResizeBuffers((uint)this._bufferCount, width, height, this._nativeColorFormat,
-            this.GetSwapChainFlags());
+        this._dxgiSwapChain.ResizeBuffers((uint)this._bufferCount, width, height, this._nativeColorFormat, this.GetSwapChainFlags());
         this.CreateNativeRenderTargets();
     }
 
+    /// <summary>
+    /// Executes GetSwapChainFlags.
+    /// </summary>
     private SwapChainFlags GetSwapChainFlags() {
         if (this._allowTearing && this._canTear) {
             return SwapChainFlags.AllowTearing;
@@ -216,6 +320,9 @@ internal sealed class D3D12Swapchain : Swapchain {
         return SwapChainFlags.None;
     }
 
+    /// <summary>
+    /// Executes DisposeNativeResources.
+    /// </summary>
     private void DisposeNativeResources() {
         if (this._backBufferResources != null) {
             foreach (ID3D12Resource resource in this._backBufferResources) {

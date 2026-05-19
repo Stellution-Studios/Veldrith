@@ -1,40 +1,40 @@
-﻿using System;
+using System;
 
 namespace Veldrith;
 
-// A GPU-CPU sync point
 /// <summary>
-///     A synchronization primitive which allows the GPU to communicate when submitted work items have finished executing.
+/// A GPU-CPU sync point
 /// </summary>
 public abstract class Fence : IDeviceResource, IDisposable {
+
     /// <summary>
-    ///     Gets a value indicating whether the Fence is currently signaled. A Fence is signaled after a CommandList finishes
-    ///     execution after it was submitted with a Fence instance.
+    /// Gets a value indicating whether the Fence is currently signaled. A Fence is signaled after a CommandList finishes
+    /// execution after it was submitted with a Fence instance.
     /// </summary>
     public abstract bool Signaled { get; }
 
     /// <summary>
-    ///     A bool indicating whether this instance has been disposed.
+    /// A bool indicating whether this instance has been disposed.
     /// </summary>
     public abstract bool IsDisposed { get; }
 
     /// <summary>
-    ///     A string identifying this instance. Can be used to differentiate between objects in graphics debuggers and other
-    ///     tools.
+    /// A string identifying this instance. Can be used to differentiate between objects in graphics debuggers and other
+    /// tools.
     /// </summary>
     public abstract string Name { get; set; }
 
     #region Disposal
 
     /// <summary>
-    ///     Frees unmanaged device resources controlled by this instance.
+    /// Frees unmanaged device resources controlled by this instance.
     /// </summary>
     public abstract void Dispose();
 
     #endregion
 
     /// <summary>
-    ///     Sets this instance to the unsignaled state.
+    /// Sets this instance to the unsignaled state.
     /// </summary>
     public abstract void Reset();
 }

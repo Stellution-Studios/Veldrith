@@ -1,36 +1,82 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Vulkan;
-using static Vulkan.VulkanNative;
 using static Veldrith.Vk.VulkanUtil;
+using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
 internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
+
+    /// <summary>
+    /// Represents the depthFormat field.
+    /// </summary>
     private readonly PixelFormat? depthFormat;
 
+    /// <summary>
+    /// Represents the gd field.
+    /// </summary>
     private readonly VkGraphicsDevice gd;
 
+    /// <summary>
+    /// Represents the _depthAttachment field.
+    /// </summary>
     private FramebufferAttachment? _depthAttachment;
+
+    /// <summary>
+    /// Represents the _desiredHeight field.
+    /// </summary>
     private uint _desiredHeight;
+
+    /// <summary>
+    /// Represents the _desiredWidth field.
+    /// </summary>
     private uint _desiredWidth;
+
+    /// <summary>
+    /// Represents the _destroyed field.
+    /// </summary>
     private bool _destroyed;
+
+    /// <summary>
+    /// Represents the _name field.
+    /// </summary>
     private string _name;
+
+    /// <summary>
+    /// Represents the _outputDescription field.
+    /// </summary>
     private OutputDescription _outputDescription;
+
+    /// <summary>
+    /// Represents the _scColorTextures field.
+    /// </summary>
     private FramebufferAttachment[][] _scColorTextures;
+
+    /// <summary>
+    /// Represents the _scExtent field.
+    /// </summary>
     private VkExtent2D _scExtent;
 
+    /// <summary>
+    /// Represents the _scFramebuffers field.
+    /// </summary>
     private VkFramebuffer[] _scFramebuffers;
+
+    /// <summary>
+    /// Represents the _scImageFormat field.
+    /// </summary>
     private VkFormat _scImageFormat;
+
+    /// <summary>
+    /// Represents the _scImages field.
+    /// </summary>
     private VkImage[] _scImages = { };
 
-    public VkSwapchainFramebuffer(
-        VkGraphicsDevice gd,
-        VkSwapchain swapchain,
-        VkSurfaceKHR surface,
-        uint width,
-        uint height,
-        PixelFormat? depthFormat) {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="VkSwapchainFramebuffer" /> class.
+    /// </summary>
+    public VkSwapchainFramebuffer(VkGraphicsDevice gd, VkSwapchain swapchain, VkSurfaceKHR surface, uint width, uint height, PixelFormat? depthFormat) {
         this.gd = gd;
         this.Swapchain = swapchain;
         this.depthFormat = depthFormat;
@@ -38,33 +84,85 @@ internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
         this.AttachmentCount = depthFormat.HasValue ? 2u : 1u; // 1 Color + 1 Depth
     }
 
+    /// <summary>
+    /// Represents the CurrentFramebuffer field.
+    /// </summary>
     public override Vulkan.VkFramebuffer CurrentFramebuffer =>
         this._scFramebuffers[(int)this.ImageIndex].CurrentFramebuffer;
 
+    /// <summary>
+    /// Gets or sets RenderPassNoClearInit.
+    /// </summary>
     public override VkRenderPass RenderPassNoClearInit => this._scFramebuffers[0].RenderPassNoClearInit;
+
+    /// <summary>
+    /// Gets or sets RenderPassNoClearLoad.
+    /// </summary>
     public override VkRenderPass RenderPassNoClearLoad => this._scFramebuffers[0].RenderPassNoClearLoad;
+
+    /// <summary>
+    /// Gets or sets RenderPassClear.
+    /// </summary>
     public override VkRenderPass RenderPassClear => this._scFramebuffers[0].RenderPassClear;
 
+    /// <summary>
+    /// Gets or sets ColorTargets.
+    /// </summary>
     public override IReadOnlyList<FramebufferAttachment> ColorTargets => this._scColorTextures[(int)this.ImageIndex];
 
+    /// <summary>
+    /// Gets or sets DepthTarget.
+    /// </summary>
     public override FramebufferAttachment? DepthTarget => this._depthAttachment;
 
+    /// <summary>
+    /// Gets or sets RenderableWidth.
+    /// </summary>
     public override uint RenderableWidth => this._scExtent.width;
+
+    /// <summary>
+    /// Gets or sets RenderableHeight.
+    /// </summary>
     public override uint RenderableHeight => this._scExtent.height;
 
+    /// <summary>
+    /// Gets or sets Width.
+    /// </summary>
     public override uint Width => this._desiredWidth;
+
+    /// <summary>
+    /// Gets or sets Height.
+    /// </summary>
     public override uint Height => this._desiredHeight;
 
+    /// <summary>
+    /// Gets or sets ImageIndex.
+    /// </summary>
     public uint ImageIndex { get; private set; }
 
+    /// <summary>
+    /// Gets or sets OutputDescription.
+    /// </summary>
     public override OutputDescription OutputDescription => this._outputDescription;
 
+    /// <summary>
+    /// Gets or sets AttachmentCount.
+    /// </summary>
     public override uint AttachmentCount { get; }
 
+    /// <summary>
+    /// Gets or sets Swapchain.
+    /// </summary>
     public VkSwapchain Swapchain { get; }
 
+    /// <summary>
+    /// Gets or sets IsDisposed.
+    /// </summary>
     public override bool IsDisposed => this._destroyed;
 
+    /// <summary>
+    /// Gets or sets Name.
+    /// </summary>
     public override string Name {
         get => this._name;
         set {
@@ -73,6 +171,9 @@ internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
         }
     }
 
+    /// <summary>
+    /// Executes TransitionToIntermediateLayout.
+    /// </summary>
     public override void TransitionToIntermediateLayout(VkCommandBuffer cb) {
         for (int i = 0; i < this.ColorTargets.Count; i++) {
             FramebufferAttachment ca = this.ColorTargets[i];
@@ -81,6 +182,9 @@ internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
         }
     }
 
+    /// <summary>
+    /// Executes TransitionToFinalLayout.
+    /// </summary>
     public override void TransitionToFinalLayout(VkCommandBuffer cb) {
         for (int i = 0; i < this.ColorTargets.Count; i++) {
             FramebufferAttachment ca = this.ColorTargets[i];
@@ -89,16 +193,17 @@ internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
         }
     }
 
+    /// <summary>
+    /// Executes SetImageIndex.
+    /// </summary>
     internal void SetImageIndex(uint index) {
         this.ImageIndex = index;
     }
 
-    internal void SetNewSwapchain(
-        VkSwapchainKHR deviceSwapchain,
-        uint width,
-        uint height,
-        VkSurfaceFormatKHR surfaceFormat,
-        VkExtent2D swapchainExtent) {
+    /// <summary>
+    /// Executes SetNewSwapchain.
+    /// </summary>
+    internal void SetNewSwapchain(VkSwapchainKHR deviceSwapchain, uint width, uint height, VkSurfaceFormatKHR surfaceFormat, VkExtent2D swapchainExtent) {
         this._desiredWidth = width;
         this._desiredHeight = height;
 
@@ -122,6 +227,9 @@ internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
         this._outputDescription = OutputDescription.CreateFromFramebuffer(this);
     }
 
+    /// <summary>
+    /// Executes DisposeCore.
+    /// </summary>
     protected override void DisposeCore() {
         if (!this._destroyed) {
             this._destroyed = true;
@@ -130,6 +238,9 @@ internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
         }
     }
 
+    /// <summary>
+    /// Executes DestroySwapchainFramebuffers.
+    /// </summary>
     private void DestroySwapchainFramebuffers() {
         if (this._scFramebuffers != null) {
             for (int i = 0; i < this._scFramebuffers.Length; i++) {
@@ -141,19 +252,20 @@ internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
         }
     }
 
+    /// <summary>
+    /// Executes CreateDepthTexture.
+    /// </summary>
     private void CreateDepthTexture() {
         if (this.depthFormat.HasValue) {
             this._depthAttachment?.Target.Dispose();
-            VkTexture depthTexture = (VkTexture)this.gd.ResourceFactory.CreateTexture(TextureDescription.Texture2D(
-                Math.Max(1, this._scExtent.width),
-                Math.Max(1, this._scExtent.height),
-                1,
-                1, this.depthFormat.Value,
-                TextureUsage.DepthStencil));
+            VkTexture depthTexture = (VkTexture)this.gd.ResourceFactory.CreateTexture(TextureDescription.Texture2D(Math.Max(1, this._scExtent.width), Math.Max(1, this._scExtent.height), 1, 1, this.depthFormat.Value, TextureUsage.DepthStencil));
             this._depthAttachment = new FramebufferAttachment(depthTexture, 0);
         }
     }
 
+    /// <summary>
+    /// Executes CreateFramebuffers.
+    /// </summary>
     private void CreateFramebuffers() {
         if (this._scFramebuffers != null) {
             for (int i = 0; i < this._scFramebuffers.Length; i++) {
@@ -168,15 +280,7 @@ internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
         Util.EnsureArrayMinimumSize(ref this._scColorTextures, (uint)this._scImages.Length);
 
         for (uint i = 0; i < this._scImages.Length; i++) {
-            VkTexture colorTex = new(this.gd,
-                Math.Max(1, this._scExtent.width),
-                Math.Max(1, this._scExtent.height),
-                1,
-                1,
-                this._scImageFormat,
-                TextureUsage.RenderTarget,
-                TextureSampleCount.Count1,
-                this._scImages[i]);
+            VkTexture colorTex = new(this.gd, Math.Max(1, this._scExtent.width), Math.Max(1, this._scExtent.height), 1, 1, this._scImageFormat, TextureUsage.RenderTarget, TextureSampleCount.Count1, this._scImages[i]);
             FramebufferDescription desc = new(this._depthAttachment?.Target, colorTex);
             VkFramebuffer fb = new(this.gd, ref desc, true);
             this._scFramebuffers[i] = fb;
