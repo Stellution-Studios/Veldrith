@@ -8,8 +8,9 @@ namespace Veldrith;
 public sealed class BackendInfoD3D12 {
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="BackendInfoD3D12" /> class.
+    /// Initializes a new instance of the <see cref="BackendInfoD3D12" /> type.
     /// </summary>
+    /// <param name="device">The value of device.</param>
     internal BackendInfoD3D12(IntPtr device) {
         this.Device = device;
     }

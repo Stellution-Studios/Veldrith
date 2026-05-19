@@ -6,8 +6,27 @@ namespace Veldrith;
 public class GraphicsDeviceFeatures {
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="GraphicsDeviceFeatures" /> class.
+    /// Initializes a new instance of the <see cref="GraphicsDeviceFeatures" /> type.
     /// </summary>
+    /// <param name="computeShader">The value of computeShader.</param>
+    /// <param name="geometryShader">The value of geometryShader.</param>
+    /// <param name="tessellationShaders">The value of tessellationShaders.</param>
+    /// <param name="multipleViewports">The value of multipleViewports.</param>
+    /// <param name="samplerLodBias">The value of samplerLodBias.</param>
+    /// <param name="drawBaseVertex">The value of drawBaseVertex.</param>
+    /// <param name="drawBaseInstance">The value of drawBaseInstance.</param>
+    /// <param name="drawIndirect">The value of drawIndirect.</param>
+    /// <param name="drawIndirectBaseInstance">The value of drawIndirectBaseInstance.</param>
+    /// <param name="fillModeWireframe">The value of fillModeWireframe.</param>
+    /// <param name="samplerAnisotropy">The value of samplerAnisotropy.</param>
+    /// <param name="depthClipDisable">The value of depthClipDisable.</param>
+    /// <param name="texture1D">The value of texture1D.</param>
+    /// <param name="independentBlend">The value of independentBlend.</param>
+    /// <param name="structuredBuffer">The value of structuredBuffer.</param>
+    /// <param name="subsetTextureView">The value of subsetTextureView.</param>
+    /// <param name="commandListDebugMarkers">The value of commandListDebugMarkers.</param>
+    /// <param name="bufferRangeBinding">The value of bufferRangeBinding.</param>
+    /// <param name="shaderFloat64">The value of shaderFloat64.</param>
     internal GraphicsDeviceFeatures(bool computeShader, bool geometryShader, bool tessellationShaders, bool multipleViewports, bool samplerLodBias, bool drawBaseVertex, bool drawBaseInstance, bool drawIndirect, bool drawIndirectBaseInstance, bool fillModeWireframe, bool samplerAnisotropy, bool depthClipDisable, bool texture1D, bool independentBlend, bool structuredBuffer, bool subsetTextureView, bool commandListDebugMarkers, bool bufferRangeBinding, bool shaderFloat64) {
         this.ComputeShader = computeShader;
         this.GeometryShader = geometryShader;

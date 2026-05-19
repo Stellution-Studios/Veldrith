@@ -14,8 +14,9 @@ public struct MTLPipelineBufferDescriptor {
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MTLPipelineBufferDescriptor" /> class.
+    /// Initializes a new instance of the <see cref="MTLPipelineBufferDescriptor" /> type.
     /// </summary>
+    /// <param name="ptr">The value of ptr.</param>
     public MTLPipelineBufferDescriptor(IntPtr ptr) {
         this.NativePtr = ptr;
     }

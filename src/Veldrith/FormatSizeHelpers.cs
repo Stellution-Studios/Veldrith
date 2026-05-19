@@ -8,13 +8,10 @@ namespace Veldrith;
 public static class FormatSizeHelpers {
 
     /// <summary>
-    /// Given a pixel format, returns the number of bytes required to store
-    /// a single pixel.
-    /// Compressed formats may not be used with this method as the number of
-    /// bytes per pixel is variable.
+    /// Performs the GetSizeInBytes operation.
     /// </summary>
-    /// <param name="format">An uncompressed pixel format</param>
-    /// <returns>The number of bytes required to store a single pixel in the given format</returns>
+    /// <param name="format">The value of format.</param>
+    /// <returns>The result of the GetSizeInBytes operation.</returns>
     public static uint GetSizeInBytes(PixelFormat format) {
         switch (format) {
             case PixelFormat.R8UNorm: case PixelFormat.R8SNorm: case PixelFormat.R8UInt: case PixelFormat.R8SInt: return 1;
@@ -54,11 +51,10 @@ public static class FormatSizeHelpers {
     }
 
     /// <summary>
-    /// Given a vertex element format, returns the number of bytes required
-    /// to store an element in that format.
+    /// Performs the GetSizeInBytes operation.
     /// </summary>
-    /// <param name="format">A vertex element format</param>
-    /// <returns>The number of bytes required to store an element in the given format</returns>
+    /// <param name="format">The value of format.</param>
+    /// <returns>The result of the GetSizeInBytes operation.</returns>
     public static uint GetSizeInBytes(VertexElementFormat format) {
         switch (format) {
             case VertexElementFormat.Byte2Norm: case VertexElementFormat.Byte2: case VertexElementFormat.SByte2Norm: case VertexElementFormat.SByte2: case VertexElementFormat.Half1: return 2;

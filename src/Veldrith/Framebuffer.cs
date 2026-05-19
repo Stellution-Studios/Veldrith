@@ -10,13 +10,15 @@ namespace Veldrith;
 public abstract class Framebuffer : IDeviceResource, IDisposable {
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="Framebuffer" /> class.
+    /// Initializes a new instance of the <see cref="Framebuffer" /> type.
     /// </summary>
     internal Framebuffer() { }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="Framebuffer" /> class.
+    /// Initializes a new instance of the <see cref="Framebuffer" /> type.
     /// </summary>
+    /// <param name="depthTargetDesc">The value of depthTargetDesc.</param>
+    /// <param name="colorTargetDescs">The value of colorTargetDescs.</param>
     internal Framebuffer(FramebufferAttachmentDescription? depthTargetDesc, IReadOnlyList<FramebufferAttachmentDescription> colorTargetDescs) {
 
         if (depthTargetDesc != null) {
@@ -93,7 +95,7 @@ public abstract class Framebuffer : IDeviceResource, IDisposable {
     #region Disposal
 
     /// <summary>
-    /// Frees unmanaged device resources controlled by this instance.
+    /// Performs the Dispose operation.
     /// </summary>
     public abstract void Dispose();
 

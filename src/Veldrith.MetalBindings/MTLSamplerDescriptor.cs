@@ -9,8 +9,10 @@ namespace Veldrith.MetalBindings;
 public struct MTLSamplerDescriptor {
 
     /// <summary>
-    /// Represents the s_class field.
+    /// Performs the new operation.
     /// </summary>
+    /// <param name="MTLSamplerDescriptor">The value of MTLSamplerDescriptor.</param>
+    /// <returns>The result of the new operation.</returns>
     private static readonly ObjCClass s_class = new(nameof(MTLSamplerDescriptor));
 
     /// <summary>
@@ -19,8 +21,9 @@ public struct MTLSamplerDescriptor {
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Executes New.
+    /// Performs the New operation.
     /// </summary>
+    /// <returns>The result of the New operation.</returns>
     public static MTLSamplerDescriptor New() {
         return s_class.AllocInit<MTLSamplerDescriptor>();
     }

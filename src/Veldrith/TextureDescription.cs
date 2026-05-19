@@ -59,23 +59,16 @@ public struct TextureDescription : IEquatable<TextureDescription> {
     public TextureSampleCount SampleCount;
 
     /// <summary>
-    /// Contsructs a new TextureDescription describing a non-multisampled <see cref="Texture" />.
+    /// Initializes a new instance of the <see cref="TextureDescription" /> type.
     /// </summary>
-    /// <param name="width">The total width, in texels.</param>
-    /// <param name="height">The total height, in texels.</param>
-    /// <param name="depth">The total depth, in texels.</param>
-    /// <param name="mipLevels">The number of mipmap levels.</param>
-    /// <param name="arrayLayers">The number of array layers.</param>
-    /// <param name="format">The format of individual texture elements.</param>
-    /// <param name="usage">
-    /// Controls how the Texture is permitted to be used. If the Texture will be sampled from a shader,
-    /// then <see cref="TextureUsage.Sampled" /> must be included. If the Texture will be used as a depth target in a
-    /// <see cref="Framebuffer" />, then <see cref="TextureUsage.DepthStencil" /> must be included. If the Texture will be
-    /// used
-    /// as a color target in a <see cref="Framebuffer" />, then <see cref="TextureUsage.RenderTarget" /> must be included.
-    /// If the Texture will be used as a 2D cubemap, then <see cref="TextureUsage.Cubemap" /> must be included.
-    /// </param>
-    /// <param name="type">The type of Texture to create.</param>
+    /// <param name="width">The value of width.</param>
+    /// <param name="height">The value of height.</param>
+    /// <param name="depth">The value of depth.</param>
+    /// <param name="mipLevels">The value of mipLevels.</param>
+    /// <param name="arrayLayers">The value of arrayLayers.</param>
+    /// <param name="format">The value of format.</param>
+    /// <param name="usage">The value of usage.</param>
+    /// <param name="type">The value of type.</param>
     public TextureDescription(uint width, uint height, uint depth, uint mipLevels, uint arrayLayers, PixelFormat format, TextureUsage usage, TextureType type) {
         this.Width = width;
         this.Height = height;
@@ -89,27 +82,17 @@ public struct TextureDescription : IEquatable<TextureDescription> {
     }
 
     /// <summary>
-    /// Contsructs a new TextureDescription.
+    /// Initializes a new instance of the <see cref="TextureDescription" /> type.
     /// </summary>
-    /// <param name="width">The total width, in texels.</param>
-    /// <param name="height">The total height, in texels.</param>
-    /// <param name="depth">The total depth, in texels.</param>
-    /// <param name="mipLevels">The number of mipmap levels.</param>
-    /// <param name="arrayLayers">The number of array layers.</param>
-    /// <param name="format">The format of individual texture elements.</param>
-    /// <param name="usage">
-    /// Controls how the Texture is permitted to be used. If the Texture will be sampled from a shader,
-    /// then <see cref="TextureUsage.Sampled" /> must be included. If the Texture will be used as a depth target in a
-    /// <see cref="Framebuffer" />, then <see cref="TextureUsage.DepthStencil" /> must be included. If the Texture will be
-    /// used
-    /// as a color target in a <see cref="Framebuffer" />, then <see cref="TextureUsage.RenderTarget" /> must be included.
-    /// If the Texture will be used as a 2D cubemap, then <see cref="TextureUsage.Cubemap" /> must be included.
-    /// </param>
-    /// <param name="type">The type of Texture to create.</param>
-    /// <param name="sampleCount">
-    /// The number of samples. If any other value than <see cref="TextureSampleCount.Count1" /> is
-    /// provided, then this describes a multisample texture.
-    /// </param>
+    /// <param name="width">The value of width.</param>
+    /// <param name="height">The value of height.</param>
+    /// <param name="depth">The value of depth.</param>
+    /// <param name="mipLevels">The value of mipLevels.</param>
+    /// <param name="arrayLayers">The value of arrayLayers.</param>
+    /// <param name="format">The value of format.</param>
+    /// <param name="usage">The value of usage.</param>
+    /// <param name="type">The value of type.</param>
+    /// <param name="sampleCount">The value of sampleCount.</param>
     public TextureDescription(uint width, uint height, uint depth, uint mipLevels, uint arrayLayers, PixelFormat format, TextureUsage usage, TextureType type, TextureSampleCount sampleCount) {
         this.Width = width;
         this.Height = height;
@@ -123,95 +106,66 @@ public struct TextureDescription : IEquatable<TextureDescription> {
     }
 
     /// <summary>
-    /// Creates a description for a non-multisampled 1D Texture.
+    /// Performs the Texture1D operation.
     /// </summary>
-    /// <param name="width">The total width, in texels.</param>
-    /// <param name="mipLevels">The number of mipmap levels.</param>
-    /// <param name="arrayLayers">The number of array layers.</param>
-    /// <param name="format">The format of individual texture elements.</param>
-    /// <param name="usage">
-    /// Controls how the Texture is permitted to be used. If the Texture will be sampled from a shader,
-    /// then <see cref="TextureUsage.Sampled" /> must be included. If the Texture will be used as a depth target in a
-    /// <see cref="Framebuffer" />, then <see cref="TextureUsage.DepthStencil" /> must be included. If the Texture will be
-    /// used
-    /// as a color target in a <see cref="Framebuffer" />, then <see cref="TextureUsage.RenderTarget" /> must be included.
-    /// </param>
-    /// <returns>A new TextureDescription for a non-multisampled 1D Texture.</returns>
+    /// <param name="width">The value of width.</param>
+    /// <param name="mipLevels">The value of mipLevels.</param>
+    /// <param name="arrayLayers">The value of arrayLayers.</param>
+    /// <param name="format">The value of format.</param>
+    /// <param name="usage">The value of usage.</param>
+    /// <returns>The result of the Texture1D operation.</returns>
     public static TextureDescription Texture1D(uint width, uint mipLevels, uint arrayLayers, PixelFormat format, TextureUsage usage) {
         return new TextureDescription(width, 1, 1, mipLevels, arrayLayers, format, usage, TextureType.Texture1D, TextureSampleCount.Count1);
     }
 
     /// <summary>
-    /// Creates a description for a non-multisampled 2D Texture.
+    /// Performs the Texture2D operation.
     /// </summary>
-    /// <param name="width">The total width, in texels.</param>
-    /// <param name="height">The total height, in texels.</param>
-    /// <param name="mipLevels">The number of mipmap levels.</param>
-    /// <param name="arrayLayers">The number of array layers.</param>
-    /// <param name="format">The format of individual texture elements.</param>
-    /// <param name="usage">
-    /// Controls how the Texture is permitted to be used. If the Texture will be sampled from a shader,
-    /// then <see cref="TextureUsage.Sampled" /> must be included. If the Texture will be used as a depth target in a
-    /// <see cref="Framebuffer" />, then <see cref="TextureUsage.DepthStencil" /> must be included. If the Texture will be
-    /// used
-    /// as a color target in a <see cref="Framebuffer" />, then <see cref="TextureUsage.RenderTarget" /> must be included.
-    /// If the Texture will be used as a 2D cubemap, then <see cref="TextureUsage.Cubemap" /> must be included.
-    /// </param>
-    /// <returns>A new TextureDescription for a non-multisampled 2D Texture.</returns>
+    /// <param name="width">The value of width.</param>
+    /// <param name="height">The value of height.</param>
+    /// <param name="mipLevels">The value of mipLevels.</param>
+    /// <param name="arrayLayers">The value of arrayLayers.</param>
+    /// <param name="format">The value of format.</param>
+    /// <param name="usage">The value of usage.</param>
+    /// <returns>The result of the Texture2D operation.</returns>
     public static TextureDescription Texture2D(uint width, uint height, uint mipLevels, uint arrayLayers, PixelFormat format, TextureUsage usage) {
         return new TextureDescription(width, height, 1, mipLevels, arrayLayers, format, usage, TextureType.Texture2D, TextureSampleCount.Count1);
     }
 
     /// <summary>
-    /// Creates a description for a 2D Texture.
+    /// Performs the Texture2D operation.
     /// </summary>
-    /// <param name="width">The total width, in texels.</param>
-    /// <param name="height">The total height, in texels.</param>
-    /// <param name="mipLevels">The number of mipmap levels.</param>
-    /// <param name="arrayLayers">The number of array layers.</param>
-    /// <param name="format">The format of individual texture elements.</param>
-    /// <param name="usage">
-    /// Controls how the Texture is permitted to be used. If the Texture will be sampled from a shader,
-    /// then <see cref="TextureUsage.Sampled" /> must be included. If the Texture will be used as a depth target in a
-    /// <see cref="Framebuffer" />, then <see cref="TextureUsage.DepthStencil" /> must be included. If the Texture will be
-    /// used
-    /// as a color target in a <see cref="Framebuffer" />, then <see cref="TextureUsage.RenderTarget" /> must be included.
-    /// If the Texture will be used as a 2D cubemap, then <see cref="TextureUsage.Cubemap" /> must be included.
-    /// </param>
-    /// <param name="sampleCount">
-    /// The number of samples. If any other value than <see cref="TextureSampleCount.Count1" /> is
-    /// provided, then this describes a multisample texture.
-    /// </param>
-    /// <returns>A new TextureDescription for a 2D Texture.</returns>
+    /// <param name="width">The value of width.</param>
+    /// <param name="height">The value of height.</param>
+    /// <param name="mipLevels">The value of mipLevels.</param>
+    /// <param name="arrayLayers">The value of arrayLayers.</param>
+    /// <param name="format">The value of format.</param>
+    /// <param name="usage">The value of usage.</param>
+    /// <param name="sampleCount">The value of sampleCount.</param>
+    /// <returns>The result of the Texture2D operation.</returns>
     public static TextureDescription Texture2D(uint width, uint height, uint mipLevels, uint arrayLayers, PixelFormat format, TextureUsage usage, TextureSampleCount sampleCount) {
         return new TextureDescription(width, height, 1, mipLevels, arrayLayers, format, usage, TextureType.Texture2D, sampleCount);
     }
 
     /// <summary>
-    /// Creates a description for a 3D Texture.
+    /// Performs the Texture3D operation.
     /// </summary>
-    /// <param name="width">The total width, in texels.</param>
-    /// <param name="height">The total height, in texels.</param>
-    /// <param name="depth">The total depth, in texels.</param>
-    /// <param name="mipLevels">The number of mipmap levels.</param>
-    /// <param name="format">The format of individual texture elements.</param>
-    /// <param name="usage">
-    /// Controls how the Texture is permitted to be used. If the Texture will be sampled from a shader,
-    /// then <see cref="TextureUsage.Sampled" /> must be included. If the Texture will be used as a depth target in a
-    /// <see cref="Framebuffer" />, then <see cref="TextureUsage.DepthStencil" /> must be included. If the Texture will be
-    /// used
-    /// as a color target in a <see cref="Framebuffer" />, then <see cref="TextureUsage.RenderTarget" /> must be included.
-    /// </param>
-    /// <returns>A new TextureDescription for a 3D Texture.</returns>
+    /// <param name="width">The value of width.</param>
+    /// <param name="height">The value of height.</param>
+    /// <param name="depth">The value of depth.</param>
+    /// <param name="mipLevels">The value of mipLevels.</param>
+    /// <param name="format">The value of format.</param>
+    /// <param name="usage">The value of usage.</param>
+    /// <returns>The result of the Texture3D operation.</returns>
     public static TextureDescription Texture3D(uint width, uint height, uint depth, uint mipLevels, PixelFormat format, TextureUsage usage) {
         return new TextureDescription(width, height, depth, mipLevels, 1, format, usage, TextureType.Texture3D, TextureSampleCount.Count1);
     }
 
     /// <summary>
-    /// Element-wise equality.
+    /// Performs the Equals operation.
     /// </summary>
-    /// <param name="other">The instance to compare to.</param>
-    /// <returns>True if all elements are equal; false otherswise.</returns>
+    /// <param name="other">The value of other.</param>
+    /// <returns>The result of the Equals operation.</returns>
     public bool Equals(TextureDescription other) {
         return this.Width.Equals(other.Width)
                && this.Height.Equals(other.Height)
@@ -225,9 +179,9 @@ public struct TextureDescription : IEquatable<TextureDescription> {
     }
 
     /// <summary>
-    /// Returns the hash code for this instance.
+    /// Performs the GetHashCode operation.
     /// </summary>
-    /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
+    /// <returns>The result of the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(this.Width.GetHashCode(), this.Height.GetHashCode(), this.Depth.GetHashCode(), this.MipLevels.GetHashCode(), this.ArrayLayers.GetHashCode(), (int)this.Format, (int)this.Usage, (int)this.Type, (int)this.SampleCount);
     }

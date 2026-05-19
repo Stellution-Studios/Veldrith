@@ -11,7 +11,7 @@ public enum CrossCompileTarget : uint {
     HLSL,
 
     /// <summary>
-    /// OpenGL-style GLSL, version 330 or 430.
+    /// GLSL source output, version 330 or 430.
     /// </summary>
     GLSL,
 
@@ -20,4 +20,3 @@ public enum CrossCompileTarget : uint {
     /// </summary>
     MSL
 }
-

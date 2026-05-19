@@ -29,8 +29,10 @@ internal unsafe class VkFence : Fence {
     private string _name;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="VkFence" /> class.
+    /// Initializes a new instance of the <see cref="VkFence" /> type.
     /// </summary>
+    /// <param name="gd">The value of gd.</param>
+    /// <param name="signaled">The value of signaled.</param>
     public VkFence(VkGraphicsDevice gd, bool signaled) {
         this.gd = gd;
         VkFenceCreateInfo fenceCi = VkFenceCreateInfo.New();
@@ -68,7 +70,7 @@ internal unsafe class VkFence : Fence {
     #region Disposal
 
     /// <summary>
-    /// Executes Dispose.
+    /// Performs the Dispose operation.
     /// </summary>
     public override void Dispose() {
         if (!this._destroyed) {
@@ -80,7 +82,7 @@ internal unsafe class VkFence : Fence {
     #endregion
 
     /// <summary>
-    /// Executes Reset.
+    /// Performs the Reset operation.
     /// </summary>
     public override void Reset() {
         this.gd.ResetFence(this);

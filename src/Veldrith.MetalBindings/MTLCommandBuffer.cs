@@ -17,64 +17,73 @@ public struct MTLCommandBuffer : IEquatable<MTLCommandBuffer> {
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Executes renderCommandEncoderWithDescriptor.
+    /// Performs the renderCommandEncoderWithDescriptor operation.
     /// </summary>
+    /// <param name="desc">The value of desc.</param>
+    /// <returns>The result of the renderCommandEncoderWithDescriptor operation.</returns>
     public MTLRenderCommandEncoder renderCommandEncoderWithDescriptor(MTLRenderPassDescriptor desc) {
         return new MTLRenderCommandEncoder(IntPtr_objc_msgSend(this.NativePtr, sel_renderCommandEncoderWithDescriptor, desc.NativePtr));
     }
 
     /// <summary>
-    /// Executes presentDrawable.
+    /// Performs the presentDrawable operation.
     /// </summary>
+    /// <param name="drawable">The value of drawable.</param>
     public void presentDrawable(IntPtr drawable) {
         objc_msgSend(this.NativePtr, sel_presentDrawable, drawable);
     }
 
     /// <summary>
-    /// Executes commit.
+    /// Performs the commit operation.
     /// </summary>
     public void commit() {
         objc_msgSend(this.NativePtr, sel_commit);
     }
 
     /// <summary>
-    /// Executes blitCommandEncoder.
+    /// Performs the blitCommandEncoder operation.
     /// </summary>
+    /// <returns>The result of the blitCommandEncoder operation.</returns>
     public MTLBlitCommandEncoder blitCommandEncoder() {
         return objc_msgSend<MTLBlitCommandEncoder>(this.NativePtr, sel_blitCommandEncoder);
     }
 
     /// <summary>
-    /// Executes computeCommandEncoder.
+    /// Performs the computeCommandEncoder operation.
     /// </summary>
+    /// <returns>The result of the computeCommandEncoder operation.</returns>
     public MTLComputeCommandEncoder computeCommandEncoder() {
         return objc_msgSend<MTLComputeCommandEncoder>(this.NativePtr, sel_computeCommandEncoder);
     }
 
     /// <summary>
-    /// Executes waitUntilCompleted.
+    /// Performs the waitUntilCompleted operation.
     /// </summary>
     public void waitUntilCompleted() {
         objc_msgSend(this.NativePtr, sel_waitUntilCompleted);
     }
 
     /// <summary>
-    /// Executes addCompletedHandler.
+    /// Performs the addCompletedHandler operation.
     /// </summary>
+    /// <param name="block">The value of block.</param>
     public void addCompletedHandler(MTLCommandBufferHandler block) {
         objc_msgSend(this.NativePtr, sel_addCompletedHandler, block);
     }
 
     /// <summary>
-    /// Executes addCompletedHandler.
+    /// Performs the addCompletedHandler operation.
     /// </summary>
+    /// <param name="block">The value of block.</param>
     public void addCompletedHandler(IntPtr block) {
         objc_msgSend(this.NativePtr, sel_addCompletedHandler, block);
     }
 
     /// <summary>
-    /// Gets or sets status.
+    /// Performs the uint_objc_msgSend operation.
     /// </summary>
+    /// <param name="MTLCommandBufferStatus">The value of MTLCommandBufferStatus.</param>
+    /// <returns>The result of the uint_objc_msgSend operation.</returns>
     public MTLCommandBufferStatus status => (MTLCommandBufferStatus)uint_objc_msgSend(this.NativePtr, sel_status);
 
     /// <summary>
@@ -118,22 +127,27 @@ public struct MTLCommandBuffer : IEquatable<MTLCommandBuffer> {
     private static readonly Selector sel_status = "status";
 
     /// <summary>
-    /// Executes Equals.
+    /// Performs the Equals operation.
     /// </summary>
+    /// <param name="other">The value of other.</param>
+    /// <returns>The result of the Equals operation.</returns>
     public bool Equals(MTLCommandBuffer other) {
         return this.NativePtr == other.NativePtr;
     }
 
     /// <summary>
-    /// Executes Equals.
+    /// Performs the Equals operation.
     /// </summary>
+    /// <param name="obj">The value of obj.</param>
+    /// <returns>The result of the Equals operation.</returns>
     public override bool Equals(object obj) {
         return obj is MTLCommandBuffer other && this.Equals(other);
     }
 
     /// <summary>
-    /// Executes GetHashCode.
+    /// Performs the GetHashCode operation.
     /// </summary>
+    /// <returns>The result of the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return this.NativePtr.GetHashCode();
     }

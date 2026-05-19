@@ -8,8 +8,9 @@ namespace Veldrith;
 public abstract class TextureView : IBindableResource, IDeviceResource, IDisposable {
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="TextureView" /> class.
+    /// Initializes a new instance of the <see cref="TextureView" /> type.
     /// </summary>
+    /// <param name="description">The value of description.</param>
     internal TextureView(ref TextureViewDescription description) {
         this.Target = description.Target;
         this.BaseMipLevel = description.BaseMipLevel;
@@ -64,7 +65,7 @@ public abstract class TextureView : IBindableResource, IDeviceResource, IDisposa
     #region Disposal
 
     /// <summary>
-    /// Frees unmanaged device resources controlled by this instance.
+    /// Performs the Dispose operation.
     /// </summary>
     public abstract void Dispose();
 

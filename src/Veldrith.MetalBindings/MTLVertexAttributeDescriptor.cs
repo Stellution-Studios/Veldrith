@@ -14,8 +14,9 @@ public struct MTLVertexAttributeDescriptor {
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MTLVertexAttributeDescriptor" /> class.
+    /// Initializes a new instance of the <see cref="MTLVertexAttributeDescriptor" /> type.
     /// </summary>
+    /// <param name="ptr">The value of ptr.</param>
     public MTLVertexAttributeDescriptor(IntPtr ptr) {
         this.NativePtr = ptr;
     }

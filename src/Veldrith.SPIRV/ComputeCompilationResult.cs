@@ -6,8 +6,10 @@ namespace Veldrith.SPIRV;
 public class ComputeCompilationResult {
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ComputeCompilationResult" /> class.
+    /// Initializes a new instance of the <see cref="ComputeCompilationResult" /> type.
     /// </summary>
+    /// <param name="computeCode">The value of computeCode.</param>
+    /// <param name="reflection">The value of reflection.</param>
     internal ComputeCompilationResult(string computeCode, SpirvReflection reflection) {
         this.ComputeShader = computeCode;
         this.Reflection = reflection;

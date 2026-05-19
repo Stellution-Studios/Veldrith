@@ -40,18 +40,24 @@ public struct PixelFormatProperties {
     private readonly uint sampleCounts;
 
     /// <summary>
-    /// Gets a value indicating whether or not the given <see cref="TextureSampleCount" /> is supported.
+    /// Performs the IsSampleCountSupported operation.
     /// </summary>
-    /// <param name="count">The <see cref="TextureSampleCount" /> to query.</param>
-    /// <returns>True if the sample count is supported; false otherwise.</returns>
+    /// <param name="count">The value of count.</param>
+    /// <returns>The result of the IsSampleCountSupported operation.</returns>
     public bool IsSampleCountSupported(TextureSampleCount count) {
         int bit = (int)count;
         return (this.sampleCounts & (1 << bit)) != 0;
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="PixelFormatProperties" /> class.
+    /// Initializes a new instance of the <see cref="PixelFormatProperties" /> type.
     /// </summary>
+    /// <param name="maxWidth">The value of maxWidth.</param>
+    /// <param name="maxHeight">The value of maxHeight.</param>
+    /// <param name="maxDepth">The value of maxDepth.</param>
+    /// <param name="maxMipLevels">The value of maxMipLevels.</param>
+    /// <param name="maxArrayLayers">The value of maxArrayLayers.</param>
+    /// <param name="sampleCounts">The value of sampleCounts.</param>
     internal PixelFormatProperties(uint maxWidth, uint maxHeight, uint maxDepth, uint maxMipLevels, uint maxArrayLayers, uint sampleCounts) {
         this.MaxWidth = maxWidth;
         this.MaxHeight = maxHeight;

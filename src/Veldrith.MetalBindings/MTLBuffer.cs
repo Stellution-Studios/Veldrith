@@ -16,8 +16,9 @@ public unsafe struct MTLBuffer {
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MTLBuffer" /> class.
+    /// Initializes a new instance of the <see cref="MTLBuffer" /> type.
     /// </summary>
+    /// <param name="ptr">The value of ptr.</param>
     public MTLBuffer(IntPtr ptr) {
         this.NativePtr = ptr;
     }
@@ -28,33 +29,40 @@ public unsafe struct MTLBuffer {
     public bool IsNull => this.NativePtr == IntPtr.Zero;
 
     /// <summary>
-    /// Executes contents.
+    /// Performs the contents operation.
     /// </summary>
+    /// <returns>The result of the contents operation.</returns>
     public void* contents() {
         return ObjectiveCRuntime.IntPtr_objc_msgSend(this.NativePtr, sel_contents).ToPointer();
     }
 
     /// <summary>
-    /// Gets or sets length.
+    /// Performs the UIntPtr_objc_msgSend operation.
     /// </summary>
+    /// <param name="NativePtr">The value of NativePtr.</param>
+    /// <param name="sel_length">The value of sel_length.</param>
+    /// <returns>The result of the UIntPtr_objc_msgSend operation.</returns>
     public UIntPtr length => ObjectiveCRuntime.UIntPtr_objc_msgSend(this.NativePtr, sel_length);
 
     /// <summary>
-    /// Executes didModifyRange.
+    /// Performs the didModifyRange operation.
     /// </summary>
+    /// <param name="range">The value of range.</param>
     public void didModifyRange(NSRange range) {
         ObjectiveCRuntime.objc_msgSend(this.NativePtr, sel_didModifyRange, range);
     }
 
     /// <summary>
-    /// Executes addDebugMarker.
+    /// Performs the addDebugMarker operation.
     /// </summary>
+    /// <param name="marker">The value of marker.</param>
+    /// <param name="range">The value of range.</param>
     public void addDebugMarker(NSString marker, NSRange range) {
         ObjectiveCRuntime.objc_msgSend(this.NativePtr, sel_addDebugMarker, marker.NativePtr, range);
     }
 
     /// <summary>
-    /// Executes removeAllDebugMarkers.
+    /// Performs the removeAllDebugMarkers operation.
     /// </summary>
     public void removeAllDebugMarkers() {
         ObjectiveCRuntime.objc_msgSend(this.NativePtr, sel_removeAllDebugMarkers);

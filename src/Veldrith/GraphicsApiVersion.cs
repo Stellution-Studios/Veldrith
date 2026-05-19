@@ -36,8 +36,12 @@ public readonly struct GraphicsApiVersion {
     public bool IsKnown => this.Major != 0 && this.Minor != 0 && this.Subminor != 0 && this.Patch != 0;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="GraphicsApiVersion" /> class.
+    /// Initializes a new instance of the <see cref="GraphicsApiVersion" /> type.
     /// </summary>
+    /// <param name="major">The value of major.</param>
+    /// <param name="minor">The value of minor.</param>
+    /// <param name="subminor">The value of subminor.</param>
+    /// <param name="patch">The value of patch.</param>
     public GraphicsApiVersion(int major, int minor, int subminor, int patch) {
         this.Major = major;
         this.Minor = minor;
@@ -46,11 +50,11 @@ public readonly struct GraphicsApiVersion {
     }
 
     /// <summary>
-    /// Executes ToString.
+    /// Performs the ToString operation.
     /// </summary>
+    /// <returns>The result of the ToString operation.</returns>
     public override string ToString() {
         return $"{this.Major}.{this.Minor}.{this.Subminor}.{this.Patch}";
     }
 
 }
-

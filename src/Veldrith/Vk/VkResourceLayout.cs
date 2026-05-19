@@ -32,12 +32,10 @@ internal unsafe class VkResourceLayout : ResourceLayout {
     /// <summary>
     /// Initializes a new instance of the <see cref="VkResourceLayout" /> class.
     /// </summary>
-    public VkResourceLayout(VkGraphicsDevice gd, ref ResourceLayoutDescription description)
-
-        /// <summary>
-        /// Executes base.
-        /// </summary>
-        : base(ref description) {
+    /// <param name="gd">The value of gd.</param>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the base operation.</returns>
+    public VkResourceLayout(VkGraphicsDevice gd, ref ResourceLayoutDescription description) : base(ref description) {
         this.gd = gd;
         VkDescriptorSetLayoutCreateInfo dslCi = VkDescriptorSetLayoutCreateInfo.New();
         ResourceLayoutElementDescription[] elements = description.Elements;
@@ -143,7 +141,7 @@ internal unsafe class VkResourceLayout : ResourceLayout {
     #region Disposal
 
     /// <summary>
-    /// Executes Dispose.
+    /// Performs the Dispose operation.
     /// </summary>
     public override void Dispose() {
         if (!this._disposed) {

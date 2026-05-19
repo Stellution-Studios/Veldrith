@@ -56,12 +56,9 @@ public struct GraphicsDeviceOptions {
     public bool SwapchainSrgbFormat;
 
     /// <summary>
-    /// Constructs a new GraphicsDeviceOptions for a device with no main Swapchain.
+    /// Initializes a new instance of the <see cref="GraphicsDeviceOptions" /> type.
     /// </summary>
-    /// <param name="debug">
-    /// Indicates whether the GraphicsDevice will support debug features, provided they are supported by
-    /// the host system.
-    /// </param>
+    /// <param name="debug">The value of debug.</param>
     public GraphicsDeviceOptions(bool debug) {
         this.Debug = debug;
         this.HasMainSwapchain = false;
@@ -74,20 +71,11 @@ public struct GraphicsDeviceOptions {
     }
 
     /// <summary>
-    /// Constructs a new GraphicsDeviceOptions for a device with a main Swapchain.
+    /// Initializes a new instance of the <see cref="GraphicsDeviceOptions" /> type.
     /// </summary>
-    /// <param name="debug">
-    /// Indicates whether the GraphicsDevice will enable debug features, provided they are supported by
-    /// the host system.
-    /// </param>
-    /// <param name="swapchainDepthFormat">
-    /// An optional <see cref="PixelFormat" /> to be used for the depth buffer of the
-    /// swapchain. If this value is null, then no depth buffer will be present on the swapchain.
-    /// </param>
-    /// <param name="syncToVerticalBlank">
-    /// Indicates whether the main Swapchain will be synchronized to the window system's
-    /// vertical refresh rate.
-    /// </param>
+    /// <param name="debug">The value of debug.</param>
+    /// <param name="swapchainDepthFormat">The value of swapchainDepthFormat.</param>
+    /// <param name="syncToVerticalBlank">The value of syncToVerticalBlank.</param>
     public GraphicsDeviceOptions(bool debug, PixelFormat? swapchainDepthFormat, bool syncToVerticalBlank) {
         this.Debug = debug;
         this.HasMainSwapchain = true;
@@ -100,21 +88,12 @@ public struct GraphicsDeviceOptions {
     }
 
     /// <summary>
-    /// Constructs a new GraphicsDeviceOptions for a device with a main Swapchain.
+    /// Initializes a new instance of the <see cref="GraphicsDeviceOptions" /> type.
     /// </summary>
-    /// <param name="debug">
-    /// Indicates whether the GraphicsDevice will enable debug features, provided they are supported by
-    /// the host system.
-    /// </param>
-    /// <param name="swapchainDepthFormat">
-    /// An optional <see cref="PixelFormat" /> to be used for the depth buffer of the
-    /// swapchain. If this value is null, then no depth buffer will be present on the swapchain.
-    /// </param>
-    /// <param name="syncToVerticalBlank">
-    /// Indicates whether the main Swapchain will be synchronized to the window system's
-    /// vertical refresh rate.
-    /// </param>
-    /// <param name="resourceBindingModel">Specifies which model the rendering backend should use for binding resources.</param>
+    /// <param name="debug">The value of debug.</param>
+    /// <param name="swapchainDepthFormat">The value of swapchainDepthFormat.</param>
+    /// <param name="syncToVerticalBlank">The value of syncToVerticalBlank.</param>
+    /// <param name="resourceBindingModel">The value of resourceBindingModel.</param>
     public GraphicsDeviceOptions(bool debug, PixelFormat? swapchainDepthFormat, bool syncToVerticalBlank, ResourceBindingModel resourceBindingModel) {
         this.Debug = debug;
         this.HasMainSwapchain = true;
@@ -127,24 +106,13 @@ public struct GraphicsDeviceOptions {
     }
 
     /// <summary>
-    /// Constructs a new GraphicsDeviceOptions for a device with a main Swapchain.
+    /// Initializes a new instance of the <see cref="GraphicsDeviceOptions" /> type.
     /// </summary>
-    /// <param name="debug">
-    /// Indicates whether the GraphicsDevice will enable debug features, provided they are supported by
-    /// the host system.
-    /// </param>
-    /// <param name="swapchainDepthFormat">
-    /// An optional <see cref="PixelFormat" /> to be used for the depth buffer of the
-    /// swapchain. If this value is null, then no depth buffer will be present on the swapchain.
-    /// </param>
-    /// <param name="syncToVerticalBlank">
-    /// Indicates whether the main Swapchain will be synchronized to the window system's
-    /// vertical refresh rate.
-    /// </param>
-    /// <param name="resourceBindingModel">Specifies which model the rendering backend should use for binding resources.</param>
-    /// <param name="preferDepthRangeZeroToOne">
-    /// Indicates whether a 0-to-1 depth range mapping is preferred.
-    /// </param>
+    /// <param name="debug">The value of debug.</param>
+    /// <param name="swapchainDepthFormat">The value of swapchainDepthFormat.</param>
+    /// <param name="syncToVerticalBlank">The value of syncToVerticalBlank.</param>
+    /// <param name="resourceBindingModel">The value of resourceBindingModel.</param>
+    /// <param name="preferDepthRangeZeroToOne">The value of preferDepthRangeZeroToOne.</param>
     public GraphicsDeviceOptions(bool debug, PixelFormat? swapchainDepthFormat, bool syncToVerticalBlank, ResourceBindingModel resourceBindingModel, bool preferDepthRangeZeroToOne) {
         this.Debug = debug;
         this.HasMainSwapchain = true;
@@ -157,28 +125,14 @@ public struct GraphicsDeviceOptions {
     }
 
     /// <summary>
-    /// Constructs a new GraphicsDeviceOptions for a device with a main Swapchain.
+    /// Initializes a new instance of the <see cref="GraphicsDeviceOptions" /> type.
     /// </summary>
-    /// <param name="debug">
-    /// Indicates whether the GraphicsDevice will enable debug features, provided they are supported by
-    /// the host system.
-    /// </param>
-    /// <param name="swapchainDepthFormat">
-    /// An optional <see cref="PixelFormat" /> to be used for the depth buffer of the
-    /// swapchain. If this value is null, then no depth buffer will be present on the swapchain.
-    /// </param>
-    /// <param name="syncToVerticalBlank">
-    /// Indicates whether the main Swapchain will be synchronized to the window system's
-    /// vertical refresh rate.
-    /// </param>
-    /// <param name="resourceBindingModel">Specifies which model the rendering backend should use for binding resources.</param>
-    /// <param name="preferDepthRangeZeroToOne">
-    /// Indicates whether a 0-to-1 depth range mapping is preferred.
-    /// </param>
-    /// <param name="preferStandardClipSpaceYDirection">
-    /// Indicates whether a bottom-to-top-increasing clip space Y direction
-    /// is preferred. For Vulkan, this is not the default, and is not available on all systems.
-    /// </param>
+    /// <param name="debug">The value of debug.</param>
+    /// <param name="swapchainDepthFormat">The value of swapchainDepthFormat.</param>
+    /// <param name="syncToVerticalBlank">The value of syncToVerticalBlank.</param>
+    /// <param name="resourceBindingModel">The value of resourceBindingModel.</param>
+    /// <param name="preferDepthRangeZeroToOne">The value of preferDepthRangeZeroToOne.</param>
+    /// <param name="preferStandardClipSpaceYDirection">The value of preferStandardClipSpaceYDirection.</param>
     public GraphicsDeviceOptions(bool debug, PixelFormat? swapchainDepthFormat, bool syncToVerticalBlank, ResourceBindingModel resourceBindingModel, bool preferDepthRangeZeroToOne, bool preferStandardClipSpaceYDirection) {
         this.Debug = debug;
         this.HasMainSwapchain = true;
@@ -190,40 +144,17 @@ public struct GraphicsDeviceOptions {
         this.SwapchainSrgbFormat = false;
     }
 
-    /// <summary>
-    /// Constructs a new GraphicsDeviceOptions for a device with a main Swapchain.
-    /// </summary>
-    /// <param name="debug">
-    /// Indicates whether the GraphicsDevice will enable debug features, provided they are supported by
-    /// the host system.
-    /// </param>
-    /// <param name="swapchainDepthFormat">
-    /// An optional <see cref="PixelFormat" /> to be used for the depth buffer of the
-    /// swapchain. If this value is null, then no depth buffer will be present on the swapchain.
-    /// </param>
-    /// <param name="syncToVerticalBlank">
-    /// Indicates whether the main Swapchain will be synchronized to the window system's
-    /// vertical refresh rate.
-    /// </param>
-    /// <param name="resourceBindingModel">Specifies which model the rendering backend should use for binding resources.</param>
-    /// <param name="preferDepthRangeZeroToOne">
-    /// Indicates whether a 0-to-1 depth range mapping is preferred.
-    /// </param>
-    /// <param name="preferStandardClipSpaceYDirection">
-    /// Indicates whether a bottom-to-top-increasing clip space Y direction
-    /// is preferred. For Vulkan, this is not the default, and is not available on all systems.
-    /// </param>
-    /// <param name="swapchainSrgbFormat">
-    /// Indicates whether the main Swapchain should use an sRGB format. This value is only
-    /// used in cases where the properties of the main SwapChain are not explicitly specified with a
-    /// <see cref="SwapchainDescription" />. If they are, then the value of <see cref="SwapchainDescription.ColorSrgb" />
-    /// will
-    /// supercede the value specified here.
-    /// </param>
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="GraphicsDeviceOptions" /> class.
+    /// Initializes a new instance of the <see cref="GraphicsDeviceOptions" /> type.
     /// </summary>
+    /// <param name="debug">The value of debug.</param>
+    /// <param name="swapchainDepthFormat">The value of swapchainDepthFormat.</param>
+    /// <param name="syncToVerticalBlank">The value of syncToVerticalBlank.</param>
+    /// <param name="resourceBindingModel">The value of resourceBindingModel.</param>
+    /// <param name="preferDepthRangeZeroToOne">The value of preferDepthRangeZeroToOne.</param>
+    /// <param name="preferStandardClipSpaceYDirection">The value of preferStandardClipSpaceYDirection.</param>
+    /// <param name="swapchainSrgbFormat">The value of swapchainSrgbFormat.</param>
     public GraphicsDeviceOptions(bool debug, PixelFormat? swapchainDepthFormat, bool syncToVerticalBlank, ResourceBindingModel resourceBindingModel, bool preferDepthRangeZeroToOne, bool preferStandardClipSpaceYDirection, bool swapchainSrgbFormat) {
         this.Debug = debug;
         this.HasMainSwapchain = true;
@@ -235,4 +166,3 @@ public struct GraphicsDeviceOptions {
         this.SwapchainSrgbFormat = swapchainSrgbFormat;
     }
 }
-

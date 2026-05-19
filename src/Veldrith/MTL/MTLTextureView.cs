@@ -20,12 +20,10 @@ internal class MtlTextureView : TextureView {
     /// <summary>
     /// Initializes a new instance of the <see cref="MtlTextureView" /> class.
     /// </summary>
-    public MtlTextureView(ref TextureViewDescription description, MtlGraphicsDevice gd)
-
-        /// <summary>
-        /// Executes base.
-        /// </summary>
-        : base(ref description) {
+    /// <param name="description">The value of description.</param>
+    /// <param name="gd">The value of gd.</param>
+    /// <returns>The result of the base operation.</returns>
+    public MtlTextureView(ref TextureViewDescription description, MtlGraphicsDevice gd) : base(ref description) {
         MtlTexture targetMtlTexture = Util.AssertSubtype<Texture, MtlTexture>(description.Target);
 
         if (this.BaseMipLevel != 0 || this.MipLevels != this.Target.MipLevels
@@ -60,7 +58,7 @@ internal class MtlTextureView : TextureView {
     #region Disposal
 
     /// <summary>
-    /// Executes Dispose.
+    /// Performs the Dispose operation.
     /// </summary>
     public override void Dispose() {
         if (this._hasTextureView && !this._disposed) {

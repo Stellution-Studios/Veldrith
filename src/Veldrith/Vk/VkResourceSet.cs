@@ -37,12 +37,10 @@ internal unsafe class VkResourceSet : ResourceSet {
     /// <summary>
     /// Initializes a new instance of the <see cref="VkResourceSet" /> class.
     /// </summary>
-    public VkResourceSet(VkGraphicsDevice gd, ref ResourceSetDescription description)
-
-        /// <summary>
-        /// Executes base.
-        /// </summary>
-        : base(ref description) {
+    /// <param name="gd">The value of gd.</param>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the base operation.</returns>
+    public VkResourceSet(VkGraphicsDevice gd, ref ResourceSetDescription description) : base(ref description) {
         this.gd = gd;
         this.RefCount = new ResourceRefCount(this.DisposeCore);
         VkResourceLayout vkLayout = Util.AssertSubtype<ResourceLayout, VkResourceLayout>(description.Layout);
@@ -111,13 +109,15 @@ internal unsafe class VkResourceSet : ResourceSet {
     public VkDescriptorSet DescriptorSet => this._descriptorAllocationToken.Set;
 
     /// <summary>
-    /// Gets or sets SampledTextures.
+    /// Performs the new operation.
     /// </summary>
+    /// <returns>The result of the new operation.</returns>
     public List<VkTexture> SampledTextures { get; } = new();
 
     /// <summary>
-    /// Gets or sets StorageTextures.
+    /// Performs the new operation.
     /// </summary>
+    /// <returns>The result of the new operation.</returns>
     public List<VkTexture> StorageTextures { get; } = new();
 
     /// <summary>
@@ -126,8 +126,9 @@ internal unsafe class VkResourceSet : ResourceSet {
     public ResourceRefCount RefCount { get; }
 
     /// <summary>
-    /// Gets or sets RefCounts.
+    /// Performs the new operation.
     /// </summary>
+    /// <returns>The result of the new operation.</returns>
     public List<ResourceRefCount> RefCounts { get; } = new();
 
     /// <summary>
@@ -149,7 +150,7 @@ internal unsafe class VkResourceSet : ResourceSet {
     #region Disposal
 
     /// <summary>
-    /// Executes Dispose.
+    /// Performs the Dispose operation.
     /// </summary>
     public override void Dispose() {
         this.RefCount.Decrement();
@@ -158,7 +159,7 @@ internal unsafe class VkResourceSet : ResourceSet {
     #endregion
 
     /// <summary>
-    /// Executes DisposeCore.
+    /// Performs the DisposeCore operation.
     /// </summary>
     private void DisposeCore() {
         if (!this._destroyed) {

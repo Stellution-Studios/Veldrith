@@ -14,8 +14,10 @@ internal class MtlSampler : Sampler {
     private bool _disposed;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MtlSampler" /> class.
+    /// Initializes a new instance of the <see cref="MtlSampler" /> type.
     /// </summary>
+    /// <param name="description">The value of description.</param>
+    /// <param name="gd">The value of gd.</param>
     public MtlSampler(ref SamplerDescription description, MtlGraphicsDevice gd) {
         MtlFormats.GetMinMagMipFilter(description.Filter, out MTLSamplerMinMagFilter min, out MTLSamplerMinMagFilter mag, out MTLSamplerMipFilter mip);
 
@@ -59,7 +61,7 @@ internal class MtlSampler : Sampler {
     #region Disposal
 
     /// <summary>
-    /// Executes Dispose.
+    /// Performs the Dispose operation.
     /// </summary>
     public override void Dispose() {
         if (!this._disposed) {

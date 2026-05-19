@@ -11,8 +11,9 @@ namespace Veldrith.Vk;
 internal class VkDescriptorPoolManager {
 
     /// <summary>
-    /// Represents the _pools field.
+    /// Performs the new operation.
     /// </summary>
+    /// <returns>The result of the new operation.</returns>
     private readonly List<PoolInfo> _pools = new();
 
     /// <summary>
@@ -21,21 +22,26 @@ internal class VkDescriptorPoolManager {
     private readonly VkGraphicsDevice gd;
 
     /// <summary>
-    /// Represents the @lock field.
+    /// Performs the new operation.
     /// </summary>
+    /// <returns>The result of the new operation.</returns>
     private readonly object @lock = new();
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="VkDescriptorPoolManager" /> class.
+    /// Initializes a new instance of the <see cref="VkDescriptorPoolManager" /> type.
     /// </summary>
+    /// <param name="gd">The value of gd.</param>
     public VkDescriptorPoolManager(VkGraphicsDevice gd) {
         this.gd = gd;
         this._pools.Add(this.CreateNewPool());
     }
 
     /// <summary>
-    /// Executes Allocate.
+    /// Performs the Allocate operation.
     /// </summary>
+    /// <param name="counts">The value of counts.</param>
+    /// <param name="setLayout">The value of setLayout.</param>
+    /// <returns>The result of the Allocate operation.</returns>
     public unsafe DescriptorAllocationToken Allocate(DescriptorResourceCounts counts, VkDescriptorSetLayout setLayout) {
         lock (this.@lock) {
             VkDescriptorPool pool = this.GetPool(counts);
@@ -51,8 +57,10 @@ internal class VkDescriptorPoolManager {
     }
 
     /// <summary>
-    /// Executes Free.
+    /// Performs the Free operation.
     /// </summary>
+    /// <param name="token">The value of token.</param>
+    /// <param name="counts">The value of counts.</param>
     public void Free(DescriptorAllocationToken token, DescriptorResourceCounts counts) {
         lock (this.@lock) {
             foreach (PoolInfo poolInfo in this._pools) {
@@ -64,7 +72,7 @@ internal class VkDescriptorPoolManager {
     }
 
     /// <summary>
-    /// Executes DestroyAll.
+    /// Performs the DestroyAll operation.
     /// </summary>
     internal unsafe void DestroyAll() {
         foreach (PoolInfo poolInfo in this._pools) {
@@ -73,8 +81,10 @@ internal class VkDescriptorPoolManager {
     }
 
     /// <summary>
-    /// Executes GetPool.
+    /// Performs the GetPool operation.
     /// </summary>
+    /// <param name="counts">The value of counts.</param>
+    /// <returns>The result of the GetPool operation.</returns>
     private VkDescriptorPool GetPool(DescriptorResourceCounts counts) {
         lock (this.@lock) {
             foreach (PoolInfo poolInfo in this._pools) {
@@ -92,8 +102,9 @@ internal class VkDescriptorPoolManager {
     }
 
     /// <summary>
-    /// Executes CreateNewPool.
+    /// Performs the CreateNewPool operation.
     /// </summary>
+    /// <returns>The result of the CreateNewPool operation.</returns>
     private unsafe PoolInfo CreateNewPool() {
         const uint total_sets = 1000;
         const uint descriptor_count = 100;
@@ -177,8 +188,11 @@ internal class VkDescriptorPoolManager {
         public uint UniformBufferDynamicCount;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PoolInfo" /> class.
+        /// Initializes a new instance of the <see cref="PoolInfo" /> type.
         /// </summary>
+        /// <param name="pool">The value of pool.</param>
+        /// <param name="totalSets">The value of totalSets.</param>
+        /// <param name="descriptorCount">The value of descriptorCount.</param>
         public PoolInfo(VkDescriptorPool pool, uint totalSets, uint descriptorCount) {
             this.Pool = pool;
             this.RemainingSets = totalSets;
@@ -192,8 +206,10 @@ internal class VkDescriptorPoolManager {
         }
 
         /// <summary>
-        /// Executes Allocate.
+        /// Performs the Allocate operation.
         /// </summary>
+        /// <param name="counts">The value of counts.</param>
+        /// <returns>The result of the Allocate operation.</returns>
         internal bool Allocate(DescriptorResourceCounts counts) {
             if (this.RemainingSets > 0
                 && this.UniformBufferCount >= counts.UniformBufferCount
@@ -218,8 +234,11 @@ internal class VkDescriptorPoolManager {
         }
 
         /// <summary>
-        /// Executes Free.
+        /// Performs the Free operation.
         /// </summary>
+        /// <param name="device">The value of device.</param>
+        /// <param name="token">The value of token.</param>
+        /// <param name="counts">The value of counts.</param>
         internal void Free(VkDevice device, DescriptorAllocationToken token, DescriptorResourceCounts counts) {
             VkDescriptorSet set = token.Set;
             vkFreeDescriptorSets(device, this.Pool, 1, ref set);
@@ -251,8 +270,10 @@ internal struct DescriptorAllocationToken {
     public readonly VkDescriptorPool Pool;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="DescriptorAllocationToken" /> class.
+    /// Initializes a new instance of the <see cref="DescriptorAllocationToken" /> type.
     /// </summary>
+    /// <param name="set">The value of set.</param>
+    /// <param name="pool">The value of pool.</param>
     public DescriptorAllocationToken(VkDescriptorSet set, VkDescriptorPool pool) {
         this.Set = set;
         this.Pool = pool;

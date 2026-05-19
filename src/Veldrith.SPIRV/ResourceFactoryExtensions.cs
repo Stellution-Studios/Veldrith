@@ -8,29 +8,24 @@ namespace Veldrith.SPIRV;
 public static class ResourceFactoryExtensions {
 
     /// <summary>
-    /// Creates a vertex and fragment shader pair from the given <see cref="ShaderDescription" /> pair containing SPIR-V
-    /// bytecode or GLSL source code.
+    /// Performs the CreateFromSpirv operation.
     /// </summary>
-    /// <param name="factory">The <see cref="ResourceFactory" /> used to compile the translated shader code.</param>
-    /// <param name="vertexShaderDescription">The vertex shader's description.</param>
-    /// <param name="fragmentShaderDescription">The fragment shader's description.</param>
-    /// <returns>A two-element array, containing the vertex shader (element 0) and the fragment shader (element 1).</returns>
+    /// <param name="factory">The value of factory.</param>
+    /// <param name="vertexShaderDescription">The value of vertexShaderDescription.</param>
+    /// <param name="fragmentShaderDescription">The value of fragmentShaderDescription.</param>
+    /// <returns>The result of the CreateFromSpirv operation.</returns>
     public static Shader[] CreateFromSpirv(this ResourceFactory factory, ShaderDescription vertexShaderDescription, ShaderDescription fragmentShaderDescription) {
         return factory.CreateFromSpirv(vertexShaderDescription, fragmentShaderDescription, new CrossCompileOptions());
     }
 
     /// <summary>
-    /// Creates a vertex and fragment shader pair from the given <see cref="ShaderDescription" /> pair containing SPIR-V
-    /// bytecode or GLSL source code.
+    /// Performs the CreateFromSpirv operation.
     /// </summary>
-    /// <param name="factory">The <see cref="ResourceFactory" /> used to compile the translated shader code.</param>
-    /// <param name="vertexShaderDescription">The vertex shader's description.</param>
-    /// <param name="fragmentShaderDescription">The fragment shader's description.</param>
-    /// <param name="options">
-    /// The <see cref="CrossCompileOptions" /> which will control the parameters used to translate the
-    /// shaders from SPIR-V to the target language.
-    /// </param>
-    /// <returns>A two-element array, containing the vertex shader (element 0) and the fragment shader (element 1).</returns>
+    /// <param name="factory">The value of factory.</param>
+    /// <param name="vertexShaderDescription">The value of vertexShaderDescription.</param>
+    /// <param name="fragmentShaderDescription">The value of fragmentShaderDescription.</param>
+    /// <param name="options">The value of options.</param>
+    /// <returns>The result of the CreateFromSpirv operation.</returns>
     public static Shader[] CreateFromSpirv(this ResourceFactory factory, ShaderDescription vertexShaderDescription, ShaderDescription fragmentShaderDescription, CrossCompileOptions options) {
         GraphicsBackend backend = factory.BackendType;
         if (backend == GraphicsBackend.Vulkan) {
@@ -55,27 +50,22 @@ public static class ResourceFactoryExtensions {
     }
 
     /// <summary>
-    /// Creates a compute shader from the given <see cref="ShaderDescription" /> containing SPIR-V bytecode or GLSL source
-    /// code.
+    /// Performs the CreateFromSpirv operation.
     /// </summary>
-    /// <param name="factory">The <see cref="ResourceFactory" /> used to compile the translated shader code.</param>
-    /// <param name="computeShaderDescription">The compute shader's description.</param>
-    /// <returns>The compiled compute <see cref="Shader" />.</returns>
+    /// <param name="factory">The value of factory.</param>
+    /// <param name="computeShaderDescription">The value of computeShaderDescription.</param>
+    /// <returns>The result of the CreateFromSpirv operation.</returns>
     public static Shader CreateFromSpirv(this ResourceFactory factory, ShaderDescription computeShaderDescription) {
         return factory.CreateFromSpirv(computeShaderDescription, new CrossCompileOptions());
     }
 
     /// <summary>
-    /// Creates a compute shader from the given <see cref="ShaderDescription" /> containing SPIR-V bytecode or GLSL source
-    /// code.
+    /// Performs the CreateFromSpirv operation.
     /// </summary>
-    /// <param name="factory">The <see cref="ResourceFactory" /> used to compile the translated shader code.</param>
-    /// <param name="computeShaderDescription">The compute shader's description.</param>
-    /// <param name="options">
-    /// The <see cref="CrossCompileOptions" /> which will control the parameters used to translate the
-    /// shaders from SPIR-V to the target language.
-    /// </param>
-    /// <returns>The compiled compute <see cref="Shader" />.</returns>
+    /// <param name="factory">The value of factory.</param>
+    /// <param name="computeShaderDescription">The value of computeShaderDescription.</param>
+    /// <param name="options">The value of options.</param>
+    /// <returns>The result of the CreateFromSpirv operation.</returns>
     public static Shader CreateFromSpirv(this ResourceFactory factory, ShaderDescription computeShaderDescription, CrossCompileOptions options) {
         GraphicsBackend backend = factory.BackendType;
         if (backend == GraphicsBackend.Vulkan) {
@@ -91,8 +81,10 @@ public static class ResourceFactoryExtensions {
     }
 
     /// <summary>
-    /// Executes EnsureSpirv.
+    /// Performs the EnsureSpirv operation.
     /// </summary>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the EnsureSpirv operation.</returns>
     private static byte[] EnsureSpirv(ShaderDescription description) {
         if (SpirvCompilation.HasSpirvHeader(description.ShaderBytes)) {
             return description.ShaderBytes;
@@ -103,8 +95,11 @@ public static class ResourceFactoryExtensions {
     }
 
     /// <summary>
-    /// Executes GetBytes.
+    /// Performs the GetBytes operation.
     /// </summary>
+    /// <param name="backend">The value of backend.</param>
+    /// <param name="code">The value of code.</param>
+    /// <returns>The result of the GetBytes operation.</returns>
     private static byte[] GetBytes(GraphicsBackend backend, string code) {
         switch (backend) {
             case GraphicsBackend.Direct3D12: case GraphicsBackend.Metal: return Encoding.ASCII.GetBytes(code);
@@ -113,8 +108,10 @@ public static class ResourceFactoryExtensions {
     }
 
     /// <summary>
-    /// Executes GetCompilationTarget.
+    /// Performs the GetCompilationTarget operation.
     /// </summary>
+    /// <param name="backend">The value of backend.</param>
+    /// <returns>The result of the GetCompilationTarget operation.</returns>
     private static CrossCompileTarget GetCompilationTarget(GraphicsBackend backend) {
         switch (backend) {
             case GraphicsBackend.Direct3D12: return CrossCompileTarget.HLSL;

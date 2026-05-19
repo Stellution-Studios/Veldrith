@@ -28,11 +28,11 @@ public struct ResourceLayoutElementDescription : IEquatable<ResourceLayoutElemen
     public ResourceLayoutElementOptions Options;
 
     /// <summary>
-    /// Constructs a new ResourceLayoutElementDescription.
+    /// Initializes a new instance of the <see cref="ResourceLayoutElementDescription" /> type.
     /// </summary>
-    /// <param name="name">The name of the element.</param>
-    /// <param name="kind">The kind of resource.</param>
-    /// <param name="stages">The <see cref="ShaderStages" /> in which this element is used.</param>
+    /// <param name="name">The value of name.</param>
+    /// <param name="kind">The value of kind.</param>
+    /// <param name="stages">The value of stages.</param>
     public ResourceLayoutElementDescription(string name, ResourceKind kind, ShaderStages stages) {
         this.Name = name;
         this.Kind = kind;
@@ -41,12 +41,12 @@ public struct ResourceLayoutElementDescription : IEquatable<ResourceLayoutElemen
     }
 
     /// <summary>
-    /// Constructs a new ResourceLayoutElementDescription.
+    /// Initializes a new instance of the <see cref="ResourceLayoutElementDescription" /> type.
     /// </summary>
-    /// <param name="name">The name of the element.</param>
-    /// <param name="kind">The kind of resource.</param>
-    /// <param name="stages">The <see cref="ShaderStages" /> in which this element is used.</param>
-    /// <param name="options">Miscellaneous resource options for this element.</param>
+    /// <param name="name">The value of name.</param>
+    /// <param name="kind">The value of kind.</param>
+    /// <param name="stages">The value of stages.</param>
+    /// <param name="options">The value of options.</param>
     public ResourceLayoutElementDescription(string name, ResourceKind kind, ShaderStages stages, ResourceLayoutElementOptions options) {
         this.Name = name;
         this.Kind = kind;
@@ -55,18 +55,18 @@ public struct ResourceLayoutElementDescription : IEquatable<ResourceLayoutElemen
     }
 
     /// <summary>
-    /// Element-wise equality.
+    /// Performs the Equals operation.
     /// </summary>
-    /// <param name="other">The instance to compare to.</param>
-    /// <returns>True if all elements are equal; false otherswise.</returns>
+    /// <param name="other">The value of other.</param>
+    /// <returns>The result of the Equals operation.</returns>
     public bool Equals(ResourceLayoutElementDescription other) {
         return this.Name == other.Name && this.Kind == other.Kind && this.Stages == other.Stages && this.Options == other.Options;
     }
 
     /// <summary>
-    /// Returns the hash code for this instance.
+    /// Performs the GetHashCode operation.
     /// </summary>
-    /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
+    /// <returns>The result of the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(this.Name.GetHashCode(), (int)this.Kind, (int)this.Stages, (int)this.Options);
     }

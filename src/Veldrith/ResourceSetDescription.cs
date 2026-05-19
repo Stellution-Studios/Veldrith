@@ -19,31 +19,28 @@ public struct ResourceSetDescription : IEquatable<ResourceSetDescription> {
     public IBindableResource[] BoundResources;
 
     /// <summary>
-    /// Constructs a new ResourceSetDescription.
+    /// Initializes a new instance of the <see cref="ResourceSetDescription" /> type.
     /// </summary>
-    /// <param name="layout">The <see cref="ResourceLayout" /> describing the number and kind of resources used.</param>
-    /// <param name="boundResources">
-    /// An array of <see cref="IBindableResource" /> objects.
-    /// The number and type of resources must match those specified in the <see cref="ResourceLayout" />.
-    /// </param>
+    /// <param name="layout">The value of layout.</param>
+    /// <param name="boundResources">The value of boundResources.</param>
     public ResourceSetDescription(ResourceLayout layout, params IBindableResource[] boundResources) {
         this.Layout = layout;
         this.BoundResources = boundResources;
     }
 
     /// <summary>
-    /// Element-wise equality.
+    /// Performs the Equals operation.
     /// </summary>
-    /// <param name="other">The instance to compare to.</param>
-    /// <returns>True if all elements and all array elements are equal; false otherswise.</returns>
+    /// <param name="other">The value of other.</param>
+    /// <returns>The result of the Equals operation.</returns>
     public bool Equals(ResourceSetDescription other) {
         return this.Layout.Equals(other.Layout) && Util.ArrayEquals(this.BoundResources, other.BoundResources);
     }
 
     /// <summary>
-    /// Returns the hash code for this instance.
+    /// Performs the GetHashCode operation.
     /// </summary>
-    /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
+    /// <returns>The result of the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(this.Layout.GetHashCode(), HashHelper.Array(this.BoundResources));
     }

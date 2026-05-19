@@ -23,12 +23,9 @@ internal class MtlPipeline : Pipeline {
     /// <summary>
     /// Initializes a new instance of the <see cref="MtlPipeline" /> class.
     /// </summary>
-    public MtlPipeline(ref GraphicsPipelineDescription description, MtlGraphicsDevice gd)
-
-        /// <summary>
-        /// Executes base.
-        /// </summary>
-        : base(ref description) {
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the base operation.</returns>
+    public MtlPipeline(ref GraphicsPipelineDescription description, MtlGraphicsDevice gd) : base(ref description) {
         this.PrimitiveType = MtlFormats.VdToMtlPrimitiveTopology(description.PrimitiveTopology);
         this.ResourceLayouts = new MtlResourceLayout[description.ResourceLayouts.Length];
         this.NonVertexBufferCount = 0;
@@ -199,12 +196,10 @@ internal class MtlPipeline : Pipeline {
     /// <summary>
     /// Initializes a new instance of the <see cref="MtlPipeline" /> class.
     /// </summary>
-    public MtlPipeline(ref ComputePipelineDescription description, MtlGraphicsDevice gd)
-
-        /// <summary>
-        /// Executes base.
-        /// </summary>
-        : base(ref description) {
+    /// <param name="description">The value of description.</param>
+    /// <param name="gd">The value of gd.</param>
+    /// <returns>The result of the base operation.</returns>
+    public MtlPipeline(ref ComputePipelineDescription description, MtlGraphicsDevice gd) : base(ref description) {
         this.IsComputePipeline = true;
         this.ResourceLayouts = new MtlResourceLayout[description.ResourceLayouts.Length];
 
@@ -328,8 +323,9 @@ internal class MtlPipeline : Pipeline {
     public bool ScissorTestEnabled { get; }
 
     /// <summary>
-    /// Gets or sets ThreadsPerThreadgroup.
+    /// Performs the new operation.
     /// </summary>
+    /// <returns>The result of the new operation.</returns>
     public MTLSize ThreadsPerThreadgroup { get; } = new(1, 1, 1);
 
     /// <summary>
@@ -360,7 +356,7 @@ internal class MtlPipeline : Pipeline {
     #region Disposal
 
     /// <summary>
-    /// Executes Dispose.
+    /// Performs the Dispose operation.
     /// </summary>
     public override void Dispose() {
         if (!this._disposed) {
@@ -391,8 +387,10 @@ internal class MtlPipeline : Pipeline {
     #endregion
 
     /// <summary>
-    /// Executes CreateConstantValues.
+    /// Performs the CreateConstantValues operation.
     /// </summary>
+    /// <param name="specializations">The value of specializations.</param>
+    /// <returns>The result of the CreateConstantValues operation.</returns>
     private unsafe MTLFunctionConstantValues CreateConstantValues(SpecializationConstant[] specializations) {
         MTLFunctionConstantValues ret = MTLFunctionConstantValues.New();
 
@@ -407,8 +405,9 @@ internal class MtlPipeline : Pipeline {
     }
 
     /// <summary>
-    /// Executes AddSpecializedFunction.
+    /// Performs the AddSpecializedFunction operation.
     /// </summary>
+    /// <param name="function">The value of function.</param>
     private void AddSpecializedFunction(MTLFunction function) {
         this._specializedFunctions ??= new List<MTLFunction>();
         this._specializedFunctions.Add(function);

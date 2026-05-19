@@ -13,12 +13,9 @@ internal sealed class D3D12ResourceSet : ResourceSet {
     /// <summary>
     /// Initializes a new instance of the <see cref="D3D12ResourceSet" /> class.
     /// </summary>
-    public D3D12ResourceSet(ref ResourceSetDescription description)
-
-        /// <summary>
-        /// Executes base.
-        /// </summary>
-        : base(ref description) {
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the base operation.</returns>
+    public D3D12ResourceSet(ref ResourceSetDescription description) : base(ref description) {
         this.ResourceLayoutInfo = Util.AssertSubtype<ResourceLayout, D3D12ResourceLayout>(description.Layout);
         this.BoundResources = Util.ShallowClone(description.BoundResources);
     }
@@ -44,7 +41,7 @@ internal sealed class D3D12ResourceSet : ResourceSet {
     public override string Name { get; set; }
 
     /// <summary>
-    /// Executes Dispose.
+    /// Performs the Dispose operation.
     /// </summary>
     public override void Dispose() {
         this._disposed = true;

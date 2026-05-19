@@ -8,8 +8,9 @@ namespace Veldrith;
 public abstract class ResourceSet : IDeviceResource, IDisposable {
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ResourceSet" /> class.
+    /// Initializes a new instance of the <see cref="ResourceSet" /> type.
     /// </summary>
+    /// <param name="description">The value of description.</param>
     internal ResourceSet(ref ResourceSetDescription description) {
 #if VALIDATE_USAGE
         this.Layout = description.Layout;
@@ -31,7 +32,7 @@ public abstract class ResourceSet : IDeviceResource, IDisposable {
     #region Disposal
 
     /// <summary>
-    /// Frees unmanaged device resources controlled by this instance.
+    /// Performs the Dispose operation.
     /// </summary>
     public abstract void Dispose();
 

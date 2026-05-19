@@ -17,15 +17,18 @@ public struct MTLCompileOptions {
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Executes IntPtr.
+    /// Performs the operator IntPtr operation.
     /// </summary>
+    /// <param name="mco">The value of mco.</param>
+    /// <returns>The result of the operator IntPtr operation.</returns>
     public static implicit operator IntPtr(MTLCompileOptions mco) {
         return mco.NativePtr;
     }
 
     /// <summary>
-    /// Executes New.
+    /// Performs the New operation.
     /// </summary>
+    /// <returns>The result of the New operation.</returns>
     public static MTLCompileOptions New() {
         return s_class.AllocInit<MTLCompileOptions>();
     }
@@ -47,8 +50,10 @@ public struct MTLCompileOptions {
     }
 
     /// <summary>
-    /// Represents the s_class field.
+    /// Performs the new operation.
     /// </summary>
+    /// <param name="MTLCompileOptions">The value of MTLCompileOptions.</param>
+    /// <returns>The result of the new operation.</returns>
     private static readonly ObjCClass s_class = new(nameof(MTLCompileOptions));
 
     /// <summary>

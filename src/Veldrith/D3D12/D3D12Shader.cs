@@ -17,12 +17,9 @@ internal sealed class D3D12Shader : Shader {
     /// <summary>
     /// Initializes a new instance of the <see cref="D3D12Shader" /> class.
     /// </summary>
-    public D3D12Shader(ref ShaderDescription description)
-
-        /// <summary>
-        /// Executes base.
-        /// </summary>
-        : base(description.Stage, description.EntryPoint) {
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the base operation.</returns>
+    public D3D12Shader(ref ShaderDescription description) : base(description.Stage, description.EntryPoint) {
         this.ShaderBytes = EnsureDxbcBytecode(description);
         this.Debug = description.Debug;
     }
@@ -48,15 +45,17 @@ internal sealed class D3D12Shader : Shader {
     public override string Name { get; set; }
 
     /// <summary>
-    /// Executes Dispose.
+    /// Performs the Dispose operation.
     /// </summary>
     public override void Dispose() {
         this._disposed = true;
     }
 
     /// <summary>
-    /// Executes EnsureDxbcBytecode.
+    /// Performs the EnsureDxbcBytecode operation.
     /// </summary>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the EnsureDxbcBytecode operation.</returns>
     private static byte[] EnsureDxbcBytecode(ShaderDescription description) {
         byte[] source = description.ShaderBytes ?? Array.Empty<byte>();
         if (source.Length >= 4
@@ -73,8 +72,10 @@ internal sealed class D3D12Shader : Shader {
     }
 
     /// <summary>
-    /// Executes GetTargetProfile.
+    /// Performs the GetTargetProfile operation.
     /// </summary>
+    /// <param name="stage">The value of stage.</param>
+    /// <returns>The result of the GetTargetProfile operation.</returns>
     private static string GetTargetProfile(ShaderStages stage) {
         switch (stage) {
             case ShaderStages.Vertex: return "vs_5_0";
@@ -88,8 +89,12 @@ internal sealed class D3D12Shader : Shader {
     }
 
     /// <summary>
-    /// Executes CompileHlsl.
+    /// Performs the CompileHlsl operation.
     /// </summary>
+    /// <param name="sourceCode">The value of sourceCode.</param>
+    /// <param name="entryPoint">The value of entryPoint.</param>
+    /// <param name="target">The value of target.</param>
+    /// <returns>The result of the CompileHlsl operation.</returns>
     private static byte[] CompileHlsl(string sourceCode, string entryPoint, string target) {
         byte[] sourceBytes = Encoding.UTF8.GetBytes(sourceCode ?? string.Empty);
         int result = D3DCompile(sourceBytes, (nuint)sourceBytes.Length, null, IntPtr.Zero, IntPtr.Zero, entryPoint, target, 0, 0, out IntPtr codeBlobPtr, out IntPtr errorBlobPtr);
@@ -131,8 +136,20 @@ internal sealed class D3D12Shader : Shader {
     [DllImport("d3dcompiler_47.dll", CharSet = CharSet.Ansi)]
 
     /// <summary>
-    /// Executes D3DCompile.
+    /// Performs the D3DCompile operation.
     /// </summary>
+    /// <param name="srcData">The value of srcData.</param>
+    /// <param name="srcDataSize">The value of srcDataSize.</param>
+    /// <param name="sourceName">The value of sourceName.</param>
+    /// <param name="defines">The value of defines.</param>
+    /// <param name="include">The value of include.</param>
+    /// <param name="entryPoint">The value of entryPoint.</param>
+    /// <param name="target">The value of target.</param>
+    /// <param name="flags1">The value of flags1.</param>
+    /// <param name="flags2">The value of flags2.</param>
+    /// <param name="code">The value of code.</param>
+    /// <param name="errorMsgs">The value of errorMsgs.</param>
+    /// <returns>The result of the D3DCompile operation.</returns>
     private static extern int D3DCompile(byte[] srcData, nuint srcDataSize, string sourceName, IntPtr defines, IntPtr include, string entryPoint, string target, uint flags1, uint flags2, out IntPtr code, out IntPtr errorMsgs);
 
     [ComImport]
@@ -146,15 +163,17 @@ internal sealed class D3D12Shader : Shader {
         [PreserveSig]
 
         /// <summary>
-        /// Executes GetBufferPointer.
+        /// Performs the GetBufferPointer operation.
         /// </summary>
+        /// <returns>The result of the GetBufferPointer operation.</returns>
         IntPtr GetBufferPointer();
 
         [PreserveSig]
 
         /// <summary>
-        /// Executes GetBufferSize.
+        /// Performs the GetBufferSize operation.
         /// </summary>
+        /// <returns>The result of the GetBufferSize operation.</returns>
         nuint GetBufferSize();
     }
 }

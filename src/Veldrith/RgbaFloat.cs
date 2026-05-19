@@ -35,20 +35,20 @@ public struct RgbaFloat : IEquatable<RgbaFloat> {
     public float A => this.channels.W;
 
     /// <summary>
-    /// Constructs a new RgbaFloat from the given components.
+    /// Initializes a new instance of the <see cref="RgbaFloat" /> type.
     /// </summary>
-    /// <param name="r">The red component.</param>
-    /// <param name="g">The green component.</param>
-    /// <param name="b">The blue component.</param>
-    /// <param name="a">The alpha component.</param>
+    /// <param name="r">The value of r.</param>
+    /// <param name="g">The value of g.</param>
+    /// <param name="b">The value of b.</param>
+    /// <param name="a">The value of a.</param>
     public RgbaFloat(float r, float g, float b, float a) {
         this.channels = new Vector4(r, g, b, a);
     }
 
     /// <summary>
-    /// Constructs a new RgbaFloat from the XYZW components of a vector.
+    /// Initializes a new instance of the <see cref="RgbaFloat" /> type.
     /// </summary>
-    /// <param name="channels">The vector containing the color components.</param>
+    /// <param name="channels">The value of channels.</param>
     public RgbaFloat(Vector4 channels) {
         this.channels = channels;
     }
@@ -59,135 +59,167 @@ public struct RgbaFloat : IEquatable<RgbaFloat> {
     public static readonly int SIZE_IN_BYTES = 16;
 
     /// <summary>
-    /// Red (1, 0, 0, 1)
+    /// Performs the new operation.
     /// </summary>
+    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaFloat RED = new(1, 0, 0, 1);
 
     /// <summary>
-    /// Dark Red (0.6f, 0, 0, 1)
+    /// Performs the new operation.
     /// </summary>
+    /// <param name="f">The value of f.</param>
+    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaFloat DARK_RED = new(0.6f, 0, 0, 1);
 
     /// <summary>
-    /// Green (0, 1, 0, 1)
+    /// Performs the new operation.
     /// </summary>
+    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaFloat GREEN = new(0, 1, 0, 1);
 
     /// <summary>
-    /// Blue (0, 0, 1, 1)
+    /// Performs the new operation.
     /// </summary>
+    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaFloat BLUE = new(0, 0, 1, 1);
 
     /// <summary>
-    /// Yellow (1, 1, 0, 1)
+    /// Performs the new operation.
     /// </summary>
+    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaFloat YELLOW = new(1, 1, 0, 1);
 
     /// <summary>
-    /// Grey (0.25f, 0.25f, 0.25f, 1)
+    /// Performs the new operation.
     /// </summary>
+    /// <param name="f">The value of f.</param>
+    /// <param name="f">The value of f.</param>
+    /// <param name="f">The value of f.</param>
+    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaFloat GREY = new(.25f, .25f, .25f, 1);
 
     /// <summary>
-    /// Light Grey (0.65f, 0.65f, 0.65f, 1)
+    /// Performs the new operation.
     /// </summary>
+    /// <param name="f">The value of f.</param>
+    /// <param name="f">The value of f.</param>
+    /// <param name="f">The value of f.</param>
+    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaFloat LIGHT_GREY = new(.65f, .65f, .65f, 1);
 
     /// <summary>
-    /// Cyan (0, 1, 1, 1)
+    /// Performs the new operation.
     /// </summary>
+    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaFloat CYAN = new(0, 1, 1, 1);
 
     /// <summary>
-    /// White (1, 1, 1, 1)
+    /// Performs the new operation.
     /// </summary>
+    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaFloat WHITE = new(1, 1, 1, 1);
 
     /// <summary>
-    /// Cornflower Blue (0.3921f, 0.5843f, 0.9294f, 1)
+    /// Performs the new operation.
     /// </summary>
+    /// <param name="f">The value of f.</param>
+    /// <param name="f">The value of f.</param>
+    /// <param name="f">The value of f.</param>
+    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaFloat CORNFLOWER_BLUE = new(0.3921f, 0.5843f, 0.9294f, 1);
 
     /// <summary>
-    /// Clear (0, 0, 0, 0)
+    /// Performs the new operation.
     /// </summary>
+    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaFloat CLEAR = new(0, 0, 0, 0);
 
     /// <summary>
-    /// Black (0, 0, 0, 1)
+    /// Performs the new operation.
     /// </summary>
+    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaFloat BLACK = new(0, 0, 0, 1);
 
     /// <summary>
-    /// Pink (1, 0.45f, 0.75f, 1)
+    /// Performs the new operation.
     /// </summary>
+    /// <param name="f">The value of f.</param>
+    /// <param name="f">The value of f.</param>
+    /// <param name="f">The value of f.</param>
+    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaFloat PINK = new(1f, 0.45f, 0.75f, 1);
 
     /// <summary>
-    /// Orange (1, 0.36f, 0, 1)
+    /// Performs the new operation.
     /// </summary>
+    /// <param name="f">The value of f.</param>
+    /// <param name="f">The value of f.</param>
+    /// <param name="f">The value of f.</param>
+    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaFloat ORANGE = new(1f, 0.36f, 0f, 1);
 
     /// <summary>
-    /// Converts this RgbaFloat into a Vector4.
+    /// Converts this color to a <see cref="Vector4" /> in RGBA component order.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>The underlying RGBA vector value.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Vector4 ToVector4() {
         return this.channels;
     }
 
     /// <summary>
-    /// Element-wise equality.
+    /// Compares this color with another <see cref="RgbaFloat" /> value.
     /// </summary>
-    /// <param name="other">The instance to compare to.</param>
-    /// <returns>True if all elements are equal; false otherswise.</returns>
+    /// <param name="other">The color to compare against.</param>
+    /// <returns><see langword="true" /> if all RGBA components are equal; otherwise, <see langword="false" />.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Equals(RgbaFloat other) {
         return this.channels.Equals(other.channels);
     }
 
     /// <summary>
-    /// Determines whether the specified object is equal to the current object.
+    /// Performs the Equals operation.
     /// </summary>
-    /// <param name="obj">The object to compare with the current object.</param>
-    /// <returns>true if the specified object is equal to the current object; otherwise, false.</returns>
+    /// <param name="obj">The value of obj.</param>
+    /// <returns>The result of the Equals operation.</returns>
     public override bool Equals(object obj) {
         return obj is RgbaFloat other && this.Equals(other);
     }
 
     /// <summary>
-    /// Returns the hash code for this instance.
+    /// Computes a hash code for this color value.
     /// </summary>
-    /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
+    /// <returns>A hash code that combines all RGBA components.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public override int GetHashCode() {
         return HashHelper.Combine(this.R.GetHashCode(), this.G.GetHashCode(), this.B.GetHashCode(), this.A.GetHashCode());
     }
 
     /// <summary>
-    /// Returns a string representation of this color.
+    /// Performs the ToString operation.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>The result of the ToString operation.</returns>
     public override string ToString() {
         return $"R:{this.R}, G:{this.G}, B:{this.B}, A:{this.A}";
     }
 
     /// <summary>
-    /// Element-wise equality.
+    /// Compares two <see cref="RgbaFloat" /> values for component-wise equality.
     /// </summary>
-    /// <param name="left">The first value.</param>
-    /// <param name="right">The second value.</param>
+    /// <param name="left">The first color value.</param>
+    /// <param name="right">The second color value.</param>
+    /// <returns><see langword="true" /> if both values are equal; otherwise, <see langword="false" />.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool operator ==(RgbaFloat left, RgbaFloat right) {
         return left.Equals(right);
     }
 
     /// <summary>
-    /// Element-wise inequality.
+    /// Compares two <see cref="RgbaFloat" /> values for component-wise inequality.
     /// </summary>
-    /// <param name="left">The first value.</param>
-    /// <param name="right">The second value.</param>
+    /// <param name="left">The first color value.</param>
+    /// <param name="right">The second color value.</param>
+    /// <returns><see langword="true" /> if at least one component differs; otherwise, <see langword="false" />.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool operator !=(RgbaFloat left, RgbaFloat right) {
         return !left.Equals(right);

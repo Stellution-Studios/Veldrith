@@ -26,10 +26,10 @@ public struct BlendStateDescription : IEquatable<BlendStateDescription> {
     public bool AlphaToCoverageEnabled;
 
     /// <summary>
-    /// Constructs a new <see cref="BlendStateDescription" />,
+    /// Initializes a new instance of the <see cref="BlendStateDescription" /> type.
     /// </summary>
-    /// <param name="blendFactor">The constant blend color.</param>
-    /// <param name="attachmentStates">The blend attachment states.</param>
+    /// <param name="blendFactor">The value of blendFactor.</param>
+    /// <param name="attachmentStates">The value of attachmentStates.</param>
     public BlendStateDescription(RgbaFloat blendFactor, params BlendAttachmentDescription[] attachmentStates) {
         this.BlendFactor = blendFactor;
         this.AttachmentStates = attachmentStates;
@@ -37,14 +37,11 @@ public struct BlendStateDescription : IEquatable<BlendStateDescription> {
     }
 
     /// <summary>
-    /// Constructs a new <see cref="BlendStateDescription" />,
+    /// Initializes a new instance of the <see cref="BlendStateDescription" /> type.
     /// </summary>
-    /// <param name="blendFactor">The constant blend color.</param>
-    /// <param name="alphaToCoverageEnabled">
-    /// Enables alpha-to-coverage, which causes a fragment's alpha value to be
-    /// used when determining multi-sample coverage.
-    /// </param>
-    /// <param name="attachmentStates">The blend attachment states.</param>
+    /// <param name="blendFactor">The value of blendFactor.</param>
+    /// <param name="alphaToCoverageEnabled">The value of alphaToCoverageEnabled.</param>
+    /// <param name="attachmentStates">The value of attachmentStates.</param>
     public BlendStateDescription(RgbaFloat blendFactor, bool alphaToCoverageEnabled, params BlendAttachmentDescription[] attachmentStates) {
         this.BlendFactor = blendFactor;
         this.AttachmentStates = attachmentStates;
@@ -52,49 +49,50 @@ public struct BlendStateDescription : IEquatable<BlendStateDescription> {
     }
 
     /// <summary>
-    /// Describes a blend state in which a single color target is blended with
-    /// <see cref="BlendAttachmentDescription.OVERRIDE_BLEND" />.
+    /// Performs the new operation.
     /// </summary>
+    /// <returns>The result of the new operation.</returns>
     public static readonly BlendStateDescription SINGLE_OVERRIDE_BLEND = new() {
         AttachmentStates = new[] { BlendAttachmentDescription.OVERRIDE_BLEND }
     };
 
     /// <summary>
-    /// Describes a blend state in which a single color target is blended with
-    /// <see cref="BlendAttachmentDescription.ALPHA_BLEND" />.
+    /// Performs the new operation.
     /// </summary>
+    /// <returns>The result of the new operation.</returns>
     public static readonly BlendStateDescription SINGLE_ALPHA_BLEND = new() {
         AttachmentStates = new[] { BlendAttachmentDescription.ALPHA_BLEND }
     };
 
     /// <summary>
-    /// Describes a blend state in which a single color target is blended with
-    /// <see cref="BlendAttachmentDescription.ADDITIVE_BLEND" />.
+    /// Performs the new operation.
     /// </summary>
+    /// <returns>The result of the new operation.</returns>
     public static readonly BlendStateDescription SINGLE_ADDITIVE_BLEND = new() {
         AttachmentStates = new[] { BlendAttachmentDescription.ADDITIVE_BLEND }
     };
 
     /// <summary>
-    /// Describes a blend state in which a single color target is blended with
-    /// <see cref="BlendAttachmentDescription.DISABLED" />.
+    /// Performs the new operation.
     /// </summary>
+    /// <returns>The result of the new operation.</returns>
     public static readonly BlendStateDescription SINGLE_DISABLED = new() {
         AttachmentStates = new[] { BlendAttachmentDescription.DISABLED }
     };
 
     /// <summary>
-    /// Describes an empty blend state in which no color targets are used.
+    /// Performs the new operation.
     /// </summary>
+    /// <returns>The result of the new operation.</returns>
     public static readonly BlendStateDescription EMPTY = new() {
         AttachmentStates = Array.Empty<BlendAttachmentDescription>()
     };
 
     /// <summary>
-    /// Element-wise equality.
+    /// Performs the Equals operation.
     /// </summary>
-    /// <param name="other">The instance to compare to.</param>
-    /// <returns>True if all elements and all array elements are equal; false otherswise.</returns>
+    /// <param name="other">The value of other.</param>
+    /// <returns>The result of the Equals operation.</returns>
     public bool Equals(BlendStateDescription other) {
         return this.BlendFactor.Equals(other.BlendFactor)
                && this.AlphaToCoverageEnabled.Equals(other.AlphaToCoverageEnabled)
@@ -102,16 +100,17 @@ public struct BlendStateDescription : IEquatable<BlendStateDescription> {
     }
 
     /// <summary>
-    /// Returns the hash code for this instance.
+    /// Performs the GetHashCode operation.
     /// </summary>
-    /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
+    /// <returns>The result of the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(this.BlendFactor.GetHashCode(), this.AlphaToCoverageEnabled.GetHashCode(), HashHelper.Array(this.AttachmentStates));
     }
 
     /// <summary>
-    /// Executes ShallowClone.
+    /// Performs the ShallowClone operation.
     /// </summary>
+    /// <returns>The result of the ShallowClone operation.</returns>
     internal BlendStateDescription ShallowClone() {
         BlendStateDescription result = this;
         result.AttachmentStates = Util.ShallowClone(result.AttachmentStates);

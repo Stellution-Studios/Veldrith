@@ -14,13 +14,19 @@ public struct NSError {
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Gets or sets domain.
+    /// Performs the string_objc_msgSend operation.
     /// </summary>
+    /// <param name="NativePtr">The value of NativePtr.</param>
+    /// <param name="sel_domain">The value of sel_domain.</param>
+    /// <returns>The result of the string_objc_msgSend operation.</returns>
     public string domain => string_objc_msgSend(this.NativePtr, sel_domain);
 
     /// <summary>
-    /// Gets or sets localizedDescription.
+    /// Performs the string_objc_msgSend operation.
     /// </summary>
+    /// <param name="NativePtr">The value of NativePtr.</param>
+    /// <param name="sel_localizedDescription">The value of sel_localizedDescription.</param>
+    /// <returns>The result of the string_objc_msgSend operation.</returns>
     public string localizedDescription => string_objc_msgSend(this.NativePtr, sel_localizedDescription);
 
     /// <summary>

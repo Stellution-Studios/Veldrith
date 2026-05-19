@@ -15,8 +15,9 @@ public struct UIView {
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="UIView" /> class.
+    /// Initializes a new instance of the <see cref="UIView" /> type.
     /// </summary>
+    /// <param name="ptr">The value of ptr.</param>
     public UIView(IntPtr ptr) {
         this.NativePtr = ptr;
     }
@@ -33,8 +34,11 @@ public struct UIView {
         RuntimeInformation.ProcessArchitecture == Architecture.Arm64
 
             /// <summary>
-            /// Executes CGRect_objc_msgSend.
+            /// Performs the CGRect_objc_msgSend operation.
             /// </summary>
+            /// <param name="NativePtr">The value of NativePtr.</param>
+            /// <param name="sel_frame">The value of sel_frame.</param>
+            /// <returns>The result of the CGRect_objc_msgSend operation.</returns>
             ? CGRect_objc_msgSend(this.NativePtr, sel_frame)
             : objc_msgSend_stret<CGRect>(this.NativePtr, sel_frame);
 

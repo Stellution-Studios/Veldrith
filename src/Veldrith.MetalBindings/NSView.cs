@@ -15,15 +15,18 @@ public struct NSView {
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Executes IntPtr.
+    /// Performs the operator IntPtr operation.
     /// </summary>
+    /// <param name="nsView">The value of nsView.</param>
+    /// <returns>The result of the operator IntPtr operation.</returns>
     public static implicit operator IntPtr(NSView nsView) {
         return nsView.NativePtr;
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="NSView" /> class.
+    /// Initializes a new instance of the <see cref="NSView" /> type.
     /// </summary>
+    /// <param name="ptr">The value of ptr.</param>
     public NSView(IntPtr ptr) {
         this.NativePtr = ptr;
     }
@@ -51,8 +54,11 @@ public struct NSView {
         RuntimeInformation.ProcessArchitecture == Architecture.Arm64
 
             /// <summary>
-            /// Executes CGRect_objc_msgSend.
+            /// Performs the CGRect_objc_msgSend operation.
             /// </summary>
+            /// <param name="NativePtr">The value of NativePtr.</param>
+            /// <param name="sel_frame">The value of sel_frame.</param>
+            /// <returns>The result of the CGRect_objc_msgSend operation.</returns>
             ? CGRect_objc_msgSend(this.NativePtr, sel_frame)
             : objc_msgSend_stret<CGRect>(this.NativePtr, sel_frame);
 

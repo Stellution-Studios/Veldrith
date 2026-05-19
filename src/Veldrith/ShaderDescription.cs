@@ -35,11 +35,11 @@ public struct ShaderDescription : IEquatable<ShaderDescription> {
     public bool Debug;
 
     /// <summary>
-    /// Constructs a new ShaderDescription.
+    /// Initializes a new instance of the <see cref="ShaderDescription" /> type.
     /// </summary>
-    /// <param name="stage">The shader stage to create.</param>
-    /// <param name="shaderBytes">An array containing the raw shader bytes.</param>
-    /// <param name="entryPoint">The name of the entry point function in the shader module to be used in this stage.</param>
+    /// <param name="stage">The value of stage.</param>
+    /// <param name="shaderBytes">The value of shaderBytes.</param>
+    /// <param name="entryPoint">The value of entryPoint.</param>
     public ShaderDescription(ShaderStages stage, byte[] shaderBytes, string entryPoint) {
         this.Stage = stage;
         this.ShaderBytes = shaderBytes;
@@ -48,15 +48,12 @@ public struct ShaderDescription : IEquatable<ShaderDescription> {
     }
 
     /// <summary>
-    /// Constructs a new ShaderDescription.
+    /// Initializes a new instance of the <see cref="ShaderDescription" /> type.
     /// </summary>
-    /// <param name="stage">The shader stage to create.</param>
-    /// <param name="shaderBytes">An array containing the raw shader bytes.</param>
-    /// <param name="entryPoint">The name of the entry point function in the shader module to be used in this stage.</param>
-    /// <param name="debug">
-    /// Indicates whether the shader should be debuggable. This flag only has an effect if
-    /// <paramref name="shaderBytes" /> contains shader code that will be compiled.
-    /// </param>
+    /// <param name="stage">The value of stage.</param>
+    /// <param name="shaderBytes">The value of shaderBytes.</param>
+    /// <param name="entryPoint">The value of entryPoint.</param>
+    /// <param name="debug">The value of debug.</param>
     public ShaderDescription(ShaderStages stage, byte[] shaderBytes, string entryPoint, bool debug) {
         this.Stage = stage;
         this.ShaderBytes = shaderBytes;
@@ -65,10 +62,10 @@ public struct ShaderDescription : IEquatable<ShaderDescription> {
     }
 
     /// <summary>
-    /// Element-wise equality.
+    /// Performs the Equals operation.
     /// </summary>
-    /// <param name="other">The instance to compare to.</param>
-    /// <returns>True if all elements and if array instances are equal; false otherswise.</returns>
+    /// <param name="other">The value of other.</param>
+    /// <returns>The result of the Equals operation.</returns>
     public bool Equals(ShaderDescription other) {
         return this.Stage == other.Stage
                && this.ShaderBytes == other.ShaderBytes
@@ -77,11 +74,10 @@ public struct ShaderDescription : IEquatable<ShaderDescription> {
     }
 
     /// <summary>
-    /// Returns the hash code for this instance.
+    /// Performs the GetHashCode operation.
     /// </summary>
-    /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
+    /// <returns>The result of the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine((int)this.Stage, this.ShaderBytes.GetHashCode(), this.EntryPoint.GetHashCode(), this.Debug.GetHashCode());
     }
 }
-

@@ -16,8 +16,10 @@ public struct MTLRegion {
     public MTLSize size;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MTLRegion" /> class.
+    /// Initializes a new instance of the <see cref="MTLRegion" /> type.
     /// </summary>
+    /// <param name="origin">The value of origin.</param>
+    /// <param name="size">The value of size.</param>
     public MTLRegion(MTLOrigin origin, MTLSize size) {
         this.origin = origin;
         this.size = size;

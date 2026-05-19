@@ -67,8 +67,11 @@ internal sealed class D3D12Texture : Texture {
     private GCHandle _pinnedData;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="D3D12Texture" /> class.
+    /// Initializes a new instance of the <see cref="D3D12Texture" /> type.
     /// </summary>
+    /// <param name="gd">The value of gd.</param>
+    /// <param name="description">The value of description.</param>
+    /// <param name="nativeHandle">The value of nativeHandle.</param>
     public D3D12Texture(D3D12GraphicsDevice gd, ref TextureDescription description, ulong? nativeHandle) {
         this.gd = gd;
         this.Width = description.Width;
@@ -182,8 +185,18 @@ internal sealed class D3D12Texture : Texture {
     public override string Name { get; set; }
 
     /// <summary>
-    /// Executes Update.
+    /// Performs the Update operation.
     /// </summary>
+    /// <param name="source">The value of source.</param>
+    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
+    /// <param name="x">The value of x.</param>
+    /// <param name="y">The value of y.</param>
+    /// <param name="z">The value of z.</param>
+    /// <param name="width">The value of width.</param>
+    /// <param name="height">The value of height.</param>
+    /// <param name="depth">The value of depth.</param>
+    /// <param name="mipLevel">The value of mipLevel.</param>
+    /// <param name="arrayLayer">The value of arrayLayer.</param>
     internal void Update(IntPtr source, uint sizeInBytes, uint x, uint y, uint z, uint width, uint height, uint depth, uint mipLevel, uint arrayLayer) {
         uint subresource = this.CalculateSubresource(mipLevel, arrayLayer);
         Util.GetMipDimensions(this, mipLevel, out uint mipWidth, out uint mipHeight, out uint mipDepth);
@@ -211,8 +224,18 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes UpdateNativeSubresource.
+    /// Performs the UpdateNativeSubresource operation.
     /// </summary>
+    /// <param name="source">The value of source.</param>
+    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
+    /// <param name="x">The value of x.</param>
+    /// <param name="y">The value of y.</param>
+    /// <param name="z">The value of z.</param>
+    /// <param name="width">The value of width.</param>
+    /// <param name="height">The value of height.</param>
+    /// <param name="depth">The value of depth.</param>
+    /// <param name="mipLevel">The value of mipLevel.</param>
+    /// <param name="arrayLayer">The value of arrayLayer.</param>
     internal void UpdateNativeSubresource(IntPtr source, uint sizeInBytes, uint x, uint y, uint z, uint width, uint height, uint depth, uint mipLevel, uint arrayLayer) {
         this.Update(source, sizeInBytes, x, y, z, width, height, depth, mipLevel, arrayLayer);
 
@@ -225,8 +248,11 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes Map.
+    /// Performs the Map operation.
     /// </summary>
+    /// <param name="mode">The value of mode.</param>
+    /// <param name="subresource">The value of subresource.</param>
+    /// <returns>The result of the Map operation.</returns>
     internal MappedResource Map(MapMode mode, uint subresource) {
         if (subresource >= this.SubresourceCount) {
             throw new VeldridException("Subresource index is out of bounds.");
@@ -249,7 +275,7 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes Unmap.
+    /// Performs the Unmap operation.
     /// </summary>
     internal void Unmap() {
         if (this._mapped
@@ -268,8 +294,23 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes CopyRegionTo.
+    /// Performs the CopyRegionTo operation.
     /// </summary>
+    /// <param name="destination">The value of destination.</param>
+    /// <param name="srcX">The value of srcX.</param>
+    /// <param name="srcY">The value of srcY.</param>
+    /// <param name="srcZ">The value of srcZ.</param>
+    /// <param name="srcMipLevel">The value of srcMipLevel.</param>
+    /// <param name="srcBaseArrayLayer">The value of srcBaseArrayLayer.</param>
+    /// <param name="dstX">The value of dstX.</param>
+    /// <param name="dstY">The value of dstY.</param>
+    /// <param name="dstZ">The value of dstZ.</param>
+    /// <param name="dstMipLevel">The value of dstMipLevel.</param>
+    /// <param name="dstBaseArrayLayer">The value of dstBaseArrayLayer.</param>
+    /// <param name="width">The value of width.</param>
+    /// <param name="height">The value of height.</param>
+    /// <param name="depth">The value of depth.</param>
+    /// <param name="layerCount">The value of layerCount.</param>
     internal void CopyRegionTo(D3D12Texture destination, uint srcX, uint srcY, uint srcZ, uint srcMipLevel, uint srcBaseArrayLayer, uint dstX, uint dstY, uint dstZ, uint dstMipLevel, uint dstBaseArrayLayer, uint width, uint height, uint depth, uint layerCount) {
         if (this.Format != destination.Format) {
             throw new VeldridException("Source and destination texture formats must match.");
@@ -294,8 +335,9 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes GenerateMipmapsCpu.
+    /// Performs the GenerateMipmapsCpu operation.
     /// </summary>
+    /// <returns>The result of the GenerateMipmapsCpu operation.</returns>
     internal bool GenerateMipmapsCpu() {
         if (this.MipLevels <= 1 || FormatHelpers.IsCompressedFormat(this.Format) || (this.Usage & TextureUsage.DepthStencil) == TextureUsage.DepthStencil) {
             return false;
@@ -370,7 +412,7 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes UploadGeneratedMipmaps.
+    /// Performs the UploadGeneratedMipmaps operation.
     /// </summary>
     internal unsafe void UploadGeneratedMipmaps() {
         if (this.NativeTexture == null || this.MipLevels <= 1) {
@@ -390,8 +432,17 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes GetSourceByte.
+    /// Performs the GetSourceByte operation.
     /// </summary>
+    /// <param name="srcBaseOffset">The value of srcBaseOffset.</param>
+    /// <param name="srcRowPitch">The value of srcRowPitch.</param>
+    /// <param name="srcDepthPitch">The value of srcDepthPitch.</param>
+    /// <param name="srcX">The value of srcX.</param>
+    /// <param name="srcY">The value of srcY.</param>
+    /// <param name="srcZ">The value of srcZ.</param>
+    /// <param name="bytesPerPixel">The value of bytesPerPixel.</param>
+    /// <param name="component">The value of component.</param>
+    /// <returns>The result of the GetSourceByte operation.</returns>
     private uint GetSourceByte(uint srcBaseOffset, uint srcRowPitch, uint srcDepthPitch, uint srcX, uint srcY, uint srcZ, uint bytesPerPixel, uint component) {
         int srcPixelOffset = (int)(srcBaseOffset
             + srcZ * srcDepthPitch
@@ -402,8 +453,11 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes CreateNativeTexture.
+    /// Performs the CreateNativeTexture operation.
     /// </summary>
+    /// <param name="gd">The value of gd.</param>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateNativeTexture operation.</returns>
     private ID3D12Resource CreateNativeTexture(D3D12GraphicsDevice gd, ref TextureDescription description) {
         bool isDepth = (description.Usage & TextureUsage.DepthStencil) == TextureUsage.DepthStencil;
         uint effectiveDescriptionArrayLayers = GetEffectiveArrayLayers(description.Usage, description.ArrayLayers);
@@ -436,8 +490,10 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes CreateWrappedNativeTexture.
+    /// Performs the CreateWrappedNativeTexture operation.
     /// </summary>
+    /// <param name="nativeHandle">The value of nativeHandle.</param>
+    /// <returns>The result of the CreateWrappedNativeTexture operation.</returns>
     private static ID3D12Resource CreateWrappedNativeTexture(ulong nativeHandle) {
         if (nativeHandle == 0) {
             throw new VeldridException("Native D3D12 texture handle cannot be 0.");
@@ -447,8 +503,10 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes ValidateWrappedTextureDescription.
+    /// Performs the ValidateWrappedTextureDescription operation.
     /// </summary>
+    /// <param name="nativeDescription">The value of nativeDescription.</param>
+    /// <param name="description">The value of description.</param>
     private static void ValidateWrappedTextureDescription(ResourceDescription nativeDescription, ref TextureDescription description) {
         bool validDimension = (description.Type == TextureType.Texture1D && nativeDescription.Dimension == ResourceDimension.Texture1D)
             || (description.Type == TextureType.Texture2D && nativeDescription.Dimension == ResourceDimension.Texture2D)
@@ -503,8 +561,11 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes IsNativeFormatCompatible.
+    /// Performs the IsNativeFormatCompatible operation.
     /// </summary>
+    /// <param name="nativeFormat">The value of nativeFormat.</param>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the IsNativeFormatCompatible operation.</returns>
     private static bool IsNativeFormatCompatible(Format nativeFormat, ref TextureDescription description) {
         bool depthUsage = (description.Usage & TextureUsage.DepthStencil) != 0;
         Format expectedResourceFormat = D3D12Formats.ToDxgiFormat(description.Format, depthUsage);
@@ -531,8 +592,10 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes GetCreatedTextureInitialState.
+    /// Performs the GetCreatedTextureInitialState operation.
     /// </summary>
+    /// <param name="usage">The value of usage.</param>
+    /// <returns>The result of the GetCreatedTextureInitialState operation.</returns>
     private static ResourceStates GetCreatedTextureInitialState(TextureUsage usage) {
         if ((usage & TextureUsage.DepthStencil) == TextureUsage.DepthStencil) {
             return ResourceStates.DepthWrite;
@@ -546,8 +609,9 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes InitializeSubresourceStates.
+    /// Performs the InitializeSubresourceStates operation.
     /// </summary>
+    /// <param name="initialState">The value of initialState.</param>
     private void InitializeSubresourceStates(ResourceStates initialState) {
         for (int i = 0; i < this._subresourceStates.Length; i++) {
             this._subresourceStates[i] = initialState;
@@ -558,8 +622,13 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes GetSubresourceLayout.
+    /// Performs the GetSubresourceLayout operation.
     /// </summary>
+    /// <param name="subresource">The value of subresource.</param>
+    /// <param name="offset">The value of offset.</param>
+    /// <param name="size">The value of size.</param>
+    /// <param name="rowPitch">The value of rowPitch.</param>
+    /// <param name="depthPitch">The value of depthPitch.</param>
     private void GetSubresourceLayout(uint subresource, out uint offset, out uint size, out uint rowPitch, out uint depthPitch) {
         uint totalOffset = 0;
         for (uint arrayLayer = 0; arrayLayer < this.EffectiveArrayLayers; arrayLayer++) {
@@ -590,8 +659,10 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes ComputeTotalSize.
+    /// Performs the ComputeTotalSize operation.
     /// </summary>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the ComputeTotalSize operation.</returns>
     private static int ComputeTotalSize(ref TextureDescription description) {
         uint total = 0;
         uint effectiveDescriptionArrayLayers = GetEffectiveArrayLayers(description.Usage, description.ArrayLayers);
@@ -610,8 +681,11 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes GetEffectiveArrayLayers.
+    /// Performs the GetEffectiveArrayLayers operation.
     /// </summary>
+    /// <param name="usage">The value of usage.</param>
+    /// <param name="arrayLayers">The value of arrayLayers.</param>
+    /// <returns>The result of the GetEffectiveArrayLayers operation.</returns>
     private static uint GetEffectiveArrayLayers(TextureUsage usage, uint arrayLayers) {
         if ((usage & TextureUsage.Cubemap) != 0) {
             return arrayLayers * 6;
@@ -621,15 +695,17 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes IsStagingTexture.
+    /// Performs the IsStagingTexture operation.
     /// </summary>
+    /// <returns>The result of the IsStagingTexture operation.</returns>
     private bool IsStagingTexture() {
         return (this.Usage & TextureUsage.Staging) == TextureUsage.Staging;
     }
 
     /// <summary>
-    /// Executes SyncSubresourceToNative.
+    /// Performs the SyncSubresourceToNative operation.
     /// </summary>
+    /// <param name="subresource">The value of subresource.</param>
     private void SyncSubresourceToNative(uint subresource) {
         ResourceDescription textureDescription = this.NativeTexture.Description;
         PlacedSubresourceFootPrint[] layouts = new PlacedSubresourceFootPrint[1];
@@ -673,8 +749,9 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes SyncSubresourceFromNative.
+    /// Performs the SyncSubresourceFromNative operation.
     /// </summary>
+    /// <param name="subresource">The value of subresource.</param>
     private void SyncSubresourceFromNative(uint subresource) {
         ResourceDescription textureDescription = this.NativeTexture.Description;
         PlacedSubresourceFootPrint[] layouts = new PlacedSubresourceFootPrint[1];
@@ -719,8 +796,12 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes ExecuteTextureBufferCopy.
+    /// Performs the ExecuteTextureBufferCopy operation.
     /// </summary>
+    /// <param name="subresource">The value of subresource.</param>
+    /// <param name="copyState">The value of copyState.</param>
+    /// <param name="previousState">The value of previousState.</param>
+    /// <param name="copyToTexture">The value of copyToTexture.</param>
     private void ExecuteTextureBufferCopy(uint subresource, ResourceStates copyState, Func<ResourceStates, (TextureCopyLocation destination, TextureCopyLocation source, Box? sourceBox, ResourceStates previousState)> buildCopy, bool copyToTexture) {
         ID3D12CommandAllocator allocator = this.gd.Device.CreateCommandAllocator(CommandListType.Direct);
         ID3D12GraphicsCommandList commandList = this.gd.Device.CreateCommandList<ID3D12GraphicsCommandList>(0, CommandListType.Direct, allocator);
@@ -768,7 +849,7 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes DisposeCore.
+    /// Performs the DisposeCore operation.
     /// </summary>
     private protected override void DisposeCore() {
         if (this._mapped) {
@@ -784,8 +865,10 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes GetSubresourceState.
+    /// Performs the GetSubresourceState operation.
     /// </summary>
+    /// <param name="subresource">The value of subresource.</param>
+    /// <returns>The result of the GetSubresourceState operation.</returns>
     internal ResourceStates GetSubresourceState(uint subresource) {
         if (this._subresourceStates == null || subresource >= this._subresourceStates.Length) {
             return ResourceStates.Common;
@@ -795,8 +878,10 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes SetSubresourceState.
+    /// Performs the SetSubresourceState operation.
     /// </summary>
+    /// <param name="subresource">The value of subresource.</param>
+    /// <param name="state">The value of state.</param>
     internal void SetSubresourceState(uint subresource, ResourceStates state) {
         if (this._subresourceStates == null || subresource >= this._subresourceStates.Length) {
             return;
@@ -814,8 +899,9 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes SetAllSubresourceStates.
+    /// Performs the SetAllSubresourceStates operation.
     /// </summary>
+    /// <param name="state">The value of state.</param>
     internal void SetAllSubresourceStates(ResourceStates state) {
         if (this._subresourceStates == null) {
             return;
@@ -830,8 +916,10 @@ internal sealed class D3D12Texture : Texture {
     }
 
     /// <summary>
-    /// Executes TryGetCommonState.
+    /// Performs the TryGetCommonState operation.
     /// </summary>
+    /// <param name="state">The value of state.</param>
+    /// <returns>The result of the TryGetCommonState operation.</returns>
     internal bool TryGetCommonState(out ResourceStates state) {
         if (this._subresourceStates == null || this._subresourceStates.Length == 0) {
             state = ResourceStates.Common;

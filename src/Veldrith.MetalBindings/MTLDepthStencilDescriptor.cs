@@ -14,8 +14,9 @@ public struct MTLDepthStencilDescriptor {
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MTLDepthStencilDescriptor" /> class.
+    /// Initializes a new instance of the <see cref="MTLDepthStencilDescriptor" /> type.
     /// </summary>
+    /// <param name="ptr">The value of ptr.</param>
     public MTLDepthStencilDescriptor(IntPtr ptr) {
         this.NativePtr = ptr;
     }

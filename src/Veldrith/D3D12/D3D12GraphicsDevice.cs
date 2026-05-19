@@ -19,8 +19,28 @@ namespace Veldrith.D3D12;
 internal sealed class D3D12GraphicsDevice : GraphicsDevice {
 
     /// <summary>
-    /// Represents the _d3d12Features field.
+    /// Performs the new operation.
     /// </summary>
+    /// <param name="true">The value of true.</param>
+    /// <param name="true">The value of true.</param>
+    /// <param name="true">The value of true.</param>
+    /// <param name="true">The value of true.</param>
+    /// <param name="true">The value of true.</param>
+    /// <param name="true">The value of true.</param>
+    /// <param name="true">The value of true.</param>
+    /// <param name="true">The value of true.</param>
+    /// <param name="true">The value of true.</param>
+    /// <param name="true">The value of true.</param>
+    /// <param name="true">The value of true.</param>
+    /// <param name="true">The value of true.</param>
+    /// <param name="true">The value of true.</param>
+    /// <param name="true">The value of true.</param>
+    /// <param name="true">The value of true.</param>
+    /// <param name="true">The value of true.</param>
+    /// <param name="true">The value of true.</param>
+    /// <param name="true">The value of true.</param>
+    /// <param name="false">The value of false.</param>
+    /// <returns>The result of the new operation.</returns>
     private static readonly GraphicsDeviceFeatures _d3d12Features = new(true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, false);
 
     /// <summary>
@@ -34,13 +54,15 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     private readonly ID3D12Device _device;
 
     /// <summary>
-    /// Represents the _formatSupportCache field.
+    /// Performs the new operation.
     /// </summary>
+    /// <returns>The result of the new operation.</returns>
     private readonly Dictionary<Format, CachedFormatSupport> _formatSupportCache = new();
 
     /// <summary>
-    /// Represents the _formatSupportCacheLock field.
+    /// Performs the new operation.
     /// </summary>
+    /// <returns>The result of the new operation.</returns>
     private readonly object _formatSupportCacheLock = new();
 
     /// <summary>
@@ -49,13 +71,16 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     private readonly D3D12ResourceFactory _resourceFactory;
 
     /// <summary>
-    /// Represents the _rootSignatureCache field.
+    /// Performs the new operation.
     /// </summary>
+    /// <param name="Ordinal">The value of Ordinal.</param>
+    /// <returns>The result of the new operation.</returns>
     private readonly Dictionary<string, ID3D12RootSignature> _rootSignatureCache = new(StringComparer.Ordinal);
 
     /// <summary>
-    /// Represents the _rootSignatureCacheLock field.
+    /// Performs the new operation.
     /// </summary>
+    /// <returns>The result of the new operation.</returns>
     private readonly object _rootSignatureCacheLock = new();
 
     /// <summary>
@@ -79,8 +104,10 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     private ulong _nextSubmissionFenceValue = 1;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="D3D12GraphicsDevice" /> class.
+    /// Initializes a new instance of the <see cref="D3D12GraphicsDevice" /> type.
     /// </summary>
+    /// <param name="options">The value of options.</param>
+    /// <param name="swapchainDescription">The value of swapchainDescription.</param>
     public D3D12GraphicsDevice(GraphicsDeviceOptions options, SwapchainDescription? swapchainDescription) {
         if (!IsSupported()) {
             throw new PlatformNotSupportedException("Direct3D 12 is only supported on Windows.");
@@ -201,8 +228,9 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     internal IDXGIFactory4 DxgiFactory { get; }
 
     /// <summary>
-    /// Executes IsSupported.
+    /// Performs the IsSupported operation.
     /// </summary>
+    /// <returns>The result of the IsSupported operation.</returns>
     public static bool IsSupported() {
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
             return false;
@@ -212,15 +240,18 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes IsSubmissionFenceComplete.
+    /// Performs the IsSubmissionFenceComplete operation.
     /// </summary>
+    /// <param name="value">The value of value.</param>
+    /// <returns>The result of the IsSubmissionFenceComplete operation.</returns>
     internal bool IsSubmissionFenceComplete(ulong value) {
         return this._submissionFence.CompletedValue >= value;
     }
 
     /// <summary>
-    /// Executes WaitForSubmissionFence.
+    /// Performs the WaitForSubmissionFence operation.
     /// </summary>
+    /// <param name="value">The value of value.</param>
     internal void WaitForSubmissionFence(ulong value) {
         if (this._submissionFence.CompletedValue >= value) {
             return;
@@ -232,8 +263,11 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes GetOrCreateRootSignature.
+    /// Performs the GetOrCreateRootSignature operation.
     /// </summary>
+    /// <param name="cacheKey">The value of cacheKey.</param>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the GetOrCreateRootSignature operation.</returns>
     internal ID3D12RootSignature GetOrCreateRootSignature(string cacheKey, in RootSignatureDescription description) {
         lock (this._rootSignatureCacheLock) {
             if (this._rootSignatureCache.TryGetValue(cacheKey, out ID3D12RootSignature cached)) {
@@ -247,16 +281,23 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes WaitForFence.
+    /// Performs the WaitForFence operation.
     /// </summary>
+    /// <param name="fence">The value of fence.</param>
+    /// <param name="nanosecondTimeout">The value of nanosecondTimeout.</param>
+    /// <returns>The result of the WaitForFence operation.</returns>
     public override bool WaitForFence(Fence fence, ulong nanosecondTimeout) {
         D3D12Fence d3d12Fence = Util.AssertSubtype<Fence, D3D12Fence>(fence);
         return d3d12Fence.Wait(nanosecondTimeout);
     }
 
     /// <summary>
-    /// Executes WaitForFences.
+    /// Performs the WaitForFences operation.
     /// </summary>
+    /// <param name="fences">The value of fences.</param>
+    /// <param name="waitAll">The value of waitAll.</param>
+    /// <param name="nanosecondTimeout">The value of nanosecondTimeout.</param>
+    /// <returns>The result of the WaitForFences operation.</returns>
     public override bool WaitForFences(Fence[] fences, bool waitAll, ulong nanosecondTimeout) {
         if (fences == null || fences.Length == 0) {
             return true;
@@ -299,15 +340,19 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes ResetFence.
+    /// Performs the ResetFence operation.
     /// </summary>
+    /// <param name="fence">The value of fence.</param>
     public override void ResetFence(Fence fence) {
         fence.Reset();
     }
 
     /// <summary>
-    /// Executes GetSampleCountLimit.
+    /// Performs the GetSampleCountLimit operation.
     /// </summary>
+    /// <param name="format">The value of format.</param>
+    /// <param name="depthFormat">The value of depthFormat.</param>
+    /// <returns>The result of the GetSampleCountLimit operation.</returns>
     public override TextureSampleCount GetSampleCountLimit(PixelFormat format, bool depthFormat) {
         Format dxgiFormat;
         try {
@@ -358,22 +403,28 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes GetUniformBufferMinOffsetAlignmentCore.
+    /// Performs the GetUniformBufferMinOffsetAlignmentCore operation.
     /// </summary>
+    /// <returns>The result of the GetUniformBufferMinOffsetAlignmentCore operation.</returns>
     internal override uint GetUniformBufferMinOffsetAlignmentCore() {
         return 256;
     }
 
     /// <summary>
-    /// Executes GetStructuredBufferMinOffsetAlignmentCore.
+    /// Performs the GetStructuredBufferMinOffsetAlignmentCore operation.
     /// </summary>
+    /// <returns>The result of the GetStructuredBufferMinOffsetAlignmentCore operation.</returns>
     internal override uint GetStructuredBufferMinOffsetAlignmentCore() {
         return 16;
     }
 
     /// <summary>
-    /// Executes MapCore.
+    /// Performs the MapCore operation.
     /// </summary>
+    /// <param name="resource">The value of resource.</param>
+    /// <param name="mode">The value of mode.</param>
+    /// <param name="subresource">The value of subresource.</param>
+    /// <returns>The result of the MapCore operation.</returns>
     protected override MappedResource MapCore(IMappableResource resource, MapMode mode, uint subresource) {
         if (resource is D3D12DeviceBuffer buffer) {
             return buffer.Map(mode);
@@ -387,8 +438,10 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes UnmapCore.
+    /// Performs the UnmapCore operation.
     /// </summary>
+    /// <param name="resource">The value of resource.</param>
+    /// <param name="subresource">The value of subresource.</param>
     protected override void UnmapCore(IMappableResource resource, uint subresource) {
         if (resource is D3D12DeviceBuffer buffer) {
             buffer.Unmap();
@@ -404,7 +457,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes PlatformDispose.
+    /// Performs the PlatformDispose operation.
     /// </summary>
     protected override void PlatformDispose() {
         lock (this._rootSignatureCacheLock) {
@@ -424,8 +477,10 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes SubmitCommandsCore.
+    /// Performs the SubmitCommandsCore operation.
     /// </summary>
+    /// <param name="commandList">The value of commandList.</param>
+    /// <param name="fence">The value of fence.</param>
     private protected override void SubmitCommandsCore(CommandList commandList, Fence fence) {
         if (commandList is D3D12CommandList d3d12CommandList) {
             d3d12CommandList.ExecuteNoSignal();
@@ -441,8 +496,9 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes SwapBuffersCore.
+    /// Performs the SwapBuffersCore operation.
     /// </summary>
+    /// <param name="swapchain">The value of swapchain.</param>
     private protected override void SwapBuffersCore(Swapchain swapchain) {
         if (swapchain is D3D12Swapchain d3d12Swapchain) {
             d3d12Swapchain.Present();
@@ -453,14 +509,14 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes WaitForIdleCore.
+    /// Performs the WaitForIdleCore operation.
     /// </summary>
     private protected override void WaitForIdleCore() {
         this.WaitForQueueIdle();
     }
 
     /// <summary>
-    /// Executes WaitForNextFrameReadyCore.
+    /// Performs the WaitForNextFrameReadyCore operation.
     /// </summary>
     private protected override void WaitForNextFrameReadyCore() {
         // Do not globally stall the GPU every frame on D3D12.
@@ -468,8 +524,19 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes UpdateTextureCore.
+    /// Performs the UpdateTextureCore operation.
     /// </summary>
+    /// <param name="texture">The value of texture.</param>
+    /// <param name="source">The value of source.</param>
+    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
+    /// <param name="x">The value of x.</param>
+    /// <param name="y">The value of y.</param>
+    /// <param name="z">The value of z.</param>
+    /// <param name="width">The value of width.</param>
+    /// <param name="height">The value of height.</param>
+    /// <param name="depth">The value of depth.</param>
+    /// <param name="mipLevel">The value of mipLevel.</param>
+    /// <param name="arrayLayer">The value of arrayLayer.</param>
     private protected override void UpdateTextureCore(Texture texture, IntPtr source, uint sizeInBytes, uint x, uint y, uint z, uint width, uint height, uint depth, uint mipLevel, uint arrayLayer) {
         if (texture is not D3D12Texture d3d12Texture) {
             throw new VeldridException("Texture belongs to a different backend.");
@@ -484,8 +551,12 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes UpdateBufferCore.
+    /// Performs the UpdateBufferCore operation.
     /// </summary>
+    /// <param name="buffer">The value of buffer.</param>
+    /// <param name="bufferOffsetInBytes">The value of bufferOffsetInBytes.</param>
+    /// <param name="source">The value of source.</param>
+    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
     private protected override void UpdateBufferCore(DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes) {
         if (buffer is not D3D12DeviceBuffer d3d12Buffer) {
             throw new VeldridException("Buffer belongs to a different backend.");
@@ -508,8 +579,13 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes GetPixelFormatSupportCore.
+    /// Performs the GetPixelFormatSupportCore operation.
     /// </summary>
+    /// <param name="format">The value of format.</param>
+    /// <param name="type">The value of type.</param>
+    /// <param name="usage">The value of usage.</param>
+    /// <param name="properties">The value of properties.</param>
+    /// <returns>The result of the GetPixelFormatSupportCore operation.</returns>
     private protected override bool GetPixelFormatSupportCore(PixelFormat format, TextureType type, TextureUsage usage, out PixelFormatProperties properties) {
         if ((usage & TextureUsage.Cubemap) != 0 && type != TextureType.Texture2D) {
             properties = default;
@@ -649,16 +725,20 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes GetD3D12Info.
+    /// Performs the GetD3D12Info operation.
     /// </summary>
+    /// <param name="info">The value of info.</param>
+    /// <returns>The result of the GetD3D12Info operation.</returns>
     public override bool GetD3D12Info(out BackendInfoD3D12 info) {
         info = this._d3d12Info;
         return true;
     }
 
     /// <summary>
-    /// Executes SelectAdapter.
+    /// Performs the SelectAdapter operation.
     /// </summary>
+    /// <param name="factory">The value of factory.</param>
+    /// <returns>The result of the SelectAdapter operation.</returns>
     private static IDXGIAdapter1 SelectAdapter(IDXGIFactory4 factory) {
         // Prefer the high-performance adapter when DXGI 1.6 is available.
         using (IDXGIFactory6 factory6 = factory.QueryInterfaceOrNull<IDXGIFactory6>()) {
@@ -713,8 +793,10 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes GetSupportedSampleFlags.
+    /// Performs the GetSupportedSampleFlags operation.
     /// </summary>
+    /// <param name="format">The value of format.</param>
+    /// <returns>The result of the GetSupportedSampleFlags operation.</returns>
     private uint GetSupportedSampleFlags(Format format) {
         uint sampleFlags = 1u << (int)TextureSampleCount.Count1;
         sampleFlags |= this.QuerySampleSupportFlag(format, 2, TextureSampleCount.Count2);
@@ -726,8 +808,12 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes QuerySampleSupportFlag.
+    /// Performs the QuerySampleSupportFlag operation.
     /// </summary>
+    /// <param name="format">The value of format.</param>
+    /// <param name="sampleCount">The value of sampleCount.</param>
+    /// <param name="textureSampleCount">The value of textureSampleCount.</param>
+    /// <returns>The result of the QuerySampleSupportFlag operation.</returns>
     private uint QuerySampleSupportFlag(Format format, uint sampleCount, TextureSampleCount textureSampleCount) {
         FeatureDataMultisampleQualityLevels msaa = new() {
             Format = format,
@@ -743,8 +829,13 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes GetTextureTypeLimits.
+    /// Performs the GetTextureTypeLimits operation.
     /// </summary>
+    /// <param name="type">The value of type.</param>
+    /// <param name="maxWidth">The value of maxWidth.</param>
+    /// <param name="maxHeight">The value of maxHeight.</param>
+    /// <param name="maxDepth">The value of maxDepth.</param>
+    /// <param name="maxArrayLayers">The value of maxArrayLayers.</param>
     private static void GetTextureTypeLimits(TextureType type, out uint maxWidth, out uint maxHeight, out uint maxDepth, out uint maxArrayLayers) {
         switch (type) {
             case TextureType.Texture1D:
@@ -770,8 +861,12 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes GetMaxMipLevels.
+    /// Performs the GetMaxMipLevels operation.
     /// </summary>
+    /// <param name="maxWidth">The value of maxWidth.</param>
+    /// <param name="maxHeight">The value of maxHeight.</param>
+    /// <param name="maxDepth">The value of maxDepth.</param>
+    /// <returns>The result of the GetMaxMipLevels operation.</returns>
     private static uint GetMaxMipLevels(uint maxWidth, uint maxHeight, uint maxDepth) {
         uint maxDimension = Math.Max(maxWidth, Math.Max(maxHeight, maxDepth));
         uint mipLevels = 1;
@@ -784,8 +879,10 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes IsSrgbFormat.
+    /// Performs the IsSrgbFormat operation.
     /// </summary>
+    /// <param name="format">The value of format.</param>
+    /// <returns>The result of the IsSrgbFormat operation.</returns>
     private static bool IsSrgbFormat(PixelFormat format) {
         switch (format) {
             case PixelFormat.R8G8B8A8UNormSRgb: case PixelFormat.B8G8R8A8UNormSRgb: case PixelFormat.Bc1RgbUNormSRgb: case PixelFormat.Bc1RgbaUNormSRgb: case PixelFormat.Bc2UNormSRgb: case PixelFormat.Bc3UNormSRgb: case PixelFormat.Bc7UNormSRgb: return true;
@@ -794,8 +891,13 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes IsRuntimeMipmapGenerationSupported.
+    /// Performs the IsRuntimeMipmapGenerationSupported operation.
     /// </summary>
+    /// <param name="format">The value of format.</param>
+    /// <param name="type">The value of type.</param>
+    /// <param name="usage">The value of usage.</param>
+    /// <param name="depthUsage">The value of depthUsage.</param>
+    /// <returns>The result of the IsRuntimeMipmapGenerationSupported operation.</returns>
     private static bool IsRuntimeMipmapGenerationSupported(PixelFormat format, TextureType type, TextureUsage usage, bool depthUsage) {
         if (depthUsage) {
             return false;
@@ -819,8 +921,11 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes TryGetFormatSupport.
+    /// Performs the TryGetFormatSupport operation.
     /// </summary>
+    /// <param name="format">The value of format.</param>
+    /// <param name="formatSupport">The value of formatSupport.</param>
+    /// <returns>The result of the TryGetFormatSupport operation.</returns>
     private bool TryGetFormatSupport(Format format, out FeatureDataFormatSupport formatSupport) {
         lock (this._formatSupportCacheLock) {
             if (this._formatSupportCache.TryGetValue(format, out CachedFormatSupport cached)) {
@@ -839,8 +944,11 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes IsTypeSupported.
+    /// Performs the IsTypeSupported operation.
     /// </summary>
+    /// <param name="type">The value of type.</param>
+    /// <param name="support">The value of support.</param>
+    /// <returns>The result of the IsTypeSupported operation.</returns>
     private static bool IsTypeSupported(TextureType type, FormatSupport1 support) {
         switch (type) {
             case TextureType.Texture1D: return (support & FormatSupport1.Texture1D) != 0;
@@ -856,8 +964,19 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes UpdateNativeTexture.
+    /// Performs the UpdateNativeTexture operation.
     /// </summary>
+    /// <param name="texture">The value of texture.</param>
+    /// <param name="source">The value of source.</param>
+    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
+    /// <param name="x">The value of x.</param>
+    /// <param name="y">The value of y.</param>
+    /// <param name="z">The value of z.</param>
+    /// <param name="width">The value of width.</param>
+    /// <param name="height">The value of height.</param>
+    /// <param name="depth">The value of depth.</param>
+    /// <param name="mipLevel">The value of mipLevel.</param>
+    /// <param name="arrayLayer">The value of arrayLayer.</param>
     private void UpdateNativeTexture(D3D12Texture texture, IntPtr source, uint sizeInBytes, uint x, uint y, uint z, uint width, uint height, uint depth, uint mipLevel, uint arrayLayer) {
         // Use the validated staging->native upload path in D3D12Texture to avoid
         // partial CopyTextureRegion edge-cases that can trigger device removal.
@@ -865,8 +984,18 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes CopyTextureDataToUploadBuffer.
+    /// Performs the CopyTextureDataToUploadBuffer operation.
     /// </summary>
+    /// <param name="source">The value of source.</param>
+    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
+    /// <param name="format">The value of format.</param>
+    /// <param name="copyWidth">The value of copyWidth.</param>
+    /// <param name="copyHeight">The value of copyHeight.</param>
+    /// <param name="copyDepth">The value of copyDepth.</param>
+    /// <param name="uploadMappedPtr">The value of uploadMappedPtr.</param>
+    /// <param name="placedFootprint">The value of placedFootprint.</param>
+    /// <param name="numRows">The value of numRows.</param>
+    /// <param name="rowSizeInBytes">The value of rowSizeInBytes.</param>
     private unsafe void CopyTextureDataToUploadBuffer(IntPtr source, uint sizeInBytes, PixelFormat format, uint copyWidth, uint copyHeight, uint copyDepth, void* uploadMappedPtr, PlacedSubresourceFootPrint placedFootprint, uint numRows, ulong rowSizeInBytes) {
         uint srcRowPitch = FormatHelpers.GetRowPitch(copyWidth, format);
         uint srcNumRows = FormatHelpers.GetNumRows(copyHeight, format);
@@ -900,7 +1029,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Executes WaitForQueueIdle.
+    /// Performs the WaitForQueueIdle operation.
     /// </summary>
     private void WaitForQueueIdle() {
         ID3D12Fence fence = null;
@@ -938,8 +1067,10 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         public readonly FeatureDataFormatSupport Support;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="CachedFormatSupport" /> class.
+        /// Initializes a new instance of the <see cref="CachedFormatSupport" /> type.
         /// </summary>
+        /// <param name="isSupported">The value of isSupported.</param>
+        /// <param name="support">The value of support.</param>
         public CachedFormatSupport(bool isSupported, FeatureDataFormatSupport support) {
             this.IsSupported = isSupported;
             this.Support = support;

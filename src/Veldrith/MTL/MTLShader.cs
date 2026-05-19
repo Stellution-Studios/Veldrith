@@ -17,12 +17,10 @@ internal class MtlShader : Shader {
     /// <summary>
     /// Initializes a new instance of the <see cref="MtlShader" /> class.
     /// </summary>
-    public unsafe MtlShader(ref ShaderDescription description, MtlGraphicsDevice gd)
-
-        /// <summary>
-        /// Executes base.
-        /// </summary>
-        : base(description.Stage, description.EntryPoint) {
+    /// <param name="description">The value of description.</param>
+    /// <param name="gd">The value of gd.</param>
+    /// <returns>The result of the base operation.</returns>
+    public unsafe MtlShader(ref ShaderDescription description, MtlGraphicsDevice gd) : base(description.Stage, description.EntryPoint) {
         if (description.ShaderBytes.Length > 4
             && description.ShaderBytes[0] == 0x4d
             && description.ShaderBytes[1] == 0x54
@@ -85,7 +83,7 @@ internal class MtlShader : Shader {
     #region Disposal
 
     /// <summary>
-    /// Executes Dispose.
+    /// Performs the Dispose operation.
     /// </summary>
     public override void Dispose() {
         if (!this._disposed) {

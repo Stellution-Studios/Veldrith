@@ -29,8 +29,10 @@ internal unsafe class VkSampler : Sampler {
     private string _name;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="VkSampler" /> class.
+    /// Initializes a new instance of the <see cref="VkSampler" /> type.
     /// </summary>
+    /// <param name="gd">The value of gd.</param>
+    /// <param name="description">The value of description.</param>
     public VkSampler(VkGraphicsDevice gd, ref SamplerDescription description) {
         this.gd = gd;
         VkFormats.GetFilterParams(description.Filter, out VkFilter minFilter, out VkFilter magFilter, out VkSamplerMipmapMode mipmapMode);
@@ -88,7 +90,7 @@ internal unsafe class VkSampler : Sampler {
     #region Disposal
 
     /// <summary>
-    /// Executes Dispose.
+    /// Performs the Dispose operation.
     /// </summary>
     public override void Dispose() {
         this.RefCount.Decrement();
@@ -97,7 +99,7 @@ internal unsafe class VkSampler : Sampler {
     #endregion
 
     /// <summary>
-    /// Executes DisposeCore.
+    /// Performs the DisposeCore operation.
     /// </summary>
     private void DisposeCore() {
         if (!this._disposed) {

@@ -14,8 +14,10 @@ internal class MtlTexture : Texture {
     private bool _disposed;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MtlTexture" /> class.
+    /// Initializes a new instance of the <see cref="MtlTexture" /> type.
     /// </summary>
+    /// <param name="description">The value of description.</param>
+    /// <param name="gd">The value of gd.</param>
     public MtlTexture(ref TextureDescription description, MtlGraphicsDevice gd) {
         this.Width = description.Width;
         this.Height = description.Height;
@@ -70,8 +72,10 @@ internal class MtlTexture : Texture {
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MtlTexture" /> class.
+    /// Initializes a new instance of the <see cref="MtlTexture" /> type.
     /// </summary>
+    /// <param name="nativeTexture">The value of nativeTexture.</param>
+    /// <param name="description">The value of description.</param>
     public MtlTexture(ulong nativeTexture, ref TextureDescription description) {
         this.DeviceTexture = new MTLTexture((IntPtr)nativeTexture);
         this.Width = description.Width;
@@ -90,7 +94,7 @@ internal class MtlTexture : Texture {
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MtlTexture" /> class.
+    /// Initializes a new instance of the <see cref="MtlTexture" /> type.
     /// </summary>
     protected MtlTexture() { }
 
@@ -180,8 +184,11 @@ internal class MtlTexture : Texture {
     public override string Name { get; set; }
 
     /// <summary>
-    /// Executes GetSubresourceSize.
+    /// Performs the GetSubresourceSize operation.
     /// </summary>
+    /// <param name="mipLevel">The value of mipLevel.</param>
+    /// <param name="arrayLayer">The value of arrayLayer.</param>
+    /// <returns>The result of the GetSubresourceSize operation.</returns>
     internal uint GetSubresourceSize(uint mipLevel, uint arrayLayer) {
         uint blockSize = FormatHelpers.IsCompressedFormat(this.Format) ? 4u : 1u;
         Util.GetMipDimensions(this, mipLevel, out uint width, out uint height, out uint depth);
@@ -191,8 +198,12 @@ internal class MtlTexture : Texture {
     }
 
     /// <summary>
-    /// Executes GetSubresourceLayout.
+    /// Performs the GetSubresourceLayout operation.
     /// </summary>
+    /// <param name="mipLevel">The value of mipLevel.</param>
+    /// <param name="arrayLayer">The value of arrayLayer.</param>
+    /// <param name="rowPitch">The value of rowPitch.</param>
+    /// <param name="depthPitch">The value of depthPitch.</param>
     internal void GetSubresourceLayout(uint mipLevel, uint arrayLayer, out uint rowPitch, out uint depthPitch) {
         uint blockSize = FormatHelpers.IsCompressedFormat(this.Format) ? 4u : 1u;
         Util.GetMipDimensions(this, mipLevel, out uint mipWidth, out uint mipHeight, out uint _);
@@ -203,7 +214,7 @@ internal class MtlTexture : Texture {
     }
 
     /// <summary>
-    /// Executes DisposeCore.
+    /// Performs the DisposeCore operation.
     /// </summary>
     private protected override void DisposeCore() {
         if (!this._disposed) {

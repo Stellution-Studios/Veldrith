@@ -19,16 +19,18 @@ internal class ResourceRefCount {
     private int _refCount;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ResourceRefCount" /> class.
+    /// Initializes a new instance of the <see cref="ResourceRefCount" /> type.
     /// </summary>
+    /// <param name="disposeAction">The value of disposeAction.</param>
     public ResourceRefCount(Action disposeAction) {
         this.disposeAction = disposeAction;
         this._refCount = 1;
     }
 
     /// <summary>
-    /// Executes Increment.
+    /// Performs the Increment operation.
     /// </summary>
+    /// <returns>The result of the Increment operation.</returns>
     public int Increment() {
         int ret = Interlocked.Increment(ref this._refCount);
 #if VALIDATE_USAGE
@@ -40,8 +42,9 @@ internal class ResourceRefCount {
     }
 
     /// <summary>
-    /// Executes Decrement.
+    /// Performs the Decrement operation.
     /// </summary>
+    /// <returns>The result of the Decrement operation.</returns>
     public int Decrement() {
         int ret = Interlocked.Decrement(ref this._refCount);
         if (ret == 0) {

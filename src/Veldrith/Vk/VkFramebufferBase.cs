@@ -11,17 +11,15 @@ internal abstract class VkFramebufferBase : Framebuffer {
     /// <summary>
     /// Initializes a new instance of the <see cref="VkFramebufferBase" /> class.
     /// </summary>
-    protected VkFramebufferBase(FramebufferAttachmentDescription? depthTexture, IReadOnlyList<FramebufferAttachmentDescription> colorTextures)
-
-        /// <summary>
-        /// Executes base.
-        /// </summary>
-        : base(depthTexture, colorTextures) {
+    /// <param name="depthTexture">The value of depthTexture.</param>
+    /// <param name="colorTextures">The value of colorTextures.</param>
+    /// <returns>The result of the base operation.</returns>
+    protected VkFramebufferBase(FramebufferAttachmentDescription? depthTexture, IReadOnlyList<FramebufferAttachmentDescription> colorTextures) : base(depthTexture, colorTextures) {
         this.RefCount = new ResourceRefCount(this.DisposeCore);
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="VkFramebufferBase" /> class.
+    /// Initializes a new instance of the <see cref="VkFramebufferBase" /> type.
     /// </summary>
     protected VkFramebufferBase() {
         this.RefCount = new ResourceRefCount(this.DisposeCore);
@@ -70,7 +68,7 @@ internal abstract class VkFramebufferBase : Framebuffer {
     #region Disposal
 
     /// <summary>
-    /// Executes Dispose.
+    /// Performs the Dispose operation.
     /// </summary>
     public override void Dispose() {
         this.RefCount.Decrement();
@@ -79,17 +77,19 @@ internal abstract class VkFramebufferBase : Framebuffer {
     #endregion
 
     /// <summary>
-    /// Executes TransitionToIntermediateLayout.
+    /// Performs the TransitionToIntermediateLayout operation.
     /// </summary>
+    /// <param name="cb">The value of cb.</param>
     public abstract void TransitionToIntermediateLayout(VkCommandBuffer cb);
 
     /// <summary>
-    /// Executes TransitionToFinalLayout.
+    /// Performs the TransitionToFinalLayout operation.
     /// </summary>
+    /// <param name="cb">The value of cb.</param>
     public abstract void TransitionToFinalLayout(VkCommandBuffer cb);
 
     /// <summary>
-    /// Executes DisposeCore.
+    /// Performs the DisposeCore operation.
     /// </summary>
     protected abstract void DisposeCore();
 }

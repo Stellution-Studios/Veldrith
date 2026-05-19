@@ -13,36 +13,43 @@ public struct ObjectiveCMethod {
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ObjectiveCMethod" /> class.
+    /// Initializes a new instance of the <see cref="ObjectiveCMethod" /> type.
     /// </summary>
+    /// <param name="ptr">The value of ptr.</param>
     public ObjectiveCMethod(IntPtr ptr) {
         this.NativePtr = ptr;
     }
 
     /// <summary>
-    /// Executes IntPtr.
+    /// Performs the operator IntPtr operation.
     /// </summary>
+    /// <param name="method">The value of method.</param>
+    /// <returns>The result of the operator IntPtr operation.</returns>
     public static implicit operator IntPtr(ObjectiveCMethod method) {
         return method.NativePtr;
     }
 
     /// <summary>
-    /// Executes ObjectiveCMethod.
+    /// Performs the operator ObjectiveCMethod operation.
     /// </summary>
+    /// <param name="ptr">The value of ptr.</param>
+    /// <returns>The result of the operator ObjectiveCMethod operation.</returns>
     public static implicit operator ObjectiveCMethod(IntPtr ptr) {
         return new ObjectiveCMethod(ptr);
     }
 
     /// <summary>
-    /// Executes GetSelector.
+    /// Performs the GetSelector operation.
     /// </summary>
+    /// <returns>The result of the GetSelector operation.</returns>
     public Selector GetSelector() {
         return ObjectiveCRuntime.method_getName(this);
     }
 
     /// <summary>
-    /// Executes GetName.
+    /// Performs the GetName operation.
     /// </summary>
+    /// <returns>The result of the GetName operation.</returns>
     public string GetName() {
         return this.GetSelector().Name;
     }

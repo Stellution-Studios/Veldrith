@@ -14,22 +14,27 @@ public struct CAMetalLayer {
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="CAMetalLayer" /> class.
+    /// Initializes a new instance of the <see cref="CAMetalLayer" /> type.
     /// </summary>
+    /// <param name="ptr">The value of ptr.</param>
     public CAMetalLayer(IntPtr ptr) {
         this.NativePtr = ptr;
     }
 
     /// <summary>
-    /// Executes New.
+    /// Performs the New operation.
     /// </summary>
+    /// <returns>The result of the New operation.</returns>
     public static CAMetalLayer New() {
         return s_class.AllocInit<CAMetalLayer>();
     }
 
     /// <summary>
-    /// Executes TryCast.
+    /// Performs the TryCast operation.
     /// </summary>
+    /// <param name="layerPointer">The value of layerPointer.</param>
+    /// <param name="metalLayer">The value of metalLayer.</param>
+    /// <returns>The result of the TryCast operation.</returns>
     public static bool TryCast(IntPtr layerPointer, out CAMetalLayer metalLayer) {
         NSObject layerObject = new(layerPointer);
 
@@ -91,8 +96,9 @@ public struct CAMetalLayer {
     }
 
     /// <summary>
-    /// Executes nextDrawable.
+    /// Performs the nextDrawable operation.
     /// </summary>
+    /// <returns>The result of the nextDrawable operation.</returns>
     public CAMetalDrawable nextDrawable() {
         return objc_msgSend<CAMetalDrawable>(this.NativePtr, sel_nextDrawable);
     }
@@ -106,8 +112,10 @@ public struct CAMetalLayer {
     }
 
     /// <summary>
-    /// Represents the s_class field.
+    /// Performs the new operation.
     /// </summary>
+    /// <param name="CAMetalLayer">The value of CAMetalLayer.</param>
+    /// <returns>The result of the new operation.</returns>
     private static readonly ObjCClass s_class = new(nameof(CAMetalLayer));
 
     /// <summary>

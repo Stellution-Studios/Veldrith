@@ -13,8 +13,9 @@ public struct MTLComputePipelineState {
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MTLComputePipelineState" /> class.
+    /// Initializes a new instance of the <see cref="MTLComputePipelineState" /> type.
     /// </summary>
+    /// <param name="ptr">The value of ptr.</param>
     public MTLComputePipelineState(IntPtr ptr) {
         this.NativePtr = ptr;
     }

@@ -13,12 +13,14 @@ internal class MtlFramebuffer : Framebuffer {
     private bool _disposed;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MtlFramebuffer" /> class.
+    /// Initializes a new instance of the <see cref="MtlFramebuffer" /> type.
     /// </summary>
+    /// <param name="gd">The value of gd.</param>
+    /// <param name="description">The value of description.</param>
     public MtlFramebuffer(MtlGraphicsDevice gd, ref FramebufferDescription description) : base(description.DepthTarget, description.ColorTargets) { }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MtlFramebuffer" /> class.
+    /// Initializes a new instance of the <see cref="MtlFramebuffer" /> type.
     /// </summary>
     public MtlFramebuffer() { }
 
@@ -35,7 +37,7 @@ internal class MtlFramebuffer : Framebuffer {
     #region Disposal
 
     /// <summary>
-    /// Executes Dispose.
+    /// Performs the Dispose operation.
     /// </summary>
     public override void Dispose() {
         this._disposed = true;
@@ -44,8 +46,9 @@ internal class MtlFramebuffer : Framebuffer {
     #endregion
 
     /// <summary>
-    /// Executes CreateRenderPassDescriptor.
+    /// Performs the CreateRenderPassDescriptor operation.
     /// </summary>
+    /// <returns>The result of the CreateRenderPassDescriptor operation.</returns>
     public MTLRenderPassDescriptor CreateRenderPassDescriptor() {
         MTLRenderPassDescriptor ret = MTLRenderPassDescriptor.New();
 

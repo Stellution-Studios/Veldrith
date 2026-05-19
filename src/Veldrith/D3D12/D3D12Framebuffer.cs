@@ -39,8 +39,10 @@ internal class D3D12Framebuffer : Framebuffer {
     private bool _disposed;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="D3D12Framebuffer" /> class.
+    /// Initializes a new instance of the <see cref="D3D12Framebuffer" /> type.
     /// </summary>
+    /// <param name="gd">The value of gd.</param>
+    /// <param name="description">The value of description.</param>
     public D3D12Framebuffer(D3D12GraphicsDevice gd, ref FramebufferDescription description) : base(description.DepthTarget, description.ColorTargets) {
         this._colorTargetTextures = new D3D12Texture[this.ColorTargets.Count];
         this._colorTargetViews = new CpuDescriptorHandle[this.ColorTargets.Count];
@@ -96,8 +98,11 @@ internal class D3D12Framebuffer : Framebuffer {
     public override string Name { get; set; }
 
     /// <summary>
-    /// Executes TryGetColorTargetView.
+    /// Performs the TryGetColorTargetView operation.
     /// </summary>
+    /// <param name="index">The value of index.</param>
+    /// <param name="handle">The value of handle.</param>
+    /// <returns>The result of the TryGetColorTargetView operation.</returns>
     internal bool TryGetColorTargetView(uint index, out CpuDescriptorHandle handle) {
         if (index >= this._colorTargetViews.Length) {
             handle = default;
@@ -109,8 +114,10 @@ internal class D3D12Framebuffer : Framebuffer {
     }
 
     /// <summary>
-    /// Executes TryGetColorTargetViews.
+    /// Performs the TryGetColorTargetViews operation.
     /// </summary>
+    /// <param name="handles">The value of handles.</param>
+    /// <returns>The result of the TryGetColorTargetViews operation.</returns>
     internal bool TryGetColorTargetViews(out CpuDescriptorHandle[] handles) {
         handles = this._colorTargetViews;
         if (this._colorTargetViews.Length == 0) {
@@ -127,8 +134,10 @@ internal class D3D12Framebuffer : Framebuffer {
     }
 
     /// <summary>
-    /// Executes TryGetDepthStencilView.
+    /// Performs the TryGetDepthStencilView operation.
     /// </summary>
+    /// <param name="handle">The value of handle.</param>
+    /// <returns>The result of the TryGetDepthStencilView operation.</returns>
     internal bool TryGetDepthStencilView(out CpuDescriptorHandle handle) {
         if (!this._depthStencilView.HasValue || this.DepthTargetTexture?.NativeTexture == null) {
             handle = default;
@@ -140,7 +149,7 @@ internal class D3D12Framebuffer : Framebuffer {
     }
 
     /// <summary>
-    /// Executes Dispose.
+    /// Performs the Dispose operation.
     /// </summary>
     public override void Dispose() {
         if (this._disposed) {
@@ -153,8 +162,11 @@ internal class D3D12Framebuffer : Framebuffer {
     }
 
     /// <summary>
-    /// Executes CreateRenderTargetViewDescription.
+    /// Performs the CreateRenderTargetViewDescription operation.
     /// </summary>
+    /// <param name="texture">The value of texture.</param>
+    /// <param name="attachment">The value of attachment.</param>
+    /// <returns>The result of the CreateRenderTargetViewDescription operation.</returns>
     private static RenderTargetViewDescription CreateRenderTargetViewDescription(D3D12Texture texture, FramebufferAttachment attachment) {
         RenderTargetViewDescription description = new() {
             Format = D3D12Formats.GetViewFormat(D3D12Formats.ToDxgiFormat(texture.Format))
@@ -226,8 +238,11 @@ internal class D3D12Framebuffer : Framebuffer {
     }
 
     /// <summary>
-    /// Executes CreateDepthStencilViewDescription.
+    /// Performs the CreateDepthStencilViewDescription operation.
     /// </summary>
+    /// <param name="texture">The value of texture.</param>
+    /// <param name="attachment">The value of attachment.</param>
+    /// <returns>The result of the CreateDepthStencilViewDescription operation.</returns>
     private static DepthStencilViewDescription CreateDepthStencilViewDescription(D3D12Texture texture, FramebufferAttachment attachment) {
         DepthStencilViewDescription description = new() {
             Format = D3D12Formats.ToDepthFormat(texture.Format),

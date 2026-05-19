@@ -16,22 +16,31 @@ public static unsafe class Dispatch {
     [DllImport(LibdispatchLocation)]
 
     /// <summary>
-    /// Executes dispatch_get_global_queue.
+    /// Performs the dispatch_get_global_queue operation.
     /// </summary>
+    /// <param name="identifier">The value of identifier.</param>
+    /// <param name="flags">The value of flags.</param>
+    /// <returns>The result of the dispatch_get_global_queue operation.</returns>
     public static extern DispatchQueue dispatch_get_global_queue(QualityOfServiceLevel identifier, ulong flags);
 
     [DllImport(LibdispatchLocation)]
 
     /// <summary>
-    /// Executes dispatch_data_create.
+    /// Performs the dispatch_data_create operation.
     /// </summary>
+    /// <param name="buffer">The value of buffer.</param>
+    /// <param name="size">The value of size.</param>
+    /// <param name="queue">The value of queue.</param>
+    /// <param name="destructorBlock">The value of destructorBlock.</param>
+    /// <returns>The result of the dispatch_data_create operation.</returns>
     public static extern DispatchData dispatch_data_create(void* buffer, UIntPtr size, DispatchQueue queue, IntPtr destructorBlock);
 
     [DllImport(LibdispatchLocation)]
 
     /// <summary>
-    /// Executes dispatch_release.
+    /// Performs the dispatch_release operation.
     /// </summary>
+    /// <param name="nativePtr">The value of nativePtr.</param>
     public static extern void dispatch_release(IntPtr nativePtr);
 }
 

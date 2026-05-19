@@ -6,17 +6,20 @@ namespace Veldrith.SPIRV;
 public class SpirvCompilationException : Exception {
 
     /// <summary>
-    /// Constructs a new <see cref="SpirvCompilationException" />.
+    /// Initializes a new instance of the <see cref="SpirvCompilationException" /> type.
     /// </summary>
     public SpirvCompilationException() { }
 
     /// <summary>
-    /// Constructs a new <see cref="SpirvCompilationException" /> with the given message.
+    /// Initializes a new instance of the <see cref="SpirvCompilationException" /> type.
     /// </summary>
+    /// <param name="message">The value of message.</param>
     public SpirvCompilationException(string message) : base(message) { }
 
     /// <summary>
-    /// Constructs a new <see cref="SpirvCompilationException" /> with the given message and inner exception.
+    /// Initializes a new instance of the <see cref="SpirvCompilationException" /> type.
     /// </summary>
+    /// <param name="message">The value of message.</param>
+    /// <param name="innerException">The value of innerException.</param>
     public SpirvCompilationException(string message, Exception innerException) : base(message, innerException) { }
 }

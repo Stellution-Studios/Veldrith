@@ -13,8 +13,10 @@ public abstract class Pipeline : IDeviceResource, IDisposable {
     internal Pipeline(ref GraphicsPipelineDescription graphicsDescription)
 
         /// <summary>
-        /// Executes this.
+        /// Performs the this operation.
         /// </summary>
+        /// <param name="ResourceLayouts">The value of ResourceLayouts.</param>
+        /// <returns>The result of the this operation.</returns>
         : this(graphicsDescription.ResourceLayouts) {
 #if VALIDATE_USAGE
         this.GraphicsOutputDescription = graphicsDescription.Outputs;
@@ -22,14 +24,16 @@ public abstract class Pipeline : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="Pipeline" /> class.
+    /// Initializes a new instance of the <see cref="Pipeline" /> type.
     /// </summary>
+    /// <param name="computeDescription">The value of computeDescription.</param>
     internal Pipeline(ref ComputePipelineDescription computeDescription)
         : this(computeDescription.ResourceLayouts) { }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="Pipeline" /> class.
+    /// Initializes a new instance of the <see cref="Pipeline" /> type.
     /// </summary>
+    /// <param name="resourceLayouts">The value of resourceLayouts.</param>
     internal Pipeline(ResourceLayout[] resourceLayouts) {
 #if VALIDATE_USAGE
         this.ResourceLayouts = Util.ShallowClone(resourceLayouts);
@@ -56,7 +60,7 @@ public abstract class Pipeline : IDeviceResource, IDisposable {
     #region Disposal
 
     /// <summary>
-    /// Frees unmanaged device resources controlled by this instance.
+    /// Performs the Dispose operation.
     /// </summary>
     public abstract void Dispose();
 

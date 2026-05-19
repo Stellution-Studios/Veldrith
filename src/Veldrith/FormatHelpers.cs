@@ -8,8 +8,10 @@ namespace Veldrith;
 internal static class FormatHelpers {
 
     /// <summary>
-    /// Executes GetElementCount.
+    /// Performs the GetElementCount operation.
     /// </summary>
+    /// <param name="format">The value of format.</param>
+    /// <returns>The result of the GetElementCount operation.</returns>
     public static int GetElementCount(VertexElementFormat format) {
         switch (format) {
             case VertexElementFormat.Float1: case VertexElementFormat.UInt1: case VertexElementFormat.Int1: case VertexElementFormat.Half1: return 1;
@@ -25,8 +27,10 @@ internal static class FormatHelpers {
     }
 
     /// <summary>
-    /// Executes GetBlockSizeInBytes.
+    /// Performs the GetBlockSizeInBytes operation.
     /// </summary>
+    /// <param name="format">The value of format.</param>
+    /// <returns>The result of the GetBlockSizeInBytes operation.</returns>
     public static uint GetBlockSizeInBytes(PixelFormat format) {
         switch (format) {
             case PixelFormat.Bc1RgbUNorm: case PixelFormat.Bc1RgbUNormSRgb: case PixelFormat.Bc1RgbaUNorm: case PixelFormat.Bc1RgbaUNormSRgb: case PixelFormat.Bc4UNorm: case PixelFormat.Bc4SNorm: case PixelFormat.Etc2R8G8B8UNorm: case PixelFormat.Etc2R8G8B8A1UNorm: return 8;
@@ -38,8 +42,10 @@ internal static class FormatHelpers {
     }
 
     /// <summary>
-    /// Executes GetSampleCountUInt32.
+    /// Performs the GetSampleCountUInt32 operation.
     /// </summary>
+    /// <param name="sampleCount">The value of sampleCount.</param>
+    /// <returns>The result of the GetSampleCountUInt32 operation.</returns>
     internal static uint GetSampleCountUInt32(TextureSampleCount sampleCount) {
         switch (sampleCount) {
             case TextureSampleCount.Count1: return 1;
@@ -59,15 +65,19 @@ internal static class FormatHelpers {
     }
 
     /// <summary>
-    /// Executes IsStencilFormat.
+    /// Performs the IsStencilFormat operation.
     /// </summary>
+    /// <param name="format">The value of format.</param>
+    /// <returns>The result of the IsStencilFormat operation.</returns>
     internal static bool IsStencilFormat(PixelFormat format) {
         return format == PixelFormat.D24UNormS8UInt || format == PixelFormat.D32FloatS8UInt;
     }
 
     /// <summary>
-    /// Executes IsDepthStencilFormat.
+    /// Performs the IsDepthStencilFormat operation.
     /// </summary>
+    /// <param name="format">The value of format.</param>
+    /// <returns>The result of the IsDepthStencilFormat operation.</returns>
     internal static bool IsDepthStencilFormat(PixelFormat format) {
         return format == PixelFormat.D32FloatS8UInt
                || format == PixelFormat.D24UNormS8UInt
@@ -76,8 +86,10 @@ internal static class FormatHelpers {
     }
 
     /// <summary>
-    /// Executes IsCompressedFormat.
+    /// Performs the IsCompressedFormat operation.
     /// </summary>
+    /// <param name="format">The value of format.</param>
+    /// <returns>The result of the IsCompressedFormat operation.</returns>
     internal static bool IsCompressedFormat(PixelFormat format) {
         return format == PixelFormat.Bc1RgbUNorm
                || format == PixelFormat.Bc1RgbUNormSRgb
@@ -99,8 +111,11 @@ internal static class FormatHelpers {
     }
 
     /// <summary>
-    /// Executes GetRowPitch.
+    /// Performs the GetRowPitch operation.
     /// </summary>
+    /// <param name="width">The value of width.</param>
+    /// <param name="format">The value of format.</param>
+    /// <returns>The result of the GetRowPitch operation.</returns>
     internal static uint GetRowPitch(uint width, PixelFormat format) {
         switch (format) {
             case PixelFormat.Bc1RgbUNorm:
@@ -129,8 +144,11 @@ internal static class FormatHelpers {
     }
 
     /// <summary>
-    /// Executes IsFormatViewCompatible.
+    /// Performs the IsFormatViewCompatible operation.
     /// </summary>
+    /// <param name="viewFormat">The value of viewFormat.</param>
+    /// <param name="realFormat">The value of realFormat.</param>
+    /// <returns>The result of the IsFormatViewCompatible operation.</returns>
     internal static bool IsFormatViewCompatible(PixelFormat viewFormat, PixelFormat realFormat) {
         if (IsCompressedFormat(realFormat)) {
             return IsSrgbCounterpart(viewFormat, realFormat);
@@ -140,8 +158,11 @@ internal static class FormatHelpers {
     }
 
     /// <summary>
-    /// Executes GetNumRows.
+    /// Performs the GetNumRows operation.
     /// </summary>
+    /// <param name="height">The value of height.</param>
+    /// <param name="format">The value of format.</param>
+    /// <returns>The result of the GetNumRows operation.</returns>
     internal static uint GetNumRows(uint height, PixelFormat format) {
         switch (format) {
             case PixelFormat.Bc1RgbUNorm: case PixelFormat.Bc1RgbUNormSRgb: case PixelFormat.Bc1RgbaUNorm: case PixelFormat.Bc1RgbaUNormSRgb: case PixelFormat.Bc2UNorm: case PixelFormat.Bc2UNormSRgb: case PixelFormat.Bc3UNorm: case PixelFormat.Bc3UNormSRgb: case PixelFormat.Bc4UNorm: case PixelFormat.Bc4SNorm: case PixelFormat.Bc5UNorm: case PixelFormat.Bc5SNorm: case PixelFormat.Bc7UNorm: case PixelFormat.Bc7UNormSRgb: case PixelFormat.Etc2R8G8B8UNorm: case PixelFormat.Etc2R8G8B8A1UNorm: case PixelFormat.Etc2R8G8B8A8UNorm: return (height + 3) / 4;
@@ -151,15 +172,24 @@ internal static class FormatHelpers {
     }
 
     /// <summary>
-    /// Executes GetDepthPitch.
+    /// Performs the GetDepthPitch operation.
     /// </summary>
+    /// <param name="rowPitch">The value of rowPitch.</param>
+    /// <param name="height">The value of height.</param>
+    /// <param name="format">The value of format.</param>
+    /// <returns>The result of the GetDepthPitch operation.</returns>
     internal static uint GetDepthPitch(uint rowPitch, uint height, PixelFormat format) {
         return rowPitch * GetNumRows(height, format);
     }
 
     /// <summary>
-    /// Executes GetRegionSize.
+    /// Performs the GetRegionSize operation.
     /// </summary>
+    /// <param name="width">The value of width.</param>
+    /// <param name="height">The value of height.</param>
+    /// <param name="depth">The value of depth.</param>
+    /// <param name="format">The value of format.</param>
+    /// <returns>The result of the GetRegionSize operation.</returns>
     internal static uint GetRegionSize(uint width, uint height, uint depth, PixelFormat format) {
         uint blockSizeInBytes;
 
@@ -177,8 +207,10 @@ internal static class FormatHelpers {
     }
 
     /// <summary>
-    /// Executes GetSampleCount.
+    /// Performs the GetSampleCount operation.
     /// </summary>
+    /// <param name="samples">The value of samples.</param>
+    /// <returns>The result of the GetSampleCount operation.</returns>
     internal static TextureSampleCount GetSampleCount(uint samples) {
         switch (samples) {
             case 1: return TextureSampleCount.Count1;
@@ -198,8 +230,10 @@ internal static class FormatHelpers {
     }
 
     /// <summary>
-    /// Executes GetViewFamilyFormat.
+    /// Performs the GetViewFamilyFormat operation.
     /// </summary>
+    /// <param name="format">The value of format.</param>
+    /// <returns>The result of the GetViewFamilyFormat operation.</returns>
     internal static PixelFormat GetViewFamilyFormat(PixelFormat format) {
         switch (format) {
             case PixelFormat.R32G32B32A32Float: case PixelFormat.R32G32B32A32UInt: case PixelFormat.R32G32B32A32SInt: return PixelFormat.R32G32B32A32Float;
@@ -241,8 +275,11 @@ internal static class FormatHelpers {
     }
 
     /// <summary>
-    /// Executes IsSrgbCounterpart.
+    /// Performs the IsSrgbCounterpart operation.
     /// </summary>
+    /// <param name="viewFormat">The value of viewFormat.</param>
+    /// <param name="realFormat">The value of realFormat.</param>
+    /// <returns>The result of the IsSrgbCounterpart operation.</returns>
     private static bool IsSrgbCounterpart(PixelFormat viewFormat, PixelFormat realFormat) {
         if (viewFormat == realFormat) {
             return true;

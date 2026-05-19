@@ -17,29 +17,36 @@ internal class CommandBufferUsageList<T> {
     private readonly List<(MTLCommandBuffer buffer, T value)> _items = new List<(MTLCommandBuffer buffer, T item)>();
 
     /// <summary>
-    /// Executes Add.
+    /// Performs the Add operation.
     /// </summary>
+    /// <param name="cb">The value of cb.</param>
+    /// <param name="value">The value of value.</param>
     public void Add(MTLCommandBuffer cb, T value) {
         this._items.Add((cb, value));
     }
 
     /// <summary>
-    /// Executes EnumerateItems.
+    /// Performs the EnumerateItems operation.
     /// </summary>
+    /// <returns>The result of the EnumerateItems operation.</returns>
     public ItemsEnumerator EnumerateItems() {
         return new ItemsEnumerator(this._items);
     }
 
     /// <summary>
-    /// Executes EnumerateAndRemove.
+    /// Performs the EnumerateAndRemove operation.
     /// </summary>
+    /// <param name="cb">The value of cb.</param>
+    /// <returns>The result of the EnumerateAndRemove operation.</returns>
     public RemovalEnumerator EnumerateAndRemove(MTLCommandBuffer cb) {
         return new RemovalEnumerator(this._items, cb);
     }
 
     /// <summary>
-    /// Executes Contains.
+    /// Performs the Contains operation.
     /// </summary>
+    /// <param name="cb">The value of cb.</param>
+    /// <returns>The result of the Contains operation.</returns>
     public bool Contains(MTLCommandBuffer cb) {
         foreach ((MTLCommandBuffer buffer, T _) in this._items) {
             if (buffer.Equals(cb)) {
@@ -51,7 +58,7 @@ internal class CommandBufferUsageList<T> {
     }
 
     /// <summary>
-    /// Executes Clear.
+    /// Performs the Clear operation.
     /// </summary>
     public void Clear() {
         this._items.Clear();
@@ -73,15 +80,17 @@ internal class CommandBufferUsageList<T> {
         private int _index;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ItemsEnumerator" /> class.
+        /// Initializes a new instance of the <see cref="ItemsEnumerator" /> type.
         /// </summary>
+        /// <param name="value">The value of value.</param>
         public ItemsEnumerator(List<(MTLCommandBuffer buffer, T value)> list) {
             this.list = list;
         }
 
         /// <summary>
-        /// Executes MoveNext.
+        /// Performs the MoveNext operation.
         /// </summary>
+        /// <returns>The result of the MoveNext operation.</returns>
         public bool MoveNext() {
             if (this._index == this.list.Count) {
                 return false;
@@ -94,7 +103,7 @@ internal class CommandBufferUsageList<T> {
         }
 
         /// <summary>
-        /// Executes Reset.
+        /// Performs the Reset operation.
         /// </summary>
         public void Reset() {
             this._index = 0;
@@ -106,25 +115,27 @@ internal class CommandBufferUsageList<T> {
         public T Current { get; private set; }
 
         /// <summary>
-        /// Gets or sets IEnumerator.Current.
+        /// Gets the current item as an <see cref="object" />.
         /// </summary>
         object IEnumerator.Current => this.Current;
 
         /// <summary>
-        /// Executes Dispose.
+        /// Performs the Dispose operation.
         /// </summary>
         public void Dispose() { }
 
         /// <summary>
-        /// Executes GetEnumerator.
+        /// Performs the GetEnumerator operation.
         /// </summary>
+        /// <returns>The result of the GetEnumerator operation.</returns>
         public ItemsEnumerator GetEnumerator() {
             return this;
         }
 
         /// <summary>
-        /// Executes IEnumerable.GetEnumerator.
+        /// Performs the GetEnumerator operation.
         /// </summary>
+        /// <returns>The result of the GetEnumerator operation.</returns>
         IEnumerator IEnumerable.GetEnumerator() {
             return this.GetEnumerator();
         }
@@ -159,8 +170,10 @@ internal class CommandBufferUsageList<T> {
         private int _index;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="RemovalEnumerator" /> class.
+        /// Initializes a new instance of the <see cref="RemovalEnumerator" /> type.
         /// </summary>
+        /// <param name="value">The value of value.</param>
+        /// <param name="cb">The value of cb.</param>
         public RemovalEnumerator(List<(MTLCommandBuffer buffer, T value)> list, MTLCommandBuffer cb) {
             this.list = list;
             this.cb = cb;
@@ -170,8 +183,9 @@ internal class CommandBufferUsageList<T> {
         }
 
         /// <summary>
-        /// Executes MoveNext.
+        /// Performs the MoveNext operation.
         /// </summary>
+        /// <returns>The result of the MoveNext operation.</returns>
         public bool MoveNext() {
             while (true) {
                 if (this._index == this._count) {
@@ -194,7 +208,7 @@ internal class CommandBufferUsageList<T> {
         }
 
         /// <summary>
-        /// Executes Reset.
+        /// Performs the Reset operation.
         /// </summary>
         public void Reset() {
             this._index = 0;
@@ -206,12 +220,12 @@ internal class CommandBufferUsageList<T> {
         public T Current { get; private set; }
 
         /// <summary>
-        /// Gets or sets IEnumerator.Current.
+        /// Gets the current item as an <see cref="object" />.
         /// </summary>
         object IEnumerator.Current => this.Current;
 
         /// <summary>
-        /// Executes Dispose.
+        /// Performs the Dispose operation.
         /// </summary>
         public void Dispose() {
             if (this.list.Count == 0) {
@@ -226,15 +240,17 @@ internal class CommandBufferUsageList<T> {
         }
 
         /// <summary>
-        /// Executes GetEnumerator.
+        /// Performs the GetEnumerator operation.
         /// </summary>
+        /// <returns>The result of the GetEnumerator operation.</returns>
         public RemovalEnumerator GetEnumerator() {
             return this;
         }
 
         /// <summary>
-        /// Executes IEnumerable.GetEnumerator.
+        /// Performs the GetEnumerator operation.
         /// </summary>
+        /// <returns>The result of the GetEnumerator operation.</returns>
         IEnumerator IEnumerable.GetEnumerator() {
             return this.GetEnumerator();
         }

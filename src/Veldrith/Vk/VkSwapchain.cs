@@ -77,14 +77,19 @@ internal unsafe class VkSwapchain : Swapchain {
     private bool _syncToVBlank;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="VkSwapchain" /> class.
+    /// Initializes a new instance of the <see cref="VkSwapchain" /> type.
     /// </summary>
+    /// <param name="gd">The value of gd.</param>
+    /// <param name="description">The value of description.</param>
     public VkSwapchain(VkGraphicsDevice gd, ref SwapchainDescription description)
         : this(gd, ref description, VkSurfaceKHR.Null) { }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="VkSwapchain" /> class.
+    /// Initializes a new instance of the <see cref="VkSwapchain" /> type.
     /// </summary>
+    /// <param name="gd">The value of gd.</param>
+    /// <param name="description">The value of description.</param>
+    /// <param name="existingSurface">The value of existingSurface.</param>
     public VkSwapchain(VkGraphicsDevice gd, ref SwapchainDescription description, VkSurfaceKHR existingSurface) {
         this.gd = gd;
         this._syncToVBlank = description.SyncToVerticalBlank;
@@ -204,7 +209,7 @@ internal unsafe class VkSwapchain : Swapchain {
     #region Disposal
 
     /// <summary>
-    /// Executes Dispose.
+    /// Performs the Dispose operation.
     /// </summary>
     public override void Dispose() {
         this.RefCount.Decrement();
@@ -213,15 +218,21 @@ internal unsafe class VkSwapchain : Swapchain {
     #endregion
 
     /// <summary>
-    /// Executes Resize.
+    /// Performs the Resize operation.
     /// </summary>
+    /// <param name="width">The value of width.</param>
+    /// <param name="height">The value of height.</param>
     public override void Resize(uint width, uint height) {
         this.RecreateAndReacquire(width, height);
     }
 
     /// <summary>
-    /// Executes AcquireNextImage.
+    /// Performs the AcquireNextImage operation.
     /// </summary>
+    /// <param name="device">The value of device.</param>
+    /// <param name="semaphore">The value of semaphore.</param>
+    /// <param name="fence">The value of fence.</param>
+    /// <returns>The result of the AcquireNextImage operation.</returns>
     public bool AcquireNextImage(VkDevice device, VkSemaphore semaphore, Vulkan.VkFence fence) {
         if (this._newSyncToVBlank != null) {
             this._syncToVBlank = this._newSyncToVBlank.Value;
@@ -246,8 +257,10 @@ internal unsafe class VkSwapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes RecreateAndReacquire.
+    /// Performs the RecreateAndReacquire operation.
     /// </summary>
+    /// <param name="width">The value of width.</param>
+    /// <param name="height">The value of height.</param>
     private void RecreateAndReacquire(uint width, uint height) {
         if (this.CreateSwapchain(width, height)) {
             if (this.AcquireNextImage(this.gd.Device, VkSemaphore.Null, this._imageAvailableFence)) {
@@ -258,8 +271,11 @@ internal unsafe class VkSwapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes CreateSwapchain.
+    /// Performs the CreateSwapchain operation.
     /// </summary>
+    /// <param name="width">The value of width.</param>
+    /// <param name="height">The value of height.</param>
+    /// <returns>The result of the CreateSwapchain operation.</returns>
     private bool CreateSwapchain(uint width, uint height) {
         // Obtain the surface capabilities first -- this will indicate whether the surface has been lost.
         VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(this.gd.PhysicalDevice, this.Surface, out VkSurfaceCapabilitiesKHR surfaceCapabilities);
@@ -379,8 +395,10 @@ internal unsafe class VkSwapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes GetPresentQueueIndex.
+    /// Performs the GetPresentQueueIndex operation.
     /// </summary>
+    /// <param name="queueFamilyIndex">The value of queueFamilyIndex.</param>
+    /// <returns>The result of the GetPresentQueueIndex operation.</returns>
     private bool GetPresentQueueIndex(out uint queueFamilyIndex) {
         uint deviceGraphicsQueueIndex = this.gd.GraphicsQueueIndex;
         uint devicePresentQueueIndex = this.gd.PresentQueueIndex;
@@ -400,8 +418,11 @@ internal unsafe class VkSwapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes QueueSupportsPresent.
+    /// Performs the QueueSupportsPresent operation.
     /// </summary>
+    /// <param name="queueFamilyIndex">The value of queueFamilyIndex.</param>
+    /// <param name="surface">The value of surface.</param>
+    /// <returns>The result of the QueueSupportsPresent operation.</returns>
     private bool QueueSupportsPresent(uint queueFamilyIndex, VkSurfaceKHR surface) {
         VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(this.gd.PhysicalDevice, queueFamilyIndex, surface, out VkBool32 supported);
         CheckResult(result);
@@ -409,7 +430,7 @@ internal unsafe class VkSwapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes DisposeCore.
+    /// Performs the DisposeCore operation.
     /// </summary>
     private void DisposeCore() {
         vkDestroyFence(this.gd.Device, this._imageAvailableFence, null);

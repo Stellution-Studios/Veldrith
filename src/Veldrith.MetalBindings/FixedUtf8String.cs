@@ -20,8 +20,9 @@ internal unsafe class FixedUtf8String : IDisposable {
     private uint _numBytes;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="FixedUtf8String" /> class.
+    /// Initializes a new instance of the <see cref="FixedUtf8String" /> type.
     /// </summary>
+    /// <param name="s">The value of s.</param>
     public FixedUtf8String(string s) {
         if (s == null) {
             throw new ArgumentNullException(nameof(s));
@@ -33,20 +34,22 @@ internal unsafe class FixedUtf8String : IDisposable {
     }
 
     /// <summary>
-    /// Represents the StringPtr field.
+    /// Performs the AddrOfPinnedObject operation.
     /// </summary>
+    /// <returns>The result of the AddrOfPinnedObject operation.</returns>
     public byte* StringPtr => (byte*)this._handle.AddrOfPinnedObject().ToPointer();
 
     /// <summary>
-    /// Executes Dispose.
+    /// Performs the Dispose operation.
     /// </summary>
     public void Dispose() {
         this._handle.Free();
     }
 
     /// <summary>
-    /// Executes SetText.
+    /// Performs the SetText operation.
     /// </summary>
+    /// <param name="s">The value of s.</param>
     public void SetText(string s) {
         if (s == null) {
             throw new ArgumentNullException(nameof(s));
@@ -59,33 +62,45 @@ internal unsafe class FixedUtf8String : IDisposable {
     }
 
     /// <summary>
-    /// Executes GetString.
+    /// Performs the GetString operation.
     /// </summary>
+    /// <returns>The result of the GetString operation.</returns>
     private string GetString() {
         return Encoding.UTF8.GetString(this.StringPtr, (int)this._numBytes);
     }
 
+    /// <summary>
+    /// Performs the operator byte* operation.
+    /// </summary>
+    /// <param name="utf8String">The value of utf8String.</param>
+    /// <returns>The result of the operator byte* operation.</returns>
     public static implicit operator byte*(FixedUtf8String utf8String) {
         return utf8String.StringPtr;
     }
 
     /// <summary>
-    /// Executes IntPtr.
+    /// Performs the operator IntPtr operation.
     /// </summary>
+    /// <param name="utf8String">The value of utf8String.</param>
+    /// <returns>The result of the operator IntPtr operation.</returns>
     public static implicit operator IntPtr(FixedUtf8String utf8String) {
         return new IntPtr(utf8String.StringPtr);
     }
 
     /// <summary>
-    /// Executes FixedUtf8String.
+    /// Performs the operator FixedUtf8String operation.
     /// </summary>
+    /// <param name="s">The value of s.</param>
+    /// <returns>The result of the operator FixedUtf8String operation.</returns>
     public static implicit operator FixedUtf8String(string s) {
         return new FixedUtf8String(s);
     }
 
     /// <summary>
-    /// Executes string.
+    /// Performs the operator string operation.
     /// </summary>
+    /// <param name="utf8String">The value of utf8String.</param>
+    /// <returns>The result of the operator string operation.</returns>
     public static implicit operator string(FixedUtf8String utf8String) {
         return utf8String.GetString();
     }

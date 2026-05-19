@@ -77,8 +77,14 @@ internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
     private VkImage[] _scImages = { };
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="VkSwapchainFramebuffer" /> class.
+    /// Initializes a new instance of the <see cref="VkSwapchainFramebuffer" /> type.
     /// </summary>
+    /// <param name="gd">The value of gd.</param>
+    /// <param name="swapchain">The value of swapchain.</param>
+    /// <param name="surface">The value of surface.</param>
+    /// <param name="width">The value of width.</param>
+    /// <param name="height">The value of height.</param>
+    /// <param name="depthFormat">The value of depthFormat.</param>
     public VkSwapchainFramebuffer(VkGraphicsDevice gd, VkSwapchain swapchain, VkSurfaceKHR surface, uint width, uint height, PixelFormat? depthFormat) {
         this.gd = gd;
         this.Swapchain = swapchain;
@@ -175,8 +181,9 @@ internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
     }
 
     /// <summary>
-    /// Executes TransitionToIntermediateLayout.
+    /// Performs the TransitionToIntermediateLayout operation.
     /// </summary>
+    /// <param name="cb">The value of cb.</param>
     public override void TransitionToIntermediateLayout(VkCommandBuffer cb) {
         for (int i = 0; i < this.ColorTargets.Count; i++) {
             FramebufferAttachment ca = this.ColorTargets[i];
@@ -186,8 +193,9 @@ internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
     }
 
     /// <summary>
-    /// Executes TransitionToFinalLayout.
+    /// Performs the TransitionToFinalLayout operation.
     /// </summary>
+    /// <param name="cb">The value of cb.</param>
     public override void TransitionToFinalLayout(VkCommandBuffer cb) {
         for (int i = 0; i < this.ColorTargets.Count; i++) {
             FramebufferAttachment ca = this.ColorTargets[i];
@@ -197,15 +205,21 @@ internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
     }
 
     /// <summary>
-    /// Executes SetImageIndex.
+    /// Performs the SetImageIndex operation.
     /// </summary>
+    /// <param name="index">The value of index.</param>
     internal void SetImageIndex(uint index) {
         this.ImageIndex = index;
     }
 
     /// <summary>
-    /// Executes SetNewSwapchain.
+    /// Performs the SetNewSwapchain operation.
     /// </summary>
+    /// <param name="deviceSwapchain">The value of deviceSwapchain.</param>
+    /// <param name="width">The value of width.</param>
+    /// <param name="height">The value of height.</param>
+    /// <param name="surfaceFormat">The value of surfaceFormat.</param>
+    /// <param name="swapchainExtent">The value of swapchainExtent.</param>
     internal void SetNewSwapchain(VkSwapchainKHR deviceSwapchain, uint width, uint height, VkSurfaceFormatKHR surfaceFormat, VkExtent2D swapchainExtent) {
         this._desiredWidth = width;
         this._desiredHeight = height;
@@ -231,7 +245,7 @@ internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
     }
 
     /// <summary>
-    /// Executes DisposeCore.
+    /// Performs the DisposeCore operation.
     /// </summary>
     protected override void DisposeCore() {
         if (!this._destroyed) {
@@ -242,7 +256,7 @@ internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
     }
 
     /// <summary>
-    /// Executes DestroySwapchainFramebuffers.
+    /// Performs the DestroySwapchainFramebuffers operation.
     /// </summary>
     private void DestroySwapchainFramebuffers() {
         if (this._scFramebuffers != null) {
@@ -256,7 +270,7 @@ internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
     }
 
     /// <summary>
-    /// Executes CreateDepthTexture.
+    /// Performs the CreateDepthTexture operation.
     /// </summary>
     private void CreateDepthTexture() {
         if (this.depthFormat.HasValue) {
@@ -267,7 +281,7 @@ internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
     }
 
     /// <summary>
-    /// Executes CreateFramebuffers.
+    /// Performs the CreateFramebuffers operation.
     /// </summary>
     private void CreateFramebuffers() {
         if (this._scFramebuffers != null) {

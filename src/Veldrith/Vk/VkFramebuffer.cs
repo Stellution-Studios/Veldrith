@@ -12,8 +12,9 @@ namespace Veldrith.Vk;
 internal unsafe class VkFramebuffer : VkFramebufferBase {
 
     /// <summary>
-    /// Represents the _attachmentViews field.
+    /// Performs the new operation.
     /// </summary>
+    /// <returns>The result of the new operation.</returns>
     private readonly List<VkImageView> _attachmentViews = new();
 
     /// <summary>
@@ -54,12 +55,11 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
     /// <summary>
     /// Initializes a new instance of the <see cref="VkFramebuffer" /> class.
     /// </summary>
-    public VkFramebuffer(VkGraphicsDevice gd, ref FramebufferDescription description, bool isPresented)
-
-        /// <summary>
-        /// Executes base.
-        /// </summary>
-        : base(description.DepthTarget, description.ColorTargets) {
+    /// <param name="gd">The value of gd.</param>
+    /// <param name="description">The value of description.</param>
+    /// <param name="isPresented">The value of isPresented.</param>
+    /// <returns>The result of the base operation.</returns>
+    public VkFramebuffer(VkGraphicsDevice gd, ref FramebufferDescription description, bool isPresented) : base(description.DepthTarget, description.ColorTargets) {
         this.gd = gd;
 
         VkRenderPassCreateInfo renderPassCi = VkRenderPassCreateInfo.New();
@@ -307,8 +307,9 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
     }
 
     /// <summary>
-    /// Executes TransitionToIntermediateLayout.
+    /// Performs the TransitionToIntermediateLayout operation.
     /// </summary>
+    /// <param name="cb">The value of cb.</param>
     public override void TransitionToIntermediateLayout(VkCommandBuffer cb) {
         for (int i = 0; i < this.ColorTargets.Count; i++) {
             FramebufferAttachment ca = this.ColorTargets[i];
@@ -323,8 +324,9 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
     }
 
     /// <summary>
-    /// Executes TransitionToFinalLayout.
+    /// Performs the TransitionToFinalLayout operation.
     /// </summary>
+    /// <param name="cb">The value of cb.</param>
     public override void TransitionToFinalLayout(VkCommandBuffer cb) {
         for (int i = 0; i < this.ColorTargets.Count; i++) {
             FramebufferAttachment ca = this.ColorTargets[i];
@@ -345,7 +347,7 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
     }
 
     /// <summary>
-    /// Executes DisposeCore.
+    /// Performs the DisposeCore operation.
     /// </summary>
     protected override void DisposeCore() {
         if (!this._destroyed) {

@@ -18,8 +18,10 @@ internal struct FixedArray2<T> where T : struct {
     public T Second;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="FixedArray2" /> class.
+    /// Initializes a new instance of the <see cref="FixedArray2" /> type.
     /// </summary>
+    /// <param name="first">The value of first.</param>
+    /// <param name="second">The value of second.</param>
     public FixedArray2(T first, T second) {
         this.First = first;
         this.Second = second;
@@ -52,8 +54,11 @@ internal struct FixedArray3<T> where T : struct {
     public T Third;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="FixedArray3" /> class.
+    /// Initializes a new instance of the <see cref="FixedArray3" /> type.
     /// </summary>
+    /// <param name="first">The value of first.</param>
+    /// <param name="second">The value of second.</param>
+    /// <param name="third">The value of third.</param>
     public FixedArray3(T first, T second, T third) {
         this.First = first;
         this.Second = second;
@@ -92,8 +97,12 @@ internal struct FixedArray4<T> where T : struct {
     public T Fourth;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="FixedArray4" /> class.
+    /// Initializes a new instance of the <see cref="FixedArray4" /> type.
     /// </summary>
+    /// <param name="first">The value of first.</param>
+    /// <param name="second">The value of second.</param>
+    /// <param name="third">The value of third.</param>
+    /// <param name="fourth">The value of fourth.</param>
     public FixedArray4(T first, T second, T third, T fourth) {
         this.First = first;
         this.Second = second;
@@ -138,8 +147,13 @@ internal struct FixedArray5<T> where T : struct {
     public T Fifth;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="FixedArray5" /> class.
+    /// Initializes a new instance of the <see cref="FixedArray5" /> type.
     /// </summary>
+    /// <param name="first">The value of first.</param>
+    /// <param name="second">The value of second.</param>
+    /// <param name="third">The value of third.</param>
+    /// <param name="fourth">The value of fourth.</param>
+    /// <param name="fifth">The value of fifth.</param>
     public FixedArray5(T first, T second, T third, T fourth, T fifth) {
         this.First = first;
         this.Second = second;
@@ -190,8 +204,14 @@ internal struct FixedArray6<T> where T : struct {
     public T Sixth;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="FixedArray6" /> class.
+    /// Initializes a new instance of the <see cref="FixedArray6" /> type.
     /// </summary>
+    /// <param name="first">The value of first.</param>
+    /// <param name="second">The value of second.</param>
+    /// <param name="third">The value of third.</param>
+    /// <param name="fourth">The value of fourth.</param>
+    /// <param name="fifth">The value of fifth.</param>
+    /// <param name="sixth">The value of sixth.</param>
     public FixedArray6(T first, T second, T third, T fourth, T fifth, T sixth) {
         this.First = first;
         this.Second = second;

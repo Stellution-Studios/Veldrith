@@ -6,25 +6,33 @@ namespace Veldrith.SPIRV;
 public class CrossCompileOptions {
 
     /// <summary>
-    /// Constructs a new <see cref="CrossCompileOptions" /> with default values.
+    /// Initializes a new instance of the <see cref="CrossCompileOptions" /> type.
     /// </summary>
     public CrossCompileOptions() {
         this.Specializations = Array.Empty<SpecializationConstant>();
     }
 
     /// <summary>
-    /// Constructs a new <see cref="CrossCompileOptions" />.
+    /// Initializes a new instance of the <see cref="CrossCompileOptions" /> type.
     /// </summary>
+    /// <param name="fixClipSpaceZ">The value of fixClipSpaceZ.</param>
+    /// <param name="invertVertexOutputY">The value of invertVertexOutputY.</param>
     public CrossCompileOptions(bool fixClipSpaceZ, bool invertVertexOutputY) : this(fixClipSpaceZ, invertVertexOutputY, Array.Empty<SpecializationConstant>()) { }
 
     /// <summary>
-    /// Constructs a new <see cref="CrossCompileOptions" />.
+    /// Initializes a new instance of the <see cref="CrossCompileOptions" /> type.
     /// </summary>
+    /// <param name="fixClipSpaceZ">The value of fixClipSpaceZ.</param>
+    /// <param name="invertVertexOutputY">The value of invertVertexOutputY.</param>
+    /// <param name="normalizeResourceNames">The value of normalizeResourceNames.</param>
     public CrossCompileOptions(bool fixClipSpaceZ, bool invertVertexOutputY, bool normalizeResourceNames) : this(fixClipSpaceZ, invertVertexOutputY, normalizeResourceNames, Array.Empty<SpecializationConstant>()) { }
 
     /// <summary>
-    /// Constructs a new <see cref="CrossCompileOptions" />.
+    /// Initializes a new instance of the <see cref="CrossCompileOptions" /> type.
     /// </summary>
+    /// <param name="fixClipSpaceZ">The value of fixClipSpaceZ.</param>
+    /// <param name="invertVertexOutputY">The value of invertVertexOutputY.</param>
+    /// <param name="specializations">The value of specializations.</param>
     public CrossCompileOptions(bool fixClipSpaceZ, bool invertVertexOutputY, params SpecializationConstant[] specializations) {
         this.FixClipSpaceZ = fixClipSpaceZ;
         this.InvertVertexOutputY = invertVertexOutputY;
@@ -32,8 +40,12 @@ public class CrossCompileOptions {
     }
 
     /// <summary>
-    /// Constructs a new <see cref="CrossCompileOptions" />.
+    /// Initializes a new instance of the <see cref="CrossCompileOptions" /> type.
     /// </summary>
+    /// <param name="fixClipSpaceZ">The value of fixClipSpaceZ.</param>
+    /// <param name="invertVertexOutputY">The value of invertVertexOutputY.</param>
+    /// <param name="normalizeResourceNames">The value of normalizeResourceNames.</param>
+    /// <param name="specializations">The value of specializations.</param>
     public CrossCompileOptions(bool fixClipSpaceZ, bool invertVertexOutputY, bool normalizeResourceNames, params SpecializationConstant[] specializations) {
         this.FixClipSpaceZ = fixClipSpaceZ;
         this.InvertVertexOutputY = invertVertexOutputY;

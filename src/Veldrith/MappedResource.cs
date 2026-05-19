@@ -47,8 +47,15 @@ public struct MappedResource {
     public readonly uint DepthPitch;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MappedResource" /> class.
+    /// Initializes a new instance of the <see cref="MappedResource" /> type.
     /// </summary>
+    /// <param name="resource">The value of resource.</param>
+    /// <param name="mode">The value of mode.</param>
+    /// <param name="data">The value of data.</param>
+    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
+    /// <param name="subresource">The value of subresource.</param>
+    /// <param name="rowPitch">The value of rowPitch.</param>
+    /// <param name="depthPitch">The value of depthPitch.</param>
     internal MappedResource(IMappableResource resource, MapMode mode, IntPtr data, uint sizeInBytes, uint subresource, uint rowPitch, uint depthPitch) {
         this.Resource = resource;
         this.Mode = mode;
@@ -60,8 +67,12 @@ public struct MappedResource {
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MappedResource" /> class.
+    /// Initializes a new instance of the <see cref="MappedResource" /> type.
     /// </summary>
+    /// <param name="resource">The value of resource.</param>
+    /// <param name="mode">The value of mode.</param>
+    /// <param name="data">The value of data.</param>
+    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
     internal MappedResource(IMappableResource resource, MapMode mode, IntPtr data, uint sizeInBytes) {
         this.Resource = resource;
         this.Mode = mode;
@@ -104,9 +115,9 @@ public unsafe struct MappedResourceView<T> where T : struct {
     public readonly int Count;
 
     /// <summary>
-    /// Constructs a new MappedResourceView which wraps the given <see cref="MappedResource" />.
+    /// Initializes a new instance of the <see cref="MappedResourceView" /> type.
     /// </summary>
-    /// <param name="rawResource">The raw resource which has been mapped.</param>
+    /// <param name="rawResource">The value of rawResource.</param>
     public MappedResourceView(MappedResource rawResource) {
         this.MappedResource = rawResource;
         this.SizeInBytes = rawResource.SizeInBytes;

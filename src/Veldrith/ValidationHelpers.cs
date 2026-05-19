@@ -9,8 +9,10 @@ internal static class ValidationHelpers {
     [Conditional("VALIDATE_USAGE")]
 
     /// <summary>
-    /// Executes ValidateResourceSet.
+    /// Performs the ValidateResourceSet operation.
     /// </summary>
+    /// <param name="gd">The value of gd.</param>
+    /// <param name="description">The value of description.</param>
     internal static void ValidateResourceSet(GraphicsDevice gd, ref ResourceSetDescription description) {
 #if VALIDATE_USAGE
         ResourceLayoutElementDescription[] elements = description.Layout.Description.Elements;
@@ -51,8 +53,11 @@ internal static class ValidationHelpers {
     [Conditional("VALIDATE_USAGE")]
 
     /// <summary>
-    /// Executes ValidateResourceKind.
+    /// Performs the ValidateResourceKind operation.
     /// </summary>
+    /// <param name="kind">The value of kind.</param>
+    /// <param name="resource">The value of resource.</param>
+    /// <param name="slot">The value of slot.</param>
     private static void ValidateResourceKind(ResourceKind kind, IBindableResource resource, uint slot) {
         switch (kind) {
             case ResourceKind.UniformBuffer: {

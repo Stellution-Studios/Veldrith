@@ -17,8 +17,9 @@ public struct MTLRenderPipelineColorAttachmentDescriptor {
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MTLRenderPipelineColorAttachmentDescriptor" /> class.
+    /// Initializes a new instance of the <see cref="MTLRenderPipelineColorAttachmentDescriptor" /> type.
     /// </summary>
+    /// <param name="ptr">The value of ptr.</param>
     public MTLRenderPipelineColorAttachmentDescriptor(IntPtr ptr) {
         this.NativePtr = ptr;
     }

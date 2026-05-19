@@ -27,11 +27,11 @@ public struct DeviceBufferRange : IBindableResource, IEquatable<DeviceBufferRang
     public uint SizeInBytes;
 
     /// <summary>
-    /// Constructs a new <see cref="DeviceBufferRange" />.
+    /// Initializes a new instance of the <see cref="DeviceBufferRange" /> type.
     /// </summary>
-    /// <param name="buffer">The underlying <see cref="DeviceBuffer" /> that this range will refer to.</param>
-    /// <param name="offset">The offset, in bytes, from the beginning of the buffer that this range will start at.</param>
-    /// <param name="sizeInBytes">The total number of bytes that this range will encompass.</param>
+    /// <param name="buffer">The value of buffer.</param>
+    /// <param name="offset">The value of offset.</param>
+    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
     public DeviceBufferRange(DeviceBuffer buffer, uint offset, uint sizeInBytes) {
         this.Buffer = buffer;
         this.Offset = offset;
@@ -39,18 +39,18 @@ public struct DeviceBufferRange : IBindableResource, IEquatable<DeviceBufferRang
     }
 
     /// <summary>
-    /// Element-wise equality.
+    /// Performs the Equals operation.
     /// </summary>
-    /// <param name="other">The instance to compare to.</param>
-    /// <returns>True if all elements are equal; false otherswise.</returns>
+    /// <param name="other">The value of other.</param>
+    /// <returns>The result of the Equals operation.</returns>
     public bool Equals(DeviceBufferRange other) {
         return this.Buffer == other.Buffer && this.Offset.Equals(other.Offset) && this.SizeInBytes.Equals(other.SizeInBytes);
     }
 
     /// <summary>
-    /// Returns the hash code for this instance.
+    /// Performs the GetHashCode operation.
     /// </summary>
-    /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
+    /// <returns>The result of the GetHashCode operation.</returns>
     public override int GetHashCode() {
         int bufferHash = this.Buffer?.GetHashCode() ?? 0;
         return HashHelper.Combine(bufferHash, this.Offset.GetHashCode(), this.SizeInBytes.GetHashCode());

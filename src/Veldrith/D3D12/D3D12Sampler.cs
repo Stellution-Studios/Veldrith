@@ -28,8 +28,10 @@ internal sealed class D3D12Sampler : Sampler {
     private bool _disposed;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="D3D12Sampler" /> class.
+    /// Initializes a new instance of the <see cref="D3D12Sampler" /> type.
     /// </summary>
+    /// <param name="gd">The value of gd.</param>
+    /// <param name="description">The value of description.</param>
     public D3D12Sampler(D3D12GraphicsDevice gd, ref SamplerDescription description) {
         this.gd = gd;
         this.description = description;
@@ -51,8 +53,9 @@ internal sealed class D3D12Sampler : Sampler {
     public override string Name { get; set; }
 
     /// <summary>
-    /// Executes GetOrCreateDescriptor.
+    /// Performs the GetOrCreateDescriptor operation.
     /// </summary>
+    /// <returns>The result of the GetOrCreateDescriptor operation.</returns>
     internal CpuDescriptorHandle GetOrCreateDescriptor() {
         if (this._descriptorHeap == null) {
             this._descriptorHeap = this.gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(DescriptorHeapType.Sampler, 1));
@@ -80,7 +83,7 @@ internal sealed class D3D12Sampler : Sampler {
     }
 
     /// <summary>
-    /// Executes Dispose.
+    /// Performs the Dispose operation.
     /// </summary>
     public override void Dispose() {
         this._descriptorHeap?.Dispose();

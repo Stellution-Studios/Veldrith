@@ -15,8 +15,9 @@ internal class MtlSwapchainFramebuffer : MtlFramebuffer {
     private readonly FramebufferAttachment[] _colorTargets;
 
     /// <summary>
-    /// Represents the _colorTexture field.
+    /// Performs the new operation.
     /// </summary>
+    /// <returns>The result of the new operation.</returns>
     private readonly MtlSwapchainTexture _colorTexture = new();
 
     /// <summary>
@@ -50,8 +51,12 @@ internal class MtlSwapchainFramebuffer : MtlFramebuffer {
     private MtlTexture _depthTexture;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MtlSwapchainFramebuffer" /> class.
+    /// Initializes a new instance of the <see cref="MtlSwapchainFramebuffer" /> type.
     /// </summary>
+    /// <param name="gd">The value of gd.</param>
+    /// <param name="parent">The value of parent.</param>
+    /// <param name="depthFormat">The value of depthFormat.</param>
+    /// <param name="colorFormat">The value of colorFormat.</param>
     public MtlSwapchainFramebuffer(MtlGraphicsDevice gd, MtlSwapchain parent, PixelFormat? depthFormat, PixelFormat colorFormat) {
         this.gd = gd;
         this._parentSwapchain = parent;
@@ -99,7 +104,7 @@ internal class MtlSwapchainFramebuffer : MtlFramebuffer {
     #region Disposal
 
     /// <summary>
-    /// Executes Dispose.
+    /// Performs the Dispose operation.
     /// </summary>
     public override void Dispose() {
         this._depthTexture?.Dispose();
@@ -109,8 +114,10 @@ internal class MtlSwapchainFramebuffer : MtlFramebuffer {
     #endregion
 
     /// <summary>
-    /// Executes UpdateTextures.
+    /// Performs the UpdateTextures operation.
     /// </summary>
+    /// <param name="drawable">The value of drawable.</param>
+    /// <param name="size">The value of size.</param>
     public void UpdateTextures(CAMetalDrawable drawable, CGSize size) {
         this._colorTexture.SetDrawable(drawable, size, this.colorFormat);
 
@@ -120,15 +127,18 @@ internal class MtlSwapchainFramebuffer : MtlFramebuffer {
     }
 
     /// <summary>
-    /// Executes EnsureDrawableAvailable.
+    /// Performs the EnsureDrawableAvailable operation.
     /// </summary>
+    /// <returns>The result of the EnsureDrawableAvailable operation.</returns>
     public bool EnsureDrawableAvailable() {
         return this._parentSwapchain.EnsureDrawableAvailable();
     }
 
     /// <summary>
-    /// Executes RecreateDepthTexture.
+    /// Performs the RecreateDepthTexture operation.
     /// </summary>
+    /// <param name="width">The value of width.</param>
+    /// <param name="height">The value of height.</param>
     private void RecreateDepthTexture(uint width, uint height) {
         Debug.Assert(this.depthFormat.HasValue);
         this._depthTexture?.Dispose();

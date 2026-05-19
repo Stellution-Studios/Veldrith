@@ -83,8 +83,11 @@ internal class MtlSwapchainTexture : MtlTexture {
     public override MTLTextureType MtlTextureType => MTLTextureType.Type2D;
 
     /// <summary>
-    /// Executes SetDrawable.
+    /// Performs the SetDrawable operation.
     /// </summary>
+    /// <param name="drawable">The value of drawable.</param>
+    /// <param name="size">The value of size.</param>
+    /// <param name="format">The value of format.</param>
     public void SetDrawable(CAMetalDrawable drawable, CGSize size, PixelFormat format) {
         this._deviceTexture = drawable.texture;
         this._width = (uint)size.width;

@@ -17,15 +17,17 @@ public struct MTLRenderPipelineDescriptor {
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MTLRenderPipelineDescriptor" /> class.
+    /// Initializes a new instance of the <see cref="MTLRenderPipelineDescriptor" /> type.
     /// </summary>
+    /// <param name="ptr">The value of ptr.</param>
     public MTLRenderPipelineDescriptor(IntPtr ptr) {
         this.NativePtr = ptr;
     }
 
     /// <summary>
-    /// Executes New.
+    /// Performs the New operation.
     /// </summary>
+    /// <returns>The result of the New operation.</returns>
     public static MTLRenderPipelineDescriptor New() {
         ObjCClass cls = new("MTLRenderPipelineDescriptor");
         MTLRenderPipelineDescriptor ret = cls.AllocInit<MTLRenderPipelineDescriptor>();

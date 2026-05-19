@@ -10,34 +10,36 @@ namespace Veldrith.SPIRV;
 public static unsafe class SpirvCompilation {
 
     /// <summary>
-    /// Represents the s_shaderc field.
+    /// Performs the GetApi operation.
     /// </summary>
+    /// <returns>The result of the GetApi operation.</returns>
     private static readonly Shaderc s_shaderc = Shaderc.GetApi();
 
     /// <summary>
-    /// Represents the s_compiler field.
+    /// Performs the CompilerInitialize operation.
     /// </summary>
+    /// <returns>The result of the CompilerInitialize operation.</returns>
     private static readonly Compiler* s_compiler = s_shaderc.CompilerInitialize();
 
     /// <summary>
-    /// Cross-compiles the given vertex-fragment pair into some target language.
+    /// Performs the CompileVertexFragment operation.
     /// </summary>
-    /// <param name="vsBytes">The vertex shader's SPIR-V bytecode or ASCII-encoded GLSL source code.</param>
-    /// <param name="fsBytes">The fragment shader's SPIR-V bytecode or ASCII-encoded GLSL source code.</param>
-    /// <param name="target">The target language.</param>
-    /// <returns>A <see cref="VertexFragmentCompilationResult" /> containing the compiled output.</returns>
+    /// <param name="vsBytes">The value of vsBytes.</param>
+    /// <param name="fsBytes">The value of fsBytes.</param>
+    /// <param name="target">The value of target.</param>
+    /// <returns>The result of the CompileVertexFragment operation.</returns>
     public static VertexFragmentCompilationResult CompileVertexFragment(byte[] vsBytes, byte[] fsBytes, CrossCompileTarget target) {
         return CompileVertexFragment(vsBytes, fsBytes, target, new CrossCompileOptions());
     }
 
     /// <summary>
-    /// Cross-compiles the given vertex-fragment pair into some target language.
+    /// Performs the CompileVertexFragment operation.
     /// </summary>
-    /// <param name="vsBytes">The vertex shader's SPIR-V bytecode or ASCII-encoded GLSL source code.</param>
-    /// <param name="fsBytes">The fragment shader's SPIR-V bytecode or ASCII-encoded GLSL source code.</param>
-    /// <param name="target">The target language.</param>
-    /// <param name="options">The options for shader translation.</param>
-    /// <returns>A <see cref="VertexFragmentCompilationResult" /> containing the compiled output.</returns>
+    /// <param name="vsBytes">The value of vsBytes.</param>
+    /// <param name="fsBytes">The value of fsBytes.</param>
+    /// <param name="target">The value of target.</param>
+    /// <param name="options">The value of options.</param>
+    /// <returns>The result of the CompileVertexFragment operation.</returns>
     public static VertexFragmentCompilationResult CompileVertexFragment(byte[] vsBytes, byte[] fsBytes, CrossCompileTarget target, CrossCompileOptions options) {
         byte[] vsSpirvBytes = EnsureSpirvBytes(vsBytes, ShaderStages.Vertex, target);
         byte[] fsSpirvBytes = EnsureSpirvBytes(fsBytes, ShaderStages.Fragment, target);
@@ -45,35 +47,35 @@ public static unsafe class SpirvCompilation {
     }
 
     /// <summary>
-    /// Cross-compiles the given compute shader into some target language.
+    /// Performs the CompileCompute operation.
     /// </summary>
-    /// <param name="csBytes">The compute shader's SPIR-V bytecode or ASCII-encoded GLSL source code.</param>
-    /// <param name="target">The target language.</param>
-    /// <returns>A <see cref="ComputeCompilationResult" /> containing the compiled output.</returns>
+    /// <param name="csBytes">The value of csBytes.</param>
+    /// <param name="target">The value of target.</param>
+    /// <returns>The result of the CompileCompute operation.</returns>
     public static ComputeCompilationResult CompileCompute(byte[] csBytes, CrossCompileTarget target) {
         return CompileCompute(csBytes, target, new CrossCompileOptions());
     }
 
     /// <summary>
-    /// Cross-compiles the given compute shader into some target language.
+    /// Performs the CompileCompute operation.
     /// </summary>
-    /// <param name="csBytes">The compute shader's SPIR-V bytecode or ASCII-encoded GLSL source code.</param>
-    /// <param name="target">The target language.</param>
-    /// <param name="options">The options for shader translation.</param>
-    /// <returns>A <see cref="ComputeCompilationResult" /> containing the compiled output.</returns>
+    /// <param name="csBytes">The value of csBytes.</param>
+    /// <param name="target">The value of target.</param>
+    /// <param name="options">The value of options.</param>
+    /// <returns>The result of the CompileCompute operation.</returns>
     public static ComputeCompilationResult CompileCompute(byte[] csBytes, CrossCompileTarget target, CrossCompileOptions options) {
         byte[] csSpirvBytes = EnsureSpirvBytes(csBytes, ShaderStages.Compute, target);
         return SpirvCrossCompiler.CompileCompute(csSpirvBytes, target, options);
     }
 
     /// <summary>
-    /// Compiles the given GLSL source code into SPIR-V.
+    /// Performs the CompileGlslToSpirv operation.
     /// </summary>
-    /// <param name="sourceText">The shader source code.</param>
-    /// <param name="fileName">A descriptive name for the shader. May be null.</param>
-    /// <param name="stage">The <see cref="ShaderStages" /> which the shader is used in.</param>
-    /// <param name="options">Parameters for the GLSL compiler.</param>
-    /// <returns>A <see cref="SpirvCompilationResult" /> containing the compiled SPIR-V bytecode.</returns>
+    /// <param name="sourceText">The value of sourceText.</param>
+    /// <param name="fileName">The value of fileName.</param>
+    /// <param name="stage">The value of stage.</param>
+    /// <param name="options">The value of options.</param>
+    /// <returns>The result of the CompileGlslToSpirv operation.</returns>
     public static SpirvCompilationResult CompileGlslToSpirv(string sourceText, string fileName, ShaderStages stage, GlslCompileOptions options) {
         Shaderc shaderc = s_shaderc;
         Compiler* compiler = s_compiler;
@@ -155,8 +157,12 @@ public static unsafe class SpirvCompilation {
     }
 
     /// <summary>
-    /// Executes EnsureSpirvBytes.
+    /// Performs the EnsureSpirvBytes operation.
     /// </summary>
+    /// <param name="bytes">The value of bytes.</param>
+    /// <param name="stage">The value of stage.</param>
+    /// <param name="target">The value of target.</param>
+    /// <returns>The result of the EnsureSpirvBytes operation.</returns>
     private static byte[] EnsureSpirvBytes(byte[] bytes, ShaderStages stage, CrossCompileTarget target) {
         if (HasSpirvHeader(bytes)) {
             return bytes;
@@ -169,8 +175,10 @@ public static unsafe class SpirvCompilation {
     }
 
     /// <summary>
-    /// Executes HasSpirvHeader.
+    /// Performs the HasSpirvHeader operation.
     /// </summary>
+    /// <param name="bytes">The value of bytes.</param>
+    /// <returns>The result of the HasSpirvHeader operation.</returns>
     internal static bool HasSpirvHeader(byte[] bytes) {
         return bytes.Length > 4
                && bytes[0] == 0x03
@@ -180,8 +188,10 @@ public static unsafe class SpirvCompilation {
     }
 
     /// <summary>
-    /// Executes GetShadercKind.
+    /// Performs the GetShadercKind operation.
     /// </summary>
+    /// <param name="stage">The value of stage.</param>
+    /// <returns>The result of the GetShadercKind operation.</returns>
     private static ShaderKind GetShadercKind(ShaderStages stage) {
         return stage switch {
             ShaderStages.Vertex => ShaderKind.VertexShader,
@@ -194,4 +204,3 @@ public static unsafe class SpirvCompilation {
         };
     }
 }
-

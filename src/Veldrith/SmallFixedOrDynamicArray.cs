@@ -19,9 +19,6 @@ internal unsafe struct SmallFixedOrDynamicArray : IDisposable {
     /// </summary>
     public readonly uint Count;
 
-    /// <summary>
-    /// Represents the _fixedData field.
-    /// </summary>
     private fixed uint _fixedData[_max_fixed_values];
 
     /// <summary>
@@ -30,15 +27,19 @@ internal unsafe struct SmallFixedOrDynamicArray : IDisposable {
     public readonly uint[] Data;
 
     /// <summary>
-    /// Executes Get.
+    /// Performs the Get operation.
     /// </summary>
+    /// <param name="i">The value of i.</param>
+    /// <returns>The result of the Get operation.</returns>
     public uint Get(uint i) {
         return this.Count > _max_fixed_values ? this.Data[i] : this._fixedData[i];
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="SmallFixedOrDynamicArray" /> class.
+    /// Initializes a new instance of the <see cref="SmallFixedOrDynamicArray" /> type.
     /// </summary>
+    /// <param name="count">The value of count.</param>
+    /// <param name="data">The value of data.</param>
     public SmallFixedOrDynamicArray(uint count, ref uint data) {
         if (count > _max_fixed_values) {
             this.Data = ArrayPool<uint>.Shared.Rent((int)count);
@@ -58,7 +59,7 @@ internal unsafe struct SmallFixedOrDynamicArray : IDisposable {
     }
 
     /// <summary>
-    /// Executes Dispose.
+    /// Performs the Dispose operation.
     /// </summary>
     public void Dispose() {
         if (this.Data != null) {

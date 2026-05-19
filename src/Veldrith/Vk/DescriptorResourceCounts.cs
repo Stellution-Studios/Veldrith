@@ -41,8 +41,15 @@ internal struct DescriptorResourceCounts {
     public readonly uint StorageBufferDynamicCount;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="DescriptorResourceCounts" /> class.
+    /// Initializes a new instance of the <see cref="DescriptorResourceCounts" /> type.
     /// </summary>
+    /// <param name="uniformBufferCount">The value of uniformBufferCount.</param>
+    /// <param name="uniformBufferDynamicCount">The value of uniformBufferDynamicCount.</param>
+    /// <param name="sampledImageCount">The value of sampledImageCount.</param>
+    /// <param name="samplerCount">The value of samplerCount.</param>
+    /// <param name="storageBufferCount">The value of storageBufferCount.</param>
+    /// <param name="storageBufferDynamicCount">The value of storageBufferDynamicCount.</param>
+    /// <param name="storageImageCount">The value of storageImageCount.</param>
     public DescriptorResourceCounts(uint uniformBufferCount, uint uniformBufferDynamicCount, uint sampledImageCount, uint samplerCount, uint storageBufferCount, uint storageBufferDynamicCount, uint storageImageCount) {
         this.UniformBufferCount = uniformBufferCount;
         this.UniformBufferDynamicCount = uniformBufferDynamicCount;

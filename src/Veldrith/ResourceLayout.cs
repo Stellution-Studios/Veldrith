@@ -8,8 +8,9 @@ namespace Veldrith;
 public abstract class ResourceLayout : IDeviceResource, IDisposable {
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ResourceLayout" /> class.
+    /// Initializes a new instance of the <see cref="ResourceLayout" /> type.
     /// </summary>
+    /// <param name="description">The value of description.</param>
     internal ResourceLayout(ref ResourceLayoutDescription description) {
 #if VALIDATE_USAGE
         this.Description = description;
@@ -36,7 +37,7 @@ public abstract class ResourceLayout : IDeviceResource, IDisposable {
     #region Disposal
 
     /// <summary>
-    /// Frees unmanaged device resources controlled by this instance.
+    /// Performs the Dispose operation.
     /// </summary>
     public abstract void Dispose();
 

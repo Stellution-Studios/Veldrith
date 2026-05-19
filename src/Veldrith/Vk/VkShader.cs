@@ -33,12 +33,10 @@ internal unsafe class VkShader : Shader {
     /// <summary>
     /// Initializes a new instance of the <see cref="VkShader" /> class.
     /// </summary>
-    public VkShader(VkGraphicsDevice gd, ref ShaderDescription description)
-
-        /// <summary>
-        /// Executes base.
-        /// </summary>
-        : base(description.Stage, description.EntryPoint) {
+    /// <param name="gd">The value of gd.</param>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the base operation.</returns>
+    public VkShader(VkGraphicsDevice gd, ref ShaderDescription description) : base(description.Stage, description.EntryPoint) {
         this.gd = gd;
 
         VkShaderModuleCreateInfo shaderModuleCi = VkShaderModuleCreateInfo.New();
@@ -75,7 +73,7 @@ internal unsafe class VkShader : Shader {
     #region Disposal
 
     /// <summary>
-    /// Executes Dispose.
+    /// Performs the Dispose operation.
     /// </summary>
     public override void Dispose() {
         if (!this._disposed) {

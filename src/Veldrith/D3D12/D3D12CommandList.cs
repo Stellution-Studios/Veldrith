@@ -29,25 +29,17 @@ internal sealed class D3D12CommandList : CommandList {
     private const int PerfReportIntervalFrames = 240;
 
     /// <summary>
-    /// Represents the _mipmapComputeShaderCode field.
+    /// Performs the register operation.
     /// </summary>
+    /// <param name="t0">The value of t0.</param>
+    /// <returns>The result of the register operation.</returns>
     private const string _mipmapComputeShaderCode = @"Texture2D<float4> SourceTexture : register(t0);
 
-                                                      /// <summary>
-                                                      /// Executes register.
-                                                      /// </summary>
                                                       RWTexture2D<float4> DestinationTexture : register(u0);
 
-                                                      /// <summary>
-                                                      /// Executes register.
-                                                      /// </summary>
                                                       SamplerState LinearSampler : register(s0);
                                                       
                                                       [numthreads(8, 8, 1)]
-
-                                                      /// <summary>
-                                                      /// Executes cs_main.
-                                                      /// </summary>
                                                       void cs_main(uint3 dispatchThreadID : SV_DispatchThreadID) {
                                                           uint width;
                                                           uint height;
@@ -63,8 +55,10 @@ internal sealed class D3D12CommandList : CommandList {
                                                       }";
 
     /// <summary>
-    /// Represents the _perfLogEnabled field.
+    /// Performs the Equals operation.
     /// </summary>
+    /// <param name="Ordinal">The value of Ordinal.</param>
+    /// <returns>The result of the Equals operation.</returns>
     private static readonly bool _perfLogEnabled = string.Equals(Environment.GetEnvironmentVariable("VELDRID_D3D12_PERF"), "1", StringComparison.Ordinal);
 
     /// <summary>
@@ -108,8 +102,10 @@ internal sealed class D3D12CommandList : CommandList {
     private readonly ID3D12CommandAllocator[] _commandAllocators = new ID3D12CommandAllocator[FramesInFlight];
 
     /// <summary>
-    /// Represents the _computeResourceSetBindingPlans field.
+    /// Performs the new operation.
     /// </summary>
+    /// <param name="Instance">The value of Instance.</param>
+    /// <returns>The result of the new operation.</returns>
     private readonly Dictionary<ResourceSetBindingPlanKey, ResourceSetBindingPlanEntry[]> _computeResourceSetBindingPlans = new(ResourceSetBindingPlanKeyComparer.Instance);
 
     /// <summary>
@@ -128,8 +124,10 @@ internal sealed class D3D12CommandList : CommandList {
     private readonly ulong[] _frameSlotFenceValues = new ulong[FramesInFlight];
 
     /// <summary>
-    /// Represents the _graphicsResourceSetBindingPlans field.
+    /// Performs the new operation.
     /// </summary>
+    /// <param name="Instance">The value of Instance.</param>
+    /// <returns>The result of the new operation.</returns>
     private readonly Dictionary<ResourceSetBindingPlanKey, ResourceSetBindingPlanEntry[]> _graphicsResourceSetBindingPlans = new(ResourceSetBindingPlanKeyComparer.Instance);
 
     /// <summary>
@@ -153,8 +151,9 @@ internal sealed class D3D12CommandList : CommandList {
     private readonly uint[] _nextSrvUavDescriptorsPerFrameSlot = new uint[FramesInFlight];
 
     /// <summary>
-    /// Represents the _perfStopwatch field.
+    /// Performs the StartNew operation.
     /// </summary>
+    /// <returns>The result of the StartNew operation.</returns>
     private readonly Stopwatch _perfStopwatch = Stopwatch.StartNew();
 
     /// <summary>
@@ -528,8 +527,13 @@ internal sealed class D3D12CommandList : CommandList {
     private bool _uavBarrierPending;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="D3D12CommandList" /> class.
+    /// Initializes a new instance of the <see cref="D3D12CommandList" /> type.
     /// </summary>
+    /// <param name="gd">The value of gd.</param>
+    /// <param name="description">The value of description.</param>
+    /// <param name="features">The value of features.</param>
+    /// <param name="uniformAlignment">The value of uniformAlignment.</param>
+    /// <param name="structuredAlignment">The value of structuredAlignment.</param>
     public D3D12CommandList(D3D12GraphicsDevice gd, ref CommandListDescription description, GraphicsDeviceFeatures features, uint uniformAlignment, uint structuredAlignment) : base(ref description, features, uniformAlignment, structuredAlignment) {
         this.gd = gd;
 
@@ -565,7 +569,7 @@ internal sealed class D3D12CommandList : CommandList {
     public override string Name { get; set; }
 
     /// <summary>
-    /// Executes Dispose.
+    /// Performs the Dispose operation.
     /// </summary>
     public override void Dispose() {
         this._gpuMipPipeline?.Dispose();
@@ -587,7 +591,7 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes Begin.
+    /// Performs the Begin operation.
     /// </summary>
     public override void Begin() {
         if (_perfLogEnabled) {
@@ -638,7 +642,7 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes End.
+    /// Performs the End operation.
     /// </summary>
     public override void End() {
         if (!this._begun) {
@@ -691,8 +695,10 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes SetViewport.
+    /// Performs the SetViewport operation.
     /// </summary>
+    /// <param name="index">The value of index.</param>
+    /// <param name="viewport">The value of viewport.</param>
     public override void SetViewport(uint index, ref Viewport viewport) {
         if (index >= this._activeViewports.Length) {
             return;
@@ -708,8 +714,13 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes SetScissorRect.
+    /// Performs the SetScissorRect operation.
     /// </summary>
+    /// <param name="index">The value of index.</param>
+    /// <param name="x">The value of x.</param>
+    /// <param name="y">The value of y.</param>
+    /// <param name="width">The value of width.</param>
+    /// <param name="height">The value of height.</param>
     public override void SetScissorRect(uint index, uint x, uint y, uint width, uint height) {
         if (index >= this._activeScissorRects.Length) {
             return;
@@ -725,8 +736,11 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes Dispatch.
+    /// Performs the Dispatch operation.
     /// </summary>
+    /// <param name="groupCountX">The value of groupCountX.</param>
+    /// <param name="groupCountY">The value of groupCountY.</param>
+    /// <param name="groupCountZ">The value of groupCountZ.</param>
     public override void Dispatch(uint groupCountX, uint groupCountY, uint groupCountZ) {
         this.FlushPendingUavBarrier();
         this.NativeCommandList.Dispatch(groupCountX, groupCountY, groupCountZ);
@@ -738,7 +752,7 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes ExecuteNoSignal.
+    /// Performs the ExecuteNoSignal operation.
     /// </summary>
     internal void ExecuteNoSignal() {
         if (!this._ended) {
@@ -749,8 +763,9 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes MarkSubmitted.
+    /// Performs the MarkSubmitted operation.
     /// </summary>
+    /// <param name="signalValue">The value of signalValue.</param>
     internal void MarkSubmitted(ulong signalValue) {
         if (this._currentFrameSlot >= 0) {
             this._frameSlotFenceValues[this._currentFrameSlot] = signalValue;
@@ -758,8 +773,12 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes SetGraphicsResourceSetCore.
+    /// Performs the SetGraphicsResourceSetCore operation.
     /// </summary>
+    /// <param name="slot">The value of slot.</param>
+    /// <param name="rs">The value of rs.</param>
+    /// <param name="dynamicOffsetsCount">The value of dynamicOffsetsCount.</param>
+    /// <param name="dynamicOffsets">The value of dynamicOffsets.</param>
     protected override void SetGraphicsResourceSetCore(uint slot, ResourceSet rs, uint dynamicOffsetsCount, ref uint dynamicOffsets) {
         if (this._currentGraphicsPipeline == null) {
             return;
@@ -805,8 +824,12 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes SetComputeResourceSetCore.
+    /// Performs the SetComputeResourceSetCore operation.
     /// </summary>
+    /// <param name="slot">The value of slot.</param>
+    /// <param name="set">The value of set.</param>
+    /// <param name="dynamicOffsetsCount">The value of dynamicOffsetsCount.</param>
+    /// <param name="dynamicOffsets">The value of dynamicOffsets.</param>
     protected override void SetComputeResourceSetCore(uint slot, ResourceSet set, uint dynamicOffsetsCount, ref uint dynamicOffsets) {
         if (this._currentComputePipeline == null) {
             return;
@@ -852,8 +875,9 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes SetFramebufferCore.
+    /// Performs the SetFramebufferCore operation.
     /// </summary>
+    /// <param name="fb">The value of fb.</param>
     protected override void SetFramebufferCore(Framebuffer fb) {
         if (fb is D3D12SwapchainFramebuffer swapchainFramebuffer && swapchainFramebuffer.Swapchain.TryGetCurrentBackBuffer(out ID3D12Resource backBuffer, out CpuDescriptorHandle rtv, out int backBufferIndex, out ResourceStates currentState)) {
             this.Transition(backBuffer, currentState, ResourceStates.RenderTarget);
@@ -901,8 +925,12 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes DrawIndirectCore.
+    /// Performs the DrawIndirectCore operation.
     /// </summary>
+    /// <param name="indirectBuffer">The value of indirectBuffer.</param>
+    /// <param name="offset">The value of offset.</param>
+    /// <param name="drawCount">The value of drawCount.</param>
+    /// <param name="stride">The value of stride.</param>
     protected override void DrawIndirectCore(DeviceBuffer indirectBuffer, uint offset, uint drawCount, uint stride) {
         D3D12DeviceBuffer d3D12Buffer = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(indirectBuffer);
         uint argumentSize = (uint)Unsafe.SizeOf<IndirectDrawArguments>();
@@ -933,8 +961,12 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes DrawIndexedIndirectCore.
+    /// Performs the DrawIndexedIndirectCore operation.
     /// </summary>
+    /// <param name="indirectBuffer">The value of indirectBuffer.</param>
+    /// <param name="offset">The value of offset.</param>
+    /// <param name="drawCount">The value of drawCount.</param>
+    /// <param name="stride">The value of stride.</param>
     protected override void DrawIndexedIndirectCore(DeviceBuffer indirectBuffer, uint offset, uint drawCount, uint stride) {
         D3D12DeviceBuffer d3D12Buffer = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(indirectBuffer);
         uint argumentSize = (uint)Unsafe.SizeOf<IndirectDrawIndexedArguments>();
@@ -965,8 +997,10 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes DispatchIndirectCore.
+    /// Performs the DispatchIndirectCore operation.
     /// </summary>
+    /// <param name="indirectBuffer">The value of indirectBuffer.</param>
+    /// <param name="offset">The value of offset.</param>
     protected override void DispatchIndirectCore(DeviceBuffer indirectBuffer, uint offset) {
         D3D12DeviceBuffer d3d12Buffer = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(indirectBuffer);
         uint argumentSize = (uint)Unsafe.SizeOf<IndirectDispatchArguments>();
@@ -992,8 +1026,10 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes ResolveTextureCore.
+    /// Performs the ResolveTextureCore operation.
     /// </summary>
+    /// <param name="source">The value of source.</param>
+    /// <param name="destination">The value of destination.</param>
     protected override void ResolveTextureCore(Texture source, Texture destination) {
         this.FlushPendingUavBarrier();
         D3D12Texture src = Util.AssertSubtype<Texture, D3D12Texture>(source);
@@ -1025,8 +1061,13 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes CopyBufferCore.
+    /// Performs the CopyBufferCore operation.
     /// </summary>
+    /// <param name="source">The value of source.</param>
+    /// <param name="sourceOffset">The value of sourceOffset.</param>
+    /// <param name="destination">The value of destination.</param>
+    /// <param name="destinationOffset">The value of destinationOffset.</param>
+    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
     protected override void CopyBufferCore(DeviceBuffer source, uint sourceOffset, DeviceBuffer destination, uint destinationOffset, uint sizeInBytes) {
         this.FlushPendingUavBarrier();
         D3D12DeviceBuffer src = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(source);
@@ -1035,8 +1076,24 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes CopyTextureCore.
+    /// Performs the CopyTextureCore operation.
     /// </summary>
+    /// <param name="source">The value of source.</param>
+    /// <param name="srcX">The value of srcX.</param>
+    /// <param name="srcY">The value of srcY.</param>
+    /// <param name="srcZ">The value of srcZ.</param>
+    /// <param name="srcMipLevel">The value of srcMipLevel.</param>
+    /// <param name="srcBaseArrayLayer">The value of srcBaseArrayLayer.</param>
+    /// <param name="destination">The value of destination.</param>
+    /// <param name="dstX">The value of dstX.</param>
+    /// <param name="dstY">The value of dstY.</param>
+    /// <param name="dstZ">The value of dstZ.</param>
+    /// <param name="dstMipLevel">The value of dstMipLevel.</param>
+    /// <param name="dstBaseArrayLayer">The value of dstBaseArrayLayer.</param>
+    /// <param name="width">The value of width.</param>
+    /// <param name="height">The value of height.</param>
+    /// <param name="depth">The value of depth.</param>
+    /// <param name="layerCount">The value of layerCount.</param>
     protected override void CopyTextureCore(Texture source, uint srcX, uint srcY, uint srcZ, uint srcMipLevel, uint srcBaseArrayLayer, Texture destination, uint dstX, uint dstY, uint dstZ, uint dstMipLevel, uint dstBaseArrayLayer, uint width, uint height, uint depth, uint layerCount) {
         this.FlushPendingUavBarrier();
         D3D12Texture src = Util.AssertSubtype<Texture, D3D12Texture>(source);
@@ -1066,8 +1123,9 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes SetPipelineCore.
+    /// Performs the SetPipelineCore operation.
     /// </summary>
+    /// <param name="pipeline">The value of pipeline.</param>
     private protected override void SetPipelineCore(Pipeline pipeline) {
         if (pipeline.IsComputePipeline) {
             D3D12Pipeline d3D12ComputePipeline = Util.AssertSubtype<Pipeline, D3D12Pipeline>(pipeline);
@@ -1117,8 +1175,11 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes SetVertexBufferCore.
+    /// Performs the SetVertexBufferCore operation.
     /// </summary>
+    /// <param name="index">The value of index.</param>
+    /// <param name="buffer">The value of buffer.</param>
+    /// <param name="offset">The value of offset.</param>
     private protected override void SetVertexBufferCore(uint index, DeviceBuffer buffer, uint offset) {
         if (index >= this._boundVertexBuffers.Length) {
             return;
@@ -1147,8 +1208,11 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes SetIndexBufferCore.
+    /// Performs the SetIndexBufferCore operation.
     /// </summary>
+    /// <param name="buffer">The value of buffer.</param>
+    /// <param name="format">The value of format.</param>
+    /// <param name="offset">The value of offset.</param>
     private protected override void SetIndexBufferCore(DeviceBuffer buffer, IndexFormat format, uint offset) {
         D3D12DeviceBuffer d3D12Buffer = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(buffer);
         bool isDynamicBuffer = (d3D12Buffer.Usage & BufferUsage.Dynamic) == BufferUsage.Dynamic;
@@ -1176,8 +1240,10 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes ClearColorTargetCore.
+    /// Performs the ClearColorTargetCore operation.
     /// </summary>
+    /// <param name="index">The value of index.</param>
+    /// <param name="clearColor">The value of clearColor.</param>
     private protected override void ClearColorTargetCore(uint index, RgbaFloat clearColor) {
         this.FlushPendingUavBarrier();
         if (this.Framebuffer is D3D12SwapchainFramebuffer swapchainFramebuffer && swapchainFramebuffer.Swapchain.TryGetCurrentBackBuffer(out ID3D12Resource backBuffer, out CpuDescriptorHandle rtv, out int backBufferIndex, out ResourceStates currentState)) {
@@ -1209,8 +1275,10 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes ClearDepthStencilCore.
+    /// Performs the ClearDepthStencilCore operation.
     /// </summary>
+    /// <param name="depth">The value of depth.</param>
+    /// <param name="stencil">The value of stencil.</param>
     private protected override void ClearDepthStencilCore(float depth, byte stencil) {
         this.FlushPendingUavBarrier();
         if (this.Framebuffer is not D3D12Framebuffer d3D12Framebuffer) {
@@ -1228,8 +1296,12 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes DrawCore.
+    /// Performs the DrawCore operation.
     /// </summary>
+    /// <param name="vertexCount">The value of vertexCount.</param>
+    /// <param name="instanceCount">The value of instanceCount.</param>
+    /// <param name="vertexStart">The value of vertexStart.</param>
+    /// <param name="instanceStart">The value of instanceStart.</param>
     private protected override void DrawCore(uint vertexCount, uint instanceCount, uint vertexStart, uint instanceStart) {
         this.FlushPendingUavBarrier();
         this.NativeCommandList.DrawInstanced(vertexCount, instanceCount, vertexStart, instanceStart);
@@ -1239,8 +1311,13 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes DrawIndexedCore.
+    /// Performs the DrawIndexedCore operation.
     /// </summary>
+    /// <param name="indexCount">The value of indexCount.</param>
+    /// <param name="instanceCount">The value of instanceCount.</param>
+    /// <param name="indexStart">The value of indexStart.</param>
+    /// <param name="vertexOffset">The value of vertexOffset.</param>
+    /// <param name="instanceStart">The value of instanceStart.</param>
     private protected override void DrawIndexedCore(uint indexCount, uint instanceCount, uint indexStart, int vertexOffset, uint instanceStart) {
         this.FlushPendingUavBarrier();
         this.NativeCommandList.DrawIndexedInstanced(indexCount, instanceCount, indexStart, vertexOffset, instanceStart);
@@ -1250,8 +1327,12 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes UpdateBufferCore.
+    /// Performs the UpdateBufferCore operation.
     /// </summary>
+    /// <param name="buffer">The value of buffer.</param>
+    /// <param name="bufferOffsetInBytes">The value of bufferOffsetInBytes.</param>
+    /// <param name="source">The value of source.</param>
+    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
     private protected override void UpdateBufferCore(DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes) {
         this.FlushPendingUavBarrier();
         D3D12DeviceBuffer d3D12Buffer = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(buffer);
@@ -1264,8 +1345,9 @@ internal sealed class D3D12CommandList : CommandList {
     [SupportedOSPlatform("windows")]
 
     /// <summary>
-    /// Executes GenerateMipmapsCore.
+    /// Performs the GenerateMipmapsCore operation.
     /// </summary>
+    /// <param name="texture">The value of texture.</param>
     private protected override void GenerateMipmapsCore(Texture texture) {
         D3D12Texture d3D12Texture = Util.AssertSubtype<Texture, D3D12Texture>(texture);
         if (texture.MipLevels <= 1 || d3D12Texture.NativeTexture == null) {
@@ -1289,29 +1371,34 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes PushDebugGroupCore.
+    /// Performs the PushDebugGroupCore operation.
     /// </summary>
+    /// <param name="name">The value of name.</param>
     private protected override void PushDebugGroupCore(string name) {
         this.WriteDebugMarker(name, true, false);
     }
 
     /// <summary>
-    /// Executes PopDebugGroupCore.
+    /// Performs the PopDebugGroupCore operation.
     /// </summary>
     private protected override void PopDebugGroupCore() {
         this._endEventMethod?.Invoke(this.NativeCommandList, null);
     }
 
     /// <summary>
-    /// Executes InsertDebugMarkerCore.
+    /// Performs the InsertDebugMarkerCore operation.
     /// </summary>
+    /// <param name="name">The value of name.</param>
     private protected override void InsertDebugMarkerCore(string name) {
         this.WriteDebugMarker(name, false, true);
     }
 
     /// <summary>
-    /// Executes Transition.
+    /// Performs the Transition operation.
     /// </summary>
+    /// <param name="resource">The value of resource.</param>
+    /// <param name="from">The value of from.</param>
+    /// <param name="to">The value of to.</param>
     private void Transition(ID3D12Resource resource, ResourceStates from, ResourceStates to) {
         if (from == to) {
             return;
@@ -1326,8 +1413,11 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes BindVertexBuffer.
+    /// Performs the BindVertexBuffer operation.
     /// </summary>
+    /// <param name="index">The value of index.</param>
+    /// <param name="buffer">The value of buffer.</param>
+    /// <param name="offset">The value of offset.</param>
     private void BindVertexBuffer(uint index, D3D12DeviceBuffer buffer, uint offset) {
         this.TransitionBuffer(buffer, ResourceStates.VertexAndConstantBuffer);
 
@@ -1342,7 +1432,7 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes RebindVertexBuffersForCurrentPipeline.
+    /// Performs the RebindVertexBuffersForCurrentPipeline operation.
     /// </summary>
     private void RebindVertexBuffersForCurrentPipeline() {
         if (this._currentGraphicsPipeline == null) {
@@ -1360,8 +1450,12 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes TransitionSubresource.
+    /// Performs the TransitionSubresource operation.
     /// </summary>
+    /// <param name="resource">The value of resource.</param>
+    /// <param name="from">The value of from.</param>
+    /// <param name="to">The value of to.</param>
+    /// <param name="subresource">The value of subresource.</param>
     private void TransitionSubresource(ID3D12Resource resource, ResourceStates from, ResourceStates to, uint subresource) {
         if (from == to) {
             return;
@@ -1376,7 +1470,7 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes FlushPendingUavBarrier.
+    /// Performs the FlushPendingUavBarrier operation.
     /// </summary>
     private void FlushPendingUavBarrier() {
         if (!this._uavBarrierPending) {
@@ -1394,8 +1488,9 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes WaitForFrameSlot.
+    /// Performs the WaitForFrameSlot operation.
     /// </summary>
+    /// <param name="frameSlot">The value of frameSlot.</param>
     private void WaitForFrameSlot(int frameSlot) {
         ulong fenceValue = this._frameSlotFenceValues[frameSlot];
         if (fenceValue == 0) {
@@ -1420,8 +1515,14 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes ExecuteIndirect.
+    /// Performs the ExecuteIndirect operation.
     /// </summary>
+    /// <param name="argumentBuffer">The value of argumentBuffer.</param>
+    /// <param name="offset">The value of offset.</param>
+    /// <param name="drawCount">The value of drawCount.</param>
+    /// <param name="stride">The value of stride.</param>
+    /// <param name="argumentSize">The value of argumentSize.</param>
+    /// <param name="signature">The value of signature.</param>
     private void ExecuteIndirect(D3D12DeviceBuffer argumentBuffer, uint offset, uint drawCount, uint stride, uint argumentSize, ID3D12CommandSignature signature) {
         if (drawCount == 0) {
             return;
@@ -1447,8 +1548,9 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes EnsureIndirectCommandSignatures.
+    /// Performs the EnsureIndirectCommandSignatures operation.
     /// </summary>
+    /// <returns>The result of the EnsureIndirectCommandSignatures operation.</returns>
     private bool EnsureIndirectCommandSignatures() {
         if (this._indirectSignaturesInitialized) {
             return this._indirectSignaturesAvailable;
@@ -1489,8 +1591,10 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes CreateCommandSignature.
+    /// Performs the CreateCommandSignature operation.
     /// </summary>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateCommandSignature operation.</returns>
     private ID3D12CommandSignature CreateCommandSignature(CommandSignatureDescription description) {
         ID3D12CommandSignature signature = this.gd.Device.CreateCommandSignature<ID3D12CommandSignature>(description, null);
 
@@ -1502,8 +1606,10 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes CanUseGpuMipmapPath.
+    /// Performs the CanUseGpuMipmapPath operation.
     /// </summary>
+    /// <param name="texture">The value of texture.</param>
+    /// <returns>The result of the CanUseGpuMipmapPath operation.</returns>
     private bool CanUseGpuMipmapPath(Texture texture) {
         return texture.Type == TextureType.Texture2D
                && texture.SampleCount == TextureSampleCount.Count1
@@ -1515,8 +1621,9 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes GenerateMipmapsGpu.
+    /// Performs the GenerateMipmapsGpu operation.
     /// </summary>
+    /// <param name="texture">The value of texture.</param>
     private void GenerateMipmapsGpu(D3D12Texture texture) {
         D3D12Pipeline previousGraphics = this._currentGraphicsPipeline;
         D3D12Pipeline previousCompute = this._currentComputePipeline;
@@ -1597,8 +1704,9 @@ internal sealed class D3D12CommandList : CommandList {
     [SupportedOSPlatform("windows")]
 
     /// <summary>
-    /// Executes EnsureGpuMipmapResources.
+    /// Performs the EnsureGpuMipmapResources operation.
     /// </summary>
+    /// <returns>The result of the EnsureGpuMipmapResources operation.</returns>
     private bool EnsureGpuMipmapResources() {
         if (this._gpuMipResourcesInitialized) {
             return this._gpuMipResourcesAvailable;
@@ -1633,8 +1741,12 @@ internal sealed class D3D12CommandList : CommandList {
     [SupportedOSPlatform("windows")]
 
     /// <summary>
-    /// Executes CompileComputeShader.
+    /// Performs the CompileComputeShader operation.
     /// </summary>
+    /// <param name="sourceCode">The value of sourceCode.</param>
+    /// <param name="entryPoint">The value of entryPoint.</param>
+    /// <param name="target">The value of target.</param>
+    /// <returns>The result of the CompileComputeShader operation.</returns>
     private static byte[] CompileComputeShader(string sourceCode, string entryPoint, string target) {
         byte[] sourceBytes = Encoding.UTF8.GetBytes(sourceCode);
 
@@ -1676,8 +1788,10 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes TransitionTexture.
+    /// Performs the TransitionTexture operation.
     /// </summary>
+    /// <param name="texture">The value of texture.</param>
+    /// <param name="toState">The value of toState.</param>
     private void TransitionTexture(D3D12Texture texture, ResourceStates toState) {
         if (texture.NativeTexture == null) {
             return;
@@ -1706,8 +1820,10 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes TransitionTextureView.
+    /// Performs the TransitionTextureView operation.
     /// </summary>
+    /// <param name="textureView">The value of textureView.</param>
+    /// <param name="toState">The value of toState.</param>
     private void TransitionTextureView(D3D12TextureView textureView, ResourceStates toState) {
         D3D12Texture texture = textureView.TargetTexture;
         if (texture.NativeTexture == null) {
@@ -1748,8 +1864,10 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes TransitionBuffer.
+    /// Performs the TransitionBuffer operation.
     /// </summary>
+    /// <param name="buffer">The value of buffer.</param>
+    /// <param name="toState">The value of toState.</param>
     private void TransitionBuffer(D3D12DeviceBuffer buffer, ResourceStates toState) {
         if (!buffer.CanTransitionState || buffer.CurrentState == toState) {
             return;
@@ -1760,8 +1878,10 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes CaptureTextureStates.
+    /// Performs the CaptureTextureStates operation.
     /// </summary>
+    /// <param name="texture">The value of texture.</param>
+    /// <returns>The result of the CaptureTextureStates operation.</returns>
     private static ResourceStates[] CaptureTextureStates(D3D12Texture texture) {
         uint subresourceCount = texture.SubresourceCount;
         ResourceStates[] states = new ResourceStates[subresourceCount];
@@ -1773,8 +1893,10 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes RestoreTextureStates.
+    /// Performs the RestoreTextureStates operation.
     /// </summary>
+    /// <param name="texture">The value of texture.</param>
+    /// <param name="previousStates">The value of previousStates.</param>
     private void RestoreTextureStates(D3D12Texture texture, ResourceStates[] previousStates) {
         if (texture.NativeTexture == null || previousStates == null || previousStates.Length == 0) {
             return;
@@ -1794,8 +1916,11 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes WriteDebugMarker.
+    /// Performs the WriteDebugMarker operation.
     /// </summary>
+    /// <param name="name">The value of name.</param>
+    /// <param name="beginEvent">The value of beginEvent.</param>
+    /// <param name="setMarker">The value of setMarker.</param>
     private unsafe void WriteDebugMarker(string name, bool beginEvent, bool setMarker) {
         if (string.IsNullOrEmpty(name)) {
             return;
@@ -1824,8 +1949,10 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes GetDebugMarkerMethod.
+    /// Performs the GetDebugMarkerMethod operation.
     /// </summary>
+    /// <param name="methodName">The value of methodName.</param>
+    /// <returns>The result of the GetDebugMarkerMethod operation.</returns>
     private MethodInfo GetDebugMarkerMethod(string methodName) {
         MethodInfo[] methods = this.NativeCommandList.GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance);
         for (int i = 0; i < methods.Length; i++) {
@@ -1849,13 +1976,28 @@ internal sealed class D3D12CommandList : CommandList {
     [DllImport("d3dcompiler_47.dll", CharSet = CharSet.Ansi)]
 
     /// <summary>
-    /// Executes D3DCompile.
+    /// Performs the D3DCompile operation.
     /// </summary>
+    /// <param name="srcData">The value of srcData.</param>
+    /// <param name="srcDataSize">The value of srcDataSize.</param>
+    /// <param name="sourceName">The value of sourceName.</param>
+    /// <param name="defines">The value of defines.</param>
+    /// <param name="include">The value of include.</param>
+    /// <param name="entryPoint">The value of entryPoint.</param>
+    /// <param name="target">The value of target.</param>
+    /// <param name="flags1">The value of flags1.</param>
+    /// <param name="flags2">The value of flags2.</param>
+    /// <param name="code">The value of code.</param>
+    /// <param name="errorMsgs">The value of errorMsgs.</param>
+    /// <returns>The result of the D3DCompile operation.</returns>
     private static extern int D3DCompile(byte[] srcData, nuint srcDataSize, string sourceName, IntPtr defines, IntPtr include, string entryPoint, string target, uint flags1, uint flags2, out IntPtr code, out IntPtr errorMsgs);
 
     /// <summary>
-    /// Executes BindGraphicsResource.
+    /// Performs the BindGraphicsResource operation.
     /// </summary>
+    /// <param name="bindingInfo">The value of bindingInfo.</param>
+    /// <param name="resource">The value of resource.</param>
+    /// <param name="dynamicOffset">The value of dynamicOffset.</param>
     private void BindGraphicsResource(D3D12Pipeline.RootBindingInfo bindingInfo, IBindableResource resource, uint dynamicOffset) {
 
         if (bindingInfo.DescriptorTable) {
@@ -1893,8 +2035,11 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes BindComputeResource.
+    /// Performs the BindComputeResource operation.
     /// </summary>
+    /// <param name="bindingInfo">The value of bindingInfo.</param>
+    /// <param name="resource">The value of resource.</param>
+    /// <param name="dynamicOffset">The value of dynamicOffset.</param>
     private void BindComputeResource(D3D12Pipeline.RootBindingInfo bindingInfo, IBindableResource resource, uint dynamicOffset) {
         if (bindingInfo.DescriptorTable) {
             this.BindDescriptorTableResource(bindingInfo, resource, true);
@@ -1932,8 +2077,11 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes BindDescriptorTableResource.
+    /// Performs the BindDescriptorTableResource operation.
     /// </summary>
+    /// <param name="bindingInfo">The value of bindingInfo.</param>
+    /// <param name="resource">The value of resource.</param>
+    /// <param name="compute">The value of compute.</param>
     private void BindDescriptorTableResource(D3D12Pipeline.RootBindingInfo bindingInfo, IBindableResource resource, bool compute) {
         this.BindDescriptorHeaps();
 
@@ -2036,8 +2184,11 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes ValidateTextureViewBindingSupport.
+    /// Performs the ValidateTextureViewBindingSupport operation.
     /// </summary>
+    /// <param name="textureView">The value of textureView.</param>
+    /// <param name="requestedUsage">The value of requestedUsage.</param>
+    /// <param name="bindingKind">The value of bindingKind.</param>
     private void ValidateTextureViewBindingSupport(D3D12TextureView textureView, TextureUsage requestedUsage, string bindingKind) {
         D3D12Texture texture = textureView.TargetTexture;
         TextureUsage usage = requestedUsage;
@@ -2058,7 +2209,7 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes BindDescriptorHeaps.
+    /// Performs the BindDescriptorHeaps operation.
     /// </summary>
     private void BindDescriptorHeaps() {
         if (this._descriptorHeapsBound) {
@@ -2072,8 +2223,10 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes AllocateSrvUavDescriptor.
+    /// Performs the AllocateSrvUavDescriptor operation.
     /// </summary>
+    /// <param name="cpuHandle">The value of cpuHandle.</param>
+    /// <param name="gpuHandle">The value of gpuHandle.</param>
     private void AllocateSrvUavDescriptor(out CpuDescriptorHandle cpuHandle, out GpuDescriptorHandle gpuHandle) {
         if (this._nextSrvUavDescriptor >= this._maxSrvUavDescriptors) {
             throw new VeldridException("D3D12 SRV/UAV descriptor heap exhausted for this CommandList recording.");
@@ -2088,8 +2241,10 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes AllocateSamplerDescriptor.
+    /// Performs the AllocateSamplerDescriptor operation.
     /// </summary>
+    /// <param name="cpuHandle">The value of cpuHandle.</param>
+    /// <param name="gpuHandle">The value of gpuHandle.</param>
     private void AllocateSamplerDescriptor(out CpuDescriptorHandle cpuHandle, out GpuDescriptorHandle gpuHandle) {
         if (this._nextSamplerDescriptor >= this._maxSamplerDescriptors) {
             throw new VeldridException("D3D12 sampler descriptor heap exhausted for this CommandList recording.");
@@ -2104,8 +2259,12 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes GetOrCreateDescriptorTableHandle.
+    /// Performs the GetOrCreateDescriptorTableHandle operation.
     /// </summary>
+    /// <param name="resource">The value of resource.</param>
+    /// <param name="kind">The value of kind.</param>
+    /// <param name="createHandle">The value of createHandle.</param>
+    /// <returns>The result of the GetOrCreateDescriptorTableHandle operation.</returns>
     private GpuDescriptorHandle GetOrCreateDescriptorTableHandle(IBindableResource resource, ResourceKind kind, Func<GpuDescriptorHandle> createHandle) {
         Dictionary<DescriptorCacheKey, GpuDescriptorHandle> descriptorTableCache = this._descriptorTableCaches[this._currentFrameSlot];
         DescriptorCacheKey key = new(resource, kind);
@@ -2123,8 +2282,12 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes GetGraphicsResourceSetBindingPlan.
+    /// Performs the GetGraphicsResourceSetBindingPlan operation.
     /// </summary>
+    /// <param name="pipeline">The value of pipeline.</param>
+    /// <param name="slot">The value of slot.</param>
+    /// <param name="layout">The value of layout.</param>
+    /// <returns>The result of the GetGraphicsResourceSetBindingPlan operation.</returns>
     private ResourceSetBindingPlanEntry[] GetGraphicsResourceSetBindingPlan(D3D12Pipeline pipeline, uint slot, D3D12ResourceLayout layout) {
         ResourceSetBindingPlanKey key = new(pipeline, layout, slot);
         if (this._graphicsResourceSetBindingPlans.TryGetValue(key, out ResourceSetBindingPlanEntry[] existingPlan)) {
@@ -2137,8 +2300,12 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes GetComputeResourceSetBindingPlan.
+    /// Performs the GetComputeResourceSetBindingPlan operation.
     /// </summary>
+    /// <param name="pipeline">The value of pipeline.</param>
+    /// <param name="slot">The value of slot.</param>
+    /// <param name="layout">The value of layout.</param>
+    /// <returns>The result of the GetComputeResourceSetBindingPlan operation.</returns>
     private ResourceSetBindingPlanEntry[] GetComputeResourceSetBindingPlan(D3D12Pipeline pipeline, uint slot, D3D12ResourceLayout layout) {
         ResourceSetBindingPlanKey key = new(pipeline, layout, slot);
         if (this._computeResourceSetBindingPlans.TryGetValue(key, out ResourceSetBindingPlanEntry[] existingPlan)) {
@@ -2152,8 +2319,12 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes CreateGraphicsResourceSetBindingPlan.
+    /// Performs the CreateGraphicsResourceSetBindingPlan operation.
     /// </summary>
+    /// <param name="pipeline">The value of pipeline.</param>
+    /// <param name="slot">The value of slot.</param>
+    /// <param name="elements">The value of elements.</param>
+    /// <returns>The result of the CreateGraphicsResourceSetBindingPlan operation.</returns>
     private static ResourceSetBindingPlanEntry[] CreateGraphicsResourceSetBindingPlan(D3D12Pipeline pipeline, uint slot, ResourceLayoutElementDescription[] elements) {
         List<ResourceSetBindingPlanEntry> plan = new(elements.Length);
         for (uint elementIndex = 0; elementIndex < elements.Length; elementIndex++) {
@@ -2169,8 +2340,12 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes CreateComputeResourceSetBindingPlan.
+    /// Performs the CreateComputeResourceSetBindingPlan operation.
     /// </summary>
+    /// <param name="pipeline">The value of pipeline.</param>
+    /// <param name="slot">The value of slot.</param>
+    /// <param name="elements">The value of elements.</param>
+    /// <returns>The result of the CreateComputeResourceSetBindingPlan operation.</returns>
     private static ResourceSetBindingPlanEntry[] CreateComputeResourceSetBindingPlan(D3D12Pipeline pipeline, uint slot, ResourceLayoutElementDescription[] elements) {
         List<ResourceSetBindingPlanEntry> plan = new(elements.Length);
 
@@ -2187,8 +2362,10 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes GetGraphicsBufferState.
+    /// Performs the GetGraphicsBufferState operation.
     /// </summary>
+    /// <param name="kind">The value of kind.</param>
+    /// <returns>The result of the GetGraphicsBufferState operation.</returns>
     private static ResourceStates GetGraphicsBufferState(ResourceKind kind) {
         switch (kind) {
             case ResourceKind.UniformBuffer: return ResourceStates.VertexAndConstantBuffer;
@@ -2199,8 +2376,10 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes GetComputeBufferState.
+    /// Performs the GetComputeBufferState operation.
     /// </summary>
+    /// <param name="kind">The value of kind.</param>
+    /// <returns>The result of the GetComputeBufferState operation.</returns>
     private static ResourceStates GetComputeBufferState(ResourceKind kind) {
         switch (kind) {
             case ResourceKind.UniformBuffer: return ResourceStates.VertexAndConstantBuffer;
@@ -2211,8 +2390,11 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes IsSameGraphicsRootBuffer.
+    /// Performs the IsSameGraphicsRootBuffer operation.
     /// </summary>
+    /// <param name="rootParameterIndex">The value of rootParameterIndex.</param>
+    /// <param name="gpuAddress">The value of gpuAddress.</param>
+    /// <returns>The result of the IsSameGraphicsRootBuffer operation.</returns>
     private bool IsSameGraphicsRootBuffer(uint rootParameterIndex, ulong gpuAddress) {
         int index = (int)rootParameterIndex;
         Util.EnsureArrayMinimumSize(ref this._graphicsRootBufferAddresses, rootParameterIndex + 1);
@@ -2221,8 +2403,10 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes SetGraphicsRootBufferCache.
+    /// Performs the SetGraphicsRootBufferCache operation.
     /// </summary>
+    /// <param name="rootParameterIndex">The value of rootParameterIndex.</param>
+    /// <param name="gpuAddress">The value of gpuAddress.</param>
     private void SetGraphicsRootBufferCache(uint rootParameterIndex, ulong gpuAddress) {
         int index = (int)rootParameterIndex;
         Util.EnsureArrayMinimumSize(ref this._graphicsRootBufferAddresses, rootParameterIndex + 1);
@@ -2232,8 +2416,11 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes IsSameComputeRootBuffer.
+    /// Performs the IsSameComputeRootBuffer operation.
     /// </summary>
+    /// <param name="rootParameterIndex">The value of rootParameterIndex.</param>
+    /// <param name="gpuAddress">The value of gpuAddress.</param>
+    /// <returns>The result of the IsSameComputeRootBuffer operation.</returns>
     private bool IsSameComputeRootBuffer(uint rootParameterIndex, ulong gpuAddress) {
         int index = (int)rootParameterIndex;
         Util.EnsureArrayMinimumSize(ref this._computeRootBufferAddresses, rootParameterIndex + 1);
@@ -2242,8 +2429,10 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes SetComputeRootBufferCache.
+    /// Performs the SetComputeRootBufferCache operation.
     /// </summary>
+    /// <param name="rootParameterIndex">The value of rootParameterIndex.</param>
+    /// <param name="gpuAddress">The value of gpuAddress.</param>
     private void SetComputeRootBufferCache(uint rootParameterIndex, ulong gpuAddress) {
         int index = (int)rootParameterIndex;
         Util.EnsureArrayMinimumSize(ref this._computeRootBufferAddresses, rootParameterIndex + 1);
@@ -2253,8 +2442,11 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes IsSameGraphicsRootTable.
+    /// Performs the IsSameGraphicsRootTable operation.
     /// </summary>
+    /// <param name="rootParameterIndex">The value of rootParameterIndex.</param>
+    /// <param name="tablePtr">The value of tablePtr.</param>
+    /// <returns>The result of the IsSameGraphicsRootTable operation.</returns>
     private bool IsSameGraphicsRootTable(uint rootParameterIndex, ulong tablePtr) {
         int index = (int)rootParameterIndex;
         Util.EnsureArrayMinimumSize(ref this._graphicsRootTablePointers, rootParameterIndex + 1);
@@ -2263,8 +2455,10 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes SetGraphicsRootTableCache.
+    /// Performs the SetGraphicsRootTableCache operation.
     /// </summary>
+    /// <param name="rootParameterIndex">The value of rootParameterIndex.</param>
+    /// <param name="tablePtr">The value of tablePtr.</param>
     private void SetGraphicsRootTableCache(uint rootParameterIndex, ulong tablePtr) {
         int index = (int)rootParameterIndex;
         Util.EnsureArrayMinimumSize(ref this._graphicsRootTablePointers, rootParameterIndex + 1);
@@ -2274,8 +2468,11 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes IsSameComputeRootTable.
+    /// Performs the IsSameComputeRootTable operation.
     /// </summary>
+    /// <param name="rootParameterIndex">The value of rootParameterIndex.</param>
+    /// <param name="tablePtr">The value of tablePtr.</param>
+    /// <returns>The result of the IsSameComputeRootTable operation.</returns>
     private bool IsSameComputeRootTable(uint rootParameterIndex, ulong tablePtr) {
         int index = (int)rootParameterIndex;
         Util.EnsureArrayMinimumSize(ref this._computeRootTablePointers, rootParameterIndex + 1);
@@ -2284,8 +2481,10 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes SetComputeRootTableCache.
+    /// Performs the SetComputeRootTableCache operation.
     /// </summary>
+    /// <param name="rootParameterIndex">The value of rootParameterIndex.</param>
+    /// <param name="tablePtr">The value of tablePtr.</param>
     private void SetComputeRootTableCache(uint rootParameterIndex, ulong tablePtr) {
         int index = (int)rootParameterIndex;
         Util.EnsureArrayMinimumSize(ref this._computeRootTablePointers, rootParameterIndex + 1);
@@ -2295,7 +2494,7 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes InvalidateGraphicsRootCaches.
+    /// Performs the InvalidateGraphicsRootCaches operation.
     /// </summary>
     private void InvalidateGraphicsRootCaches() {
         Array.Clear(this._graphicsRootBufferAddressValid, 0, this._graphicsRootBufferAddressValid.Length);
@@ -2303,7 +2502,7 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes InvalidateComputeRootCaches.
+    /// Performs the InvalidateComputeRootCaches operation.
     /// </summary>
     private void InvalidateComputeRootCaches() {
         Array.Clear(this._computeRootBufferAddressValid, 0, this._computeRootBufferAddressValid.Length);
@@ -2311,8 +2510,9 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes ClearBoundResourceSets.
+    /// Performs the ClearBoundResourceSets operation.
     /// </summary>
+    /// <param name="infos">The value of infos.</param>
     private static void ClearBoundResourceSets(BoundResourceSetInfo[] infos) {
         if (infos == null) {
             return;
@@ -2326,7 +2526,7 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Executes TransitionSwapchainBackBuffersToPresent.
+    /// Performs the TransitionSwapchainBackBuffersToPresent operation.
     /// </summary>
     private void TransitionSwapchainBackBuffersToPresent() {
         if (this.Framebuffer is not D3D12SwapchainFramebuffer swapchainFramebuffer) {
@@ -2354,15 +2554,17 @@ internal sealed class D3D12CommandList : CommandList {
         [PreserveSig]
 
         /// <summary>
-        /// Executes GetBufferPointer.
+        /// Performs the GetBufferPointer operation.
         /// </summary>
+        /// <returns>The result of the GetBufferPointer operation.</returns>
         IntPtr GetBufferPointer();
 
         [PreserveSig]
 
         /// <summary>
-        /// Executes GetBufferSize.
+        /// Performs the GetBufferSize operation.
         /// </summary>
+        /// <returns>The result of the GetBufferSize operation.</returns>
         nuint GetBufferSize();
     }
 
@@ -2372,8 +2574,10 @@ internal sealed class D3D12CommandList : CommandList {
     private readonly struct DescriptorCacheKey {
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="DescriptorCacheKey" /> class.
+        /// Initializes a new instance of the <see cref="DescriptorCacheKey" /> type.
         /// </summary>
+        /// <param name="resource">The value of resource.</param>
+        /// <param name="kind">The value of kind.</param>
         public DescriptorCacheKey(IBindableResource resource, ResourceKind kind) {
             this.Resource = resource;
             this.Kind = kind;
@@ -2396,8 +2600,11 @@ internal sealed class D3D12CommandList : CommandList {
     private readonly struct ResourceSetBindingPlanKey {
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ResourceSetBindingPlanKey" /> class.
+        /// Initializes a new instance of the <see cref="ResourceSetBindingPlanKey" /> type.
         /// </summary>
+        /// <param name="pipeline">The value of pipeline.</param>
+        /// <param name="layout">The value of layout.</param>
+        /// <param name="slot">The value of slot.</param>
         public ResourceSetBindingPlanKey(D3D12Pipeline pipeline, D3D12ResourceLayout layout, uint slot) {
             this.Pipeline = pipeline;
             this.Layout = layout;
@@ -2426,8 +2633,11 @@ internal sealed class D3D12CommandList : CommandList {
     private readonly struct ResourceSetBindingPlanEntry {
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ResourceSetBindingPlanEntry" /> class.
+        /// Initializes a new instance of the <see cref="ResourceSetBindingPlanEntry" /> type.
         /// </summary>
+        /// <param name="elementIndex">The value of elementIndex.</param>
+        /// <param name="bindingInfo">The value of bindingInfo.</param>
+        /// <param name="isDynamicBinding">The value of isDynamicBinding.</param>
         public ResourceSetBindingPlanEntry(uint elementIndex, D3D12Pipeline.RootBindingInfo bindingInfo, bool isDynamicBinding) {
             this.ElementIndex = elementIndex;
             this.BindingInfo = bindingInfo;
@@ -2456,20 +2666,26 @@ internal sealed class D3D12CommandList : CommandList {
     private sealed class DescriptorCacheKeyComparer : IEqualityComparer<DescriptorCacheKey> {
 
         /// <summary>
-        /// Represents the Instance field.
+        /// Performs the new operation.
         /// </summary>
+        /// <returns>The result of the new operation.</returns>
         public static readonly DescriptorCacheKeyComparer Instance = new();
 
         /// <summary>
-        /// Executes Equals.
+        /// Performs the Equals operation.
         /// </summary>
+        /// <param name="x">The value of x.</param>
+        /// <param name="y">The value of y.</param>
+        /// <returns>The result of the Equals operation.</returns>
         public bool Equals(DescriptorCacheKey x, DescriptorCacheKey y) {
             return x.Kind == y.Kind && ReferenceEquals(x.Resource, y.Resource);
         }
 
         /// <summary>
-        /// Executes GetHashCode.
+        /// Performs the GetHashCode operation.
         /// </summary>
+        /// <param name="obj">The value of obj.</param>
+        /// <returns>The result of the GetHashCode operation.</returns>
         public int GetHashCode(DescriptorCacheKey obj) {
             return HashCode.Combine((int)obj.Kind, RuntimeHelpers.GetHashCode(obj.Resource));
         }
@@ -2481,20 +2697,26 @@ internal sealed class D3D12CommandList : CommandList {
     private sealed class ResourceSetBindingPlanKeyComparer : IEqualityComparer<ResourceSetBindingPlanKey> {
 
         /// <summary>
-        /// Represents the Instance field.
+        /// Performs the new operation.
         /// </summary>
+        /// <returns>The result of the new operation.</returns>
         public static readonly ResourceSetBindingPlanKeyComparer Instance = new();
 
         /// <summary>
-        /// Executes Equals.
+        /// Performs the Equals operation.
         /// </summary>
+        /// <param name="x">The value of x.</param>
+        /// <param name="y">The value of y.</param>
+        /// <returns>The result of the Equals operation.</returns>
         public bool Equals(ResourceSetBindingPlanKey x, ResourceSetBindingPlanKey y) {
             return x.Slot == y.Slot && ReferenceEquals(x.Pipeline, y.Pipeline) && ReferenceEquals(x.Layout, y.Layout);
         }
 
         /// <summary>
-        /// Executes GetHashCode.
+        /// Performs the GetHashCode operation.
         /// </summary>
+        /// <param name="obj">The value of obj.</param>
+        /// <returns>The result of the GetHashCode operation.</returns>
         public int GetHashCode(ResourceSetBindingPlanKey obj) {
             return HashCode.Combine((int)obj.Slot, RuntimeHelpers.GetHashCode(obj.Pipeline), RuntimeHelpers.GetHashCode(obj.Layout));
         }

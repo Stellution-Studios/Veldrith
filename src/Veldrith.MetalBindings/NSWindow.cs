@@ -14,8 +14,9 @@ public struct NSWindow {
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="NSWindow" /> class.
+    /// Initializes a new instance of the <see cref="NSWindow" /> type.
     /// </summary>
+    /// <param name="ptr">The value of ptr.</param>
     public NSWindow(IntPtr ptr) {
         this.NativePtr = ptr;
     }

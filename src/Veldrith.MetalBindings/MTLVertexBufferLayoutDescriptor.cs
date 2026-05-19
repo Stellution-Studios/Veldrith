@@ -14,8 +14,9 @@ public struct MTLVertexBufferLayoutDescriptor {
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MTLVertexBufferLayoutDescriptor" /> class.
+    /// Initializes a new instance of the <see cref="MTLVertexBufferLayoutDescriptor" /> type.
     /// </summary>
+    /// <param name="ptr">The value of ptr.</param>
     public MTLVertexBufferLayoutDescriptor(IntPtr ptr) {
         this.NativePtr = ptr;
     }

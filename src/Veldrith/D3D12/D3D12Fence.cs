@@ -30,8 +30,10 @@ internal sealed class D3D12Fence : Fence {
     private ulong _fenceValue;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="D3D12Fence" /> class.
+    /// Initializes a new instance of the <see cref="D3D12Fence" /> type.
     /// </summary>
+    /// <param name="gd">The value of gd.</param>
+    /// <param name="signaled">The value of signaled.</param>
     public D3D12Fence(D3D12GraphicsDevice gd, bool signaled) {
         ulong initialValue = signaled ? 1UL : 0UL;
         this._nativeFence = gd.Device.CreateFence(initialValue);
@@ -55,7 +57,7 @@ internal sealed class D3D12Fence : Fence {
     public override string Name { get; set; }
 
     /// <summary>
-    /// Executes Dispose.
+    /// Performs the Dispose operation.
     /// </summary>
     public override void Dispose() {
         if (this._disposed) {
@@ -68,15 +70,16 @@ internal sealed class D3D12Fence : Fence {
     }
 
     /// <summary>
-    /// Executes Reset.
+    /// Performs the Reset operation.
     /// </summary>
     public override void Reset() {
         this._fenceValue = this._nativeFence.CompletedValue + 1;
     }
 
     /// <summary>
-    /// Executes Signal.
+    /// Performs the Signal operation.
     /// </summary>
+    /// <param name="commandQueue">The value of commandQueue.</param>
     internal void Signal(ID3D12CommandQueue commandQueue) {
         if (this._fenceValue <= this._nativeFence.CompletedValue) {
             this._fenceValue = this._nativeFence.CompletedValue + 1;
@@ -86,8 +89,10 @@ internal sealed class D3D12Fence : Fence {
     }
 
     /// <summary>
-    /// Executes Wait.
+    /// Performs the Wait operation.
     /// </summary>
+    /// <param name="nanosecondTimeout">The value of nanosecondTimeout.</param>
+    /// <returns>The result of the Wait operation.</returns>
     internal bool Wait(ulong nanosecondTimeout) {
         if (this.Signaled) {
             return true;

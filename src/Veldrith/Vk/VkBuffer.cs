@@ -40,8 +40,12 @@ internal unsafe class VkBuffer : DeviceBuffer {
     private string _name;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="VkBuffer" /> class.
+    /// Initializes a new instance of the <see cref="VkBuffer" /> type.
     /// </summary>
+    /// <param name="gd">The value of gd.</param>
+    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
+    /// <param name="usage">The value of usage.</param>
+    /// <param name="callerMember">The value of callerMember.</param>
     public VkBuffer(VkGraphicsDevice gd, uint sizeInBytes, BufferUsage usage, string callerMember = null) {
         this.gd = gd;
         this.SizeInBytes = sizeInBytes;
@@ -164,7 +168,7 @@ internal unsafe class VkBuffer : DeviceBuffer {
     #region Disposal
 
     /// <summary>
-    /// Executes Dispose.
+    /// Performs the Dispose operation.
     /// </summary>
     public override void Dispose() {
         this.RefCount.Decrement();
@@ -173,7 +177,7 @@ internal unsafe class VkBuffer : DeviceBuffer {
     #endregion
 
     /// <summary>
-    /// Executes DisposeCore.
+    /// Performs the DisposeCore operation.
     /// </summary>
     private void DisposeCore() {
         if (!this._destroyed) {

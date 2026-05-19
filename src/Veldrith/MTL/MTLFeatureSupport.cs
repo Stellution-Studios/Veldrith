@@ -11,13 +11,15 @@ namespace Veldrith.MTL;
 internal class MtlFeatureSupport : IReadOnlyCollection<MTLFeatureSet> {
 
     /// <summary>
-    /// Represents the _supportedFeatureSets field.
+    /// Performs the new operation.
     /// </summary>
+    /// <returns>The result of the new operation.</returns>
     private readonly HashSet<MTLFeatureSet> _supportedFeatureSets = new();
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MtlFeatureSupport" /> class.
+    /// Initializes a new instance of the <see cref="MtlFeatureSupport" /> type.
     /// </summary>
+    /// <param name="device">The value of device.</param>
     public MtlFeatureSupport(MTLDevice device) {
         foreach (MTLFeatureSet set in Enum.GetValues(typeof(MTLFeatureSet))) {
             if (device.supportsFeatureSet(set)) {
@@ -47,29 +49,34 @@ internal class MtlFeatureSupport : IReadOnlyCollection<MTLFeatureSet> {
     public int Count => this._supportedFeatureSets.Count;
 
     /// <summary>
-    /// Executes GetEnumerator.
+    /// Performs the GetEnumerator operation.
     /// </summary>
+    /// <returns>The result of the GetEnumerator operation.</returns>
     public IEnumerator<MTLFeatureSet> GetEnumerator() {
         return this._supportedFeatureSets.GetEnumerator();
     }
 
     /// <summary>
-    /// Executes IEnumerable.GetEnumerator.
+    /// Performs the GetEnumerator operation.
     /// </summary>
+    /// <returns>The result of the GetEnumerator operation.</returns>
     IEnumerator IEnumerable.GetEnumerator() {
         return this.GetEnumerator();
     }
 
     /// <summary>
-    /// Executes IsSupported.
+    /// Performs the IsSupported operation.
     /// </summary>
+    /// <param name="featureSet">The value of featureSet.</param>
+    /// <returns>The result of the IsSupported operation.</returns>
     public bool IsSupported(MTLFeatureSet featureSet) {
         return this._supportedFeatureSets.Contains(featureSet);
     }
 
     /// <summary>
-    /// Executes IsDrawBaseVertexInstanceSupported.
+    /// Performs the IsDrawBaseVertexInstanceSupported operation.
     /// </summary>
+    /// <returns>The result of the IsDrawBaseVertexInstanceSupported operation.</returns>
     public bool IsDrawBaseVertexInstanceSupported() {
         return this.IsSupported(MTLFeatureSet.iOS_GPUFamily3_v1)
                || this.IsSupported(MTLFeatureSet.iOS_GPUFamily3_v2)

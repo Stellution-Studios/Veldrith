@@ -8,8 +8,9 @@ public abstract class ResourceFactory {
     /// <param name="features"></param>
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ResourceFactory" /> class.
+    /// Initializes a new instance of the <see cref="ResourceFactory" /> type.
     /// </summary>
+    /// <param name="features">The value of features.</param>
     protected ResourceFactory(GraphicsDeviceFeatures features) {
         this.Features = features;
     }
@@ -25,19 +26,19 @@ public abstract class ResourceFactory {
     public GraphicsDeviceFeatures Features { get; }
 
     /// <summary>
-    /// Creates a new <see cref="Pipeline" />.
+    /// Performs the CreateGraphicsPipeline operation.
     /// </summary>
-    /// <param name="description">The desired properties of the created object.</param>
-    /// <returns>A new <see cref="Pipeline" />.</returns>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateGraphicsPipeline operation.</returns>
     public Pipeline CreateGraphicsPipeline(GraphicsPipelineDescription description) {
         return this.CreateGraphicsPipeline(ref description);
     }
 
     /// <summary>
-    /// Creates a new <see cref="Pipeline" /> object.
+    /// Performs the CreateGraphicsPipeline operation.
     /// </summary>
-    /// <param name="description">The desired properties of the created object.</param>
-    /// <returns>A new <see cref="Pipeline" /> which, when bound to a CommandList, is used to dispatch draw commands.</returns>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateGraphicsPipeline operation.</returns>
     public Pipeline CreateGraphicsPipeline(ref GraphicsPipelineDescription description) {
 #if VALIDATE_USAGE
         if (!description.RasterizerState.DepthClipEnabled && !this.Features.DepthClipDisable) {
@@ -86,51 +87,51 @@ public abstract class ResourceFactory {
     }
 
     /// <summary>
-    /// Creates a new compute <see cref="Pipeline" /> object.
+    /// Performs the CreateComputePipeline operation.
     /// </summary>
-    /// <param name="description">The desirede properties of the created object.</param>
-    /// <returns>A new <see cref="Pipeline" /> which, when bound to a CommandList, is used to dispatch compute commands.</returns>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateComputePipeline operation.</returns>
     public Pipeline CreateComputePipeline(ComputePipelineDescription description) {
         return this.CreateComputePipeline(ref description);
     }
 
     /// <summary>
-    /// Creates a new compute <see cref="Pipeline" /> object.
+    /// Performs the CreateComputePipeline operation.
     /// </summary>
-    /// <param name="description">The desirede properties of the created object.</param>
-    /// <returns>A new <see cref="Pipeline" /> which, when bound to a CommandList, is used to dispatch compute commands.</returns>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateComputePipeline operation.</returns>
     public abstract Pipeline CreateComputePipeline(ref ComputePipelineDescription description);
 
     /// <summary>
-    /// Creates a new <see cref="Framebuffer" />.
+    /// Performs the CreateFramebuffer operation.
     /// </summary>
-    /// <param name="description">The desired properties of the created object.</param>
-    /// <returns>A new <see cref="Framebuffer" />.</returns>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateFramebuffer operation.</returns>
     public Framebuffer CreateFramebuffer(FramebufferDescription description) {
         return this.CreateFramebuffer(ref description);
     }
 
     /// <summary>
-    /// Creates a new <see cref="Framebuffer" />.
+    /// Performs the CreateFramebuffer operation.
     /// </summary>
-    /// <param name="description">The desired properties of the created object.</param>
-    /// <returns>A new <see cref="Framebuffer" />.</returns>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateFramebuffer operation.</returns>
     public abstract Framebuffer CreateFramebuffer(ref FramebufferDescription description);
 
     /// <summary>
-    /// Creates a new <see cref="Texture" />.
+    /// Performs the CreateTexture operation.
     /// </summary>
-    /// <param name="description">The desired properties of the created object.</param>
-    /// <returns>A new <see cref="Texture" />.</returns>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateTexture operation.</returns>
     public Texture CreateTexture(TextureDescription description) {
         return this.CreateTexture(ref description);
     }
 
     /// <summary>
-    /// Creates a new <see cref="Texture" />.
+    /// Performs the CreateTexture operation.
     /// </summary>
-    /// <param name="description">The desired properties of the created object.</param>
-    /// <returns>A new <see cref="Texture" />.</returns>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateTexture operation.</returns>
     public Texture CreateTexture(ref TextureDescription description) {
 #if VALIDATE_USAGE
         if (description.Width == 0 || description.Height == 0 || description.Depth == 0) {
@@ -163,66 +164,48 @@ public abstract class ResourceFactory {
     }
 
     /// <summary>
-    /// Creates a new <see cref="Texture" /> from an existing native texture.
+    /// Performs the CreateTexture operation.
     /// </summary>
-    /// <param name="nativeTexture">A backend-specific handle identifying an existing native texture. See remarks.</param>
-    /// <param name="description">The properties of the existing Texture.</param>
-    /// <returns>A new <see cref="Texture" /> wrapping the existing native texture.</returns>
-    /// <remarks>
-    /// The nativeTexture parameter is backend-specific, and the type of data passed in depends on which graphics API is
-    /// being used.
-    /// When using the Vulkan backend, nativeTexture must be a valid VkImage handle.
-    /// When using the Direct3D12 backend, nativeTexture must be a valid ID3D12Resource pointer representing a texture.
-    /// When using the Metal backend, nativeTexture must be a valid MTLTexture pointer.
-    /// The properties of the Texture will be determined from the <see cref="TextureDescription" /> passed in. These
-    /// properties must match the true properties of the existing native texture.
-    /// </remarks>
+    /// <param name="nativeTexture">The value of nativeTexture.</param>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateTexture operation.</returns>
     public Texture CreateTexture(ulong nativeTexture, TextureDescription description) {
         return this.CreateTextureCore(nativeTexture, ref description);
     }
 
     /// <summary>
-    /// Creates a new <see cref="Texture" /> from an existing native texture.
+    /// Performs the CreateTexture operation.
     /// </summary>
-    /// <param name="nativeTexture">A backend-specific handle identifying an existing native texture. See remarks.</param>
-    /// <param name="description">The properties of the existing Texture.</param>
-    /// <returns>A new <see cref="Texture" /> wrapping the existing native texture.</returns>
-    /// <remarks>
-    /// The nativeTexture parameter is backend-specific, and the type of data passed in depends on which graphics API is
-    /// being used.
-    /// When using the Vulkan backend, nativeTexture must be a valid VkImage handle.
-    /// When using the Direct3D12 backend, nativeTexture must be a valid ID3D12Resource pointer representing a texture.
-    /// When using the Metal backend, nativeTexture must be a valid MTLTexture pointer.
-    /// The properties of the Texture will be determined from the <see cref="TextureDescription" /> passed in. These
-    /// properties must match the true properties of the existing native texture.
-    /// </remarks>
+    /// <param name="nativeTexture">The value of nativeTexture.</param>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateTexture operation.</returns>
     public Texture CreateTexture(ulong nativeTexture, ref TextureDescription description) {
         return this.CreateTextureCore(nativeTexture, ref description);
     }
 
     /// <summary>
-    /// Creates a new <see cref="TextureView" />.
+    /// Performs the CreateTextureView operation.
     /// </summary>
-    /// <param name="target">The target <see cref="Texture" /> used in the new view.</param>
-    /// <returns>A new <see cref="TextureView" />.</returns>
+    /// <param name="target">The value of target.</param>
+    /// <returns>The result of the CreateTextureView operation.</returns>
     public TextureView CreateTextureView(Texture target) {
         return this.CreateTextureView(new TextureViewDescription(target));
     }
 
     /// <summary>
-    /// Creates a new <see cref="TextureView" />.
+    /// Performs the CreateTextureView operation.
     /// </summary>
-    /// <param name="description">The desired properties of the created object.</param>
-    /// <returns>A new <see cref="TextureView" />.</returns>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateTextureView operation.</returns>
     public TextureView CreateTextureView(TextureViewDescription description) {
         return this.CreateTextureView(ref description);
     }
 
     /// <summary>
-    /// Creates a new <see cref="TextureView" />.
+    /// Performs the CreateTextureView operation.
     /// </summary>
-    /// <param name="description">The desired properties of the created object.</param>
-    /// <returns>A new <see cref="TextureView" />.</returns>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateTextureView operation.</returns>
     public TextureView CreateTextureView(ref TextureViewDescription description) {
 #if VALIDATE_USAGE
         if (description.MipLevels == 0 || description.ArrayLayers == 0
@@ -254,19 +237,19 @@ public abstract class ResourceFactory {
     }
 
     /// <summary>
-    /// Creates a new <see cref="DeviceBuffer" />.
+    /// Performs the CreateBuffer operation.
     /// </summary>
-    /// <param name="description">The desired properties of the created object.</param>
-    /// <returns>A new <see cref="DeviceBuffer" />.</returns>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateBuffer operation.</returns>
     public DeviceBuffer CreateBuffer(BufferDescription description) {
         return this.CreateBuffer(ref description);
     }
 
     /// <summary>
-    /// Creates a new <see cref="DeviceBuffer" />.
+    /// Performs the CreateBuffer operation.
     /// </summary>
-    /// <param name="description">The desired properties of the created object.</param>
-    /// <returns>A new <see cref="DeviceBuffer" />.</returns>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateBuffer operation.</returns>
     public DeviceBuffer CreateBuffer(ref BufferDescription description) {
 #if VALIDATE_USAGE
         BufferUsage usage = description.Usage;
@@ -307,19 +290,19 @@ public abstract class ResourceFactory {
     }
 
     /// <summary>
-    /// Creates a new <see cref="Sampler" />.
+    /// Performs the CreateSampler operation.
     /// </summary>
-    /// <param name="description">The desired properties of the created object.</param>
-    /// <returns>A new <see cref="Sampler" />.</returns>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateSampler operation.</returns>
     public Sampler CreateSampler(SamplerDescription description) {
         return this.CreateSampler(ref description);
     }
 
     /// <summary>
-    /// Creates a new <see cref="Sampler" />.
+    /// Performs the CreateSampler operation.
     /// </summary>
-    /// <param name="description">The desired properties of the created object.</param>
-    /// <returns>A new <see cref="Sampler" />.</returns>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateSampler operation.</returns>
     public Sampler CreateSampler(ref SamplerDescription description) {
 #if VALIDATE_USAGE
         if (!this.Features.SamplerLodBias && description.LodBias != 0) {
@@ -335,19 +318,19 @@ public abstract class ResourceFactory {
     }
 
     /// <summary>
-    /// Creates a new <see cref="Shader" />.
+    /// Performs the CreateShader operation.
     /// </summary>
-    /// <param name="description">The desired properties of the created object.</param>
-    /// <returns>A new <see cref="Shader" />.</returns>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateShader operation.</returns>
     public Shader CreateShader(ShaderDescription description) {
         return this.CreateShader(ref description);
     }
 
     /// <summary>
-    /// Creates a new <see cref="Shader" />.
+    /// Performs the CreateShader operation.
     /// </summary>
-    /// <param name="description">The desired properties of the created object.</param>
-    /// <returns>A new <see cref="Shader" />.</returns>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateShader operation.</returns>
     public Shader CreateShader(ref ShaderDescription description) {
 #if VALIDATE_USAGE
         if (!this.Features.ComputeShader && description.Stage == ShaderStages.Compute) {
@@ -368,82 +351,82 @@ public abstract class ResourceFactory {
     }
 
     /// <summary>
-    /// Creates a new <see cref="CommandList" />.
+    /// Performs the CreateCommandList operation.
     /// </summary>
-    /// <returns>A new <see cref="CommandList" />.</returns>
+    /// <returns>The result of the CreateCommandList operation.</returns>
     public CommandList CreateCommandList() {
         return this.CreateCommandList(new CommandListDescription());
     }
 
     /// <summary>
-    /// Creates a new <see cref="CommandList" />.
+    /// Performs the CreateCommandList operation.
     /// </summary>
-    /// <param name="description">The desired properties of the created object.</param>
-    /// <returns>A new <see cref="CommandList" />.</returns>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateCommandList operation.</returns>
     public CommandList CreateCommandList(CommandListDescription description) {
         return this.CreateCommandList(ref description);
     }
 
     /// <summary>
-    /// Creates a new <see cref="CommandList" />.
+    /// Performs the CreateCommandList operation.
     /// </summary>
-    /// <param name="description">The desired properties of the created object.</param>
-    /// <returns>A new <see cref="CommandList" />.</returns>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateCommandList operation.</returns>
     public abstract CommandList CreateCommandList(ref CommandListDescription description);
 
     /// <summary>
-    /// Creates a new <see cref="ResourceLayout" />.
+    /// Performs the CreateResourceLayout operation.
     /// </summary>
-    /// <param name="description">The desired properties of the created object.</param>
-    /// <returns>A new <see cref="ResourceLayout" />.</returns>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateResourceLayout operation.</returns>
     public ResourceLayout CreateResourceLayout(ResourceLayoutDescription description) {
         return this.CreateResourceLayout(ref description);
     }
 
     /// <summary>
-    /// Creates a new <see cref="ResourceLayout" />.
+    /// Performs the CreateResourceLayout operation.
     /// </summary>
-    /// <param name="description">The desired properties of the created object.</param>
-    /// <returns>A new <see cref="ResourceLayout" />.</returns>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateResourceLayout operation.</returns>
     public abstract ResourceLayout CreateResourceLayout(ref ResourceLayoutDescription description);
 
     /// <summary>
-    /// Creates a new <see cref="ResourceSet" />.
+    /// Performs the CreateResourceSet operation.
     /// </summary>
-    /// <param name="description">The desired properties of the created object.</param>
-    /// <returns>A new <see cref="ResourceSet" />.</returns>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateResourceSet operation.</returns>
     public ResourceSet CreateResourceSet(ResourceSetDescription description) {
         return this.CreateResourceSet(ref description);
     }
 
     /// <summary>
-    /// Creates a new <see cref="ResourceSet" />.
+    /// Performs the CreateResourceSet operation.
     /// </summary>
-    /// <param name="description">The desired properties of the created object.</param>
-    /// <returns>A new <see cref="ResourceSet" />.</returns>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateResourceSet operation.</returns>
     public abstract ResourceSet CreateResourceSet(ref ResourceSetDescription description);
 
     /// <summary>
-    /// Creates a new <see cref="Fence" /> in the given state.
+    /// Performs the CreateFence operation.
     /// </summary>
-    /// <param name="signaled">A value indicating whether the Fence should be in the signaled state when created.</param>
-    /// <returns>A new <see cref="Fence" />.</returns>
+    /// <param name="signaled">The value of signaled.</param>
+    /// <returns>The result of the CreateFence operation.</returns>
     public abstract Fence CreateFence(bool signaled);
 
     /// <summary>
-    /// Creates a new <see cref="Swapchain" />.
+    /// Performs the CreateSwapchain operation.
     /// </summary>
-    /// <param name="description">The desired properties of the created object.</param>
-    /// <returns>A new <see cref="Swapchain" />.</returns>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateSwapchain operation.</returns>
     public Swapchain CreateSwapchain(SwapchainDescription description) {
         return this.CreateSwapchain(ref description);
     }
 
     /// <summary>
-    /// Creates a new <see cref="Swapchain" />.
+    /// Performs the CreateSwapchain operation.
     /// </summary>
-    /// <param name="description">The desired properties of the created object.</param>
-    /// <returns>A new <see cref="Swapchain" />.</returns>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateSwapchain operation.</returns>
     public abstract Swapchain CreateSwapchain(ref SwapchainDescription description);
 
     /// <summary></summary>
@@ -451,8 +434,10 @@ public abstract class ResourceFactory {
     /// <returns></returns>
 
     /// <summary>
-    /// Executes CreateGraphicsPipelineCore.
+    /// Performs the CreateGraphicsPipelineCore operation.
     /// </summary>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateGraphicsPipelineCore operation.</returns>
     protected abstract Pipeline CreateGraphicsPipelineCore(ref GraphicsPipelineDescription description);
 
     /// <summary></summary>
@@ -461,32 +446,38 @@ public abstract class ResourceFactory {
     /// <returns></returns>
 
     /// <summary>
-    /// Executes CreateTextureCore.
+    /// Performs the CreateTextureCore operation.
     /// </summary>
+    /// <param name="nativeTexture">The value of nativeTexture.</param>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateTextureCore operation.</returns>
     protected abstract Texture CreateTextureCore(ulong nativeTexture, ref TextureDescription description);
 
     // TODO: private protected
 
     /// <summary>
+    /// Performs the CreateTextureCore operation.
     /// </summary>
-    /// <param name="description"></param>
-    /// <returns></returns>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateTextureCore operation.</returns>
     protected abstract Texture CreateTextureCore(ref TextureDescription description);
 
     // TODO: private protected
 
     /// <summary>
+    /// Performs the CreateTextureViewCore operation.
     /// </summary>
-    /// <param name="description"></param>
-    /// <returns></returns>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateTextureViewCore operation.</returns>
     protected abstract TextureView CreateTextureViewCore(ref TextureViewDescription description);
 
     // TODO: private protected
 
     /// <summary>
+    /// Performs the CreateBufferCore operation.
     /// </summary>
-    /// <param name="description"></param>
-    /// <returns></returns>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateBufferCore operation.</returns>
     protected abstract DeviceBuffer CreateBufferCore(ref BufferDescription description);
 
     /// <summary></summary>
@@ -494,8 +485,10 @@ public abstract class ResourceFactory {
     /// <returns></returns>
 
     /// <summary>
-    /// Executes CreateSamplerCore.
+    /// Performs the CreateSamplerCore operation.
     /// </summary>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateSamplerCore operation.</returns>
     protected abstract Sampler CreateSamplerCore(ref SamplerDescription description);
 
     /// <summary></summary>
@@ -503,8 +496,9 @@ public abstract class ResourceFactory {
     /// <returns></returns>
 
     /// <summary>
-    /// Executes CreateShaderCore.
+    /// Performs the CreateShaderCore operation.
     /// </summary>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the CreateShaderCore operation.</returns>
     protected abstract Shader CreateShaderCore(ref ShaderDescription description);
 }
-

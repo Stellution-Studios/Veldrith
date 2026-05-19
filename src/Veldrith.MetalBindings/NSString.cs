@@ -14,22 +14,27 @@ public unsafe struct NSString {
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="NSString" /> class.
+    /// Initializes a new instance of the <see cref="NSString" /> type.
     /// </summary>
+    /// <param name="ptr">The value of ptr.</param>
     public NSString(IntPtr ptr) {
         this.NativePtr = ptr;
     }
 
     /// <summary>
-    /// Executes IntPtr.
+    /// Performs the operator IntPtr operation.
     /// </summary>
+    /// <param name="nss">The value of nss.</param>
+    /// <returns>The result of the operator IntPtr operation.</returns>
     public static implicit operator IntPtr(NSString nss) {
         return nss.NativePtr;
     }
 
     /// <summary>
-    /// Executes New.
+    /// Performs the New operation.
     /// </summary>
+    /// <param name="s">The value of s.</param>
+    /// <returns>The result of the New operation.</returns>
     public static NSString New(string s) {
         NSString nss = s_class.Alloc<NSString>();
 
@@ -41,16 +46,19 @@ public unsafe struct NSString {
     }
 
     /// <summary>
-    /// Executes GetValue.
+    /// Performs the GetValue operation.
     /// </summary>
+    /// <returns>The result of the GetValue operation.</returns>
     public string GetValue() {
         byte* utf8Ptr = bytePtr_objc_msgSend(this.NativePtr, sel_utf8String);
         return MTLUtil.GetUtf8String(utf8Ptr);
     }
 
     /// <summary>
-    /// Represents the s_class field.
+    /// Performs the new operation.
     /// </summary>
+    /// <param name="NSString">The value of NSString.</param>
+    /// <returns>The result of the new operation.</returns>
     private static readonly ObjCClass s_class = new(nameof(NSString));
 
     /// <summary>

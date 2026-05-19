@@ -51,30 +51,15 @@ public struct GraphicsPipelineDescription : IEquatable<GraphicsPipelineDescripti
     public ResourceBindingModel? ResourceBindingModel;
 
     /// <summary>
-    /// Constructs a new <see cref="GraphicsPipelineDescription" />.
+    /// Initializes a new instance of the <see cref="GraphicsPipelineDescription" /> type.
     /// </summary>
-    /// <param name="blendState">
-    /// A description of the blend state, which controls how color values are blended into each
-    /// color target.
-    /// </param>
-    /// <param name="depthStencilStateDescription">
-    /// A description of the depth stencil state, which controls depth tests,
-    /// writing, and comparisons.
-    /// </param>
-    /// <param name="rasterizerState">
-    /// A description of the rasterizer state, which controls culling, clipping, scissor, and
-    /// polygon-fill behavior.
-    /// </param>
-    /// <param name="primitiveTopology">
-    /// The <see cref="PrimitiveTopology" /> to use, which controls how a series of input
-    /// vertices is interpreted by the <see cref="Pipeline" />.
-    /// </param>
-    /// <param name="shaderSet">A description of the shader set to be used.</param>
-    /// <param name="resourceLayouts">
-    /// An array of <see cref="ResourceLayout" />, which controls the layout of shader resoruces
-    /// in the <see cref="Pipeline" />.
-    /// </param>
-    /// <param name="outputs">A description of the output attachments used by the <see cref="Pipeline" />.</param>
+    /// <param name="blendState">The value of blendState.</param>
+    /// <param name="depthStencilStateDescription">The value of depthStencilStateDescription.</param>
+    /// <param name="rasterizerState">The value of rasterizerState.</param>
+    /// <param name="primitiveTopology">The value of primitiveTopology.</param>
+    /// <param name="shaderSet">The value of shaderSet.</param>
+    /// <param name="resourceLayouts">The value of resourceLayouts.</param>
+    /// <param name="outputs">The value of outputs.</param>
     public GraphicsPipelineDescription(BlendStateDescription blendState, DepthStencilStateDescription depthStencilStateDescription, RasterizerStateDescription rasterizerState, PrimitiveTopology primitiveTopology, ShaderSetDescription shaderSet, ResourceLayout[] resourceLayouts, OutputDescription outputs) {
         this.BlendState = blendState;
         this.DepthStencilState = depthStencilStateDescription;
@@ -87,30 +72,15 @@ public struct GraphicsPipelineDescription : IEquatable<GraphicsPipelineDescripti
     }
 
     /// <summary>
-    /// Constructs a new <see cref="GraphicsPipelineDescription" />.
+    /// Initializes a new instance of the <see cref="GraphicsPipelineDescription" /> type.
     /// </summary>
-    /// <param name="blendState">
-    /// A description of the blend state, which controls how color values are blended into each
-    /// color target.
-    /// </param>
-    /// <param name="depthStencilStateDescription">
-    /// A description of the depth stencil state, which controls depth tests,
-    /// writing, and comparisons.
-    /// </param>
-    /// <param name="rasterizerState">
-    /// A description of the rasterizer state, which controls culling, clipping, scissor, and
-    /// polygon-fill behavior.
-    /// </param>
-    /// <param name="primitiveTopology">
-    /// The <see cref="PrimitiveTopology" /> to use, which controls how a series of input
-    /// vertices is interpreted by the <see cref="Pipeline" />.
-    /// </param>
-    /// <param name="shaderSet">A description of the shader set to be used.</param>
-    /// <param name="resourceLayout">
-    /// A <see cref="ResourceLayout" />, which controls the layout of shader resoruces in the
-    /// <see cref="Pipeline" />.
-    /// </param>
-    /// <param name="outputs">A description of the output attachments used by the <see cref="Pipeline" />.</param>
+    /// <param name="blendState">The value of blendState.</param>
+    /// <param name="depthStencilStateDescription">The value of depthStencilStateDescription.</param>
+    /// <param name="rasterizerState">The value of rasterizerState.</param>
+    /// <param name="primitiveTopology">The value of primitiveTopology.</param>
+    /// <param name="shaderSet">The value of shaderSet.</param>
+    /// <param name="resourceLayout">The value of resourceLayout.</param>
+    /// <param name="outputs">The value of outputs.</param>
     public GraphicsPipelineDescription(BlendStateDescription blendState, DepthStencilStateDescription depthStencilStateDescription, RasterizerStateDescription rasterizerState, PrimitiveTopology primitiveTopology, ShaderSetDescription shaderSet, ResourceLayout resourceLayout, OutputDescription outputs) {
         this.BlendState = blendState;
         this.DepthStencilState = depthStencilStateDescription;
@@ -123,34 +93,16 @@ public struct GraphicsPipelineDescription : IEquatable<GraphicsPipelineDescripti
     }
 
     /// <summary>
-    /// Constructs a new <see cref="GraphicsPipelineDescription" />.
+    /// Initializes a new instance of the <see cref="GraphicsPipelineDescription" /> type.
     /// </summary>
-    /// <param name="blendState">
-    /// A description of the blend state, which controls how color values are blended into each
-    /// color target.
-    /// </param>
-    /// <param name="depthStencilStateDescription">
-    /// A description of the depth stencil state, which controls depth tests,
-    /// writing, and comparisons.
-    /// </param>
-    /// <param name="rasterizerState">
-    /// A description of the rasterizer state, which controls culling, clipping, scissor, and
-    /// polygon-fill behavior.
-    /// </param>
-    /// <param name="primitiveTopology">
-    /// The <see cref="PrimitiveTopology" /> to use, which controls how a series of input
-    /// vertices is interpreted by the <see cref="Pipeline" />.
-    /// </param>
-    /// <param name="shaderSet">A description of the shader set to be used.</param>
-    /// <param name="resourceLayouts">
-    /// An array of <see cref="ResourceLayout" />, which controls the layout of shader resoruces
-    /// in the <see cref="Pipeline" />.
-    /// </param>
-    /// <param name="outputs">A description of the output attachments used by the <see cref="Pipeline" />.</param>
-    /// <param name="resourceBindingModel">
-    /// The <see cref="ResourceBindingModel" /> to use for this pipeline. Overrides
-    /// the value specified in <see cref="GraphicsDeviceOptions" />.
-    /// </param>
+    /// <param name="blendState">The value of blendState.</param>
+    /// <param name="depthStencilStateDescription">The value of depthStencilStateDescription.</param>
+    /// <param name="rasterizerState">The value of rasterizerState.</param>
+    /// <param name="primitiveTopology">The value of primitiveTopology.</param>
+    /// <param name="shaderSet">The value of shaderSet.</param>
+    /// <param name="resourceLayouts">The value of resourceLayouts.</param>
+    /// <param name="outputs">The value of outputs.</param>
+    /// <param name="resourceBindingModel">The value of resourceBindingModel.</param>
     public GraphicsPipelineDescription(BlendStateDescription blendState, DepthStencilStateDescription depthStencilStateDescription, RasterizerStateDescription rasterizerState, PrimitiveTopology primitiveTopology, ShaderSetDescription shaderSet, ResourceLayout[] resourceLayouts, OutputDescription outputs, ResourceBindingModel resourceBindingModel) {
         this.BlendState = blendState;
         this.DepthStencilState = depthStencilStateDescription;
@@ -163,10 +115,10 @@ public struct GraphicsPipelineDescription : IEquatable<GraphicsPipelineDescripti
     }
 
     /// <summary>
-    /// Element-wise equality.
+    /// Performs the Equals operation.
     /// </summary>
-    /// <param name="other">The instance to compare to.</param>
-    /// <returns>True if all elements and all array elements are equal; false otherswise.</returns>
+    /// <param name="other">The value of other.</param>
+    /// <returns>The result of the Equals operation.</returns>
     public bool Equals(GraphicsPipelineDescription other) {
         return this.BlendState.Equals(other.BlendState)
                && this.DepthStencilState.Equals(other.DepthStencilState)
@@ -181,9 +133,9 @@ public struct GraphicsPipelineDescription : IEquatable<GraphicsPipelineDescripti
     }
 
     /// <summary>
-    /// Returns the hash code for this instance.
+    /// Performs the GetHashCode operation.
     /// </summary>
-    /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
+    /// <returns>The result of the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(this.BlendState.GetHashCode(), this.DepthStencilState.GetHashCode(), this.RasterizerState.GetHashCode(), (int)this.PrimitiveTopology, this.ShaderSet.GetHashCode(), HashHelper.Array(this.ResourceLayouts), this.ResourceBindingModel.GetHashCode(), this.Outputs.GetHashCode());
     }

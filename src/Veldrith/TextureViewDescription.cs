@@ -42,12 +42,9 @@ public struct TextureViewDescription : IEquatable<TextureViewDescription> {
     public PixelFormat? Format;
 
     /// <summary>
-    /// Constructs a new TextureViewDescription.
+    /// Initializes a new instance of the <see cref="TextureViewDescription" /> type.
     /// </summary>
-    /// <param name="target">
-    /// The desired target <see cref="Texture" />. This <see cref="Texture" /> must have been created
-    /// with the <see cref="TextureUsage.Sampled" /> usage flag.
-    /// </param>
+    /// <param name="target">The value of target.</param>
     public TextureViewDescription(Texture target) {
         this.Target = target;
         this.BaseMipLevel = 0;
@@ -58,20 +55,10 @@ public struct TextureViewDescription : IEquatable<TextureViewDescription> {
     }
 
     /// <summary>
-    /// Constructs a new TextureViewDescription.
+    /// Initializes a new instance of the <see cref="TextureViewDescription" /> type.
     /// </summary>
-    /// <param name="target">
-    /// The desired target <see cref="Texture" />. This <see cref="Texture" /> must have been created
-    /// with the <see cref="TextureUsage.Sampled" /> usage flag.
-    /// </param>
-    /// <param name="format">
-    /// Specifies how the data within the target Texture will be viewed.
-    /// This format must be "compatible" with the target Texture's. For uncompressed formats, the overall size and number
-    /// of
-    /// components in this format must be equal to the underlying format. For compressed formats, it is only possible to
-    /// use
-    /// the same PixelFormat or its sRGB/non-sRGB counterpart.
-    /// </param>
+    /// <param name="target">The value of target.</param>
+    /// <param name="format">The value of format.</param>
     public TextureViewDescription(Texture target, PixelFormat format) {
         this.Target = target;
         this.BaseMipLevel = 0;
@@ -82,15 +69,13 @@ public struct TextureViewDescription : IEquatable<TextureViewDescription> {
     }
 
     /// <summary>
-    /// Constructs a new TextureViewDescription.
+    /// Initializes a new instance of the <see cref="TextureViewDescription" /> type.
     /// </summary>
-    /// <param name="target">The desired target <see cref="Texture" />.</param>
-    /// <param name="baseMipLevel">
-    /// The base mip level visible in the view. Must be less than <see cref="Texture.MipLevels" />.
-    /// </param>
-    /// <param name="mipLevels">The number of mip levels visible in the view.</param>
-    /// <param name="baseArrayLayer">The base array layer visible in the view.</param>
-    /// <param name="arrayLayers">The number of array layers visible in the view.</param>
+    /// <param name="target">The value of target.</param>
+    /// <param name="baseMipLevel">The value of baseMipLevel.</param>
+    /// <param name="mipLevels">The value of mipLevels.</param>
+    /// <param name="baseArrayLayer">The value of baseArrayLayer.</param>
+    /// <param name="arrayLayers">The value of arrayLayers.</param>
     public TextureViewDescription(Texture target, uint baseMipLevel, uint mipLevels, uint baseArrayLayer, uint arrayLayers) {
         this.Target = target;
         this.BaseMipLevel = baseMipLevel;
@@ -101,23 +86,14 @@ public struct TextureViewDescription : IEquatable<TextureViewDescription> {
     }
 
     /// <summary>
-    /// Constructs a new TextureViewDescription.
+    /// Initializes a new instance of the <see cref="TextureViewDescription" /> type.
     /// </summary>
-    /// <param name="target">The desired target <see cref="Texture" />.</param>
-    /// <param name="format">
-    /// Specifies how the data within the target Texture will be viewed.
-    /// This format must be "compatible" with the target Texture's. For uncompressed formats, the overall size and number
-    /// of
-    /// components in this format must be equal to the underlying format. For compressed formats, it is only possible to
-    /// use
-    /// the same PixelFormat or its sRGB/non-sRGB counterpart.
-    /// </param>
-    /// <param name="baseMipLevel">
-    /// The base mip level visible in the view. Must be less than <see cref="Texture.MipLevels" />.
-    /// </param>
-    /// <param name="mipLevels">The number of mip levels visible in the view.</param>
-    /// <param name="baseArrayLayer">The base array layer visible in the view.</param>
-    /// <param name="arrayLayers">The number of array layers visible in the view.</param>
+    /// <param name="target">The value of target.</param>
+    /// <param name="format">The value of format.</param>
+    /// <param name="baseMipLevel">The value of baseMipLevel.</param>
+    /// <param name="mipLevels">The value of mipLevels.</param>
+    /// <param name="baseArrayLayer">The value of baseArrayLayer.</param>
+    /// <param name="arrayLayers">The value of arrayLayers.</param>
     public TextureViewDescription(Texture target, PixelFormat format, uint baseMipLevel, uint mipLevels, uint baseArrayLayer, uint arrayLayers) {
         this.Target = target;
         this.BaseMipLevel = baseMipLevel;
@@ -128,10 +104,10 @@ public struct TextureViewDescription : IEquatable<TextureViewDescription> {
     }
 
     /// <summary>
-    /// Element-wise equality.
+    /// Performs the Equals operation.
     /// </summary>
-    /// <param name="other">The instance to compare to.</param>
-    /// <returns>True if all elements are equal; false otherswise.</returns>
+    /// <param name="other">The value of other.</param>
+    /// <returns>The result of the Equals operation.</returns>
     public bool Equals(TextureViewDescription other) {
         return this.Target.Equals(other.Target)
                && this.BaseMipLevel.Equals(other.BaseMipLevel)
@@ -142,9 +118,9 @@ public struct TextureViewDescription : IEquatable<TextureViewDescription> {
     }
 
     /// <summary>
-    /// Returns the hash code for this instance.
+    /// Performs the GetHashCode operation.
     /// </summary>
-    /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
+    /// <returns>The result of the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(this.Target.GetHashCode(), this.BaseMipLevel.GetHashCode(), this.MipLevels.GetHashCode(), this.BaseArrayLayer.GetHashCode(), this.ArrayLayers.GetHashCode(), this.Format?.GetHashCode() ?? 0);
     }

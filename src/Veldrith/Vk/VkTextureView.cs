@@ -31,12 +31,10 @@ internal unsafe class VkTextureView : TextureView {
     /// <summary>
     /// Initializes a new instance of the <see cref="VkTextureView" /> class.
     /// </summary>
-    public VkTextureView(VkGraphicsDevice gd, ref TextureViewDescription description)
-
-        /// <summary>
-        /// Executes base.
-        /// </summary>
-        : base(ref description) {
+    /// <param name="gd">The value of gd.</param>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the base operation.</returns>
+    public VkTextureView(VkGraphicsDevice gd, ref TextureViewDescription description) : base(ref description) {
         this.gd = gd;
         VkImageViewCreateInfo imageViewCi = VkImageViewCreateInfo.New();
         VkTexture tex = Util.AssertSubtype<Texture, VkTexture>(description.Target);
@@ -111,7 +109,7 @@ internal unsafe class VkTextureView : TextureView {
     #region Disposal
 
     /// <summary>
-    /// Executes Dispose.
+    /// Performs the Dispose operation.
     /// </summary>
     public override void Dispose() {
         this.RefCount.Decrement();
@@ -120,7 +118,7 @@ internal unsafe class VkTextureView : TextureView {
     #endregion
 
     /// <summary>
-    /// Executes DisposeCore.
+    /// Performs the DisposeCore operation.
     /// </summary>
     private void DisposeCore() {
         if (!this._destroyed) {

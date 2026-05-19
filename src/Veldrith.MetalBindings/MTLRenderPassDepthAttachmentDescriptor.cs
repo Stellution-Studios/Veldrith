@@ -14,8 +14,9 @@ public struct MTLRenderPassDepthAttachmentDescriptor {
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MTLRenderPassDepthAttachmentDescriptor" /> class.
+    /// Initializes a new instance of the <see cref="MTLRenderPassDepthAttachmentDescriptor" /> type.
     /// </summary>
+    /// <param name="ptr">The value of ptr.</param>
     public MTLRenderPassDepthAttachmentDescriptor(IntPtr ptr) {
         this.NativePtr = ptr;
     }

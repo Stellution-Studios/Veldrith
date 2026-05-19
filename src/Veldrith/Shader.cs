@@ -8,8 +8,10 @@ namespace Veldrith;
 public abstract class Shader : IDeviceResource, IDisposable {
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="Shader" /> class.
+    /// Initializes a new instance of the <see cref="Shader" /> type.
     /// </summary>
+    /// <param name="stage">The value of stage.</param>
+    /// <param name="entryPoint">The value of entryPoint.</param>
     internal Shader(ShaderStages stage, string entryPoint) {
         this.Stage = stage;
         this.EntryPoint = entryPoint;
@@ -39,7 +41,7 @@ public abstract class Shader : IDeviceResource, IDisposable {
     #region Disposal
 
     /// <summary>
-    /// Frees unmanaged device resources controlled by this instance.
+    /// Performs the Dispose operation.
     /// </summary>
     public abstract void Dispose();
 

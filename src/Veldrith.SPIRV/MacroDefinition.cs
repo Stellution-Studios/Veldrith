@@ -6,22 +6,25 @@ namespace Veldrith.SPIRV;
 public class MacroDefinition {
 
     /// <summary>
-    /// Constructs a new <see cref="MacroDefinition" /> with no value.
+    /// Initializes a new instance of the <see cref="MacroDefinition" /> type.
     /// </summary>
+    /// <param name="name">The value of name.</param>
     public MacroDefinition(string name) {
         this.Name = name;
     }
 
     /// <summary>
-    /// Constructs a new <see cref="MacroDefinition" /> with a value.
+    /// Initializes a new instance of the <see cref="MacroDefinition" /> type.
     /// </summary>
+    /// <param name="name">The value of name.</param>
+    /// <param name="value">The value of value.</param>
     public MacroDefinition(string name, string value) {
         this.Name = name;
         this.Value = value;
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MacroDefinition" /> class.
+    /// Initializes a new instance of the <see cref="MacroDefinition" /> type.
     /// </summary>
     internal MacroDefinition() { }
 

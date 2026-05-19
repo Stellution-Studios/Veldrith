@@ -30,8 +30,12 @@ public struct MTLClearColor {
     public double alpha;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MTLClearColor" /> class.
+    /// Initializes a new instance of the <see cref="MTLClearColor" /> type.
     /// </summary>
+    /// <param name="r">The value of r.</param>
+    /// <param name="g">The value of g.</param>
+    /// <param name="b">The value of b.</param>
+    /// <param name="a">The value of a.</param>
     public MTLClearColor(double r, double g, double b, double a) {
         this.red = r;
         this.green = g;

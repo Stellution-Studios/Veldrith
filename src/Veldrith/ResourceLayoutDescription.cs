@@ -14,29 +14,26 @@ public struct ResourceLayoutDescription : IEquatable<ResourceLayoutDescription> 
     public ResourceLayoutElementDescription[] Elements;
 
     /// <summary>
-    /// Constructs a new ResourceLayoutDescription.
+    /// Initializes a new instance of the <see cref="ResourceLayoutDescription" /> type.
     /// </summary>
-    /// <param name="elements">
-    /// An array of <see cref="ResourceLayoutElementDescription" /> objects, describing the properties
-    /// of each resource element in the <see cref="ResourceLayout" />.
-    /// </param>
+    /// <param name="elements">The value of elements.</param>
     public ResourceLayoutDescription(params ResourceLayoutElementDescription[] elements) {
         this.Elements = elements;
     }
 
     /// <summary>
-    /// Element-wise equality.
+    /// Performs the Equals operation.
     /// </summary>
-    /// <param name="other">The instance to compare to.</param>
-    /// <returns>True if all array elements are equal; false otherswise.</returns>
+    /// <param name="other">The value of other.</param>
+    /// <returns>The result of the Equals operation.</returns>
     public bool Equals(ResourceLayoutDescription other) {
         return Util.ArrayEqualsEquatable(this.Elements, other.Elements);
     }
 
     /// <summary>
-    /// Returns the hash code for this instance.
+    /// Performs the GetHashCode operation.
     /// </summary>
-    /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
+    /// <returns>The result of the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Array(this.Elements);
     }

@@ -16,8 +16,12 @@ namespace Veldrith.Vk;
 internal static unsafe class VkSurfaceUtil {
 
     /// <summary>
-    /// Executes CreateSurface.
+    /// Performs the CreateSurface operation.
     /// </summary>
+    /// <param name="gd">The value of gd.</param>
+    /// <param name="instance">The value of instance.</param>
+    /// <param name="swapchainSource">The value of swapchainSource.</param>
+    /// <returns>The result of the CreateSurface operation.</returns>
     internal static VkSurfaceKHR CreateSurface(VkGraphicsDevice gd, VkInstance instance, SwapchainSource swapchainSource) {
         // TODO a null GD is passed from VkSurfaceSource.CreateSurface for compatibility
         //      when VkSurfaceInfo is removed we do not have to handle gd == null anymore
@@ -97,8 +101,11 @@ internal static unsafe class VkSurfaceUtil {
     }
 
     /// <summary>
-    /// Executes CreateWin32.
+    /// Performs the CreateWin32 operation.
     /// </summary>
+    /// <param name="instance">The value of instance.</param>
+    /// <param name="win32Source">The value of win32Source.</param>
+    /// <returns>The result of the CreateWin32 operation.</returns>
     private static VkSurfaceKHR CreateWin32(VkInstance instance, Win32SwapchainSource win32Source) {
         VkWin32SurfaceCreateInfoKHR surfaceCi = VkWin32SurfaceCreateInfoKHR.New();
         surfaceCi.hwnd = win32Source.Hwnd;
@@ -109,8 +116,11 @@ internal static unsafe class VkSurfaceUtil {
     }
 
     /// <summary>
-    /// Executes CreateXlib.
+    /// Performs the CreateXlib operation.
     /// </summary>
+    /// <param name="instance">The value of instance.</param>
+    /// <param name="xlibSource">The value of xlibSource.</param>
+    /// <returns>The result of the CreateXlib operation.</returns>
     private static VkSurfaceKHR CreateXlib(VkInstance instance, XlibSwapchainSource xlibSource) {
         VkXlibSurfaceCreateInfoKHR xsci = VkXlibSurfaceCreateInfoKHR.New();
         xsci.dpy = (Display*)xlibSource.Display;
@@ -121,8 +131,11 @@ internal static unsafe class VkSurfaceUtil {
     }
 
     /// <summary>
-    /// Executes CreateWayland.
+    /// Performs the CreateWayland operation.
     /// </summary>
+    /// <param name="instance">The value of instance.</param>
+    /// <param name="waylandSource">The value of waylandSource.</param>
+    /// <returns>The result of the CreateWayland operation.</returns>
     private static VkSurfaceKHR CreateWayland(VkInstance instance, WaylandSwapchainSource waylandSource) {
         VkWaylandSurfaceCreateInfoKHR wsci = VkWaylandSurfaceCreateInfoKHR.New();
         wsci.display = (wl_display*)waylandSource.Display;
@@ -133,8 +146,11 @@ internal static unsafe class VkSurfaceUtil {
     }
 
     /// <summary>
-    /// Executes CreateAndroidSurface.
+    /// Performs the CreateAndroidSurface operation.
     /// </summary>
+    /// <param name="instance">The value of instance.</param>
+    /// <param name="androidSource">The value of androidSource.</param>
+    /// <returns>The result of the CreateAndroidSurface operation.</returns>
     private static VkSurfaceKHR CreateAndroidSurface(VkInstance instance, AndroidSurfaceSwapchainSource androidSource) {
         IntPtr aNativeWindow = AndroidRuntime.ANativeWindow_fromSurface(androidSource.JniEnv, androidSource.Surface);
 
@@ -146,16 +162,26 @@ internal static unsafe class VkSurfaceUtil {
     }
 
     /// <summary>
-    /// Executes CreateNSWindowSurface.
+    /// Performs the CreateNSWindowSurface operation.
     /// </summary>
+    /// <param name="gd">The value of gd.</param>
+    /// <param name="instance">The value of instance.</param>
+    /// <param name="nsWindowSource">The value of nsWindowSource.</param>
+    /// <param name="hasExtMetalSurface">The value of hasExtMetalSurface.</param>
+    /// <returns>The result of the CreateNSWindowSurface operation.</returns>
     private static VkSurfaceKHR CreateNSWindowSurface(VkGraphicsDevice gd, VkInstance instance, NSWindowSwapchainSource nsWindowSource, bool hasExtMetalSurface) {
         NSWindow nswindow = new(nsWindowSource.NSWindow);
         return CreateNSViewSurface(gd, instance, new NSViewSwapchainSource(nswindow.contentView), hasExtMetalSurface);
     }
 
     /// <summary>
-    /// Executes CreateNSViewSurface.
+    /// Performs the CreateNSViewSurface operation.
     /// </summary>
+    /// <param name="gd">The value of gd.</param>
+    /// <param name="instance">The value of instance.</param>
+    /// <param name="nsViewSource">The value of nsViewSource.</param>
+    /// <param name="hasExtMetalSurface">The value of hasExtMetalSurface.</param>
+    /// <returns>The result of the CreateNSViewSurface operation.</returns>
     private static VkSurfaceKHR CreateNSViewSurface(VkGraphicsDevice gd, VkInstance instance, NSViewSwapchainSource nsViewSource, bool hasExtMetalSurface) {
         NSView contentView = new(nsViewSource.NSView);
 
@@ -185,8 +211,13 @@ internal static unsafe class VkSurfaceUtil {
     }
 
     /// <summary>
-    /// Executes CreateUIViewSurface.
+    /// Performs the CreateUIViewSurface operation.
     /// </summary>
+    /// <param name="gd">The value of gd.</param>
+    /// <param name="instance">The value of instance.</param>
+    /// <param name="uiViewSource">The value of uiViewSource.</param>
+    /// <param name="hasExtMetalSurface">The value of hasExtMetalSurface.</param>
+    /// <returns>The result of the CreateUIViewSurface operation.</returns>
     private static VkSurfaceKHR CreateUIViewSurface(VkGraphicsDevice gd, VkInstance instance, UIViewSwapchainSource uiViewSource, bool hasExtMetalSurface) {
         UIView uiView = new(uiViewSource.UIView);
 

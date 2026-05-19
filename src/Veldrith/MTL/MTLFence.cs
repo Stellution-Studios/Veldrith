@@ -14,8 +14,9 @@ internal class MtlFence : Fence {
     private bool _disposed;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MtlFence" /> class.
+    /// Initializes a new instance of the <see cref="MtlFence" /> type.
     /// </summary>
+    /// <param name="signaled">The value of signaled.</param>
     public MtlFence(bool signaled) {
         this.ResetEvent = new ManualResetEvent(signaled);
     }
@@ -26,8 +27,9 @@ internal class MtlFence : Fence {
     public ManualResetEvent ResetEvent { get; }
 
     /// <summary>
-    /// Gets or sets Signaled.
+    /// Performs the WaitOne operation.
     /// </summary>
+    /// <returns>The result of the WaitOne operation.</returns>
     public override bool Signaled => this.ResetEvent.WaitOne(0);
 
     /// <summary>
@@ -43,7 +45,7 @@ internal class MtlFence : Fence {
     #region Disposal
 
     /// <summary>
-    /// Executes Dispose.
+    /// Performs the Dispose operation.
     /// </summary>
     public override void Dispose() {
         if (!this._disposed) {
@@ -55,22 +57,24 @@ internal class MtlFence : Fence {
     #endregion
 
     /// <summary>
-    /// Executes Set.
+    /// Performs the Set operation.
     /// </summary>
     public void Set() {
         this.ResetEvent.Set();
     }
 
     /// <summary>
-    /// Executes Reset.
+    /// Performs the Reset operation.
     /// </summary>
     public override void Reset() {
         this.ResetEvent.Reset();
     }
 
     /// <summary>
-    /// Executes Wait.
+    /// Performs the Wait operation.
     /// </summary>
+    /// <param name="nanosecondTimeout">The value of nanosecondTimeout.</param>
+    /// <returns>The result of the Wait operation.</returns>
     internal bool Wait(ulong nanosecondTimeout) {
         ulong timeout = Math.Min(int.MaxValue, nanosecondTimeout / 1_000_000);
         return this.ResetEvent.WaitOne((int)timeout);

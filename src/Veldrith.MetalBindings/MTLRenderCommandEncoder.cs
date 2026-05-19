@@ -17,8 +17,9 @@ public struct MTLRenderCommandEncoder {
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MTLRenderCommandEncoder" /> class.
+    /// Initializes a new instance of the <see cref="MTLRenderCommandEncoder" /> type.
     /// </summary>
+    /// <param name="ptr">The value of ptr.</param>
     public MTLRenderCommandEncoder(IntPtr ptr) {
         this.NativePtr = ptr;
     }
@@ -29,211 +30,280 @@ public struct MTLRenderCommandEncoder {
     public bool IsNull => this.NativePtr == IntPtr.Zero;
 
     /// <summary>
-    /// Executes setRenderPipelineState.
+    /// Performs the setRenderPipelineState operation.
     /// </summary>
+    /// <param name="pipelineState">The value of pipelineState.</param>
     public void setRenderPipelineState(MTLRenderPipelineState pipelineState) {
         objc_msgSend(this.NativePtr, sel_setRenderPipelineState, pipelineState.NativePtr);
     }
 
     /// <summary>
-    /// Executes setVertexBuffer.
+    /// Performs the setVertexBuffer operation.
     /// </summary>
+    /// <param name="buffer">The value of buffer.</param>
+    /// <param name="offset">The value of offset.</param>
+    /// <param name="index">The value of index.</param>
     public void setVertexBuffer(MTLBuffer buffer, UIntPtr offset, UIntPtr index) {
         objc_msgSend(this.NativePtr, sel_setVertexBuffer, buffer.NativePtr, offset, index);
     }
 
     /// <summary>
-    /// Executes setVertexBufferOffset.
+    /// Performs the setVertexBufferOffset operation.
     /// </summary>
+    /// <param name="offset">The value of offset.</param>
+    /// <param name="index">The value of index.</param>
     public void setVertexBufferOffset(UIntPtr offset, UIntPtr index) {
         objc_msgSend(this.NativePtr, sel_setVertexBufferOffset, offset, index);
     }
 
     /// <summary>
-    /// Executes setFragmentBuffer.
+    /// Performs the setFragmentBuffer operation.
     /// </summary>
+    /// <param name="buffer">The value of buffer.</param>
+    /// <param name="offset">The value of offset.</param>
+    /// <param name="index">The value of index.</param>
     public void setFragmentBuffer(MTLBuffer buffer, UIntPtr offset, UIntPtr index) {
         objc_msgSend(this.NativePtr, sel_setFragmentBuffer, buffer.NativePtr, offset, index);
     }
 
     /// <summary>
-    /// Executes setFragmentBufferOffset.
+    /// Performs the setFragmentBufferOffset operation.
     /// </summary>
+    /// <param name="offset">The value of offset.</param>
+    /// <param name="index">The value of index.</param>
     public void setFragmentBufferOffset(UIntPtr offset, UIntPtr index) {
         objc_msgSend(this.NativePtr, sel_setFragmentBufferOffset, offset, index);
     }
 
     /// <summary>
-    /// Executes setVertexTexture.
+    /// Performs the setVertexTexture operation.
     /// </summary>
+    /// <param name="texture">The value of texture.</param>
+    /// <param name="index">The value of index.</param>
     public void setVertexTexture(MTLTexture texture, UIntPtr index) {
         objc_msgSend(this.NativePtr, sel_setVertexTexture, texture.NativePtr, index);
     }
 
     /// <summary>
-    /// Executes setFragmentTexture.
+    /// Performs the setFragmentTexture operation.
     /// </summary>
+    /// <param name="texture">The value of texture.</param>
+    /// <param name="index">The value of index.</param>
     public void setFragmentTexture(MTLTexture texture, UIntPtr index) {
         objc_msgSend(this.NativePtr, sel_setFragmentTexture, texture.NativePtr, index);
     }
 
     /// <summary>
-    /// Executes setVertexSamplerState.
+    /// Performs the setVertexSamplerState operation.
     /// </summary>
+    /// <param name="sampler">The value of sampler.</param>
+    /// <param name="index">The value of index.</param>
     public void setVertexSamplerState(MTLSamplerState sampler, UIntPtr index) {
         objc_msgSend(this.NativePtr, sel_setVertexSamplerState, sampler.NativePtr, index);
     }
 
     /// <summary>
-    /// Executes setFragmentSamplerState.
+    /// Performs the setFragmentSamplerState operation.
     /// </summary>
+    /// <param name="sampler">The value of sampler.</param>
+    /// <param name="index">The value of index.</param>
     public void setFragmentSamplerState(MTLSamplerState sampler, UIntPtr index) {
         objc_msgSend(this.NativePtr, sel_setFragmentSamplerState, sampler.NativePtr, index);
     }
 
     /// <summary>
-    /// Executes drawPrimitives.
+    /// Performs the drawPrimitives operation.
     /// </summary>
+    /// <param name="primitiveType">The value of primitiveType.</param>
+    /// <param name="vertexStart">The value of vertexStart.</param>
+    /// <param name="vertexCount">The value of vertexCount.</param>
+    /// <param name="instanceCount">The value of instanceCount.</param>
+    /// <param name="baseInstance">The value of baseInstance.</param>
     public void drawPrimitives(MTLPrimitiveType primitiveType, UIntPtr vertexStart, UIntPtr vertexCount, UIntPtr instanceCount, UIntPtr baseInstance) {
         objc_msgSend(this.NativePtr, sel_drawPrimitives0, primitiveType, vertexStart, vertexCount, instanceCount, baseInstance);
     }
 
     /// <summary>
-    /// Executes drawPrimitives.
+    /// Performs the drawPrimitives operation.
     /// </summary>
+    /// <param name="primitiveType">The value of primitiveType.</param>
+    /// <param name="vertexStart">The value of vertexStart.</param>
+    /// <param name="vertexCount">The value of vertexCount.</param>
+    /// <param name="instanceCount">The value of instanceCount.</param>
     public void drawPrimitives(MTLPrimitiveType primitiveType, UIntPtr vertexStart, UIntPtr vertexCount, UIntPtr instanceCount) {
         objc_msgSend(this.NativePtr, sel_drawPrimitives2, primitiveType, vertexStart, vertexCount, instanceCount);
     }
 
     /// <summary>
-    /// Executes drawPrimitives.
+    /// Performs the drawPrimitives operation.
     /// </summary>
+    /// <param name="primitiveType">The value of primitiveType.</param>
+    /// <param name="indirectBuffer">The value of indirectBuffer.</param>
+    /// <param name="indirectBufferOffset">The value of indirectBufferOffset.</param>
     public void drawPrimitives(MTLPrimitiveType primitiveType, MTLBuffer indirectBuffer, UIntPtr indirectBufferOffset) {
         objc_msgSend(this.NativePtr, sel_drawPrimitives1, primitiveType, indirectBuffer, indirectBufferOffset);
     }
 
     /// <summary>
-    /// Executes drawIndexedPrimitives.
+    /// Performs the drawIndexedPrimitives operation.
     /// </summary>
+    /// <param name="primitiveType">The value of primitiveType.</param>
+    /// <param name="indexCount">The value of indexCount.</param>
+    /// <param name="indexType">The value of indexType.</param>
+    /// <param name="indexBuffer">The value of indexBuffer.</param>
+    /// <param name="indexBufferOffset">The value of indexBufferOffset.</param>
+    /// <param name="instanceCount">The value of instanceCount.</param>
     public void drawIndexedPrimitives(MTLPrimitiveType primitiveType, UIntPtr indexCount, MTLIndexType indexType, MTLBuffer indexBuffer, UIntPtr indexBufferOffset, UIntPtr instanceCount) {
         objc_msgSend(this.NativePtr, sel_drawIndexedPrimitives0, primitiveType, indexCount, indexType, indexBuffer.NativePtr, indexBufferOffset, instanceCount);
     }
 
     /// <summary>
-    /// Executes drawIndexedPrimitives.
+    /// Performs the drawIndexedPrimitives operation.
     /// </summary>
+    /// <param name="primitiveType">The value of primitiveType.</param>
+    /// <param name="indexCount">The value of indexCount.</param>
+    /// <param name="indexType">The value of indexType.</param>
+    /// <param name="indexBuffer">The value of indexBuffer.</param>
+    /// <param name="indexBufferOffset">The value of indexBufferOffset.</param>
+    /// <param name="instanceCount">The value of instanceCount.</param>
+    /// <param name="baseVertex">The value of baseVertex.</param>
+    /// <param name="baseInstance">The value of baseInstance.</param>
     public void drawIndexedPrimitives(MTLPrimitiveType primitiveType, UIntPtr indexCount, MTLIndexType indexType, MTLBuffer indexBuffer, UIntPtr indexBufferOffset, UIntPtr instanceCount, IntPtr baseVertex, UIntPtr baseInstance) {
         objc_msgSend(this.NativePtr, sel_drawIndexedPrimitives1, primitiveType, indexCount, indexType, indexBuffer.NativePtr, indexBufferOffset, instanceCount, baseVertex, baseInstance);
     }
 
     /// <summary>
-    /// Executes drawIndexedPrimitives.
+    /// Performs the drawIndexedPrimitives operation.
     /// </summary>
+    /// <param name="primitiveType">The value of primitiveType.</param>
+    /// <param name="indexType">The value of indexType.</param>
+    /// <param name="indexBuffer">The value of indexBuffer.</param>
+    /// <param name="indexBufferOffset">The value of indexBufferOffset.</param>
+    /// <param name="indirectBuffer">The value of indirectBuffer.</param>
+    /// <param name="indirectBufferOffset">The value of indirectBufferOffset.</param>
     public void drawIndexedPrimitives(MTLPrimitiveType primitiveType, MTLIndexType indexType, MTLBuffer indexBuffer, UIntPtr indexBufferOffset, MTLBuffer indirectBuffer, UIntPtr indirectBufferOffset) {
         objc_msgSend(this.NativePtr, sel_drawIndexedPrimitives2, primitiveType, indexType, indexBuffer, indexBufferOffset, indirectBuffer, indirectBufferOffset);
     }
 
     /// <summary>
-    /// Executes setViewport.
+    /// Performs the setViewport operation.
     /// </summary>
+    /// <param name="viewport">The value of viewport.</param>
     public void setViewport(MTLViewport viewport) {
         objc_msgSend(this.NativePtr, sel_setViewport, viewport);
     }
 
     /// <summary>
-    /// Executes setViewports.
+    /// Performs the setViewports operation.
     /// </summary>
+    /// <param name="viewports">The value of viewports.</param>
+    /// <param name="count">The value of count.</param>
     public unsafe void setViewports(MTLViewport* viewports, UIntPtr count) {
         objc_msgSend(this.NativePtr, sel_setViewports, viewports, count);
     }
 
     /// <summary>
-    /// Executes setScissorRect.
+    /// Performs the setScissorRect operation.
     /// </summary>
+    /// <param name="scissorRect">The value of scissorRect.</param>
     public void setScissorRect(MTLScissorRect scissorRect) {
         objc_msgSend(this.NativePtr, sel_setScissorRect, scissorRect);
     }
 
     /// <summary>
-    /// Executes setScissorRects.
+    /// Performs the setScissorRects operation.
     /// </summary>
+    /// <param name="scissorRects">The value of scissorRects.</param>
+    /// <param name="count">The value of count.</param>
     public unsafe void setScissorRects(MTLScissorRect* scissorRects, UIntPtr count) {
         objc_msgSend(this.NativePtr, sel_setScissorRects, scissorRects, count);
     }
 
     /// <summary>
-    /// Executes setCullMode.
+    /// Performs the setCullMode operation.
     /// </summary>
+    /// <param name="cullMode">The value of cullMode.</param>
     public void setCullMode(MTLCullMode cullMode) {
         objc_msgSend(this.NativePtr, sel_setCullMode, (uint)cullMode);
     }
 
     /// <summary>
-    /// Executes setFrontFacing.
+    /// Performs the setFrontFacing operation.
     /// </summary>
+    /// <param name="frontFaceWinding">The value of frontFaceWinding.</param>
     public void setFrontFacing(MTLWinding frontFaceWinding) {
         objc_msgSend(this.NativePtr, sel_setFrontFacingWinding, (uint)frontFaceWinding);
     }
 
     /// <summary>
-    /// Executes setDepthStencilState.
+    /// Performs the setDepthStencilState operation.
     /// </summary>
+    /// <param name="depthStencilState">The value of depthStencilState.</param>
     public void setDepthStencilState(MTLDepthStencilState depthStencilState) {
         objc_msgSend(this.NativePtr, sel_setDepthStencilState, depthStencilState.NativePtr);
     }
 
     /// <summary>
-    /// Executes setDepthClipMode.
+    /// Performs the setDepthClipMode operation.
     /// </summary>
+    /// <param name="depthClipMode">The value of depthClipMode.</param>
     public void setDepthClipMode(MTLDepthClipMode depthClipMode) {
         objc_msgSend(this.NativePtr, sel_setDepthClipMode, (uint)depthClipMode);
     }
 
     /// <summary>
-    /// Executes endEncoding.
+    /// Performs the endEncoding operation.
     /// </summary>
     public void endEncoding() {
         objc_msgSend(this.NativePtr, sel_endEncoding);
     }
 
     /// <summary>
-    /// Executes setStencilReferenceValue.
+    /// Performs the setStencilReferenceValue operation.
     /// </summary>
+    /// <param name="stencilReference">The value of stencilReference.</param>
     public void setStencilReferenceValue(uint stencilReference) {
         objc_msgSend(this.NativePtr, sel_setStencilReferenceValue, stencilReference);
     }
 
     /// <summary>
-    /// Executes setBlendColor.
+    /// Performs the setBlendColor operation.
     /// </summary>
+    /// <param name="red">The value of red.</param>
+    /// <param name="green">The value of green.</param>
+    /// <param name="blue">The value of blue.</param>
+    /// <param name="alpha">The value of alpha.</param>
     public void setBlendColor(float red, float green, float blue, float alpha) {
         objc_msgSend(this.NativePtr, sel_setBlendColor, red, green, blue, alpha);
     }
 
     /// <summary>
-    /// Executes setTriangleFillMode.
+    /// Performs the setTriangleFillMode operation.
     /// </summary>
+    /// <param name="fillMode">The value of fillMode.</param>
     public void setTriangleFillMode(MTLTriangleFillMode fillMode) {
         objc_msgSend(this.NativePtr, sel_setTriangleFillMode, (uint)fillMode);
     }
 
     /// <summary>
-    /// Executes pushDebugGroup.
+    /// Performs the pushDebugGroup operation.
     /// </summary>
+    /// <param name="string">The value of string.</param>
     public void pushDebugGroup(NSString @string) {
         objc_msgSend(this.NativePtr, Selectors.pushDebugGroup, @string.NativePtr);
     }
 
     /// <summary>
-    /// Executes popDebugGroup.
+    /// Performs the popDebugGroup operation.
     /// </summary>
     public void popDebugGroup() {
         objc_msgSend(this.NativePtr, Selectors.popDebugGroup);
     }
 
     /// <summary>
-    /// Executes insertDebugSignpost.
+    /// Performs the insertDebugSignpost operation.
     /// </summary>
+    /// <param name="string">The value of string.</param>
     public void insertDebugSignpost(NSString @string) {
         objc_msgSend(this.NativePtr, Selectors.insertDebugSignpost, @string.NativePtr);
     }

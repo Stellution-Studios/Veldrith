@@ -14,8 +14,9 @@ public struct MTLFunction {
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MTLFunction" /> class.
+    /// Initializes a new instance of the <see cref="MTLFunction" /> type.
     /// </summary>
+    /// <param name="ptr">The value of ptr.</param>
     public MTLFunction(IntPtr ptr) {
         this.NativePtr = ptr;
     }

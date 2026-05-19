@@ -8,8 +8,10 @@ namespace Veldrith.MetalBindings;
 public static class MTLUtil {
 
     /// <summary>
-    /// Executes GetUtf8String.
+    /// Performs the GetUtf8String operation.
     /// </summary>
+    /// <param name="stringStart">The value of stringStart.</param>
+    /// <returns>The result of the GetUtf8String operation.</returns>
     public static unsafe string GetUtf8String(byte* stringStart) {
         int characters = 0;
         while (stringStart[characters] != 0) {

@@ -89,8 +89,10 @@ internal sealed class D3D12Swapchain : Swapchain {
     private ID3D12DescriptorHeap _rtvHeap;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="D3D12Swapchain" /> class.
+    /// Initializes a new instance of the <see cref="D3D12Swapchain" /> type.
     /// </summary>
+    /// <param name="gd">The value of gd.</param>
+    /// <param name="description">The value of description.</param>
     public D3D12Swapchain(D3D12GraphicsDevice gd, ref SwapchainDescription description) {
         this.gd = gd;
         this.SyncToVerticalBlank = description.SyncToVerticalBlank;
@@ -145,7 +147,7 @@ internal sealed class D3D12Swapchain : Swapchain {
     public override string Name { get; set; }
 
     /// <summary>
-    /// Executes Dispose.
+    /// Performs the Dispose operation.
     /// </summary>
     public override void Dispose() {
         if (this._disposed) {
@@ -161,8 +163,10 @@ internal sealed class D3D12Swapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes Resize.
+    /// Performs the Resize operation.
     /// </summary>
+    /// <param name="width">The value of width.</param>
+    /// <param name="height">The value of height.</param>
     public override void Resize(uint width, uint height) {
         if (width == 0 || height == 0) {
             return;
@@ -185,7 +189,7 @@ internal sealed class D3D12Swapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes Present.
+    /// Performs the Present operation.
     /// </summary>
     internal void Present() {
         if (this._hasNativeSwapchain) {
@@ -199,8 +203,12 @@ internal sealed class D3D12Swapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes CreateAttachments.
+    /// Performs the CreateAttachments operation.
     /// </summary>
+    /// <param name="width">The value of width.</param>
+    /// <param name="height">The value of height.</param>
+    /// <param name="depthFormat">The value of depthFormat.</param>
+    /// <param name="srgb">The value of srgb.</param>
     private void CreateAttachments(uint width, uint height, PixelFormat? depthFormat, bool srgb) {
         PixelFormat colorFormat = srgb ? PixelFormat.B8G8R8A8UNormSRgb : PixelFormat.B8G8R8A8UNorm;
         TextureDescription colorDesc = TextureDescription.Texture2D(width, height, 1, 1, colorFormat, TextureUsage.RenderTarget | TextureUsage.Sampled);
@@ -224,8 +232,10 @@ internal sealed class D3D12Swapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes TryCreateNativeSwapchain.
+    /// Performs the TryCreateNativeSwapchain operation.
     /// </summary>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the TryCreateNativeSwapchain operation.</returns>
     private bool TryCreateNativeSwapchain(ref SwapchainDescription description) {
         if (description.Source is not Win32SwapchainSource win32Source) {
             return false;
@@ -254,8 +264,13 @@ internal sealed class D3D12Swapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes TryGetCurrentBackBuffer.
+    /// Performs the TryGetCurrentBackBuffer operation.
     /// </summary>
+    /// <param name="resource">The value of resource.</param>
+    /// <param name="rtv">The value of rtv.</param>
+    /// <param name="index">The value of index.</param>
+    /// <param name="state">The value of state.</param>
+    /// <returns>The result of the TryGetCurrentBackBuffer operation.</returns>
     internal bool TryGetCurrentBackBuffer(out ID3D12Resource resource, out CpuDescriptorHandle rtv, out int index, out ResourceStates state) {
         if (!this._hasNativeSwapchain || this._dxgiSwapChain == null) {
             resource = null;
@@ -273,14 +288,16 @@ internal sealed class D3D12Swapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes SetBackBufferState.
+    /// Performs the SetBackBufferState operation.
     /// </summary>
+    /// <param name="index">The value of index.</param>
+    /// <param name="state">The value of state.</param>
     internal void SetBackBufferState(int index, ResourceStates state) {
         this._backBufferStates[index] = state;
     }
 
     /// <summary>
-    /// Executes CreateNativeRenderTargets.
+    /// Performs the CreateNativeRenderTargets operation.
     /// </summary>
     private void CreateNativeRenderTargets() {
         this._rtvDescriptorSize = (int)this.gd.Device.GetDescriptorHandleIncrementSize(DescriptorHeapType.RenderTargetView);
@@ -300,8 +317,10 @@ internal sealed class D3D12Swapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes RecreateNativeSwapchain.
+    /// Performs the RecreateNativeSwapchain operation.
     /// </summary>
+    /// <param name="width">The value of width.</param>
+    /// <param name="height">The value of height.</param>
     private void RecreateNativeSwapchain(uint width, uint height) {
         if (!this._hasNativeSwapchain || this._dxgiSwapChain == null) {
             return;
@@ -313,8 +332,9 @@ internal sealed class D3D12Swapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes GetSwapChainFlags.
+    /// Performs the GetSwapChainFlags operation.
     /// </summary>
+    /// <returns>The result of the GetSwapChainFlags operation.</returns>
     private SwapChainFlags GetSwapChainFlags() {
         if (this._allowTearing && this._canTear) {
             return SwapChainFlags.AllowTearing;
@@ -324,7 +344,7 @@ internal sealed class D3D12Swapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes DisposeNativeResources.
+    /// Performs the DisposeNativeResources operation.
     /// </summary>
     private void DisposeNativeResources() {
         if (this._backBufferResources != null) {

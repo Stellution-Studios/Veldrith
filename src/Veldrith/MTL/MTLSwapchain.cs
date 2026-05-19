@@ -44,8 +44,10 @@ internal class MtlSwapchain : Swapchain {
     private UIView _uiView; // Valid only when a UIViewSwapchainSource is used.
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MtlSwapchain" /> class.
+    /// Initializes a new instance of the <see cref="MtlSwapchain" /> type.
     /// </summary>
+    /// <param name="gd">The value of gd.</param>
+    /// <param name="description">The value of description.</param>
     public MtlSwapchain(MtlGraphicsDevice gd, ref SwapchainDescription description) {
         this.gd = gd;
         this._syncToVerticalBlank = description.SyncToVerticalBlank;
@@ -148,7 +150,7 @@ internal class MtlSwapchain : Swapchain {
     #region Disposal
 
     /// <summary>
-    /// Executes Dispose.
+    /// Performs the Dispose operation.
     /// </summary>
     public override void Dispose() {
         if (this._drawable.NativePtr != IntPtr.Zero) {
@@ -164,8 +166,10 @@ internal class MtlSwapchain : Swapchain {
     #endregion
 
     /// <summary>
-    /// Executes Resize.
+    /// Performs the Resize operation.
     /// </summary>
+    /// <param name="width">The value of width.</param>
+    /// <param name="height">The value of height.</param>
     public override void Resize(uint width, uint height) {
         if (this._uiView.NativePtr != IntPtr.Zero) {
             this._metalLayer.frame = this._uiView.frame;
@@ -177,14 +181,15 @@ internal class MtlSwapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes EnsureDrawableAvailable.
+    /// Performs the EnsureDrawableAvailable operation.
     /// </summary>
+    /// <returns>The result of the EnsureDrawableAvailable operation.</returns>
     public bool EnsureDrawableAvailable() {
         return !this._drawable.IsNull || this.GetNextDrawable();
     }
 
     /// <summary>
-    /// Executes InvalidateDrawable.
+    /// Performs the InvalidateDrawable operation.
     /// </summary>
     public void InvalidateDrawable() {
         ObjectiveCRuntime.release(this._drawable.NativePtr);
@@ -192,8 +197,9 @@ internal class MtlSwapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes GetNextDrawable.
+    /// Performs the GetNextDrawable operation.
     /// </summary>
+    /// <returns>The result of the GetNextDrawable operation.</returns>
     private bool GetNextDrawable() {
         if (!this._drawable.IsNull) {
             ObjectiveCRuntime.release(this._drawable.NativePtr);
@@ -213,8 +219,9 @@ internal class MtlSwapchain : Swapchain {
     }
 
     /// <summary>
-    /// Executes SetSyncToVerticalBlank.
+    /// Performs the SetSyncToVerticalBlank operation.
     /// </summary>
+    /// <param name="value">The value of value.</param>
     private void SetSyncToVerticalBlank(bool value) {
         this._syncToVerticalBlank = value;
 

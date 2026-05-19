@@ -41,23 +41,13 @@ public struct SwapchainDescription : IEquatable<SwapchainDescription> {
     public bool ColorSrgb;
 
     /// <summary>
-    /// Constructs a new SwapchainDescription.
+    /// Initializes a new instance of the <see cref="SwapchainDescription" /> type.
     /// </summary>
-    /// <param name="source">
-    /// The <see cref="SwapchainSource" /> which will be used as the target of rendering operations.
-    /// This is a window-system-specific object which differs by platform.
-    /// </param>
-    /// <param name="width">The initial width of the Swapchain surface.</param>
-    /// <param name="height">The initial height of the Swapchain surface.</param>
-    /// <param name="depthFormat">
-    /// The optional format of the depth target of the Swapchain's Framebuffer.
-    /// If non-null, this must be a valid depth Texture format.
-    /// If null, then no depth target will be created.
-    /// </param>
-    /// <param name="syncToVerticalBlank">
-    /// Indicates whether presentation of the Swapchain will be synchronized to the window
-    /// system's vertical refresh rate.
-    /// </param>
+    /// <param name="source">The value of source.</param>
+    /// <param name="width">The value of width.</param>
+    /// <param name="height">The value of height.</param>
+    /// <param name="depthFormat">The value of depthFormat.</param>
+    /// <param name="syncToVerticalBlank">The value of syncToVerticalBlank.</param>
     public SwapchainDescription(SwapchainSource source, uint width, uint height, PixelFormat? depthFormat, bool syncToVerticalBlank) {
         this.Source = source;
         this.Width = width;
@@ -68,24 +58,14 @@ public struct SwapchainDescription : IEquatable<SwapchainDescription> {
     }
 
     /// <summary>
-    /// Constructs a new SwapchainDescription.
+    /// Initializes a new instance of the <see cref="SwapchainDescription" /> type.
     /// </summary>
-    /// <param name="source">
-    /// The <see cref="SwapchainSource" /> which will be used as the target of rendering operations.
-    /// This is a window-system-specific object which differs by platform.
-    /// </param>
-    /// <param name="width">The initial width of the Swapchain surface.</param>
-    /// <param name="height">The initial height of the Swapchain surface.</param>
-    /// <param name="depthFormat">
-    /// The optional format of the depth target of the Swapchain's Framebuffer.
-    /// If non-null, this must be a valid depth Texture format.
-    /// If null, then no depth target will be created.
-    /// </param>
-    /// <param name="syncToVerticalBlank">
-    /// Indicates whether presentation of the Swapchain will be synchronized to the window
-    /// system's vertical refresh rate.
-    /// </param>
-    /// <param name="colorSrgb">Indicates whether the color target of the Swapchain will use an sRGB PixelFormat.</param>
+    /// <param name="source">The value of source.</param>
+    /// <param name="width">The value of width.</param>
+    /// <param name="height">The value of height.</param>
+    /// <param name="depthFormat">The value of depthFormat.</param>
+    /// <param name="syncToVerticalBlank">The value of syncToVerticalBlank.</param>
+    /// <param name="colorSrgb">The value of colorSrgb.</param>
     public SwapchainDescription(SwapchainSource source, uint width, uint height, PixelFormat? depthFormat, bool syncToVerticalBlank, bool colorSrgb) {
         this.Source = source;
         this.Width = width;
@@ -96,10 +76,10 @@ public struct SwapchainDescription : IEquatable<SwapchainDescription> {
     }
 
     /// <summary>
-    /// Element-wise equality.
+    /// Performs the Equals operation.
     /// </summary>
-    /// <param name="other">The instance to compare to.</param>
-    /// <returns>True if all elements are equal; false otherswise.</returns>
+    /// <param name="other">The value of other.</param>
+    /// <returns>The result of the Equals operation.</returns>
     public bool Equals(SwapchainDescription other) {
         return this.Source.Equals(other.Source)
                && this.Width.Equals(other.Width)
@@ -110,9 +90,9 @@ public struct SwapchainDescription : IEquatable<SwapchainDescription> {
     }
 
     /// <summary>
-    /// Returns the hash code for this instance.
+    /// Performs the GetHashCode operation.
     /// </summary>
-    /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
+    /// <returns>The result of the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(this.Source.GetHashCode(), this.Width.GetHashCode(), this.Height.GetHashCode(), this.DepthFormat.GetHashCode(), this.SyncToVerticalBlank.GetHashCode(), this.ColorSrgb.GetHashCode());
     }

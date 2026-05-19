@@ -21,10 +21,10 @@ public struct FramebufferAttachment {
     public uint MipLevel { get; }
 
     /// <summary>
-    /// Constructs a new FramebufferAttachment.
+    /// Initializes a new instance of the <see cref="FramebufferAttachment" /> type.
     /// </summary>
-    /// <param name="target">The target <see cref="Texture" /> which will be rendered to.</param>
-    /// <param name="arrayLayer">The target array layer.</param>
+    /// <param name="target">The value of target.</param>
+    /// <param name="arrayLayer">The value of arrayLayer.</param>
     public FramebufferAttachment(Texture target, uint arrayLayer) {
         this.Target = target;
         this.ArrayLayer = arrayLayer;
@@ -32,11 +32,11 @@ public struct FramebufferAttachment {
     }
 
     /// <summary>
-    /// Constructs a new FramebufferAttachment.
+    /// Initializes a new instance of the <see cref="FramebufferAttachment" /> type.
     /// </summary>
-    /// <param name="target">The target <see cref="Texture" /> which will be rendered to.</param>
-    /// <param name="arrayLayer">The target array layer.</param>
-    /// <param name="mipLevel">The target mip level.</param>
+    /// <param name="target">The value of target.</param>
+    /// <param name="arrayLayer">The value of arrayLayer.</param>
+    /// <param name="mipLevel">The value of mipLevel.</param>
     public FramebufferAttachment(Texture target, uint arrayLayer, uint mipLevel) {
         this.Target = target;
         this.ArrayLayer = arrayLayer;

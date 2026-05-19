@@ -43,12 +43,10 @@ internal unsafe class VkPipeline : Pipeline {
     /// <summary>
     /// Initializes a new instance of the <see cref="VkPipeline" /> class.
     /// </summary>
-    public VkPipeline(VkGraphicsDevice gd, ref GraphicsPipelineDescription description)
-
-        /// <summary>
-        /// Executes base.
-        /// </summary>
-        : base(ref description) {
+    /// <param name="gd">The value of gd.</param>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the base operation.</returns>
+    public VkPipeline(VkGraphicsDevice gd, ref GraphicsPipelineDescription description) : base(ref description) {
         this.gd = gd;
         this.IsComputePipeline = false;
         this.RefCount = new ResourceRefCount(this.DisposeCore);
@@ -361,12 +359,10 @@ internal unsafe class VkPipeline : Pipeline {
     /// <summary>
     /// Initializes a new instance of the <see cref="VkPipeline" /> class.
     /// </summary>
-    public VkPipeline(VkGraphicsDevice gd, ref ComputePipelineDescription description)
-
-        /// <summary>
-        /// Executes base.
-        /// </summary>
-        : base(ref description) {
+    /// <param name="gd">The value of gd.</param>
+    /// <param name="description">The value of description.</param>
+    /// <returns>The result of the base operation.</returns>
+    public VkPipeline(VkGraphicsDevice gd, ref ComputePipelineDescription description) : base(ref description) {
         this.gd = gd;
         this.IsComputePipeline = true;
         this.RefCount = new ResourceRefCount(this.DisposeCore);
@@ -493,7 +489,7 @@ internal unsafe class VkPipeline : Pipeline {
     #region Disposal
 
     /// <summary>
-    /// Executes Dispose.
+    /// Performs the Dispose operation.
     /// </summary>
     public override void Dispose() {
         this.RefCount.Decrement();
@@ -502,7 +498,7 @@ internal unsafe class VkPipeline : Pipeline {
     #endregion
 
     /// <summary>
-    /// Executes DisposeCore.
+    /// Performs the DisposeCore operation.
     /// </summary>
     private void DisposeCore() {
         if (!this._destroyed) {

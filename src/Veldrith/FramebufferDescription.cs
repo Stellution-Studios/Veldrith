@@ -20,16 +20,10 @@ public struct FramebufferDescription : IEquatable<FramebufferDescription> {
     public FramebufferAttachmentDescription[] ColorTargets;
 
     /// <summary>
-    /// Constructs a new <see cref="FramebufferDescription" />.
+    /// Initializes a new instance of the <see cref="FramebufferDescription" /> type.
     /// </summary>
-    /// <param name="depthTarget">
-    /// The depth texture, which must have been created with
-    /// <see cref="TextureUsage.DepthStencil" /> usage flags. May be null.
-    /// </param>
-    /// <param name="colorTargets">
-    /// An array of color textures, all of which must have been created with
-    /// <see cref="TextureUsage.RenderTarget" /> usage flags. May be null or empty.
-    /// </param>
+    /// <param name="depthTarget">The value of depthTarget.</param>
+    /// <param name="colorTargets">The value of colorTargets.</param>
     public FramebufferDescription(Texture depthTarget, params Texture[] colorTargets) {
         if (depthTarget != null) {
             this.DepthTarget = new FramebufferAttachmentDescription(depthTarget, 0);
@@ -45,31 +39,28 @@ public struct FramebufferDescription : IEquatable<FramebufferDescription> {
     }
 
     /// <summary>
-    /// Constructs a new <see cref="FramebufferDescription" />.
+    /// Initializes a new instance of the <see cref="FramebufferDescription" /> type.
     /// </summary>
-    /// <param name="depthTarget">A description of the depth attachment. May be null if no depth attachment will be used.</param>
-    /// <param name="colorTargets">
-    /// An array of descriptions of color attachments. May be empty if no color attachments will
-    /// be used.
-    /// </param>
+    /// <param name="depthTarget">The value of depthTarget.</param>
+    /// <param name="colorTargets">The value of colorTargets.</param>
     public FramebufferDescription(FramebufferAttachmentDescription? depthTarget, FramebufferAttachmentDescription[] colorTargets) {
         this.DepthTarget = depthTarget;
         this.ColorTargets = colorTargets;
     }
 
     /// <summary>
-    /// Element-wise equality.
+    /// Performs the Equals operation.
     /// </summary>
-    /// <param name="other">The instance to compare to.</param>
-    /// <returns>True if all elements and all array elements are equal; false otherswise.</returns>
+    /// <param name="other">The value of other.</param>
+    /// <returns>The result of the Equals operation.</returns>
     public bool Equals(FramebufferDescription other) {
         return Util.NullableEquals(this.DepthTarget, other.DepthTarget) && Util.ArrayEqualsEquatable(this.ColorTargets, other.ColorTargets);
     }
 
     /// <summary>
-    /// Returns the hash code for this instance.
+    /// Performs the GetHashCode operation.
     /// </summary>
-    /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
+    /// <returns>The result of the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(this.DepthTarget.GetHashCode(), HashHelper.Array(this.ColorTargets));
     }

@@ -27,13 +27,10 @@ public struct VertexLayoutDescription : IEquatable<VertexLayoutDescription> {
     public uint InstanceStepRate;
 
     /// <summary>
-    /// Constructs a new VertexLayoutDescription.
+    /// Initializes a new instance of the <see cref="VertexLayoutDescription" /> type.
     /// </summary>
-    /// <param name="stride">The number of bytes in between successive elements in the <see cref="DeviceBuffer" />.</param>
-    /// <param name="elements">
-    /// An array of <see cref="VertexElementDescription" /> objects, each describing a single element
-    /// of vertex data.
-    /// </param>
+    /// <param name="stride">The value of stride.</param>
+    /// <param name="elements">The value of elements.</param>
     public VertexLayoutDescription(uint stride, params VertexElementDescription[] elements) {
         this.Stride = stride;
         this.Elements = elements;
@@ -41,20 +38,11 @@ public struct VertexLayoutDescription : IEquatable<VertexLayoutDescription> {
     }
 
     /// <summary>
-    /// Constructs a new VertexLayoutDescription.
+    /// Initializes a new instance of the <see cref="VertexLayoutDescription" /> type.
     /// </summary>
-    /// <param name="stride">The number of bytes in between successive elements in the <see cref="DeviceBuffer" />.</param>
-    /// <param name="elements">
-    /// An array of <see cref="VertexElementDescription" /> objects, each describing a single element
-    /// of vertex data.
-    /// </param>
-    /// <param name="instanceStepRate">
-    /// A value controlling how often data for instances is advanced for this element. For
-    /// per-vertex elements, this value should be 0.
-    /// For example, an InstanceStepRate of 3 indicates that 3 instances will be drawn with the same value for this
-    /// element.
-    /// The next 3 instances will be drawn with the next value for this element, and so on.
-    /// </param>
+    /// <param name="stride">The value of stride.</param>
+    /// <param name="instanceStepRate">The value of instanceStepRate.</param>
+    /// <param name="elements">The value of elements.</param>
     public VertexLayoutDescription(uint stride, uint instanceStepRate, params VertexElementDescription[] elements) {
         this.Stride = stride;
         this.Elements = elements;
@@ -62,12 +50,9 @@ public struct VertexLayoutDescription : IEquatable<VertexLayoutDescription> {
     }
 
     /// <summary>
-    /// Constructs a new VertexLayoutDescription. The stride is assumed to be the sum of the size of all elements.
+    /// Initializes a new instance of the <see cref="VertexLayoutDescription" /> type.
     /// </summary>
-    /// <param name="elements">
-    /// An array of <see cref="VertexElementDescription" /> objects, each describing a single element
-    /// of vertex data.
-    /// </param>
+    /// <param name="elements">The value of elements.</param>
     public VertexLayoutDescription(params VertexElementDescription[] elements) {
         this.Elements = elements;
         uint computedStride = 0;
@@ -87,10 +72,10 @@ public struct VertexLayoutDescription : IEquatable<VertexLayoutDescription> {
     }
 
     /// <summary>
-    /// Element-wise equality.
+    /// Performs the Equals operation.
     /// </summary>
-    /// <param name="other">The instance to compare to.</param>
-    /// <returns>True if all elements and all array elements are equal; false otherswise.</returns>
+    /// <param name="other">The value of other.</param>
+    /// <returns>The result of the Equals operation.</returns>
     public bool Equals(VertexLayoutDescription other) {
         return this.Stride.Equals(other.Stride)
                && Util.ArrayEqualsEquatable(this.Elements, other.Elements)
@@ -98,9 +83,9 @@ public struct VertexLayoutDescription : IEquatable<VertexLayoutDescription> {
     }
 
     /// <summary>
-    /// Returns the hash code for this instance.
+    /// Performs the GetHashCode operation.
     /// </summary>
-    /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
+    /// <returns>The result of the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(this.Stride.GetHashCode(), HashHelper.Array(this.Elements), this.InstanceStepRate.GetHashCode());
     }

@@ -16,13 +16,19 @@ namespace Veldrith.SPIRV;
 internal static unsafe class SpirvCrossCompiler {
 
     /// <summary>
-    /// Represents the s_cross field.
+    /// Performs the GetApi operation.
     /// </summary>
+    /// <returns>The result of the GetApi operation.</returns>
     private static readonly Cross s_cross = Cross.GetApi();
 
     /// <summary>
-    /// Executes CompileVertexFragment.
+    /// Performs the CompileVertexFragment operation.
     /// </summary>
+    /// <param name="vsSpirv">The value of vsSpirv.</param>
+    /// <param name="fsSpirv">The value of fsSpirv.</param>
+    /// <param name="target">The value of target.</param>
+    /// <param name="options">The value of options.</param>
+    /// <returns>The result of the CompileVertexFragment operation.</returns>
     internal static VertexFragmentCompilationResult CompileVertexFragment(byte[] vsSpirv, byte[] fsSpirv, CrossCompileTarget target, CrossCompileOptions options) {
         Cross cross = s_cross;
         SpvcContext* ctx = null;
@@ -90,8 +96,12 @@ internal static unsafe class SpirvCrossCompiler {
     }
 
     /// <summary>
-    /// Executes CompileCompute.
+    /// Performs the CompileCompute operation.
     /// </summary>
+    /// <param name="csSpirv">The value of csSpirv.</param>
+    /// <param name="target">The value of target.</param>
+    /// <param name="options">The value of options.</param>
+    /// <returns>The result of the CompileCompute operation.</returns>
     internal static ComputeCompilationResult CompileCompute(byte[] csSpirv, CrossCompileTarget target, CrossCompileOptions options) {
         Cross cross = s_cross;
         SpvcContext* ctx = null;
@@ -157,8 +167,10 @@ internal static unsafe class SpirvCrossCompiler {
         public readonly uint Binding = binding;
 
         /// <summary>
-        /// Executes CompareTo.
+        /// Performs the CompareTo operation.
         /// </summary>
+        /// <param name="other">The value of other.</param>
+        /// <returns>The result of the CompareTo operation.</returns>
         public int CompareTo(BindingKey other) {
             int c = this.Set.CompareTo(other.Set);
             return c != 0 ? c : this.Binding.CompareTo(other.Binding);
@@ -191,8 +203,11 @@ internal static unsafe class SpirvCrossCompiler {
     #region Compiler Setup
 
     /// <summary>
-    /// Executes Check.
+    /// Performs the Check operation.
     /// </summary>
+    /// <param name="cross">The value of cross.</param>
+    /// <param name="ctx">The value of ctx.</param>
+    /// <param name="result">The value of result.</param>
     private static void Check(Cross cross, SpvcContext* ctx, SpvcResult result) {
         if (result != SpvcResult.Success) {
             string msg = "SPIRV-Cross error";
@@ -208,8 +223,10 @@ internal static unsafe class SpirvCrossCompiler {
     }
 
     /// <summary>
-    /// Executes GetSpvcBackend.
+    /// Performs the GetSpvcBackend operation.
     /// </summary>
+    /// <param name="target">The value of target.</param>
+    /// <returns>The result of the GetSpvcBackend operation.</returns>
     private static SpvcBackend GetSpvcBackend(CrossCompileTarget target) {
         return target switch {
             CrossCompileTarget.HLSL => SpvcBackend.Hlsl,
@@ -220,8 +237,14 @@ internal static unsafe class SpirvCrossCompiler {
     }
 
     /// <summary>
-    /// Executes SetCompilerOptions.
+    /// Performs the SetCompilerOptions operation.
     /// </summary>
+    /// <param name="cross">The value of cross.</param>
+    /// <param name="compiler">The value of compiler.</param>
+    /// <param name="target">The value of target.</param>
+    /// <param name="options">The value of options.</param>
+    /// <param name="isCompute">The value of isCompute.</param>
+    /// <param name="hasStorageResources">The value of hasStorageResources.</param>
     private static void SetCompilerOptions(Cross cross, SpvcCompiler* compiler, CrossCompileTarget target, CrossCompileOptions options, bool isCompute, bool hasStorageResources) {
         CompilerOptions* opts = null;
         Check(cross, null, cross.CompilerCreateCompilerOptions(compiler, &opts));
@@ -255,8 +278,11 @@ internal static unsafe class SpirvCrossCompiler {
     }
 
     /// <summary>
-    /// Executes SetSpecializations.
+    /// Performs the SetSpecializations operation.
     /// </summary>
+    /// <param name="cross">The value of cross.</param>
+    /// <param name="compiler">The value of compiler.</param>
+    /// <param name="options">The value of options.</param>
     private static void SetSpecializations(Cross cross, SpvcCompiler* compiler, CrossCompileOptions options) {
         if (options.Specializations.Length == 0) {
             return;
@@ -290,9 +316,14 @@ internal static unsafe class SpirvCrossCompiler {
     #region Resource Collection
 
     /// <summary>
-    /// Collects all resources from a shader into the shared resource map.
-    /// Returns true if the shader uses storage buffers or storage images.
+    /// Performs the CollectResources operation.
     /// </summary>
+    /// <param name="cross">The value of cross.</param>
+    /// <param name="compiler">The value of compiler.</param>
+    /// <param name="allResources">The value of allResources.</param>
+    /// <param name="idIndex">The value of idIndex.</param>
+    /// <param name="normalizeResourceNames">The value of normalizeResourceNames.</param>
+    /// <returns>The result of the CollectResources operation.</returns>
     private static bool CollectResources(Cross cross, SpvcCompiler* compiler, SortedDictionary<BindingKey, ResourceInfo> allResources, uint idIndex, bool normalizeResourceNames) {
         SpvcResources* resources = null;
         Check(cross, null, cross.CompilerCreateShaderResources(compiler, &resources));
@@ -313,8 +344,17 @@ internal static unsafe class SpirvCrossCompiler {
     }
 
     /// <summary>
-    /// Executes AddResourcesOfType.
+    /// Performs the AddResourcesOfType operation.
     /// </summary>
+    /// <param name="cross">The value of cross.</param>
+    /// <param name="compiler">The value of compiler.</param>
+    /// <param name="resources">The value of resources.</param>
+    /// <param name="resourceType">The value of resourceType.</param>
+    /// <param name="allResources">The value of allResources.</param>
+    /// <param name="idIndex">The value of idIndex.</param>
+    /// <param name="normalizeResourceNames">The value of normalizeResourceNames.</param>
+    /// <param name="kind">The value of kind.</param>
+    /// <returns>The result of the AddResourcesOfType operation.</returns>
     private static bool AddResourcesOfType(Cross cross, SpvcCompiler* compiler, SpvcResources* resources, ResourceType resourceType, SortedDictionary<BindingKey, ResourceInfo> allResources, uint idIndex, bool normalizeResourceNames, ResourceKind kind) {
         ReflectedResource* resourceList = null;
         nuint resourceCount = 0;
@@ -336,8 +376,15 @@ internal static unsafe class SpirvCrossCompiler {
     }
 
     /// <summary>
-    /// Executes AddStorageBuffers.
+    /// Performs the AddStorageBuffers operation.
     /// </summary>
+    /// <param name="cross">The value of cross.</param>
+    /// <param name="compiler">The value of compiler.</param>
+    /// <param name="resources">The value of resources.</param>
+    /// <param name="allResources">The value of allResources.</param>
+    /// <param name="idIndex">The value of idIndex.</param>
+    /// <param name="normalizeResourceNames">The value of normalizeResourceNames.</param>
+    /// <returns>The result of the AddStorageBuffers operation.</returns>
     private static bool AddStorageBuffers(Cross cross, SpvcCompiler* compiler, SpvcResources* resources, SortedDictionary<BindingKey, ResourceInfo> allResources, uint idIndex, bool normalizeResourceNames) {
         ReflectedResource* resourceList = null;
         nuint resourceCount = 0;
@@ -372,8 +419,16 @@ internal static unsafe class SpirvCrossCompiler {
     }
 
     /// <summary>
-    /// Executes GetOrSetResourceName.
+    /// Performs the GetOrSetResourceName operation.
     /// </summary>
+    /// <param name="cross">The value of cross.</param>
+    /// <param name="compiler">The value of compiler.</param>
+    /// <param name="resource">The value of resource.</param>
+    /// <param name="kind">The value of kind.</param>
+    /// <param name="set">The value of set.</param>
+    /// <param name="binding">The value of binding.</param>
+    /// <param name="normalizeResourceNames">The value of normalizeResourceNames.</param>
+    /// <returns>The result of the GetOrSetResourceName operation.</returns>
     private static string GetOrSetResourceName(Cross cross, SpvcCompiler* compiler, ref ReflectedResource resource, ResourceKind kind, uint set, uint binding, bool normalizeResourceNames) {
         if (normalizeResourceNames) {
             string name = $"vdspv_{set}_{binding}";
@@ -386,8 +441,15 @@ internal static unsafe class SpirvCrossCompiler {
     }
 
     /// <summary>
-    /// Executes InsertResource.
+    /// Performs the InsertResource operation.
     /// </summary>
+    /// <param name="allResources">The value of allResources.</param>
+    /// <param name="set">The value of set.</param>
+    /// <param name="binding">The value of binding.</param>
+    /// <param name="resourceId">The value of resourceId.</param>
+    /// <param name="idIndex">The value of idIndex.</param>
+    /// <param name="name">The value of name.</param>
+    /// <param name="kind">The value of kind.</param>
     private static void InsertResource(SortedDictionary<BindingKey, ResourceInfo> allResources, uint set, uint binding, uint resourceId, uint idIndex, string name, ResourceKind kind) {
         BindingKey key = new(set, binding);
         if (allResources.TryGetValue(key, out ResourceInfo? existing)) {
@@ -413,8 +475,15 @@ internal static unsafe class SpirvCrossCompiler {
     #region Binding Remapping
 
     /// <summary>
-    /// Executes GetResourceIndex.
+    /// Performs the GetResourceIndex operation.
     /// </summary>
+    /// <param name="target">The value of target.</param>
+    /// <param name="kind">The value of kind.</param>
+    /// <param name="bufferIndex">The value of bufferIndex.</param>
+    /// <param name="textureIndex">The value of textureIndex.</param>
+    /// <param name="uavIndex">The value of uavIndex.</param>
+    /// <param name="samplerIndex">The value of samplerIndex.</param>
+    /// <returns>The result of the GetResourceIndex operation.</returns>
     private static uint GetResourceIndex(CrossCompileTarget target, ResourceKind kind, ref uint bufferIndex, ref uint textureIndex, ref uint uavIndex, ref uint samplerIndex) {
         switch (kind) {
             case ResourceKind.UniformBuffer: return bufferIndex++;
@@ -428,8 +497,13 @@ internal static unsafe class SpirvCrossCompiler {
     }
 
     /// <summary>
-    /// Executes RemapBindingsHlslMsl.
+    /// Performs the RemapBindingsHlslMsl operation.
     /// </summary>
+    /// <param name="cross">The value of cross.</param>
+    /// <param name="allResources">The value of allResources.</param>
+    /// <param name="compiler0">The value of compiler0.</param>
+    /// <param name="compiler1">The value of compiler1.</param>
+    /// <param name="target">The value of target.</param>
     private static void RemapBindingsHlslMsl(Cross cross, SortedDictionary<BindingKey, ResourceInfo> allResources, SpvcCompiler* compiler0, SpvcCompiler* compiler1, CrossCompileTarget target) {
         uint bufferIndex = 0, textureIndex = 0, uavIndex = 0, samplerIndex = 0;
 
@@ -455,8 +529,10 @@ internal static unsafe class SpirvCrossCompiler {
     #region GLSL Specific
 
     /// <summary>
-    /// Executes BuildCombinedImageSamplers.
+    /// Performs the BuildCombinedImageSamplers operation.
     /// </summary>
+    /// <param name="cross">The value of cross.</param>
+    /// <param name="compiler">The value of compiler.</param>
     private static void BuildCombinedImageSamplers(Cross cross, SpvcCompiler* compiler) {
         uint dummySamplerId = 0;
         Check(cross, null, cross.CompilerBuildDummySamplerForCombinedImages(compiler, &dummySamplerId));
@@ -475,8 +551,11 @@ internal static unsafe class SpirvCrossCompiler {
     }
 
     /// <summary>
-    /// Executes RenameStageIO.
+    /// Performs the RenameStageIO operation.
     /// </summary>
+    /// <param name="cross">The value of cross.</param>
+    /// <param name="vsCompiler">The value of vsCompiler.</param>
+    /// <param name="fsCompiler">The value of fsCompiler.</param>
     private static void RenameStageIO(Cross cross, SpvcCompiler* vsCompiler, SpvcCompiler* fsCompiler) {
         // Rename vertex outputs to vdspv_fsinN
         SpvcResources* vsResources = null;
@@ -508,8 +587,11 @@ internal static unsafe class SpirvCrossCompiler {
     #region Reflection
 
     /// <summary>
-    /// Executes ReflectVertexInputs.
+    /// Performs the ReflectVertexInputs operation.
     /// </summary>
+    /// <param name="cross">The value of cross.</param>
+    /// <param name="compiler">The value of compiler.</param>
+    /// <returns>The result of the ReflectVertexInputs operation.</returns>
     private static VertexElementDescription[] ReflectVertexInputs(Cross cross, SpvcCompiler* compiler) {
         SpvcResources* resources = null;
         Check(cross, null, cross.CompilerCreateShaderResources(compiler, &resources));
@@ -569,8 +651,11 @@ internal static unsafe class SpirvCrossCompiler {
     }
 
     /// <summary>
-    /// Executes BuildResourceLayouts.
+    /// Performs the BuildResourceLayouts operation.
     /// </summary>
+    /// <param name="allResources">The value of allResources.</param>
+    /// <param name="isCompute">The value of isCompute.</param>
+    /// <returns>The result of the BuildResourceLayouts operation.</returns>
     private static ResourceLayoutDescription[] BuildResourceLayouts(SortedDictionary<BindingKey, ResourceInfo> allResources, bool isCompute) {
         uint setCount = 0;
         Dictionary<uint, uint> setSizes = new();
@@ -624,8 +709,13 @@ internal static unsafe class SpirvCrossCompiler {
     #region Native String Helpers
 
     /// <summary>
-    /// Executes GetNativeName.
+    /// Performs the GetNativeName operation.
     /// </summary>
+    /// <param name="cross">The value of cross.</param>
+    /// <param name="compiler">The value of compiler.</param>
+    /// <param name="id">The value of id.</param>
+    /// <param name="fallbackId">The value of fallbackId.</param>
+    /// <returns>The result of the GetNativeName operation.</returns>
     private static string GetNativeName(Cross cross, SpvcCompiler* compiler, uint id, uint fallbackId) {
         byte* namePtr = cross.CompilerGetName(compiler, id);
         string name = namePtr != null ? Marshal.PtrToStringUTF8((nint)namePtr) ?? "" : "";
@@ -638,8 +728,12 @@ internal static unsafe class SpirvCrossCompiler {
     }
 
     /// <summary>
-    /// Executes SetNativeName.
+    /// Performs the SetNativeName operation.
     /// </summary>
+    /// <param name="cross">The value of cross.</param>
+    /// <param name="compiler">The value of compiler.</param>
+    /// <param name="id">The value of id.</param>
+    /// <param name="name">The value of name.</param>
     private static void SetNativeName(Cross cross, SpvcCompiler* compiler, uint id, string name) {
         byte[] nameBytes = Encoding.UTF8.GetBytes(name + '\0');
         fixed (byte* namePtr = nameBytes) {
@@ -648,8 +742,13 @@ internal static unsafe class SpirvCrossCompiler {
     }
 
     /// <summary>
-    /// Executes HasBufferBlockDecoration.
+    /// Performs the HasBufferBlockDecoration operation.
     /// </summary>
+    /// <param name="cross">The value of cross.</param>
+    /// <param name="compiler">The value of compiler.</param>
+    /// <param name="id">The value of id.</param>
+    /// <param name="decoration">The value of decoration.</param>
+    /// <returns>The result of the HasBufferBlockDecoration operation.</returns>
     private static bool HasBufferBlockDecoration(Cross cross, SpvcCompiler* compiler, uint id, Decoration decoration) {
         Decoration* decorations = null;
         nuint count = 0;
@@ -665,4 +764,3 @@ internal static unsafe class SpirvCrossCompiler {
 
     #endregion
 }
-

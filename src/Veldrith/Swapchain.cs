@@ -32,16 +32,16 @@ public abstract class Swapchain : IDeviceResource, IDisposable {
     #region Disposal
 
     /// <summary>
-    /// Frees unmanaged device resources controlled by this instance.
+    /// Performs the Dispose operation.
     /// </summary>
     public abstract void Dispose();
 
     #endregion
 
     /// <summary>
-    /// Resizes the renderable Textures managed by this instance to the given dimensions.
+    /// Performs the Resize operation.
     /// </summary>
-    /// <param name="width">The new width of the Swapchain.</param>
-    /// <param name="height">The new height of the Swapchain.</param>
+    /// <param name="width">The value of width.</param>
+    /// <param name="height">The value of height.</param>
     public abstract void Resize(uint width, uint height);
 }

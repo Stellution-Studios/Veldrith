@@ -31,19 +31,10 @@ public struct ShaderSetDescription : IEquatable<ShaderSetDescription> {
     public SpecializationConstant[] Specializations;
 
     /// <summary>
-    /// Constructs a new ShaderSetDescription.
+    /// Initializes a new instance of the <see cref="ShaderSetDescription" /> type.
     /// </summary>
-    /// <param name="vertexLayouts">
-    /// An array of <see cref="VertexLayoutDescription" /> describing the set of vertex layouts
-    /// understood by the <see cref="Pipeline" />. Each element in this array describes the input layout of a single
-    /// <see cref="DeviceBuffer" /> to be bound when drawing.
-    /// </param>
-    /// <param name="shaders">
-    /// An array of <see cref="Shader" /> objects, one for each shader stage which is to be active
-    /// in the <see cref="Pipeline" />. At a minimum, every graphics Pipeline must include a Vertex and Fragment shader.
-    /// All
-    /// other stages are optional, but if either Tessellation stage is present, then the other must also be.
-    /// </param>
+    /// <param name="vertexLayouts">The value of vertexLayouts.</param>
+    /// <param name="shaders">The value of shaders.</param>
     public ShaderSetDescription(VertexLayoutDescription[] vertexLayouts, Shader[] shaders) {
         this.VertexLayouts = vertexLayouts;
         this.Shaders = shaders;
@@ -51,25 +42,11 @@ public struct ShaderSetDescription : IEquatable<ShaderSetDescription> {
     }
 
     /// <summary>
-    /// Constructs a new ShaderSetDescription.
+    /// Initializes a new instance of the <see cref="ShaderSetDescription" /> type.
     /// </summary>
-    /// <param name="vertexLayouts">
-    /// An array of <see cref="VertexLayoutDescription" /> describing the set of vertex layouts
-    /// understood by the <see cref="Pipeline" />. Each element in this array describes the input layout of a single
-    /// <see cref="DeviceBuffer" /> to be bound when drawing.
-    /// </param>
-    /// <param name="shaders">
-    /// An array of <see cref="Shader" /> objects, one for each shader stage which is to be active
-    /// in the <see cref="Pipeline" />. At a minimum, every graphics Pipeline must include a Vertex and Fragment shader.
-    /// All
-    /// other stages are optional, but if either Tessellation stage is present, then the other must also be.
-    /// </param>
-    /// <param name="specializations">
-    /// An array of <see cref="SpecializationConstant" /> used to override specialization
-    /// constants in the created <see cref="Pipeline" />. Each element in this array describes a single ID-value pair,
-    /// which
-    /// will be matched with the constants specified in each <see cref="Shader" />.
-    /// </param>
+    /// <param name="vertexLayouts">The value of vertexLayouts.</param>
+    /// <param name="shaders">The value of shaders.</param>
+    /// <param name="specializations">The value of specializations.</param>
     public ShaderSetDescription(VertexLayoutDescription[] vertexLayouts, Shader[] shaders, SpecializationConstant[] specializations) {
         this.VertexLayouts = vertexLayouts;
         this.Shaders = shaders;
@@ -77,10 +54,10 @@ public struct ShaderSetDescription : IEquatable<ShaderSetDescription> {
     }
 
     /// <summary>
-    /// Element-wise equality.
+    /// Performs the Equals operation.
     /// </summary>
-    /// <param name="other">The instance to compare to.</param>
-    /// <returns>True if all array elements are equal; false otherswise.</returns>
+    /// <param name="other">The value of other.</param>
+    /// <returns>The result of the Equals operation.</returns>
     public bool Equals(ShaderSetDescription other) {
         return Util.ArrayEqualsEquatable(this.VertexLayouts, other.VertexLayouts)
                && Util.ArrayEquals(this.Shaders, other.Shaders)
@@ -88,9 +65,9 @@ public struct ShaderSetDescription : IEquatable<ShaderSetDescription> {
     }
 
     /// <summary>
-    /// Returns the hash code for this instance.
+    /// Performs the GetHashCode operation.
     /// </summary>
-    /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
+    /// <returns>The result of the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(HashHelper.Array(this.VertexLayouts), HashHelper.Array(this.Shaders), HashHelper.Array(this.Specializations));
     }

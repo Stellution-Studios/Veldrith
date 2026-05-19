@@ -19,16 +19,23 @@ internal struct BoundResourceSetInfo : IEquatable<BoundResourceSetInfo> {
     public SmallFixedOrDynamicArray Offsets;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="BoundResourceSetInfo" /> class.
+    /// Initializes a new instance of the <see cref="BoundResourceSetInfo" /> type.
     /// </summary>
+    /// <param name="set">The value of set.</param>
+    /// <param name="offsetsCount">The value of offsetsCount.</param>
+    /// <param name="offsets">The value of offsets.</param>
     public BoundResourceSetInfo(ResourceSet set, uint offsetsCount, ref uint offsets) {
         this.Set = set;
         this.Offsets = new SmallFixedOrDynamicArray(offsetsCount, ref offsets);
     }
 
     /// <summary>
-    /// Executes Equals.
+    /// Performs the Equals operation.
     /// </summary>
+    /// <param name="set">The value of set.</param>
+    /// <param name="offsetsCount">The value of offsetsCount.</param>
+    /// <param name="offsets">The value of offsets.</param>
+    /// <returns>The result of the Equals operation.</returns>
     public bool Equals(ResourceSet set, uint offsetsCount, ref uint offsets) {
         if (set != this.Set || offsetsCount != this.Offsets.Count) {
             return false;
@@ -44,8 +51,10 @@ internal struct BoundResourceSetInfo : IEquatable<BoundResourceSetInfo> {
     }
 
     /// <summary>
-    /// Executes Equals.
+    /// Performs the Equals operation.
     /// </summary>
+    /// <param name="other">The value of other.</param>
+    /// <returns>The result of the Equals operation.</returns>
     public bool Equals(BoundResourceSetInfo other) {
         if (this.Set != other.Set || this.Offsets.Count != other.Offsets.Count) {
             return false;

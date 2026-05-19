@@ -20,14 +20,15 @@ public struct MTLCommandQueue {
     [Pure]
 
     /// <summary>
-    /// Executes commandBuffer.
+    /// Performs the commandBuffer operation.
     /// </summary>
+    /// <returns>The result of the commandBuffer operation.</returns>
     public MTLCommandBuffer commandBuffer() {
         return objc_msgSend<MTLCommandBuffer>(this.NativePtr, sel_commandBuffer);
     }
 
     /// <summary>
-    /// Executes insertDebugCaptureBoundary.
+    /// Performs the insertDebugCaptureBoundary operation.
     /// </summary>
     public void insertDebugCaptureBoundary() {
         objc_msgSend(this.NativePtr, sel_insertDebugCaptureBoundary);

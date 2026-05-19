@@ -36,8 +36,14 @@ public struct MTLViewport {
     public double zfar;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MTLViewport" /> class.
+    /// Initializes a new instance of the <see cref="MTLViewport" /> type.
     /// </summary>
+    /// <param name="originX">The value of originX.</param>
+    /// <param name="originY">The value of originY.</param>
+    /// <param name="width">The value of width.</param>
+    /// <param name="height">The value of height.</param>
+    /// <param name="znear">The value of znear.</param>
+    /// <param name="zfar">The value of zfar.</param>
     public MTLViewport(double originX, double originY, double width, double height, double znear, double zfar) {
         this.originX = originX;
         this.originY = originY;

@@ -27,14 +27,14 @@ public abstract class Fence : IDeviceResource, IDisposable {
     #region Disposal
 
     /// <summary>
-    /// Frees unmanaged device resources controlled by this instance.
+    /// Performs the Dispose operation.
     /// </summary>
     public abstract void Dispose();
 
     #endregion
 
     /// <summary>
-    /// Sets this instance to the unsignaled state.
+    /// Performs the Reset operation.
     /// </summary>
     public abstract void Reset();
 }

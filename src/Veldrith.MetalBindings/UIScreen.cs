@@ -14,19 +14,25 @@ public struct UIScreen {
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="UIScreen" /> class.
+    /// Initializes a new instance of the <see cref="UIScreen" /> type.
     /// </summary>
+    /// <param name="ptr">The value of ptr.</param>
     public UIScreen(IntPtr ptr) {
         this.NativePtr = ptr;
     }
 
     /// <summary>
-    /// Gets or sets nativeScale.
+    /// Performs the CGFloat_objc_msgSend operation.
     /// </summary>
+    /// <param name="NativePtr">The value of NativePtr.</param>
+    /// <param name="sel_nativeScale">The value of sel_nativeScale.</param>
+    /// <returns>The result of the CGFloat_objc_msgSend operation.</returns>
     public CGFloat nativeScale => CGFloat_objc_msgSend(this.NativePtr, sel_nativeScale);
 
-    public static UIScreen mainScreen
-        => objc_msgSend<UIScreen>(new ObjCClass(nameof(UIScreen)), sel_mainScreen);
+    /// <summary>
+    /// Gets the primary screen object from UIKit.
+    /// </summary>
+    public static UIScreen mainScreen => objc_msgSend<UIScreen>(new ObjCClass(nameof(UIScreen)), sel_mainScreen);
 
     /// <summary>
     /// Represents the sel_nativeScale field.

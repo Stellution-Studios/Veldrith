@@ -8,22 +8,22 @@ namespace Veldrith;
 public class VeldridException : Exception {
 
     /// <summary>
-    /// Constructs a new VeldridException.
+    /// Initializes a new instance of the <see cref="VeldridException" /> type.
     /// </summary>
     public VeldridException() { }
 
     /// <summary>
-    /// Constructs a new Veldridexception with the given message.
+    /// Initializes a new instance of the <see cref="VeldridException" /> type.
     /// </summary>
-    /// <param name="message">The exception message.</param>
+    /// <param name="message">The value of message.</param>
     public VeldridException(string message)
         : base(message) { }
 
     /// <summary>
-    /// Constructs a new Veldridexception with the given message and inner exception.
+    /// Initializes a new instance of the <see cref="VeldridException" /> type.
     /// </summary>
-    /// <param name="message">The exception message.</param>
-    /// <param name="innerException">The inner exception.</param>
+    /// <param name="message">The value of message.</param>
+    /// <param name="innerException">The value of innerException.</param>
     public VeldridException(string message, Exception innerException)
         : base(message, innerException) { }
 }

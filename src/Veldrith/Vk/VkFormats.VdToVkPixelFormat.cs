@@ -8,8 +8,11 @@ namespace Veldrith.Vk;
 internal static partial class VkFormats {
 
     /// <summary>
-    /// Executes VdToVkPixelFormat.
+    /// Performs the VdToVkPixelFormat operation.
     /// </summary>
+    /// <param name="format">The value of format.</param>
+    /// <param name="toDepthFormat">The value of toDepthFormat.</param>
+    /// <returns>The result of the VdToVkPixelFormat operation.</returns>
     internal static VkFormat VdToVkPixelFormat(PixelFormat format, bool toDepthFormat = false) {
         switch (format) {
             case PixelFormat.R8UNorm: return VkFormat.R8Unorm;

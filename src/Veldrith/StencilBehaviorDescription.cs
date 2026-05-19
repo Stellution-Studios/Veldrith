@@ -28,12 +28,12 @@ public struct StencilBehaviorDescription : IEquatable<StencilBehaviorDescription
     public ComparisonKind Comparison;
 
     /// <summary>
-    /// Constructs a new StencilBehaviorDescription.
+    /// Initializes a new instance of the <see cref="StencilBehaviorDescription" /> type.
     /// </summary>
-    /// <param name="fail">The operation performed on samples that fail the stencil test.</param>
-    /// <param name="pass">The operation performed on samples that pass the stencil test.</param>
-    /// <param name="depthFail">The operation performed on samples that pass the stencil test but fail the depth test.</param>
-    /// <param name="comparison">The comparison operator used in the stencil test.</param>
+    /// <param name="fail">The value of fail.</param>
+    /// <param name="pass">The value of pass.</param>
+    /// <param name="depthFail">The value of depthFail.</param>
+    /// <param name="comparison">The value of comparison.</param>
     public StencilBehaviorDescription(StencilOperation fail, StencilOperation pass, StencilOperation depthFail, ComparisonKind comparison) {
         this.Fail = fail;
         this.Pass = pass;
@@ -42,18 +42,18 @@ public struct StencilBehaviorDescription : IEquatable<StencilBehaviorDescription
     }
 
     /// <summary>
-    /// Element-wise equality.
+    /// Performs the Equals operation.
     /// </summary>
-    /// <param name="other">The instance to compare to.</param>
-    /// <returns>True if all elements are equal; false otherswise.</returns>
+    /// <param name="other">The value of other.</param>
+    /// <returns>The result of the Equals operation.</returns>
     public bool Equals(StencilBehaviorDescription other) {
         return this.Fail == other.Fail && this.Pass == other.Pass && this.DepthFail == other.DepthFail && this.Comparison == other.Comparison;
     }
 
     /// <summary>
-    /// Returns the hash code for this instance.
+    /// Performs the GetHashCode operation.
     /// </summary>
-    /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
+    /// <returns>The result of the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine((int)this.Fail, (int)this.Pass, (int)this.DepthFail, (int)this.Comparison);
     }

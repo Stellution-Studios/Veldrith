@@ -6,15 +6,17 @@ namespace Veldrith.SPIRV;
 public class GlslCompileOptions {
 
     /// <summary>
-    /// Constructs a new <see cref="GlslCompileOptions" /> with default properties.
+    /// Initializes a new instance of the <see cref="GlslCompileOptions" /> type.
     /// </summary>
     public GlslCompileOptions() {
         this.Macros = Array.Empty<MacroDefinition>();
     }
 
     /// <summary>
-    /// Constructs a new <see cref="GlslCompileOptions" />.
+    /// Initializes a new instance of the <see cref="GlslCompileOptions" /> type.
     /// </summary>
+    /// <param name="debug">The value of debug.</param>
+    /// <param name="macros">The value of macros.</param>
     public GlslCompileOptions(bool debug, params MacroDefinition[] macros) {
         this.Debug = debug;
         this.Macros = macros ?? Array.Empty<MacroDefinition>();
@@ -32,8 +34,8 @@ public class GlslCompileOptions {
     public MacroDefinition[] Macros { get; set; }
 
     /// <summary>
-    /// Gets a default <see cref="GlslCompileOptions" />.
+    /// Performs the new operation.
     /// </summary>
+    /// <returns>The result of the new operation.</returns>
     public static GlslCompileOptions Default { get; } = new();
 }
-

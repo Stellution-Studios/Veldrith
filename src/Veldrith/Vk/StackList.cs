@@ -20,9 +20,6 @@ internal unsafe struct StackList<T> where T : struct {
     /// </summary>
     private static readonly int _s_sizeof_t = Unsafe.SizeOf<T>();
 
-    /// <summary>
-    /// Represents the _storage field.
-    /// </summary>
     private fixed byte _storage[CAPACITY_IN_BYTES];
 
     /// <summary>
@@ -31,13 +28,16 @@ internal unsafe struct StackList<T> where T : struct {
     public uint Count { get; private set; }
 
     /// <summary>
-    /// Represents the Data field.
+    /// Performs the AsPointer operation.
     /// </summary>
+    /// <param name="this">The value of this.</param>
+    /// <returns>The result of the AsPointer operation.</returns>
     public void* Data => Unsafe.AsPointer(ref this);
 
     /// <summary>
-    /// Executes Add.
+    /// Performs the Add operation.
     /// </summary>
+    /// <param name="item">The value of item.</param>
     public void Add(T item) {
         byte* basePtr = (byte*)this.Data;
         int offset = (int)(this.Count * _s_sizeof_t);
@@ -98,13 +98,16 @@ internal unsafe struct StackList<T, TSize> where T : struct where TSize : struct
     public uint Count { get; private set; }
 
     /// <summary>
-    /// Represents the Data field.
+    /// Performs the AsPointer operation.
     /// </summary>
+    /// <param name="this">The value of this.</param>
+    /// <returns>The result of the AsPointer operation.</returns>
     public void* Data => Unsafe.AsPointer(ref this);
 
     /// <summary>
-    /// Executes Add.
+    /// Performs the Add operation.
     /// </summary>
+    /// <param name="item">The value of item.</param>
     public void Add(T item) {
         ref T dest = ref Unsafe.Add(ref Unsafe.As<TSize, T>(ref this._storage), (int)this.Count);
 #if DEBUG
@@ -117,13 +120,19 @@ internal unsafe struct StackList<T, TSize> where T : struct where TSize : struct
     }
 
     /// <summary>
-    /// Represents the this field.
+    /// Performs the Add operation.
     /// </summary>
+    /// <param name="Data">The value of Data.</param>
+    /// <param name="index">The value of index.</param>
+    /// <returns>The result of the Add operation.</returns>
     public ref T this[int index] => ref Unsafe.Add(ref Unsafe.AsRef<T>(this.Data), index);
 
     /// <summary>
-    /// Represents the this field.
+    /// Performs the Add operation.
     /// </summary>
+    /// <param name="Data">The value of Data.</param>
+    /// <param name="int">The value of int.</param>
+    /// <returns>The result of the Add operation.</returns>
     public ref T this[uint index] => ref Unsafe.Add(ref Unsafe.AsRef<T>(this.Data), (int)index);
 }
 
@@ -132,9 +141,6 @@ internal unsafe struct StackList<T, TSize> where T : struct where TSize : struct
 /// </summary>
 internal unsafe struct Size16Bytes {
 
-    /// <summary>
-    /// Represents the Data field.
-    /// </summary>
     public fixed byte Data[16];
 }
 
@@ -143,9 +149,6 @@ internal unsafe struct Size16Bytes {
 /// </summary>
 internal unsafe struct Size64Bytes {
 
-    /// <summary>
-    /// Represents the Data field.
-    /// </summary>
     public fixed byte Data[64];
 }
 
@@ -154,9 +157,6 @@ internal unsafe struct Size64Bytes {
 /// </summary>
 internal unsafe struct Size128Bytes {
 
-    /// <summary>
-    /// Represents the Data field.
-    /// </summary>
     public fixed byte Data[64];
 }
 
@@ -165,9 +165,6 @@ internal unsafe struct Size128Bytes {
 /// </summary>
 internal unsafe struct Size512Bytes {
 
-    /// <summary>
-    /// Represents the Data field.
-    /// </summary>
     public fixed byte Data[1024];
 }
 
@@ -176,9 +173,6 @@ internal unsafe struct Size512Bytes {
 /// </summary>
 internal unsafe struct Size1024Bytes {
 
-    /// <summary>
-    /// Represents the Data field.
-    /// </summary>
     public fixed byte Data[1024];
 }
 
@@ -187,9 +181,6 @@ internal unsafe struct Size1024Bytes {
 /// </summary>
 internal unsafe struct Size2048Bytes {
 
-    /// <summary>
-    /// Represents the Data field.
-    /// </summary>
     public fixed byte Data[2048];
 }
 #pragma warning disable 0649 // Fields are not assigned directly -- expected.
@@ -246,4 +237,3 @@ internal struct Size6IntPtr {
     public IntPtr Sixth;
 }
 #pragma warning restore 0649
-

@@ -8,104 +8,83 @@ namespace Veldrith;
 public abstract class SwapchainSource {
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="SwapchainSource" /> class.
+    /// Initializes a new instance of the <see cref="SwapchainSource" /> type.
     /// </summary>
     internal SwapchainSource() { }
 
     /// <summary>
-    /// Creates a new SwapchainSource for a Win32 window.
+    /// Performs the CreateWin32 operation.
     /// </summary>
-    /// <param name="hwnd">The Win32 window handle.</param>
-    /// <param name="hinstance">The Win32 instance handle.</param>
-    /// <returns>
-    /// A new SwapchainSource which can be used to create a <see cref="Swapchain" /> for the given Win32 window.
-    /// </returns>
+    /// <param name="hwnd">The value of hwnd.</param>
+    /// <param name="hinstance">The value of hinstance.</param>
+    /// <returns>The result of the CreateWin32 operation.</returns>
     public static SwapchainSource CreateWin32(IntPtr hwnd, IntPtr hinstance) {
         return new Win32SwapchainSource(hwnd, hinstance);
     }
 
     /// <summary>
-    /// Creates a new SwapchainSource for a UWP SwapChain panel.
+    /// Performs the CreateUwp operation.
     /// </summary>
-    /// <param name="swapChainPanel">
-    /// A COM object which must implement the <see cref="Vortice.DXGI.ISwapChainPanelNative" />
-    /// or <see cref="Vortice.DXGI.ISwapChainBackgroundPanelNative" /> interface. Generally, this should be a
-    /// SwapChainPanel
-    /// or SwapChainBackgroundPanel contained in your application window.
-    /// </param>
-    /// <param name="logicalDpi">The logical DPI of the swapchain panel.</param>
-    /// <returns>
-    /// A new SwapchainSource which can be used to create a <see cref="Swapchain" /> for the given UWP panel.
-    /// </returns>
+    /// <param name="swapChainPanel">The value of swapChainPanel.</param>
+    /// <param name="logicalDpi">The value of logicalDpi.</param>
+    /// <returns>The result of the CreateUwp operation.</returns>
     public static SwapchainSource CreateUwp(object swapChainPanel, float logicalDpi) {
         return new UwpSwapchainSource(swapChainPanel, logicalDpi);
     }
 
     /// <summary>
-    /// Creates a new SwapchainSource from the given Xlib information.
+    /// Performs the CreateXlib operation.
     /// </summary>
-    /// <param name="display">An Xlib Display.</param>
-    /// <param name="window">An Xlib Window.</param>
-    /// <returns>
-    /// A new SwapchainSource which can be used to create a <see cref="Swapchain" /> for the given Xlib window.
-    /// </returns>
+    /// <param name="display">The value of display.</param>
+    /// <param name="window">The value of window.</param>
+    /// <returns>The result of the CreateXlib operation.</returns>
     public static SwapchainSource CreateXlib(IntPtr display, IntPtr window) {
         return new XlibSwapchainSource(display, window);
     }
 
     /// <summary>
-    /// Creates a new SwapchainSource from the given Wayland information.
+    /// Performs the CreateWayland operation.
     /// </summary>
-    /// <param name="display">The Wayland display proxy.</param>
-    /// <param name="surface">The Wayland surface proxy to map.</param>
-    /// <returns>
-    /// A new SwapchainSource which can be used to create a <see cref="Swapchain" /> for the given Wayland surface.
-    /// </returns>
+    /// <param name="display">The value of display.</param>
+    /// <param name="surface">The value of surface.</param>
+    /// <returns>The result of the CreateWayland operation.</returns>
     public static SwapchainSource CreateWayland(IntPtr display, IntPtr surface) {
         return new WaylandSwapchainSource(display, surface);
     }
 
     /// <summary>
-    /// Creates a new SwapchainSource for the given NSWindow.
+    /// Performs the CreateNSWindow operation.
     /// </summary>
-    /// <param name="nsWindow">A pointer to an NSWindow.</param>
-    /// <returns>
-    /// A new SwapchainSource which can be used to create a Metal <see cref="Swapchain" /> for the given NSWindow.
-    /// </returns>
+    /// <param name="nsWindow">The value of nsWindow.</param>
+    /// <returns>The result of the CreateNSWindow operation.</returns>
     public static SwapchainSource CreateNSWindow(IntPtr nsWindow) {
         return new NSWindowSwapchainSource(nsWindow);
     }
 
     /// <summary>
-    /// Creates a new SwapchainSource for the given UIView.
+    /// Performs the CreateUIView operation.
     /// </summary>
-    /// <param name="uiView">The UIView's native handle.</param>
-    /// <returns>
-    /// A new SwapchainSource which can be used to create a Metal <see cref="Swapchain" /> for the given UIView.
-    /// </returns>
+    /// <param name="uiView">The value of uiView.</param>
+    /// <returns>The result of the CreateUIView operation.</returns>
     public static SwapchainSource CreateUIView(IntPtr uiView) {
         return new UIViewSwapchainSource(uiView);
     }
 
     /// <summary>
-    /// Creates a new SwapchainSource for the given Android Surface.
+    /// Performs the CreateAndroidSurface operation.
     /// </summary>
-    /// <param name="surfaceHandle">The handle of the Android Surface.</param>
-    /// <param name="jniEnv">The Java Native Interface Environment handle.</param>
-    /// <returns>
-    /// A new SwapchainSource which can be used to create a Vulkan <see cref="Swapchain" /> for the given Android Surface.
-    /// </returns>
+    /// <param name="surfaceHandle">The value of surfaceHandle.</param>
+    /// <param name="jniEnv">The value of jniEnv.</param>
+    /// <returns>The result of the CreateAndroidSurface operation.</returns>
     public static SwapchainSource CreateAndroidSurface(IntPtr surfaceHandle, IntPtr jniEnv) {
         return new AndroidSurfaceSwapchainSource(surfaceHandle, jniEnv);
     }
 
     /// <summary>
-    /// Creates a new SwapchainSource for the given NSView.
+    /// Performs the CreateNSView operation.
     /// </summary>
-    /// <param name="nsView">A pointer to an NSView.</param>
-    /// <returns>
-    /// A new SwapchainSource which can be used to create a Metal <see cref="Swapchain" /> for the given NSView.
-    /// </returns>
+    /// <param name="nsView">The value of nsView.</param>
+    /// <returns>The result of the CreateNSView operation.</returns>
     public static SwapchainSource CreateNSView(IntPtr nsView) {
         return new NSViewSwapchainSource(nsView);
     }
@@ -117,8 +96,10 @@ public abstract class SwapchainSource {
 internal class Win32SwapchainSource : SwapchainSource {
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="Win32SwapchainSource" /> class.
+    /// Initializes a new instance of the <see cref="Win32SwapchainSource" /> type.
     /// </summary>
+    /// <param name="hwnd">The value of hwnd.</param>
+    /// <param name="hinstance">The value of hinstance.</param>
     public Win32SwapchainSource(IntPtr hwnd, IntPtr hinstance) {
         this.Hwnd = hwnd;
         this.Hinstance = hinstance;
@@ -141,8 +122,10 @@ internal class Win32SwapchainSource : SwapchainSource {
 internal class UwpSwapchainSource : SwapchainSource {
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="UwpSwapchainSource" /> class.
+    /// Initializes a new instance of the <see cref="UwpSwapchainSource" /> type.
     /// </summary>
+    /// <param name="swapChainPanelNative">The value of swapChainPanelNative.</param>
+    /// <param name="logicalDpi">The value of logicalDpi.</param>
     public UwpSwapchainSource(object swapChainPanelNative, float logicalDpi) {
         this.SwapChainPanelNative = swapChainPanelNative;
         this.LogicalDpi = logicalDpi;
@@ -165,8 +148,10 @@ internal class UwpSwapchainSource : SwapchainSource {
 internal class XlibSwapchainSource : SwapchainSource {
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="XlibSwapchainSource" /> class.
+    /// Initializes a new instance of the <see cref="XlibSwapchainSource" /> type.
     /// </summary>
+    /// <param name="display">The value of display.</param>
+    /// <param name="window">The value of window.</param>
     public XlibSwapchainSource(IntPtr display, IntPtr window) {
         this.Display = display;
         this.Window = window;
@@ -189,8 +174,10 @@ internal class XlibSwapchainSource : SwapchainSource {
 internal class WaylandSwapchainSource : SwapchainSource {
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="WaylandSwapchainSource" /> class.
+    /// Initializes a new instance of the <see cref="WaylandSwapchainSource" /> type.
     /// </summary>
+    /// <param name="display">The value of display.</param>
+    /// <param name="surface">The value of surface.</param>
     public WaylandSwapchainSource(IntPtr display, IntPtr surface) {
         this.Display = display;
         this.Surface = surface;
@@ -213,8 +200,9 @@ internal class WaylandSwapchainSource : SwapchainSource {
 internal class NSWindowSwapchainSource : SwapchainSource {
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="NSWindowSwapchainSource" /> class.
+    /// Initializes a new instance of the <see cref="NSWindowSwapchainSource" /> type.
     /// </summary>
+    /// <param name="nsWindow">The value of nsWindow.</param>
     public NSWindowSwapchainSource(IntPtr nsWindow) {
         this.NSWindow = nsWindow;
     }
@@ -231,8 +219,9 @@ internal class NSWindowSwapchainSource : SwapchainSource {
 internal class UIViewSwapchainSource : SwapchainSource {
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="UIViewSwapchainSource" /> class.
+    /// Initializes a new instance of the <see cref="UIViewSwapchainSource" /> type.
     /// </summary>
+    /// <param name="uiView">The value of uiView.</param>
     public UIViewSwapchainSource(IntPtr uiView) {
         this.UIView = uiView;
     }
@@ -249,8 +238,10 @@ internal class UIViewSwapchainSource : SwapchainSource {
 internal class AndroidSurfaceSwapchainSource : SwapchainSource {
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="AndroidSurfaceSwapchainSource" /> class.
+    /// Initializes a new instance of the <see cref="AndroidSurfaceSwapchainSource" /> type.
     /// </summary>
+    /// <param name="surfaceHandle">The value of surfaceHandle.</param>
+    /// <param name="jniEnv">The value of jniEnv.</param>
     public AndroidSurfaceSwapchainSource(IntPtr surfaceHandle, IntPtr jniEnv) {
         this.Surface = surfaceHandle;
         this.JniEnv = jniEnv;
@@ -273,8 +264,9 @@ internal class AndroidSurfaceSwapchainSource : SwapchainSource {
 internal class NSViewSwapchainSource : SwapchainSource {
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="NSViewSwapchainSource" /> class.
+    /// Initializes a new instance of the <see cref="NSViewSwapchainSource" /> type.
     /// </summary>
+    /// <param name="nsView">The value of nsView.</param>
     public NSViewSwapchainSource(IntPtr nsView) {
         this.NSView = nsView;
     }
@@ -284,4 +276,3 @@ internal class NSViewSwapchainSource : SwapchainSource {
     /// </summary>
     public IntPtr NSView { get; }
 }
-

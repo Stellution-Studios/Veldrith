@@ -13,8 +13,10 @@ internal class MtlBuffer : DeviceBuffer {
     private bool _disposed;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MtlBuffer" /> class.
+    /// Initializes a new instance of the <see cref="MtlBuffer" /> type.
     /// </summary>
+    /// <param name="bd">The value of bd.</param>
+    /// <param name="gd">The value of gd.</param>
     public MtlBuffer(ref BufferDescription bd, MtlGraphicsDevice gd) {
         this.SizeInBytes = bd.SizeInBytes;
         uint roundFactor = (4 - this.SizeInBytes % 4) % 4;
@@ -79,7 +81,7 @@ internal class MtlBuffer : DeviceBuffer {
     #region Disposal
 
     /// <summary>
-    /// Executes Dispose.
+    /// Performs the Dispose operation.
     /// </summary>
     public override void Dispose() {
         if (!this._disposed) {

@@ -23,8 +23,11 @@ public struct MTLOrigin {
     public UIntPtr z;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MTLOrigin" /> class.
+    /// Initializes a new instance of the <see cref="MTLOrigin" /> type.
     /// </summary>
+    /// <param name="x">The value of x.</param>
+    /// <param name="y">The value of y.</param>
+    /// <param name="z">The value of z.</param>
     public MTLOrigin(uint x, uint y, uint z) {
         this.x = x;
         this.y = y;

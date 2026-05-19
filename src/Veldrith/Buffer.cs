@@ -31,7 +31,7 @@ public abstract class DeviceBuffer : IDeviceResource, IBindableResource, IMappab
     #region Disposal
 
     /// <summary>
-    /// Frees unmanaged device resources controlled by this instance.
+    /// Performs the Dispose operation.
     /// </summary>
     public abstract void Dispose();
 

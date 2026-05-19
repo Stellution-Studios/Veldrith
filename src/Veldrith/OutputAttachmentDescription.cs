@@ -13,26 +13,26 @@ public struct OutputAttachmentDescription : IEquatable<OutputAttachmentDescripti
     public PixelFormat Format;
 
     /// <summary>
-    /// Constructs a new <see cref="OutputAttachmentDescription" />.
+    /// Initializes a new instance of the <see cref="OutputAttachmentDescription" /> type.
     /// </summary>
-    /// <param name="format">THe format of the <see cref="Texture" /> attachment.</param>
+    /// <param name="format">The value of format.</param>
     public OutputAttachmentDescription(PixelFormat format) {
         this.Format = format;
     }
 
     /// <summary>
-    /// Element-wise equality.
+    /// Performs the Equals operation.
     /// </summary>
-    /// <param name="other">The instance to compare to.</param>
-    /// <returns>True if all elements are equal; false otherswise.</returns>
+    /// <param name="other">The value of other.</param>
+    /// <returns>The result of the Equals operation.</returns>
     public bool Equals(OutputAttachmentDescription other) {
         return this.Format == other.Format;
     }
 
     /// <summary>
-    /// Returns the hash code for this instance.
+    /// Performs the GetHashCode operation.
     /// </summary>
-    /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
+    /// <returns>The result of the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return (int)this.Format;
     }

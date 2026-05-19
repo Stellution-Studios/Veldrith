@@ -21,22 +21,28 @@ public unsafe struct MTLDevice {
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Executes IntPtr.
+    /// Performs the operator IntPtr operation.
     /// </summary>
+    /// <param name="device">The value of device.</param>
+    /// <returns>The result of the operator IntPtr operation.</returns>
     public static implicit operator IntPtr(MTLDevice device) {
         return device.NativePtr;
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MTLDevice" /> class.
+    /// Initializes a new instance of the <see cref="MTLDevice" /> type.
     /// </summary>
+    /// <param name="nativePtr">The value of nativePtr.</param>
     public MTLDevice(IntPtr nativePtr) {
         this.NativePtr = nativePtr;
     }
 
     /// <summary>
-    /// Gets or sets name.
+    /// Performs the string_objc_msgSend operation.
     /// </summary>
+    /// <param name="NativePtr">The value of NativePtr.</param>
+    /// <param name="sel_name">The value of sel_name.</param>
+    /// <returns>The result of the string_objc_msgSend operation.</returns>
     public string name => string_objc_msgSend(this.NativePtr, sel_name);
 
     /// <summary>
@@ -53,8 +59,11 @@ public unsafe struct MTLDevice {
     }
 
     /// <summary>
-    /// Executes newLibraryWithSource.
+    /// Performs the newLibraryWithSource operation.
     /// </summary>
+    /// <param name="source">The value of source.</param>
+    /// <param name="options">The value of options.</param>
+    /// <returns>The result of the newLibraryWithSource operation.</returns>
     public MTLLibrary newLibraryWithSource(string source, MTLCompileOptions options) {
         NSString sourceNSS = NSString.New(source);
 
@@ -70,8 +79,10 @@ public unsafe struct MTLDevice {
     }
 
     /// <summary>
-    /// Executes newLibraryWithData.
+    /// Performs the newLibraryWithData operation.
     /// </summary>
+    /// <param name="data">The value of data.</param>
+    /// <returns>The result of the newLibraryWithData operation.</returns>
     public MTLLibrary newLibraryWithData(DispatchData data) {
         IntPtr library = IntPtr_objc_msgSend(this.NativePtr, sel_newLibraryWithData, data.NativePtr, out NSError error);
 
@@ -83,8 +94,10 @@ public unsafe struct MTLDevice {
     }
 
     /// <summary>
-    /// Executes newRenderPipelineStateWithDescriptor.
+    /// Performs the newRenderPipelineStateWithDescriptor operation.
     /// </summary>
+    /// <param name="desc">The value of desc.</param>
+    /// <returns>The result of the newRenderPipelineStateWithDescriptor operation.</returns>
     public MTLRenderPipelineState newRenderPipelineStateWithDescriptor(MTLRenderPipelineDescriptor desc) {
         IntPtr ret = IntPtr_objc_msgSend(this.NativePtr, sel_newRenderPipelineStateWithDescriptor, desc.NativePtr, out NSError error);
 
@@ -98,8 +111,10 @@ public unsafe struct MTLDevice {
     [Pure]
 
     /// <summary>
-    /// Executes newComputePipelineStateWithDescriptor.
+    /// Performs the newComputePipelineStateWithDescriptor operation.
     /// </summary>
+    /// <param name="descriptor">The value of descriptor.</param>
+    /// <returns>The result of the newComputePipelineStateWithDescriptor operation.</returns>
     public MTLComputePipelineState newComputePipelineStateWithDescriptor(MTLComputePipelineDescriptor descriptor) {
         IntPtr ret = IntPtr_objc_msgSend(this.NativePtr, sel_newComputePipelineStateWithDescriptor, descriptor, 0, IntPtr.Zero, out NSError error);
 
@@ -111,78 +126,100 @@ public unsafe struct MTLDevice {
     }
 
     /// <summary>
-    /// Executes newCommandQueue.
+    /// Performs the newCommandQueue operation.
     /// </summary>
+    /// <returns>The result of the newCommandQueue operation.</returns>
     public MTLCommandQueue newCommandQueue() {
         return objc_msgSend<MTLCommandQueue>(this.NativePtr, sel_newCommandQueue);
     }
 
     /// <summary>
-    /// Executes newBuffer.
+    /// Performs the newBuffer operation.
     /// </summary>
+    /// <param name="pointer">The value of pointer.</param>
+    /// <param name="length">The value of length.</param>
+    /// <param name="options">The value of options.</param>
+    /// <returns>The result of the newBuffer operation.</returns>
     public MTLBuffer newBuffer(void* pointer, UIntPtr length, MTLResourceOptions options) {
         IntPtr buffer = IntPtr_objc_msgSend(this.NativePtr, sel_newBufferWithBytes, pointer, length, options);
         return new MTLBuffer(buffer);
     }
 
     /// <summary>
-    /// Executes newBufferWithLengthOptions.
+    /// Performs the newBufferWithLengthOptions operation.
     /// </summary>
+    /// <param name="length">The value of length.</param>
+    /// <param name="options">The value of options.</param>
+    /// <returns>The result of the newBufferWithLengthOptions operation.</returns>
     public MTLBuffer newBufferWithLengthOptions(UIntPtr length, MTLResourceOptions options) {
         IntPtr buffer = IntPtr_objc_msgSend(this.NativePtr, sel_newBufferWithLength, length, options);
         return new MTLBuffer(buffer);
     }
 
     /// <summary>
-    /// Executes newTextureWithDescriptor.
+    /// Performs the newTextureWithDescriptor operation.
     /// </summary>
+    /// <param name="descriptor">The value of descriptor.</param>
+    /// <returns>The result of the newTextureWithDescriptor operation.</returns>
     public MTLTexture newTextureWithDescriptor(MTLTextureDescriptor descriptor) {
         return objc_msgSend<MTLTexture>(this.NativePtr, sel_newTextureWithDescriptor, descriptor.NativePtr);
     }
 
     /// <summary>
-    /// Executes newSamplerStateWithDescriptor.
+    /// Performs the newSamplerStateWithDescriptor operation.
     /// </summary>
+    /// <param name="descriptor">The value of descriptor.</param>
+    /// <returns>The result of the newSamplerStateWithDescriptor operation.</returns>
     public MTLSamplerState newSamplerStateWithDescriptor(MTLSamplerDescriptor descriptor) {
         return objc_msgSend<MTLSamplerState>(this.NativePtr, sel_newSamplerStateWithDescriptor, descriptor.NativePtr);
     }
 
     /// <summary>
-    /// Executes newDepthStencilStateWithDescriptor.
+    /// Performs the newDepthStencilStateWithDescriptor operation.
     /// </summary>
+    /// <param name="descriptor">The value of descriptor.</param>
+    /// <returns>The result of the newDepthStencilStateWithDescriptor operation.</returns>
     public MTLDepthStencilState newDepthStencilStateWithDescriptor(MTLDepthStencilDescriptor descriptor) {
         return objc_msgSend<MTLDepthStencilState>(this.NativePtr, sel_newDepthStencilStateWithDescriptor, descriptor.NativePtr);
     }
 
     /// <summary>
-    /// Executes supportsTextureSampleCount.
+    /// Performs the supportsTextureSampleCount operation.
     /// </summary>
+    /// <param name="sampleCount">The value of sampleCount.</param>
+    /// <returns>The result of the supportsTextureSampleCount operation.</returns>
     public Bool8 supportsTextureSampleCount(UIntPtr sampleCount) {
         return bool8_objc_msgSend(this.NativePtr, sel_supportsTextureSampleCount, sampleCount);
     }
 
     /// <summary>
-    /// Executes supportsFeatureSet.
+    /// Performs the supportsFeatureSet operation.
     /// </summary>
+    /// <param name="featureSet">The value of featureSet.</param>
+    /// <returns>The result of the supportsFeatureSet operation.</returns>
     public Bool8 supportsFeatureSet(MTLFeatureSet featureSet) {
         return bool8_objc_msgSend(this.NativePtr, sel_supportsFeatureSet, (uint)featureSet);
     }
 
-    public Bool8 isDepth24Stencil8PixelFormatSupported
-        => bool8_objc_msgSend(this.NativePtr, sel_isDepth24Stencil8PixelFormatSupported);
+    /// <summary>
+    /// Gets a value indicating whether the device supports <c>Depth24Stencil8</c> pixel format.
+    /// </summary>
+    public Bool8 isDepth24Stencil8PixelFormatSupported => bool8_objc_msgSend(this.NativePtr, sel_isDepth24Stencil8PixelFormatSupported);
 
     [DllImport(MetalFramework)]
 
     /// <summary>
-    /// Executes MTLCreateSystemDefaultDevice.
+    /// Performs the MTLCreateSystemDefaultDevice operation.
     /// </summary>
+    /// <returns>The result of the MTLCreateSystemDefaultDevice operation.</returns>
     public static extern MTLDevice MTLCreateSystemDefaultDevice();
 
     [DllImport(MetalFramework)]
 
     /// <summary>
-    /// Executes MTLCopyAllDevices.
+    /// Performs the MTLCopyAllDevices operation.
     /// </summary>
+    /// <returns>The result of the MTLCopyAllDevices operation.</returns>
     public static extern NSArray MTLCopyAllDevices();
 
     /// <summary>

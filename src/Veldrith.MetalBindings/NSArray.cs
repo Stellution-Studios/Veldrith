@@ -14,15 +14,19 @@ public struct NSArray {
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="NSArray" /> class.
+    /// Initializes a new instance of the <see cref="NSArray" /> type.
     /// </summary>
+    /// <param name="ptr">The value of ptr.</param>
     public NSArray(IntPtr ptr) {
         this.NativePtr = ptr;
     }
 
     /// <summary>
-    /// Gets or sets count.
+    /// Performs the UIntPtr_objc_msgSend operation.
     /// </summary>
+    /// <param name="NativePtr">The value of NativePtr.</param>
+    /// <param name="sel_count">The value of sel_count.</param>
+    /// <returns>The result of the UIntPtr_objc_msgSend operation.</returns>
     public UIntPtr count => UIntPtr_objc_msgSend(this.NativePtr, sel_count);
 
     /// <summary>

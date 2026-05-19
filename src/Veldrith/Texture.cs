@@ -8,8 +8,9 @@ namespace Veldrith;
 public abstract class Texture : IDeviceResource, IMappableResource, IDisposable, IBindableResource {
 
     /// <summary>
-    /// Represents the _fullTextureViewLock field.
+    /// Performs the new operation.
     /// </summary>
+    /// <returns>The result of the new operation.</returns>
     private readonly object _fullTextureViewLock = new();
 
     /// <summary>
@@ -79,7 +80,7 @@ public abstract class Texture : IDeviceResource, IMappableResource, IDisposable,
     #region Disposal
 
     /// <summary>
-    /// Frees unmanaged device resources controlled by this instance.
+    /// Performs the Dispose operation.
     /// </summary>
     public virtual void Dispose() {
         lock (this._fullTextureViewLock) {
@@ -92,18 +93,20 @@ public abstract class Texture : IDeviceResource, IMappableResource, IDisposable,
     #endregion
 
     /// <summary>
-    /// Calculates the subresource index, given a mipmap level and array layer.
+    /// Performs the CalculateSubresource operation.
     /// </summary>
-    /// <param name="mipLevel">The mip level. This should be less than <see cref="MipLevels" />.</param>
-    /// <param name="arrayLayer">The array layer. This should be less than <see cref="ArrayLayers" />.</param>
-    /// <returns>The subresource index.</returns>
+    /// <param name="mipLevel">The value of mipLevel.</param>
+    /// <param name="arrayLayer">The value of arrayLayer.</param>
+    /// <returns>The result of the CalculateSubresource operation.</returns>
     public uint CalculateSubresource(uint mipLevel, uint arrayLayer) {
         return arrayLayer * this.MipLevels + mipLevel;
     }
 
     /// <summary>
-    /// Executes GetFullTextureView.
+    /// Performs the GetFullTextureView operation.
     /// </summary>
+    /// <param name="gd">The value of gd.</param>
+    /// <returns>The result of the GetFullTextureView operation.</returns>
     internal TextureView GetFullTextureView(GraphicsDevice gd) {
         lock (this._fullTextureViewLock) {
             return this._fullTextureView ??= this.CreateFullTextureView(gd);
@@ -111,14 +114,16 @@ public abstract class Texture : IDeviceResource, IMappableResource, IDisposable,
     }
 
     /// <summary>
-    /// Executes CreateFullTextureView.
+    /// Performs the CreateFullTextureView operation.
     /// </summary>
+    /// <param name="gd">The value of gd.</param>
+    /// <returns>The result of the CreateFullTextureView operation.</returns>
     private protected virtual TextureView CreateFullTextureView(GraphicsDevice gd) {
         return gd.ResourceFactory.CreateTextureView(this);
     }
 
     /// <summary>
-    /// Executes DisposeCore.
+    /// Performs the DisposeCore operation.
     /// </summary>
     private protected abstract void DisposeCore();
 }

@@ -20,7 +20,7 @@ internal unsafe class MtlcvDisplayLink : IMtlDisplayLink {
     private CVDisplayLink _displayLink;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MtlcvDisplayLink" /> class.
+    /// Initializes a new instance of the <see cref="MtlcvDisplayLink" /> type.
     /// </summary>
     public MtlcvDisplayLink() {
         this._cvDisplayLinkCallbackHandler = this.OnCallback;
@@ -32,7 +32,7 @@ internal unsafe class MtlcvDisplayLink : IMtlDisplayLink {
     #region Disposal
 
     /// <summary>
-    /// Executes Dispose.
+    /// Performs the Dispose operation.
     /// </summary>
     public void Dispose() {
         this._displayLink.Release();
@@ -41,15 +41,20 @@ internal unsafe class MtlcvDisplayLink : IMtlDisplayLink {
     #endregion
 
     /// <summary>
-    /// Executes UpdateActiveDisplay.
+    /// Performs the UpdateActiveDisplay operation.
     /// </summary>
+    /// <param name="x">The value of x.</param>
+    /// <param name="y">The value of y.</param>
+    /// <param name="w">The value of w.</param>
+    /// <param name="h">The value of h.</param>
     public void UpdateActiveDisplay(int x, int y, int w, int h) {
         this._displayLink.UpdateActiveMonitor(x, y, w, h);
     }
 
     /// <summary>
-    /// Executes GetActualOutputVideoRefreshPeriod.
+    /// Performs the GetActualOutputVideoRefreshPeriod operation.
     /// </summary>
+    /// <returns>The result of the GetActualOutputVideoRefreshPeriod operation.</returns>
     public double GetActualOutputVideoRefreshPeriod() {
         return this._displayLink.GetActualOutputVideoRefreshPeriod();
     }
@@ -60,8 +65,15 @@ internal unsafe class MtlcvDisplayLink : IMtlDisplayLink {
     public event Action Callback;
 
     /// <summary>
-    /// Executes OnCallback.
+    /// Performs the OnCallback operation.
     /// </summary>
+    /// <param name="displaylink">The value of displaylink.</param>
+    /// <param name="innow">The value of innow.</param>
+    /// <param name="inoutputtime">The value of inoutputtime.</param>
+    /// <param name="flagsin">The value of flagsin.</param>
+    /// <param name="flagsout">The value of flagsout.</param>
+    /// <param name="userdata">The value of userdata.</param>
+    /// <returns>The result of the OnCallback operation.</returns>
     private int OnCallback(CVDisplayLink displaylink, CVTimeStamp* innow, CVTimeStamp* inoutputtime, long flagsin, long flagsout, IntPtr userdata) {
         this.Callback?.Invoke();
         return 0;

@@ -8,8 +8,10 @@ namespace Veldrith.MetalBindings;
 public struct NSAutoreleasePool : IDisposable {
 
     /// <summary>
-    /// Represents the s_class field.
+    /// Performs the new operation.
     /// </summary>
+    /// <param name="NSAutoreleasePool">The value of NSAutoreleasePool.</param>
+    /// <returns>The result of the new operation.</returns>
     private static readonly ObjCClass s_class = new(nameof(NSAutoreleasePool));
 
     /// <summary>
@@ -18,21 +20,23 @@ public struct NSAutoreleasePool : IDisposable {
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="NSAutoreleasePool" /> class.
+    /// Initializes a new instance of the <see cref="NSAutoreleasePool" /> type.
     /// </summary>
+    /// <param name="ptr">The value of ptr.</param>
     public NSAutoreleasePool(IntPtr ptr) {
         this.NativePtr = ptr;
     }
 
     /// <summary>
-    /// Executes Begin.
+    /// Performs the Begin operation.
     /// </summary>
+    /// <returns>The result of the Begin operation.</returns>
     public static NSAutoreleasePool Begin() {
         return s_class.AllocInit<NSAutoreleasePool>();
     }
 
     /// <summary>
-    /// Executes Dispose.
+    /// Performs the Dispose operation.
     /// </summary>
     public void Dispose() {
         ObjectiveCRuntime.release(this.NativePtr);

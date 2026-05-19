@@ -38,8 +38,10 @@ internal class MtlResourceLayout : ResourceLayout {
 #endif
 
     /// <summary>
-    /// Executes GetBindingInfo.
+    /// Performs the GetBindingInfo operation.
     /// </summary>
+    /// <param name="index">The value of index.</param>
+    /// <returns>The result of the GetBindingInfo operation.</returns>
     public ResourceBindingInfo GetBindingInfo(int index) {
         return this._bindingInfosByVdIndex[index];
     }
@@ -55,12 +57,10 @@ internal class MtlResourceLayout : ResourceLayout {
     /// <summary>
     /// Initializes a new instance of the <see cref="MtlResourceLayout" /> class.
     /// </summary>
-    public MtlResourceLayout(ref ResourceLayoutDescription description, MtlGraphicsDevice gd)
-
-        /// <summary>
-        /// Executes base.
-        /// </summary>
-        : base(ref description) {
+    /// <param name="description">The value of description.</param>
+    /// <param name="gd">The value of gd.</param>
+    /// <returns>The result of the base operation.</returns>
+    public MtlResourceLayout(ref ResourceLayoutDescription description, MtlGraphicsDevice gd) : base(ref description) {
 #if !VALIDATE_USAGE
             Description = description;
 #endif
@@ -130,7 +130,7 @@ internal class MtlResourceLayout : ResourceLayout {
     public override bool IsDisposed => this._disposed;
 
     /// <summary>
-    /// Executes Dispose.
+    /// Performs the Dispose operation.
     /// </summary>
     public override void Dispose() {
         this._disposed = true;
@@ -162,8 +162,12 @@ internal class MtlResourceLayout : ResourceLayout {
         public bool DynamicBuffer;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ResourceBindingInfo" /> class.
+        /// Initializes a new instance of the <see cref="ResourceBindingInfo" /> type.
         /// </summary>
+        /// <param name="slot">The value of slot.</param>
+        /// <param name="stages">The value of stages.</param>
+        /// <param name="kind">The value of kind.</param>
+        /// <param name="dynamicBuffer">The value of dynamicBuffer.</param>
         public ResourceBindingInfo(uint slot, ShaderStages stages, ResourceKind kind, bool dynamicBuffer) {
             this.Slot = slot;
             this.Stages = stages;

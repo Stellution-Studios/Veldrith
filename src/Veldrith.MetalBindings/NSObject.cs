@@ -14,15 +14,18 @@ public struct NSObject {
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="NSObject" /> class.
+    /// Initializes a new instance of the <see cref="NSObject" /> type.
     /// </summary>
+    /// <param name="ptr">The value of ptr.</param>
     public NSObject(IntPtr ptr) {
         this.NativePtr = ptr;
     }
 
     /// <summary>
-    /// Executes IsKindOfClass.
+    /// Performs the IsKindOfClass operation.
     /// </summary>
+    /// <param name="class">The value of class.</param>
+    /// <returns>The result of the IsKindOfClass operation.</returns>
     public Bool8 IsKindOfClass(IntPtr @class) {
         return bool8_objc_msgSend(this.NativePtr, sel_isKindOfClass, @class);
     }

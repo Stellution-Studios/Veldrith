@@ -8,8 +8,10 @@ namespace Veldrith.Vk;
 internal static partial class VkFormats {
 
     /// <summary>
-    /// Executes VdToVkSamplerAddressMode.
+    /// Performs the VdToVkSamplerAddressMode operation.
     /// </summary>
+    /// <param name="mode">The value of mode.</param>
+    /// <returns>The result of the VdToVkSamplerAddressMode operation.</returns>
     internal static VkSamplerAddressMode VdToVkSamplerAddressMode(SamplerAddressMode mode) {
         switch (mode) {
             case SamplerAddressMode.Wrap: return VkSamplerAddressMode.Repeat;
@@ -25,8 +27,12 @@ internal static partial class VkFormats {
     }
 
     /// <summary>
-    /// Executes GetFilterParams.
+    /// Performs the GetFilterParams operation.
     /// </summary>
+    /// <param name="filter">The value of filter.</param>
+    /// <param name="minFilter">The value of minFilter.</param>
+    /// <param name="magFilter">The value of magFilter.</param>
+    /// <param name="mipmapMode">The value of mipmapMode.</param>
     internal static void GetFilterParams(SamplerFilter filter, out VkFilter minFilter, out VkFilter magFilter, out VkSamplerMipmapMode mipmapMode) {
         switch (filter) {
             case SamplerFilter.Anisotropic:
@@ -88,8 +94,10 @@ internal static partial class VkFormats {
     }
 
     /// <summary>
-    /// Executes VdToVkTextureUsage.
+    /// Performs the VdToVkTextureUsage operation.
     /// </summary>
+    /// <param name="vdUsage">The value of vdUsage.</param>
+    /// <returns>The result of the VdToVkTextureUsage operation.</returns>
     internal static VkImageUsageFlags VdToVkTextureUsage(TextureUsage vdUsage) {
         VkImageUsageFlags vkUsage = VkImageUsageFlags.TransferDst | VkImageUsageFlags.TransferSrc;
         bool isDepthStencil = (vdUsage & TextureUsage.DepthStencil) == TextureUsage.DepthStencil;
@@ -114,8 +122,10 @@ internal static partial class VkFormats {
     }
 
     /// <summary>
-    /// Executes VdToVkTextureType.
+    /// Performs the VdToVkTextureType operation.
     /// </summary>
+    /// <param name="type">The value of type.</param>
+    /// <returns>The result of the VdToVkTextureType operation.</returns>
     internal static VkImageType VdToVkTextureType(TextureType type) {
         switch (type) {
             case TextureType.Texture1D: return VkImageType.Image1D;
@@ -129,8 +139,11 @@ internal static partial class VkFormats {
     }
 
     /// <summary>
-    /// Executes VdToVkDescriptorType.
+    /// Performs the VdToVkDescriptorType operation.
     /// </summary>
+    /// <param name="kind">The value of kind.</param>
+    /// <param name="options">The value of options.</param>
+    /// <returns>The result of the VdToVkDescriptorType operation.</returns>
     internal static VkDescriptorType VdToVkDescriptorType(ResourceKind kind, ResourceLayoutElementOptions options) {
         bool dynamicBinding = (options & ResourceLayoutElementOptions.DynamicBinding) != 0;
 
@@ -150,8 +163,10 @@ internal static partial class VkFormats {
     }
 
     /// <summary>
-    /// Executes VdToVkSampleCount.
+    /// Performs the VdToVkSampleCount operation.
     /// </summary>
+    /// <param name="sampleCount">The value of sampleCount.</param>
+    /// <returns>The result of the VdToVkSampleCount operation.</returns>
     internal static VkSampleCountFlags VdToVkSampleCount(TextureSampleCount sampleCount) {
         switch (sampleCount) {
             case TextureSampleCount.Count1: return VkSampleCountFlags.Count1;
@@ -171,8 +186,10 @@ internal static partial class VkFormats {
     }
 
     /// <summary>
-    /// Executes VdToVkStencilOp.
+    /// Performs the VdToVkStencilOp operation.
     /// </summary>
+    /// <param name="op">The value of op.</param>
+    /// <returns>The result of the VdToVkStencilOp operation.</returns>
     internal static VkStencilOp VdToVkStencilOp(StencilOperation op) {
         switch (op) {
             case StencilOperation.Keep: return VkStencilOp.Keep;
@@ -196,8 +213,10 @@ internal static partial class VkFormats {
     }
 
     /// <summary>
-    /// Executes VdToVkPolygonMode.
+    /// Performs the VdToVkPolygonMode operation.
     /// </summary>
+    /// <param name="fillMode">The value of fillMode.</param>
+    /// <returns>The result of the VdToVkPolygonMode operation.</returns>
     internal static VkPolygonMode VdToVkPolygonMode(PolygonFillMode fillMode) {
         switch (fillMode) {
             case PolygonFillMode.Solid: return VkPolygonMode.Fill;
@@ -209,8 +228,10 @@ internal static partial class VkFormats {
     }
 
     /// <summary>
-    /// Executes VdToVkCullMode.
+    /// Performs the VdToVkCullMode operation.
     /// </summary>
+    /// <param name="cullMode">The value of cullMode.</param>
+    /// <returns>The result of the VdToVkCullMode operation.</returns>
     internal static VkCullModeFlags VdToVkCullMode(FaceCullMode cullMode) {
         switch (cullMode) {
             case FaceCullMode.Back: return VkCullModeFlags.Back;
@@ -224,8 +245,10 @@ internal static partial class VkFormats {
     }
 
     /// <summary>
-    /// Executes VdToVkBlendOp.
+    /// Performs the VdToVkBlendOp operation.
     /// </summary>
+    /// <param name="func">The value of func.</param>
+    /// <returns>The result of the VdToVkBlendOp operation.</returns>
     internal static VkBlendOp VdToVkBlendOp(BlendFunction func) {
         switch (func) {
             case BlendFunction.Add: return VkBlendOp.Add;
@@ -243,8 +266,10 @@ internal static partial class VkFormats {
     }
 
     /// <summary>
-    /// Executes VdToVkColorWriteMask.
+    /// Performs the VdToVkColorWriteMask operation.
     /// </summary>
+    /// <param name="mask">The value of mask.</param>
+    /// <returns>The result of the VdToVkColorWriteMask operation.</returns>
     internal static VkColorComponentFlags VdToVkColorWriteMask(ColorWriteMask mask) {
         VkColorComponentFlags flags = VkColorComponentFlags.None;
 
@@ -268,8 +293,10 @@ internal static partial class VkFormats {
     }
 
     /// <summary>
-    /// Executes VdToVkPrimitiveTopology.
+    /// Performs the VdToVkPrimitiveTopology operation.
     /// </summary>
+    /// <param name="topology">The value of topology.</param>
+    /// <returns>The result of the VdToVkPrimitiveTopology operation.</returns>
     internal static VkPrimitiveTopology VdToVkPrimitiveTopology(PrimitiveTopology topology) {
         switch (topology) {
             case PrimitiveTopology.TriangleList: return VkPrimitiveTopology.TriangleList;
@@ -287,8 +314,10 @@ internal static partial class VkFormats {
     }
 
     /// <summary>
-    /// Executes GetSpecializationConstantSize.
+    /// Performs the GetSpecializationConstantSize operation.
     /// </summary>
+    /// <param name="type">The value of type.</param>
+    /// <returns>The result of the GetSpecializationConstantSize operation.</returns>
     internal static uint GetSpecializationConstantSize(ShaderConstantType type) {
         switch (type) {
             case ShaderConstantType.Bool: return 4;
@@ -314,8 +343,10 @@ internal static partial class VkFormats {
     }
 
     /// <summary>
-    /// Executes VdToVkBlendFactor.
+    /// Performs the VdToVkBlendFactor operation.
     /// </summary>
+    /// <param name="factor">The value of factor.</param>
+    /// <returns>The result of the VdToVkBlendFactor operation.</returns>
     internal static VkBlendFactor VdToVkBlendFactor(BlendFactor factor) {
         switch (factor) {
             case BlendFactor.Zero: return VkBlendFactor.Zero;
@@ -347,8 +378,10 @@ internal static partial class VkFormats {
     }
 
     /// <summary>
-    /// Executes VdToVkVertexElementFormat.
+    /// Performs the VdToVkVertexElementFormat operation.
     /// </summary>
+    /// <param name="format">The value of format.</param>
+    /// <returns>The result of the VdToVkVertexElementFormat operation.</returns>
     internal static VkFormat VdToVkVertexElementFormat(VertexElementFormat format) {
         switch (format) {
             case VertexElementFormat.Float1: return VkFormat.R32Sfloat;
@@ -418,8 +451,10 @@ internal static partial class VkFormats {
     }
 
     /// <summary>
-    /// Executes VdToVkShaderStages.
+    /// Performs the VdToVkShaderStages operation.
     /// </summary>
+    /// <param name="stage">The value of stage.</param>
+    /// <returns>The result of the VdToVkShaderStages operation.</returns>
     internal static VkShaderStageFlags VdToVkShaderStages(ShaderStages stage) {
         VkShaderStageFlags ret = VkShaderStageFlags.None;
 
@@ -451,8 +486,10 @@ internal static partial class VkFormats {
     }
 
     /// <summary>
-    /// Executes VdToVkSamplerBorderColor.
+    /// Performs the VdToVkSamplerBorderColor operation.
     /// </summary>
+    /// <param name="borderColor">The value of borderColor.</param>
+    /// <returns>The result of the VdToVkSamplerBorderColor operation.</returns>
     internal static VkBorderColor VdToVkSamplerBorderColor(SamplerBorderColor borderColor) {
         switch (borderColor) {
             case SamplerBorderColor.TransparentBlack: return VkBorderColor.FloatTransparentBlack;
@@ -466,8 +503,10 @@ internal static partial class VkFormats {
     }
 
     /// <summary>
-    /// Executes VdToVkIndexFormat.
+    /// Performs the VdToVkIndexFormat operation.
     /// </summary>
+    /// <param name="format">The value of format.</param>
+    /// <returns>The result of the VdToVkIndexFormat operation.</returns>
     internal static VkIndexType VdToVkIndexFormat(IndexFormat format) {
         switch (format) {
             case IndexFormat.UInt16: return VkIndexType.Uint16;
@@ -479,8 +518,10 @@ internal static partial class VkFormats {
     }
 
     /// <summary>
-    /// Executes VdToVkCompareOp.
+    /// Performs the VdToVkCompareOp operation.
     /// </summary>
+    /// <param name="comparisonKind">The value of comparisonKind.</param>
+    /// <returns>The result of the VdToVkCompareOp operation.</returns>
     internal static VkCompareOp VdToVkCompareOp(ComparisonKind comparisonKind) {
         switch (comparisonKind) {
             case ComparisonKind.Never: return VkCompareOp.Never;
@@ -504,8 +545,10 @@ internal static partial class VkFormats {
     }
 
     /// <summary>
-    /// Executes VkToVdPixelFormat.
+    /// Performs the VkToVdPixelFormat operation.
     /// </summary>
+    /// <param name="vkFormat">The value of vkFormat.</param>
+    /// <returns>The result of the VkToVdPixelFormat operation.</returns>
     internal static PixelFormat VkToVdPixelFormat(VkFormat vkFormat) {
         switch (vkFormat) {
             case VkFormat.R8Unorm: return PixelFormat.R8UNorm;

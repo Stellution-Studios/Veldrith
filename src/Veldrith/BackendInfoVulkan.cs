@@ -27,8 +27,9 @@ public class BackendInfoVulkan {
     private readonly VkGraphicsDevice gd;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="BackendInfoVulkan" /> class.
+    /// Initializes a new instance of the <see cref="BackendInfoVulkan" /> type.
     /// </summary>
+    /// <param name="gd">The value of gd.</param>
     internal BackendInfoVulkan(VkGraphicsDevice gd) {
         this.gd = gd;
         this._instanceLayers = new Lazy<ReadOnlyCollection<string>>(() =>
@@ -88,11 +89,10 @@ public class BackendInfoVulkan {
     public ReadOnlyCollection<ExtensionProperties> AvailableDeviceExtensions => this._deviceExtensions.Value;
 
     /// <summary>
-    /// Overrides the current VkImageLayout tracked by the given Texture. This should be used when a VkImage is created by
-    /// an external library to inform Veldrith about its initial layout.
+    /// Performs the OverrideImageLayout operation.
     /// </summary>
-    /// <param name="texture">The Texture whose currently-tracked VkImageLayout will be overridden.</param>
-    /// <param name="layout">The new VkImageLayout value.</param>
+    /// <param name="texture">The value of texture.</param>
+    /// <param name="layout">The value of layout.</param>
     public void OverrideImageLayout(Texture texture, uint layout) {
         VkTexture vkTex = Util.AssertSubtype<Texture, VkTexture>(texture);
 
@@ -104,11 +104,10 @@ public class BackendInfoVulkan {
     }
 
     /// <summary>
-    /// Gets the underlying VkImage wrapped by the given Veldrith Texture. This method can not be used on Textures with
-    /// TextureUsage.Staging.
+    /// Performs the GetVkImage operation.
     /// </summary>
-    /// <param name="texture">The Texture whose underlying VkImage will be returned.</param>
-    /// <returns>The underlying VkImage for the given Texture.</returns>
+    /// <param name="texture">The value of texture.</param>
+    /// <returns>The result of the GetVkImage operation.</returns>
     public ulong GetVkImage(Texture texture) {
         VkTexture vkTexture = Util.AssertSubtype<Texture, VkTexture>(texture);
 
@@ -120,17 +119,18 @@ public class BackendInfoVulkan {
     }
 
     /// <summary>
-    /// Transitions the given Texture's underlying VkImage into a new layout.
+    /// Performs the TransitionImageLayout operation.
     /// </summary>
-    /// <param name="texture">The Texture whose underlying VkImage will be transitioned.</param>
-    /// <param name="layout">The new VkImageLayout value.</param>
+    /// <param name="texture">The value of texture.</param>
+    /// <param name="layout">The value of layout.</param>
     public void TransitionImageLayout(Texture texture, uint layout) {
         this.gd.TransitionImageLayout(Util.AssertSubtype<Texture, VkTexture>(texture), (VkImageLayout)layout);
     }
 
     /// <summary>
-    /// Executes EnumerateDeviceExtensions.
+    /// Performs the EnumerateDeviceExtensions operation.
     /// </summary>
+    /// <returns>The result of the EnumerateDeviceExtensions operation.</returns>
     private unsafe ReadOnlyCollection<ExtensionProperties> EnumerateDeviceExtensions() {
         VkExtensionProperties[] vkProps = this.gd.GetDeviceExtensionProperties();
         ExtensionProperties[] veldridProps = new ExtensionProperties[vkProps.Length];
@@ -159,16 +159,19 @@ public class BackendInfoVulkan {
         public readonly uint SpecVersion;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ExtensionProperties" /> class.
+        /// Initializes a new instance of the <see cref="ExtensionProperties" /> type.
         /// </summary>
+        /// <param name="name">The value of name.</param>
+        /// <param name="specVersion">The value of specVersion.</param>
         public ExtensionProperties(string name, uint specVersion) {
             this.Name = name ?? throw new ArgumentNullException(nameof(name));
             this.SpecVersion = specVersion;
         }
 
         /// <summary>
-        /// Executes ToString.
+        /// Performs the ToString operation.
         /// </summary>
+        /// <returns>The result of the ToString operation.</returns>
         public override string ToString() {
             return this.Name;
         }

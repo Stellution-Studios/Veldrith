@@ -26,8 +26,11 @@ public struct MTLSize {
     public UIntPtr Depth;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MTLSize" /> class.
+    /// Initializes a new instance of the <see cref="MTLSize" /> type.
     /// </summary>
+    /// <param name="width">The value of width.</param>
+    /// <param name="height">The value of height.</param>
+    /// <param name="depth">The value of depth.</param>
     public MTLSize(uint width, uint height, uint depth) {
         this.Width = width;
         this.Height = height;

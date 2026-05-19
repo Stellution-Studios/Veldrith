@@ -13,8 +13,11 @@ public struct NSDictionary {
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Gets or sets count.
+    /// Performs the UIntPtr_objc_msgSend operation.
     /// </summary>
+    /// <param name="NativePtr">The value of NativePtr.</param>
+    /// <param name="sel_count">The value of sel_count.</param>
+    /// <returns>The result of the UIntPtr_objc_msgSend operation.</returns>
     public UIntPtr count => ObjectiveCRuntime.UIntPtr_objc_msgSend(this.NativePtr, sel_count);
 
     /// <summary>

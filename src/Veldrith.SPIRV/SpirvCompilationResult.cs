@@ -6,8 +6,9 @@ namespace Veldrith.SPIRV;
 public class SpirvCompilationResult {
 
     /// <summary>
-    /// Constructs a new <see cref="SpirvCompilationResult" />.
+    /// Initializes a new instance of the <see cref="SpirvCompilationResult" /> type.
     /// </summary>
+    /// <param name="spirvBytes">The value of spirvBytes.</param>
     public SpirvCompilationResult(byte[] spirvBytes) {
         this.SpirvBytes = spirvBytes;
     }

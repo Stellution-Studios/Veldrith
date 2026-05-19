@@ -13,12 +13,10 @@ internal class MtlResourceSet : ResourceSet {
     /// <summary>
     /// Initializes a new instance of the <see cref="MtlResourceSet" /> class.
     /// </summary>
-    public MtlResourceSet(ref ResourceSetDescription description, MtlGraphicsDevice gd)
-
-        /// <summary>
-        /// Executes base.
-        /// </summary>
-        : base(ref description) {
+    /// <param name="description">The value of description.</param>
+    /// <param name="gd">The value of gd.</param>
+    /// <returns>The result of the base operation.</returns>
+    public MtlResourceSet(ref ResourceSetDescription description, MtlGraphicsDevice gd) : base(ref description) {
         this.Resources = Util.ShallowClone(description.BoundResources);
         this.Layout = Util.AssertSubtype<ResourceLayout, MtlResourceLayout>(description.Layout);
     }
@@ -46,7 +44,7 @@ internal class MtlResourceSet : ResourceSet {
     #region Disposal
 
     /// <summary>
-    /// Executes Dispose.
+    /// Performs the Dispose operation.
     /// </summary>
     public override void Dispose() {
         this._disposed = true;

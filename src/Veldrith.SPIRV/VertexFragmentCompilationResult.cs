@@ -6,8 +6,11 @@ namespace Veldrith.SPIRV;
 public class VertexFragmentCompilationResult {
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="VertexFragmentCompilationResult" /> class.
+    /// Initializes a new instance of the <see cref="VertexFragmentCompilationResult" /> type.
     /// </summary>
+    /// <param name="vertexCode">The value of vertexCode.</param>
+    /// <param name="fragmentCode">The value of fragmentCode.</param>
+    /// <param name="reflection">The value of reflection.</param>
     internal VertexFragmentCompilationResult(string vertexCode, string fragmentCode, SpirvReflection reflection) {
         this.VertexShader = vertexCode;
         this.FragmentShader = fragmentCode;

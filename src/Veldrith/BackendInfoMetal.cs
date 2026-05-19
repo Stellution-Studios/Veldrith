@@ -17,8 +17,9 @@ public class BackendInfoMetal {
     private readonly MtlGraphicsDevice gd;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="BackendInfoMetal" /> class.
+    /// Initializes a new instance of the <see cref="BackendInfoMetal" /> type.
     /// </summary>
+    /// <param name="gd">The value of gd.</param>
     internal BackendInfoMetal(MtlGraphicsDevice gd) {
         this.gd = gd;
         this.FeatureSet = new ReadOnlyCollection<MTLFeatureSet>(this.gd.MetalFeatures.ToArray());

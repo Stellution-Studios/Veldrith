@@ -14,15 +14,17 @@ public unsafe struct Selector {
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="Selector" /> class.
+    /// Initializes a new instance of the <see cref="Selector" /> type.
     /// </summary>
+    /// <param name="ptr">The value of ptr.</param>
     public Selector(IntPtr ptr) {
         this.NativePtr = ptr;
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="Selector" /> class.
+    /// Initializes a new instance of the <see cref="Selector" /> type.
     /// </summary>
+    /// <param name="name">The value of name.</param>
     public Selector(string name) {
         int byteCount = Encoding.UTF8.GetMaxByteCount(name.Length);
         byte* utf8BytesPtr = stackalloc byte[byteCount];
@@ -44,8 +46,10 @@ public unsafe struct Selector {
     }
 
     /// <summary>
-    /// Executes Selector.
+    /// Performs the operator Selector operation.
     /// </summary>
+    /// <param name="s">The value of s.</param>
+    /// <returns>The result of the operator Selector operation.</returns>
     public static implicit operator Selector(string s) {
         return new Selector(s);
     }

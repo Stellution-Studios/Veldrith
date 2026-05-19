@@ -9,8 +9,10 @@ namespace Veldrith.MetalBindings;
 public struct MTLTextureDescriptor {
 
     /// <summary>
-    /// Represents the s_class field.
+    /// Performs the new operation.
     /// </summary>
+    /// <param name="MTLTextureDescriptor">The value of MTLTextureDescriptor.</param>
+    /// <returns>The result of the new operation.</returns>
     private static readonly ObjCClass s_class = new(nameof(MTLTextureDescriptor));
 
     /// <summary>
@@ -19,8 +21,9 @@ public struct MTLTextureDescriptor {
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Executes New.
+    /// Performs the New operation.
     /// </summary>
+    /// <returns>The result of the New operation.</returns>
     public static MTLTextureDescriptor New() {
         return s_class.AllocInit<MTLTextureDescriptor>();
     }

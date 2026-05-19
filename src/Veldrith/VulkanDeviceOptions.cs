@@ -18,16 +18,10 @@ public struct VulkanDeviceOptions {
     public string[] DeviceExtensions;
 
     /// <summary>
-    /// Constructs a new VulkanDeviceOptions.
+    /// Initializes a new instance of the <see cref="VulkanDeviceOptions" /> type.
     /// </summary>
-    /// <param name="instanceExtensions">
-    /// An array of required Vulkan instance extensions. Entries in this array will be
-    /// enabled in the GraphicsDevice's created VkInstance.
-    /// </param>
-    /// <param name="deviceExtensions">
-    /// An array of required Vulkan device extensions. Entries in this array will be enabled
-    /// in the GraphicsDevice's created VkDevice.
-    /// </param>
+    /// <param name="instanceExtensions">The value of instanceExtensions.</param>
+    /// <param name="deviceExtensions">The value of deviceExtensions.</param>
     public VulkanDeviceOptions(string[] instanceExtensions, string[] deviceExtensions) {
         this.InstanceExtensions = instanceExtensions;
         this.DeviceExtensions = deviceExtensions;
