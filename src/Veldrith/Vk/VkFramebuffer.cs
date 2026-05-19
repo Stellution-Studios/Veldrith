@@ -7,58 +7,57 @@ using static Vulkan.VulkanNative;
 namespace Veldrith.Vk;
 
 /// <summary>
-/// Represents the VkFramebuffer class.
+/// Defines the behavior and responsibilities of the VkFramebuffer class.
 /// </summary>
 internal unsafe class VkFramebuffer : VkFramebufferBase {
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>_attachmentViews</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     private readonly List<VkImageView> _attachmentViews = new();
 
     /// <summary>
-    /// Represents the _deviceFramebuffer field.
+    /// Stores the value associated with <c>_deviceFramebuffer</c>.
     /// </summary>
     private readonly Vulkan.VkFramebuffer _deviceFramebuffer;
 
     /// <summary>
-    /// Represents the _renderPassClear field.
+    /// Stores the value associated with <c>_renderPassClear</c>.
     /// </summary>
     private readonly VkRenderPass _renderPassClear;
 
     /// <summary>
-    /// Represents the _renderPassNoClear field.
+    /// Stores the value associated with <c>_renderPassNoClear</c>.
     /// </summary>
     private readonly VkRenderPass _renderPassNoClear;
 
     /// <summary>
-    /// Represents the _renderPassNoClearLoad field.
+    /// Stores the value associated with <c>_renderPassNoClearLoad</c>.
     /// </summary>
     private readonly VkRenderPass _renderPassNoClearLoad;
 
     /// <summary>
-    /// Represents the gd field.
+    /// Stores the value associated with <c>gd</c>.
     /// </summary>
     private readonly VkGraphicsDevice gd;
 
     /// <summary>
-    /// Represents the _destroyed field.
+    /// Stores the value associated with <c>_destroyed</c>.
     /// </summary>
     private bool _destroyed;
 
     /// <summary>
-    /// Represents the _name field.
+    /// Stores the value associated with <c>_name</c>.
     /// </summary>
     private string _name;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VkFramebuffer" /> class.
     /// </summary>
-    /// <param name="gd">The value of gd.</param>
-    /// <param name="description">The value of description.</param>
-    /// <param name="isPresented">The value of isPresented.</param>
-    /// <returns>The result of the base operation.</returns>
+    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <param name="isPresented">Specifies the value of <paramref name="isPresented" />.</param>
+    /// <returns>Returns the result produced by the base operation.</returns>
     public VkFramebuffer(VkGraphicsDevice gd, ref FramebufferDescription description, bool isPresented) : base(description.DepthTarget, description.ColorTargets) {
         this.gd = gd;
 
@@ -307,9 +306,9 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
     }
 
     /// <summary>
-    /// Performs the TransitionToIntermediateLayout operation.
+    /// Executes the TransitionToIntermediateLayout operation.
     /// </summary>
-    /// <param name="cb">The value of cb.</param>
+    /// <param name="cb">Specifies the value of <paramref name="cb" />.</param>
     public override void TransitionToIntermediateLayout(VkCommandBuffer cb) {
         for (int i = 0; i < this.ColorTargets.Count; i++) {
             FramebufferAttachment ca = this.ColorTargets[i];
@@ -324,9 +323,9 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
     }
 
     /// <summary>
-    /// Performs the TransitionToFinalLayout operation.
+    /// Executes the TransitionToFinalLayout operation.
     /// </summary>
-    /// <param name="cb">The value of cb.</param>
+    /// <param name="cb">Specifies the value of <paramref name="cb" />.</param>
     public override void TransitionToFinalLayout(VkCommandBuffer cb) {
         for (int i = 0; i < this.ColorTargets.Count; i++) {
             FramebufferAttachment ca = this.ColorTargets[i];
@@ -347,7 +346,7 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
     }
 
     /// <summary>
-    /// Performs the DisposeCore operation.
+    /// Executes the DisposeCore operation.
     /// </summary>
     protected override void DisposeCore() {
         if (!this._destroyed) {

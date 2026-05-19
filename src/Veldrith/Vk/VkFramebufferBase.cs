@@ -4,16 +4,16 @@ using Vulkan;
 namespace Veldrith.Vk;
 
 /// <summary>
-/// Represents the VkFramebufferBase class.
+/// Defines the behavior and responsibilities of the VkFramebufferBase class.
 /// </summary>
 internal abstract class VkFramebufferBase : Framebuffer {
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VkFramebufferBase" /> class.
     /// </summary>
-    /// <param name="depthTexture">The value of depthTexture.</param>
-    /// <param name="colorTextures">The value of colorTextures.</param>
-    /// <returns>The result of the base operation.</returns>
+    /// <param name="depthTexture">Specifies the value of <paramref name="depthTexture" />.</param>
+    /// <param name="colorTextures">Specifies the value of <paramref name="colorTextures" />.</param>
+    /// <returns>Returns the result produced by the base operation.</returns>
     protected VkFramebufferBase(FramebufferAttachmentDescription? depthTexture, IReadOnlyList<FramebufferAttachmentDescription> colorTextures) : base(depthTexture, colorTextures) {
         this.RefCount = new ResourceRefCount(this.DisposeCore);
     }
@@ -68,7 +68,7 @@ internal abstract class VkFramebufferBase : Framebuffer {
     #region Disposal
 
     /// <summary>
-    /// Performs the Dispose operation.
+    /// Executes the Dispose operation.
     /// </summary>
     public override void Dispose() {
         this.RefCount.Decrement();
@@ -77,19 +77,19 @@ internal abstract class VkFramebufferBase : Framebuffer {
     #endregion
 
     /// <summary>
-    /// Performs the TransitionToIntermediateLayout operation.
+    /// Executes the TransitionToIntermediateLayout operation.
     /// </summary>
-    /// <param name="cb">The value of cb.</param>
+    /// <param name="cb">Specifies the value of <paramref name="cb" />.</param>
     public abstract void TransitionToIntermediateLayout(VkCommandBuffer cb);
 
     /// <summary>
-    /// Performs the TransitionToFinalLayout operation.
+    /// Executes the TransitionToFinalLayout operation.
     /// </summary>
-    /// <param name="cb">The value of cb.</param>
+    /// <param name="cb">Specifies the value of <paramref name="cb" />.</param>
     public abstract void TransitionToFinalLayout(VkCommandBuffer cb);
 
     /// <summary>
-    /// Performs the DisposeCore operation.
+    /// Executes the DisposeCore operation.
     /// </summary>
     protected abstract void DisposeCore();
 }

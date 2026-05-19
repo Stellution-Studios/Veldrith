@@ -1,16 +1,16 @@
 namespace Veldrith;
 
 /// <summary>
-/// Represents the ResourceFactory class.
+/// Defines the behavior and responsibilities of the ResourceFactory class.
 /// </summary>
 public abstract class ResourceFactory {
     /// <summary></summary>
-    /// <param name="features"></param>
+    /// <param name="features">Specifies the value of <paramref name="features" />.</param>
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ResourceFactory" /> type.
     /// </summary>
-    /// <param name="features">The value of features.</param>
+    /// <param name="features">Specifies the value of <paramref name="features" />.</param>
     protected ResourceFactory(GraphicsDeviceFeatures features) {
         this.Features = features;
     }
@@ -26,19 +26,19 @@ public abstract class ResourceFactory {
     public GraphicsDeviceFeatures Features { get; }
 
     /// <summary>
-    /// Performs the CreateGraphicsPipeline operation.
+    /// Executes the CreateGraphicsPipeline operation.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateGraphicsPipeline operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateGraphicsPipeline operation.</returns>
     public Pipeline CreateGraphicsPipeline(GraphicsPipelineDescription description) {
         return this.CreateGraphicsPipeline(ref description);
     }
 
     /// <summary>
-    /// Performs the CreateGraphicsPipeline operation.
+    /// Executes the CreateGraphicsPipeline operation.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateGraphicsPipeline operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateGraphicsPipeline operation.</returns>
     public Pipeline CreateGraphicsPipeline(ref GraphicsPipelineDescription description) {
 #if VALIDATE_USAGE
         if (!description.RasterizerState.DepthClipEnabled && !this.Features.DepthClipDisable) {
@@ -87,51 +87,51 @@ public abstract class ResourceFactory {
     }
 
     /// <summary>
-    /// Performs the CreateComputePipeline operation.
+    /// Executes the CreateComputePipeline operation.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateComputePipeline operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateComputePipeline operation.</returns>
     public Pipeline CreateComputePipeline(ComputePipelineDescription description) {
         return this.CreateComputePipeline(ref description);
     }
 
     /// <summary>
-    /// Performs the CreateComputePipeline operation.
+    /// Executes the CreateComputePipeline operation.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateComputePipeline operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateComputePipeline operation.</returns>
     public abstract Pipeline CreateComputePipeline(ref ComputePipelineDescription description);
 
     /// <summary>
-    /// Performs the CreateFramebuffer operation.
+    /// Executes the CreateFramebuffer operation.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateFramebuffer operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateFramebuffer operation.</returns>
     public Framebuffer CreateFramebuffer(FramebufferDescription description) {
         return this.CreateFramebuffer(ref description);
     }
 
     /// <summary>
-    /// Performs the CreateFramebuffer operation.
+    /// Executes the CreateFramebuffer operation.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateFramebuffer operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateFramebuffer operation.</returns>
     public abstract Framebuffer CreateFramebuffer(ref FramebufferDescription description);
 
     /// <summary>
-    /// Performs the CreateTexture operation.
+    /// Executes the CreateTexture operation.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateTexture operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateTexture operation.</returns>
     public Texture CreateTexture(TextureDescription description) {
         return this.CreateTexture(ref description);
     }
 
     /// <summary>
-    /// Performs the CreateTexture operation.
+    /// Executes the CreateTexture operation.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateTexture operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateTexture operation.</returns>
     public Texture CreateTexture(ref TextureDescription description) {
 #if VALIDATE_USAGE
         if (description.Width == 0 || description.Height == 0 || description.Depth == 0) {
@@ -164,48 +164,48 @@ public abstract class ResourceFactory {
     }
 
     /// <summary>
-    /// Performs the CreateTexture operation.
+    /// Executes the CreateTexture operation.
     /// </summary>
-    /// <param name="nativeTexture">The value of nativeTexture.</param>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateTexture operation.</returns>
+    /// <param name="nativeTexture">Specifies the value of <paramref name="nativeTexture" />.</param>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateTexture operation.</returns>
     public Texture CreateTexture(ulong nativeTexture, TextureDescription description) {
         return this.CreateTextureCore(nativeTexture, ref description);
     }
 
     /// <summary>
-    /// Performs the CreateTexture operation.
+    /// Executes the CreateTexture operation.
     /// </summary>
-    /// <param name="nativeTexture">The value of nativeTexture.</param>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateTexture operation.</returns>
+    /// <param name="nativeTexture">Specifies the value of <paramref name="nativeTexture" />.</param>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateTexture operation.</returns>
     public Texture CreateTexture(ulong nativeTexture, ref TextureDescription description) {
         return this.CreateTextureCore(nativeTexture, ref description);
     }
 
     /// <summary>
-    /// Performs the CreateTextureView operation.
+    /// Executes the CreateTextureView operation.
     /// </summary>
-    /// <param name="target">The value of target.</param>
-    /// <returns>The result of the CreateTextureView operation.</returns>
+    /// <param name="target">Specifies the value of <paramref name="target" />.</param>
+    /// <returns>Returns the result produced by the CreateTextureView operation.</returns>
     public TextureView CreateTextureView(Texture target) {
         return this.CreateTextureView(new TextureViewDescription(target));
     }
 
     /// <summary>
-    /// Performs the CreateTextureView operation.
+    /// Executes the CreateTextureView operation.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateTextureView operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateTextureView operation.</returns>
     public TextureView CreateTextureView(TextureViewDescription description) {
         return this.CreateTextureView(ref description);
     }
 
     /// <summary>
-    /// Performs the CreateTextureView operation.
+    /// Executes the CreateTextureView operation.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateTextureView operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateTextureView operation.</returns>
     public TextureView CreateTextureView(ref TextureViewDescription description) {
 #if VALIDATE_USAGE
         if (description.MipLevels == 0 || description.ArrayLayers == 0
@@ -237,19 +237,19 @@ public abstract class ResourceFactory {
     }
 
     /// <summary>
-    /// Performs the CreateBuffer operation.
+    /// Executes the CreateBuffer operation.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateBuffer operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateBuffer operation.</returns>
     public DeviceBuffer CreateBuffer(BufferDescription description) {
         return this.CreateBuffer(ref description);
     }
 
     /// <summary>
-    /// Performs the CreateBuffer operation.
+    /// Executes the CreateBuffer operation.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateBuffer operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateBuffer operation.</returns>
     public DeviceBuffer CreateBuffer(ref BufferDescription description) {
 #if VALIDATE_USAGE
         BufferUsage usage = description.Usage;
@@ -290,19 +290,19 @@ public abstract class ResourceFactory {
     }
 
     /// <summary>
-    /// Performs the CreateSampler operation.
+    /// Executes the CreateSampler operation.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateSampler operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateSampler operation.</returns>
     public Sampler CreateSampler(SamplerDescription description) {
         return this.CreateSampler(ref description);
     }
 
     /// <summary>
-    /// Performs the CreateSampler operation.
+    /// Executes the CreateSampler operation.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateSampler operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateSampler operation.</returns>
     public Sampler CreateSampler(ref SamplerDescription description) {
 #if VALIDATE_USAGE
         if (!this.Features.SamplerLodBias && description.LodBias != 0) {
@@ -318,19 +318,19 @@ public abstract class ResourceFactory {
     }
 
     /// <summary>
-    /// Performs the CreateShader operation.
+    /// Executes the CreateShader operation.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateShader operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateShader operation.</returns>
     public Shader CreateShader(ShaderDescription description) {
         return this.CreateShader(ref description);
     }
 
     /// <summary>
-    /// Performs the CreateShader operation.
+    /// Executes the CreateShader operation.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateShader operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateShader operation.</returns>
     public Shader CreateShader(ref ShaderDescription description) {
 #if VALIDATE_USAGE
         if (!this.Features.ComputeShader && description.Stage == ShaderStages.Compute) {
@@ -351,154 +351,154 @@ public abstract class ResourceFactory {
     }
 
     /// <summary>
-    /// Performs the CreateCommandList operation.
+    /// Executes the CreateCommandList operation.
     /// </summary>
-    /// <returns>The result of the CreateCommandList operation.</returns>
+    /// <returns>Returns the result produced by the CreateCommandList operation.</returns>
     public CommandList CreateCommandList() {
         return this.CreateCommandList(new CommandListDescription());
     }
 
     /// <summary>
-    /// Performs the CreateCommandList operation.
+    /// Executes the CreateCommandList operation.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateCommandList operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateCommandList operation.</returns>
     public CommandList CreateCommandList(CommandListDescription description) {
         return this.CreateCommandList(ref description);
     }
 
     /// <summary>
-    /// Performs the CreateCommandList operation.
+    /// Executes the CreateCommandList operation.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateCommandList operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateCommandList operation.</returns>
     public abstract CommandList CreateCommandList(ref CommandListDescription description);
 
     /// <summary>
-    /// Performs the CreateResourceLayout operation.
+    /// Executes the CreateResourceLayout operation.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateResourceLayout operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateResourceLayout operation.</returns>
     public ResourceLayout CreateResourceLayout(ResourceLayoutDescription description) {
         return this.CreateResourceLayout(ref description);
     }
 
     /// <summary>
-    /// Performs the CreateResourceLayout operation.
+    /// Executes the CreateResourceLayout operation.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateResourceLayout operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateResourceLayout operation.</returns>
     public abstract ResourceLayout CreateResourceLayout(ref ResourceLayoutDescription description);
 
     /// <summary>
-    /// Performs the CreateResourceSet operation.
+    /// Executes the CreateResourceSet operation.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateResourceSet operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateResourceSet operation.</returns>
     public ResourceSet CreateResourceSet(ResourceSetDescription description) {
         return this.CreateResourceSet(ref description);
     }
 
     /// <summary>
-    /// Performs the CreateResourceSet operation.
+    /// Executes the CreateResourceSet operation.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateResourceSet operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateResourceSet operation.</returns>
     public abstract ResourceSet CreateResourceSet(ref ResourceSetDescription description);
 
     /// <summary>
-    /// Performs the CreateFence operation.
+    /// Executes the CreateFence operation.
     /// </summary>
-    /// <param name="signaled">The value of signaled.</param>
-    /// <returns>The result of the CreateFence operation.</returns>
+    /// <param name="signaled">Specifies the value of <paramref name="signaled" />.</param>
+    /// <returns>Returns the result produced by the CreateFence operation.</returns>
     public abstract Fence CreateFence(bool signaled);
 
     /// <summary>
-    /// Performs the CreateSwapchain operation.
+    /// Executes the CreateSwapchain operation.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateSwapchain operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateSwapchain operation.</returns>
     public Swapchain CreateSwapchain(SwapchainDescription description) {
         return this.CreateSwapchain(ref description);
     }
 
     /// <summary>
-    /// Performs the CreateSwapchain operation.
+    /// Executes the CreateSwapchain operation.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateSwapchain operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateSwapchain operation.</returns>
     public abstract Swapchain CreateSwapchain(ref SwapchainDescription description);
 
     /// <summary></summary>
-    /// <param name="description"></param>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
     /// <returns></returns>
 
     /// <summary>
-    /// Performs the CreateGraphicsPipelineCore operation.
+    /// Executes the CreateGraphicsPipelineCore operation.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateGraphicsPipelineCore operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateGraphicsPipelineCore operation.</returns>
     protected abstract Pipeline CreateGraphicsPipelineCore(ref GraphicsPipelineDescription description);
 
     /// <summary></summary>
-    /// <param name="nativeTexture"></param>
-    /// <param name="description"></param>
+    /// <param name="nativeTexture">Specifies the value of <paramref name="nativeTexture" />.</param>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
     /// <returns></returns>
 
     /// <summary>
-    /// Performs the CreateTextureCore operation.
+    /// Executes the CreateTextureCore operation.
     /// </summary>
-    /// <param name="nativeTexture">The value of nativeTexture.</param>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateTextureCore operation.</returns>
+    /// <param name="nativeTexture">Specifies the value of <paramref name="nativeTexture" />.</param>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateTextureCore operation.</returns>
     protected abstract Texture CreateTextureCore(ulong nativeTexture, ref TextureDescription description);
 
     // TODO: private protected
 
     /// <summary>
-    /// Performs the CreateTextureCore operation.
+    /// Executes the CreateTextureCore operation.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateTextureCore operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateTextureCore operation.</returns>
     protected abstract Texture CreateTextureCore(ref TextureDescription description);
 
     // TODO: private protected
 
     /// <summary>
-    /// Performs the CreateTextureViewCore operation.
+    /// Executes the CreateTextureViewCore operation.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateTextureViewCore operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateTextureViewCore operation.</returns>
     protected abstract TextureView CreateTextureViewCore(ref TextureViewDescription description);
 
     // TODO: private protected
 
     /// <summary>
-    /// Performs the CreateBufferCore operation.
+    /// Executes the CreateBufferCore operation.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateBufferCore operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateBufferCore operation.</returns>
     protected abstract DeviceBuffer CreateBufferCore(ref BufferDescription description);
 
     /// <summary></summary>
-    /// <param name="description"></param>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
     /// <returns></returns>
 
     /// <summary>
-    /// Performs the CreateSamplerCore operation.
+    /// Executes the CreateSamplerCore operation.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateSamplerCore operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateSamplerCore operation.</returns>
     protected abstract Sampler CreateSamplerCore(ref SamplerDescription description);
 
     /// <summary></summary>
-    /// <param name="description"></param>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
     /// <returns></returns>
 
     /// <summary>
-    /// Performs the CreateShaderCore operation.
+    /// Executes the CreateShaderCore operation.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the CreateShaderCore operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the CreateShaderCore operation.</returns>
     protected abstract Shader CreateShaderCore(ref ShaderDescription description);
 }

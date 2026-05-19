@@ -4,18 +4,18 @@ using Veldrith.MetalBindings;
 namespace Veldrith.MTL;
 
 /// <summary>
-/// Represents the MtlcvDisplayLink class.
+/// Defines the behavior and responsibilities of the MtlcvDisplayLink class.
 /// </summary>
 internal unsafe class MtlcvDisplayLink : IMtlDisplayLink {
     // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
 
     /// <summary>
-    /// Represents the _cvDisplayLinkCallbackHandler field.
+    /// Stores the value associated with <c>_cvDisplayLinkCallbackHandler</c>.
     /// </summary>
     private readonly CVDisplayLinkOutputCallbackDelegate _cvDisplayLinkCallbackHandler;
 
     /// <summary>
-    /// Represents the _displayLink field.
+    /// Stores the value associated with <c>_displayLink</c>.
     /// </summary>
     private CVDisplayLink _displayLink;
 
@@ -32,7 +32,7 @@ internal unsafe class MtlcvDisplayLink : IMtlDisplayLink {
     #region Disposal
 
     /// <summary>
-    /// Performs the Dispose operation.
+    /// Executes the Dispose operation.
     /// </summary>
     public void Dispose() {
         this._displayLink.Release();
@@ -41,39 +41,39 @@ internal unsafe class MtlcvDisplayLink : IMtlDisplayLink {
     #endregion
 
     /// <summary>
-    /// Performs the UpdateActiveDisplay operation.
+    /// Executes the UpdateActiveDisplay operation.
     /// </summary>
-    /// <param name="x">The value of x.</param>
-    /// <param name="y">The value of y.</param>
-    /// <param name="w">The value of w.</param>
-    /// <param name="h">The value of h.</param>
+    /// <param name="x">Specifies the value of <paramref name="x" />.</param>
+    /// <param name="y">Specifies the value of <paramref name="y" />.</param>
+    /// <param name="w">Specifies the value of <paramref name="w" />.</param>
+    /// <param name="h">Specifies the value of <paramref name="h" />.</param>
     public void UpdateActiveDisplay(int x, int y, int w, int h) {
         this._displayLink.UpdateActiveMonitor(x, y, w, h);
     }
 
     /// <summary>
-    /// Performs the GetActualOutputVideoRefreshPeriod operation.
+    /// Executes the GetActualOutputVideoRefreshPeriod operation.
     /// </summary>
-    /// <returns>The result of the GetActualOutputVideoRefreshPeriod operation.</returns>
+    /// <returns>Returns the result produced by the GetActualOutputVideoRefreshPeriod operation.</returns>
     public double GetActualOutputVideoRefreshPeriod() {
         return this._displayLink.GetActualOutputVideoRefreshPeriod();
     }
 
     /// <summary>
-    /// Represents the Callback field.
+    /// Stores the value associated with <c>Callback</c>.
     /// </summary>
     public event Action Callback;
 
     /// <summary>
-    /// Performs the OnCallback operation.
+    /// Executes the OnCallback operation.
     /// </summary>
-    /// <param name="displaylink">The value of displaylink.</param>
-    /// <param name="innow">The value of innow.</param>
-    /// <param name="inoutputtime">The value of inoutputtime.</param>
-    /// <param name="flagsin">The value of flagsin.</param>
-    /// <param name="flagsout">The value of flagsout.</param>
-    /// <param name="userdata">The value of userdata.</param>
-    /// <returns>The result of the OnCallback operation.</returns>
+    /// <param name="displaylink">Specifies the value of <paramref name="displaylink" />.</param>
+    /// <param name="innow">Specifies the value of <paramref name="innow" />.</param>
+    /// <param name="inoutputtime">Specifies the value of <paramref name="inoutputtime" />.</param>
+    /// <param name="flagsin">Specifies the value of <paramref name="flagsin" />.</param>
+    /// <param name="flagsout">Specifies the value of <paramref name="flagsout" />.</param>
+    /// <param name="userdata">Specifies the value of <paramref name="userdata" />.</param>
+    /// <returns>Returns the result produced by the OnCallback operation.</returns>
     private int OnCallback(CVDisplayLink displaylink, CVTimeStamp* innow, CVTimeStamp* inoutputtime, long flagsin, long flagsout, IntPtr userdata) {
         this.Callback?.Invoke();
         return 0;

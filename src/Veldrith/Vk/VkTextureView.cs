@@ -4,36 +4,36 @@ using static Vulkan.VulkanNative;
 namespace Veldrith.Vk;
 
 /// <summary>
-/// Represents the VkTextureView class.
+/// Defines the behavior and responsibilities of the VkTextureView class.
 /// </summary>
 internal unsafe class VkTextureView : TextureView {
 
     /// <summary>
-    /// Represents the _imageView field.
+    /// Stores the value associated with <c>_imageView</c>.
     /// </summary>
     private readonly VkImageView _imageView;
 
     /// <summary>
-    /// Represents the gd field.
+    /// Stores the value associated with <c>gd</c>.
     /// </summary>
     private readonly VkGraphicsDevice gd;
 
     /// <summary>
-    /// Represents the _destroyed field.
+    /// Stores the value associated with <c>_destroyed</c>.
     /// </summary>
     private bool _destroyed;
 
     /// <summary>
-    /// Represents the _name field.
+    /// Stores the value associated with <c>_name</c>.
     /// </summary>
     private string _name;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VkTextureView" /> class.
     /// </summary>
-    /// <param name="gd">The value of gd.</param>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the base operation.</returns>
+    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the base operation.</returns>
     public VkTextureView(VkGraphicsDevice gd, ref TextureViewDescription description) : base(ref description) {
         this.gd = gd;
         VkImageViewCreateInfo imageViewCi = VkImageViewCreateInfo.New();
@@ -76,7 +76,7 @@ internal unsafe class VkTextureView : TextureView {
     }
 
     /// <summary>
-    /// Represents the ImageView field.
+    /// Stores the value associated with <c>ImageView</c>.
     /// </summary>
     public VkImageView ImageView => this._imageView;
 
@@ -109,7 +109,7 @@ internal unsafe class VkTextureView : TextureView {
     #region Disposal
 
     /// <summary>
-    /// Performs the Dispose operation.
+    /// Executes the Dispose operation.
     /// </summary>
     public override void Dispose() {
         this.RefCount.Decrement();
@@ -118,7 +118,7 @@ internal unsafe class VkTextureView : TextureView {
     #endregion
 
     /// <summary>
-    /// Performs the DisposeCore operation.
+    /// Executes the DisposeCore operation.
     /// </summary>
     private void DisposeCore() {
         if (!this._destroyed) {

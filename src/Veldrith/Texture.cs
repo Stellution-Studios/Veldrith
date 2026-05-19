@@ -3,18 +3,17 @@ using System;
 namespace Veldrith;
 
 /// <summary>
-/// Represents the Texture class.
+/// Defines the behavior and responsibilities of the Texture class.
 /// </summary>
 public abstract class Texture : IDeviceResource, IMappableResource, IDisposable, IBindableResource {
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>_fullTextureViewLock</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     private readonly object _fullTextureViewLock = new();
 
     /// <summary>
-    /// Represents the _fullTextureView field.
+    /// Stores the value associated with <c>_fullTextureView</c>.
     /// </summary>
     private TextureView _fullTextureView;
 
@@ -80,7 +79,7 @@ public abstract class Texture : IDeviceResource, IMappableResource, IDisposable,
     #region Disposal
 
     /// <summary>
-    /// Performs the Dispose operation.
+    /// Executes the Dispose operation.
     /// </summary>
     public virtual void Dispose() {
         lock (this._fullTextureViewLock) {
@@ -93,20 +92,20 @@ public abstract class Texture : IDeviceResource, IMappableResource, IDisposable,
     #endregion
 
     /// <summary>
-    /// Performs the CalculateSubresource operation.
+    /// Executes the CalculateSubresource operation.
     /// </summary>
-    /// <param name="mipLevel">The value of mipLevel.</param>
-    /// <param name="arrayLayer">The value of arrayLayer.</param>
-    /// <returns>The result of the CalculateSubresource operation.</returns>
+    /// <param name="mipLevel">Specifies the value of <paramref name="mipLevel" />.</param>
+    /// <param name="arrayLayer">Specifies the value of <paramref name="arrayLayer" />.</param>
+    /// <returns>Returns the result produced by the CalculateSubresource operation.</returns>
     public uint CalculateSubresource(uint mipLevel, uint arrayLayer) {
         return arrayLayer * this.MipLevels + mipLevel;
     }
 
     /// <summary>
-    /// Performs the GetFullTextureView operation.
+    /// Executes the GetFullTextureView operation.
     /// </summary>
-    /// <param name="gd">The value of gd.</param>
-    /// <returns>The result of the GetFullTextureView operation.</returns>
+    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
+    /// <returns>Returns the result produced by the GetFullTextureView operation.</returns>
     internal TextureView GetFullTextureView(GraphicsDevice gd) {
         lock (this._fullTextureViewLock) {
             return this._fullTextureView ??= this.CreateFullTextureView(gd);
@@ -114,16 +113,16 @@ public abstract class Texture : IDeviceResource, IMappableResource, IDisposable,
     }
 
     /// <summary>
-    /// Performs the CreateFullTextureView operation.
+    /// Executes the CreateFullTextureView operation.
     /// </summary>
-    /// <param name="gd">The value of gd.</param>
-    /// <returns>The result of the CreateFullTextureView operation.</returns>
+    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
+    /// <returns>Returns the result produced by the CreateFullTextureView operation.</returns>
     private protected virtual TextureView CreateFullTextureView(GraphicsDevice gd) {
         return gd.ResourceFactory.CreateTextureView(this);
     }
 
     /// <summary>
-    /// Performs the DisposeCore operation.
+    /// Executes the DisposeCore operation.
     /// </summary>
     private protected abstract void DisposeCore();
 }

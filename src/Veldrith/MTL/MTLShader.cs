@@ -5,21 +5,21 @@ using Veldrith.MetalBindings;
 namespace Veldrith.MTL;
 
 /// <summary>
-/// Represents the MtlShader class.
+/// Defines the behavior and responsibilities of the MtlShader class.
 /// </summary>
 internal class MtlShader : Shader {
 
     /// <summary>
-    /// Represents the _disposed field.
+    /// Stores the value associated with <c>_disposed</c>.
     /// </summary>
     private bool _disposed;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MtlShader" /> class.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <param name="gd">The value of gd.</param>
-    /// <returns>The result of the base operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
+    /// <returns>Returns the result produced by the base operation.</returns>
     public unsafe MtlShader(ref ShaderDescription description, MtlGraphicsDevice gd) : base(description.Stage, description.EntryPoint) {
         if (description.ShaderBytes.Length > 4
             && description.ShaderBytes[0] == 0x4d
@@ -83,7 +83,7 @@ internal class MtlShader : Shader {
     #region Disposal
 
     /// <summary>
-    /// Performs the Dispose operation.
+    /// Executes the Dispose operation.
     /// </summary>
     public override void Dispose() {
         if (!this._disposed) {

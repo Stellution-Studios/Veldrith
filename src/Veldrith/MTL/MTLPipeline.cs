@@ -6,25 +6,25 @@ using Veldrith.MetalBindings;
 namespace Veldrith.MTL;
 
 /// <summary>
-/// Represents the MtlPipeline class.
+/// Defines the behavior and responsibilities of the MtlPipeline class.
 /// </summary>
 internal class MtlPipeline : Pipeline {
 
     /// <summary>
-    /// Represents the _disposed field.
+    /// Stores the value associated with <c>_disposed</c>.
     /// </summary>
     private bool _disposed;
 
     /// <summary>
-    /// Represents the _specializedFunctions field.
+    /// Stores the value associated with <c>_specializedFunctions</c>.
     /// </summary>
     private List<MTLFunction> _specializedFunctions;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MtlPipeline" /> class.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the base operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the base operation.</returns>
     public MtlPipeline(ref GraphicsPipelineDescription description, MtlGraphicsDevice gd) : base(ref description) {
         this.PrimitiveType = MtlFormats.VdToMtlPrimitiveTopology(description.PrimitiveTopology);
         this.ResourceLayouts = new MtlResourceLayout[description.ResourceLayouts.Length];
@@ -196,9 +196,9 @@ internal class MtlPipeline : Pipeline {
     /// <summary>
     /// Initializes a new instance of the <see cref="MtlPipeline" /> class.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <param name="gd">The value of gd.</param>
-    /// <returns>The result of the base operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
+    /// <returns>Returns the result produced by the base operation.</returns>
     public MtlPipeline(ref ComputePipelineDescription description, MtlGraphicsDevice gd) : base(ref description) {
         this.IsComputePipeline = true;
         this.ResourceLayouts = new MtlResourceLayout[description.ResourceLayouts.Length];
@@ -323,9 +323,8 @@ internal class MtlPipeline : Pipeline {
     public bool ScissorTestEnabled { get; }
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>get</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public MTLSize ThreadsPerThreadgroup { get; } = new(1, 1, 1);
 
     /// <summary>
@@ -356,7 +355,7 @@ internal class MtlPipeline : Pipeline {
     #region Disposal
 
     /// <summary>
-    /// Performs the Dispose operation.
+    /// Executes the Dispose operation.
     /// </summary>
     public override void Dispose() {
         if (!this._disposed) {
@@ -387,10 +386,10 @@ internal class MtlPipeline : Pipeline {
     #endregion
 
     /// <summary>
-    /// Performs the CreateConstantValues operation.
+    /// Executes the CreateConstantValues operation.
     /// </summary>
-    /// <param name="specializations">The value of specializations.</param>
-    /// <returns>The result of the CreateConstantValues operation.</returns>
+    /// <param name="specializations">Specifies the value of <paramref name="specializations" />.</param>
+    /// <returns>Returns the result produced by the CreateConstantValues operation.</returns>
     private unsafe MTLFunctionConstantValues CreateConstantValues(SpecializationConstant[] specializations) {
         MTLFunctionConstantValues ret = MTLFunctionConstantValues.New();
 
@@ -405,9 +404,9 @@ internal class MtlPipeline : Pipeline {
     }
 
     /// <summary>
-    /// Performs the AddSpecializedFunction operation.
+    /// Executes the AddSpecializedFunction operation.
     /// </summary>
-    /// <param name="function">The value of function.</param>
+    /// <param name="function">Specifies the value of <paramref name="function" />.</param>
     private void AddSpecializedFunction(MTLFunction function) {
         this._specializedFunctions ??= new List<MTLFunction>();
         this._specializedFunctions.Add(function);

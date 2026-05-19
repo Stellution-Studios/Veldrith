@@ -3,42 +3,42 @@ using Vortice.Direct3D12;
 namespace Veldrith.D3D12;
 
 /// <summary>
-/// Represents the D3D12Sampler class.
+/// Defines the behavior and responsibilities of the D3D12Sampler class.
 /// </summary>
 internal sealed class D3D12Sampler : Sampler {
 
     /// <summary>
-    /// Represents the description field.
+    /// Stores the value associated with <c>description</c>.
     /// </summary>
     private readonly SamplerDescription description;
 
     /// <summary>
-    /// Represents the gd field.
+    /// Stores the value associated with <c>gd</c>.
     /// </summary>
     private readonly D3D12GraphicsDevice gd;
 
     /// <summary>
-    /// Represents the _descriptorHeap field.
+    /// Stores the value associated with <c>_descriptorHeap</c>.
     /// </summary>
     private ID3D12DescriptorHeap _descriptorHeap;
 
     /// <summary>
-    /// Represents the _disposed field.
+    /// Stores the value associated with <c>_disposed</c>.
     /// </summary>
     private bool _disposed;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="D3D12Sampler" /> type.
     /// </summary>
-    /// <param name="gd">The value of gd.</param>
-    /// <param name="description">The value of description.</param>
+    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
     public D3D12Sampler(D3D12GraphicsDevice gd, ref SamplerDescription description) {
         this.gd = gd;
         this.description = description;
     }
 
     /// <summary>
-    /// Represents the Description field.
+    /// Stores the value associated with <c>Description</c>.
     /// </summary>
     internal SamplerDescription Description => this.description;
 
@@ -53,9 +53,9 @@ internal sealed class D3D12Sampler : Sampler {
     public override string Name { get; set; }
 
     /// <summary>
-    /// Performs the GetOrCreateDescriptor operation.
+    /// Executes the GetOrCreateDescriptor operation.
     /// </summary>
-    /// <returns>The result of the GetOrCreateDescriptor operation.</returns>
+    /// <returns>Returns the result produced by the GetOrCreateDescriptor operation.</returns>
     internal CpuDescriptorHandle GetOrCreateDescriptor() {
         if (this._descriptorHeap == null) {
             this._descriptorHeap = this.gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(DescriptorHeapType.Sampler, 1));
@@ -83,7 +83,7 @@ internal sealed class D3D12Sampler : Sampler {
     }
 
     /// <summary>
-    /// Performs the Dispose operation.
+    /// Executes the Dispose operation.
     /// </summary>
     public override void Dispose() {
         this._descriptorHeap?.Dispose();

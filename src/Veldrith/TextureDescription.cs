@@ -61,14 +61,14 @@ public struct TextureDescription : IEquatable<TextureDescription> {
     /// <summary>
     /// Initializes a new instance of the <see cref="TextureDescription" /> type.
     /// </summary>
-    /// <param name="width">The value of width.</param>
-    /// <param name="height">The value of height.</param>
-    /// <param name="depth">The value of depth.</param>
-    /// <param name="mipLevels">The value of mipLevels.</param>
-    /// <param name="arrayLayers">The value of arrayLayers.</param>
-    /// <param name="format">The value of format.</param>
-    /// <param name="usage">The value of usage.</param>
-    /// <param name="type">The value of type.</param>
+    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
+    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
+    /// <param name="depth">Specifies the value of <paramref name="depth" />.</param>
+    /// <param name="mipLevels">Specifies the value of <paramref name="mipLevels" />.</param>
+    /// <param name="arrayLayers">Specifies the value of <paramref name="arrayLayers" />.</param>
+    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
+    /// <param name="usage">Specifies the value of <paramref name="usage" />.</param>
+    /// <param name="type">Specifies the value of <paramref name="type" />.</param>
     public TextureDescription(uint width, uint height, uint depth, uint mipLevels, uint arrayLayers, PixelFormat format, TextureUsage usage, TextureType type) {
         this.Width = width;
         this.Height = height;
@@ -84,15 +84,15 @@ public struct TextureDescription : IEquatable<TextureDescription> {
     /// <summary>
     /// Initializes a new instance of the <see cref="TextureDescription" /> type.
     /// </summary>
-    /// <param name="width">The value of width.</param>
-    /// <param name="height">The value of height.</param>
-    /// <param name="depth">The value of depth.</param>
-    /// <param name="mipLevels">The value of mipLevels.</param>
-    /// <param name="arrayLayers">The value of arrayLayers.</param>
-    /// <param name="format">The value of format.</param>
-    /// <param name="usage">The value of usage.</param>
-    /// <param name="type">The value of type.</param>
-    /// <param name="sampleCount">The value of sampleCount.</param>
+    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
+    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
+    /// <param name="depth">Specifies the value of <paramref name="depth" />.</param>
+    /// <param name="mipLevels">Specifies the value of <paramref name="mipLevels" />.</param>
+    /// <param name="arrayLayers">Specifies the value of <paramref name="arrayLayers" />.</param>
+    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
+    /// <param name="usage">Specifies the value of <paramref name="usage" />.</param>
+    /// <param name="type">Specifies the value of <paramref name="type" />.</param>
+    /// <param name="sampleCount">Specifies the value of <paramref name="sampleCount" />.</param>
     public TextureDescription(uint width, uint height, uint depth, uint mipLevels, uint arrayLayers, PixelFormat format, TextureUsage usage, TextureType type, TextureSampleCount sampleCount) {
         this.Width = width;
         this.Height = height;
@@ -106,66 +106,66 @@ public struct TextureDescription : IEquatable<TextureDescription> {
     }
 
     /// <summary>
-    /// Performs the Texture1D operation.
+    /// Executes the Texture1D operation.
     /// </summary>
-    /// <param name="width">The value of width.</param>
-    /// <param name="mipLevels">The value of mipLevels.</param>
-    /// <param name="arrayLayers">The value of arrayLayers.</param>
-    /// <param name="format">The value of format.</param>
-    /// <param name="usage">The value of usage.</param>
-    /// <returns>The result of the Texture1D operation.</returns>
+    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
+    /// <param name="mipLevels">Specifies the value of <paramref name="mipLevels" />.</param>
+    /// <param name="arrayLayers">Specifies the value of <paramref name="arrayLayers" />.</param>
+    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
+    /// <param name="usage">Specifies the value of <paramref name="usage" />.</param>
+    /// <returns>Returns the result produced by the Texture1D operation.</returns>
     public static TextureDescription Texture1D(uint width, uint mipLevels, uint arrayLayers, PixelFormat format, TextureUsage usage) {
         return new TextureDescription(width, 1, 1, mipLevels, arrayLayers, format, usage, TextureType.Texture1D, TextureSampleCount.Count1);
     }
 
     /// <summary>
-    /// Performs the Texture2D operation.
+    /// Executes the Texture2D operation.
     /// </summary>
-    /// <param name="width">The value of width.</param>
-    /// <param name="height">The value of height.</param>
-    /// <param name="mipLevels">The value of mipLevels.</param>
-    /// <param name="arrayLayers">The value of arrayLayers.</param>
-    /// <param name="format">The value of format.</param>
-    /// <param name="usage">The value of usage.</param>
-    /// <returns>The result of the Texture2D operation.</returns>
+    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
+    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
+    /// <param name="mipLevels">Specifies the value of <paramref name="mipLevels" />.</param>
+    /// <param name="arrayLayers">Specifies the value of <paramref name="arrayLayers" />.</param>
+    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
+    /// <param name="usage">Specifies the value of <paramref name="usage" />.</param>
+    /// <returns>Returns the result produced by the Texture2D operation.</returns>
     public static TextureDescription Texture2D(uint width, uint height, uint mipLevels, uint arrayLayers, PixelFormat format, TextureUsage usage) {
         return new TextureDescription(width, height, 1, mipLevels, arrayLayers, format, usage, TextureType.Texture2D, TextureSampleCount.Count1);
     }
 
     /// <summary>
-    /// Performs the Texture2D operation.
+    /// Executes the Texture2D operation.
     /// </summary>
-    /// <param name="width">The value of width.</param>
-    /// <param name="height">The value of height.</param>
-    /// <param name="mipLevels">The value of mipLevels.</param>
-    /// <param name="arrayLayers">The value of arrayLayers.</param>
-    /// <param name="format">The value of format.</param>
-    /// <param name="usage">The value of usage.</param>
-    /// <param name="sampleCount">The value of sampleCount.</param>
-    /// <returns>The result of the Texture2D operation.</returns>
+    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
+    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
+    /// <param name="mipLevels">Specifies the value of <paramref name="mipLevels" />.</param>
+    /// <param name="arrayLayers">Specifies the value of <paramref name="arrayLayers" />.</param>
+    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
+    /// <param name="usage">Specifies the value of <paramref name="usage" />.</param>
+    /// <param name="sampleCount">Specifies the value of <paramref name="sampleCount" />.</param>
+    /// <returns>Returns the result produced by the Texture2D operation.</returns>
     public static TextureDescription Texture2D(uint width, uint height, uint mipLevels, uint arrayLayers, PixelFormat format, TextureUsage usage, TextureSampleCount sampleCount) {
         return new TextureDescription(width, height, 1, mipLevels, arrayLayers, format, usage, TextureType.Texture2D, sampleCount);
     }
 
     /// <summary>
-    /// Performs the Texture3D operation.
+    /// Executes the Texture3D operation.
     /// </summary>
-    /// <param name="width">The value of width.</param>
-    /// <param name="height">The value of height.</param>
-    /// <param name="depth">The value of depth.</param>
-    /// <param name="mipLevels">The value of mipLevels.</param>
-    /// <param name="format">The value of format.</param>
-    /// <param name="usage">The value of usage.</param>
-    /// <returns>The result of the Texture3D operation.</returns>
+    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
+    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
+    /// <param name="depth">Specifies the value of <paramref name="depth" />.</param>
+    /// <param name="mipLevels">Specifies the value of <paramref name="mipLevels" />.</param>
+    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
+    /// <param name="usage">Specifies the value of <paramref name="usage" />.</param>
+    /// <returns>Returns the result produced by the Texture3D operation.</returns>
     public static TextureDescription Texture3D(uint width, uint height, uint depth, uint mipLevels, PixelFormat format, TextureUsage usage) {
         return new TextureDescription(width, height, depth, mipLevels, 1, format, usage, TextureType.Texture3D, TextureSampleCount.Count1);
     }
 
     /// <summary>
-    /// Performs the Equals operation.
+    /// Executes the Equals operation.
     /// </summary>
-    /// <param name="other">The value of other.</param>
-    /// <returns>The result of the Equals operation.</returns>
+    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
+    /// <returns>Returns the result produced by the Equals operation.</returns>
     public bool Equals(TextureDescription other) {
         return this.Width.Equals(other.Width)
                && this.Height.Equals(other.Height)
@@ -179,9 +179,9 @@ public struct TextureDescription : IEquatable<TextureDescription> {
     }
 
     /// <summary>
-    /// Performs the GetHashCode operation.
+    /// Executes the GetHashCode operation.
     /// </summary>
-    /// <returns>The result of the GetHashCode operation.</returns>
+    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(this.Width.GetHashCode(), this.Height.GetHashCode(), this.Depth.GetHashCode(), this.MipLevels.GetHashCode(), this.ArrayLayers.GetHashCode(), (int)this.Format, (int)this.Usage, (int)this.Type, (int)this.SampleCount);
     }

@@ -3,7 +3,7 @@ using System;
 namespace Veldrith;
 
 /// <summary>
-/// Represents the DeviceBuffer class.
+/// Defines the behavior and responsibilities of the DeviceBuffer class.
 /// </summary>
 public abstract class DeviceBuffer : IDeviceResource, IBindableResource, IMappableResource, IDisposable {
 
@@ -31,7 +31,7 @@ public abstract class DeviceBuffer : IDeviceResource, IBindableResource, IMappab
     #region Disposal
 
     /// <summary>
-    /// Performs the Dispose operation.
+    /// Executes the Dispose operation.
     /// </summary>
     public abstract void Dispose();
 

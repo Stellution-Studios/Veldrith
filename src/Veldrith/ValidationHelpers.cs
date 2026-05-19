@@ -3,16 +3,16 @@ using System.Diagnostics;
 namespace Veldrith;
 
 /// <summary>
-/// Represents the ValidationHelpers class.
+/// Defines the behavior and responsibilities of the ValidationHelpers class.
 /// </summary>
 internal static class ValidationHelpers {
     [Conditional("VALIDATE_USAGE")]
 
     /// <summary>
-    /// Performs the ValidateResourceSet operation.
+    /// Executes the ValidateResourceSet operation.
     /// </summary>
-    /// <param name="gd">The value of gd.</param>
-    /// <param name="description">The value of description.</param>
+    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
     internal static void ValidateResourceSet(GraphicsDevice gd, ref ResourceSetDescription description) {
 #if VALIDATE_USAGE
         ResourceLayoutElementDescription[] elements = description.Layout.Description.Elements;
@@ -53,11 +53,11 @@ internal static class ValidationHelpers {
     [Conditional("VALIDATE_USAGE")]
 
     /// <summary>
-    /// Performs the ValidateResourceKind operation.
+    /// Executes the ValidateResourceKind operation.
     /// </summary>
-    /// <param name="kind">The value of kind.</param>
-    /// <param name="resource">The value of resource.</param>
-    /// <param name="slot">The value of slot.</param>
+    /// <param name="kind">Specifies the value of <paramref name="kind" />.</param>
+    /// <param name="resource">Specifies the value of <paramref name="resource" />.</param>
+    /// <param name="slot">Specifies the value of <paramref name="slot" />.</param>
     private static void ValidateResourceKind(ResourceKind kind, IBindableResource resource, uint slot) {
         switch (kind) {
             case ResourceKind.UniformBuffer: {

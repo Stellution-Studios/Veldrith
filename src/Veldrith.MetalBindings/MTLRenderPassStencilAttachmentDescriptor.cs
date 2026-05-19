@@ -4,12 +4,12 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the MTLRenderPassStencilAttachmentDescriptor struct.
+/// Defines the data layout and behavior of the MTLRenderPassStencilAttachmentDescriptor struct.
 /// </summary>
 public struct MTLRenderPassStencilAttachmentDescriptor {
 
     /// <summary>
-    /// Represents the NativePtr field.
+    /// Stores the value associated with <c>NativePtr</c>.
     /// </summary>
     public readonly IntPtr NativePtr;
 
@@ -54,12 +54,12 @@ public struct MTLRenderPassStencilAttachmentDescriptor {
     }
 
     /// <summary>
-    /// Represents the sel_clearStencil field.
+    /// Stores the value associated with <c>sel_clearStencil</c>.
     /// </summary>
     private static readonly Selector sel_clearStencil = "clearStencil";
 
     /// <summary>
-    /// Represents the sel_setClearStencil field.
+    /// Stores the value associated with <c>sel_setClearStencil</c>.
     /// </summary>
     private static readonly Selector sel_setClearStencil = "setClearStencil:";
 }

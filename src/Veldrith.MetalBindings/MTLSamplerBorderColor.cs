@@ -1,12 +1,12 @@
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the MTLSamplerBorderColor enum.
+/// Defines the available values of the MTLSamplerBorderColor enumeration.
 /// </summary>
 public enum MTLSamplerBorderColor {
 
     /// <summary>
-    /// Represents the TransparentBlack field.
+    /// Stores the value associated with <c>TransparentBlack</c>.
     /// </summary>
     TransparentBlack = 0, OpaqueBlack = 1, OpaqueWhite = 2
 }

@@ -7,12 +7,12 @@ namespace Veldrith.MetalBindings;
 [StructLayout(LayoutKind.Sequential)]
 
 /// <summary>
-/// Represents the CAMetalDrawable struct.
+/// Defines the data layout and behavior of the CAMetalDrawable struct.
 /// </summary>
 public struct CAMetalDrawable {
 
     /// <summary>
-    /// Represents the NativePtr field.
+    /// Stores the value associated with <c>NativePtr</c>.
     /// </summary>
     public readonly IntPtr NativePtr;
 

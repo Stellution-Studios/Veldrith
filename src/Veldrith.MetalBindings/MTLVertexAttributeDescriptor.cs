@@ -4,19 +4,19 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the MTLVertexAttributeDescriptor struct.
+/// Defines the data layout and behavior of the MTLVertexAttributeDescriptor struct.
 /// </summary>
 public struct MTLVertexAttributeDescriptor {
 
     /// <summary>
-    /// Represents the NativePtr field.
+    /// Stores the value associated with <c>NativePtr</c>.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MTLVertexAttributeDescriptor" /> type.
     /// </summary>
-    /// <param name="ptr">The value of ptr.</param>
+    /// <param name="ptr">Specifies the value of <paramref name="ptr" />.</param>
     public MTLVertexAttributeDescriptor(IntPtr ptr) {
         this.NativePtr = ptr;
     }
@@ -46,32 +46,32 @@ public struct MTLVertexAttributeDescriptor {
     }
 
     /// <summary>
-    /// Represents the sel_format field.
+    /// Stores the value associated with <c>sel_format</c>.
     /// </summary>
     private static readonly Selector sel_format = "format";
 
     /// <summary>
-    /// Represents the sel_setFormat field.
+    /// Stores the value associated with <c>sel_setFormat</c>.
     /// </summary>
     private static readonly Selector sel_setFormat = "setFormat:";
 
     /// <summary>
-    /// Represents the sel_offset field.
+    /// Stores the value associated with <c>sel_offset</c>.
     /// </summary>
     private static readonly Selector sel_offset = "offset";
 
     /// <summary>
-    /// Represents the sel_setOffset field.
+    /// Stores the value associated with <c>sel_setOffset</c>.
     /// </summary>
     private static readonly Selector sel_setOffset = "setOffset:";
 
     /// <summary>
-    /// Represents the sel_bufferIndex field.
+    /// Stores the value associated with <c>sel_bufferIndex</c>.
     /// </summary>
     private static readonly Selector sel_bufferIndex = "bufferIndex";
 
     /// <summary>
-    /// Represents the sel_setBufferIndex field.
+    /// Stores the value associated with <c>sel_setBufferIndex</c>.
     /// </summary>
     private static readonly Selector sel_setBufferIndex = "setBufferIndex:";
 }

@@ -1,12 +1,12 @@
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the MTLBlendOperation enum.
+/// Defines the available values of the MTLBlendOperation enumeration.
 /// </summary>
 public enum MTLBlendOperation {
 
     /// <summary>
-    /// Represents the Add field.
+    /// Stores the value associated with <c>Add</c>.
     /// </summary>
     Add = 0, Subtract = 1, ReverseSubtract = 2, Min = 3, Max = 4
 }

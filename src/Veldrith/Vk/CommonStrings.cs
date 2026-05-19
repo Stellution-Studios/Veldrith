@@ -1,7 +1,7 @@
 namespace Veldrith.Vk;
 
 /// <summary>
-/// Represents the CommonStrings class.
+/// Defines the behavior and responsibilities of the CommonStrings class.
 /// </summary>
 internal static class CommonStrings {
 

@@ -3,14 +3,14 @@ using System;
 namespace Veldrith;
 
 /// <summary>
-/// Represents the TextureView class.
+/// Defines the behavior and responsibilities of the TextureView class.
 /// </summary>
 public abstract class TextureView : IBindableResource, IDeviceResource, IDisposable {
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TextureView" /> type.
     /// </summary>
-    /// <param name="description">The value of description.</param>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
     internal TextureView(ref TextureViewDescription description) {
         this.Target = description.Target;
         this.BaseMipLevel = description.BaseMipLevel;
@@ -65,7 +65,7 @@ public abstract class TextureView : IBindableResource, IDeviceResource, IDisposa
     #region Disposal
 
     /// <summary>
-    /// Performs the Dispose operation.
+    /// Executes the Dispose operation.
     /// </summary>
     public abstract void Dispose();
 

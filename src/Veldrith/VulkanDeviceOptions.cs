@@ -20,8 +20,8 @@ public struct VulkanDeviceOptions {
     /// <summary>
     /// Initializes a new instance of the <see cref="VulkanDeviceOptions" /> type.
     /// </summary>
-    /// <param name="instanceExtensions">The value of instanceExtensions.</param>
-    /// <param name="deviceExtensions">The value of deviceExtensions.</param>
+    /// <param name="instanceExtensions">Specifies the value of <paramref name="instanceExtensions" />.</param>
+    /// <param name="deviceExtensions">Specifies the value of <paramref name="deviceExtensions" />.</param>
     public VulkanDeviceOptions(string[] instanceExtensions, string[] deviceExtensions) {
         this.InstanceExtensions = instanceExtensions;
         this.DeviceExtensions = deviceExtensions;

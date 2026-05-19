@@ -37,9 +37,9 @@ public struct ShaderDescription : IEquatable<ShaderDescription> {
     /// <summary>
     /// Initializes a new instance of the <see cref="ShaderDescription" /> type.
     /// </summary>
-    /// <param name="stage">The value of stage.</param>
-    /// <param name="shaderBytes">The value of shaderBytes.</param>
-    /// <param name="entryPoint">The value of entryPoint.</param>
+    /// <param name="stage">Specifies the value of <paramref name="stage" />.</param>
+    /// <param name="shaderBytes">Specifies the value of <paramref name="shaderBytes" />.</param>
+    /// <param name="entryPoint">Specifies the value of <paramref name="entryPoint" />.</param>
     public ShaderDescription(ShaderStages stage, byte[] shaderBytes, string entryPoint) {
         this.Stage = stage;
         this.ShaderBytes = shaderBytes;
@@ -50,10 +50,10 @@ public struct ShaderDescription : IEquatable<ShaderDescription> {
     /// <summary>
     /// Initializes a new instance of the <see cref="ShaderDescription" /> type.
     /// </summary>
-    /// <param name="stage">The value of stage.</param>
-    /// <param name="shaderBytes">The value of shaderBytes.</param>
-    /// <param name="entryPoint">The value of entryPoint.</param>
-    /// <param name="debug">The value of debug.</param>
+    /// <param name="stage">Specifies the value of <paramref name="stage" />.</param>
+    /// <param name="shaderBytes">Specifies the value of <paramref name="shaderBytes" />.</param>
+    /// <param name="entryPoint">Specifies the value of <paramref name="entryPoint" />.</param>
+    /// <param name="debug">Specifies the value of <paramref name="debug" />.</param>
     public ShaderDescription(ShaderStages stage, byte[] shaderBytes, string entryPoint, bool debug) {
         this.Stage = stage;
         this.ShaderBytes = shaderBytes;
@@ -62,10 +62,10 @@ public struct ShaderDescription : IEquatable<ShaderDescription> {
     }
 
     /// <summary>
-    /// Performs the Equals operation.
+    /// Executes the Equals operation.
     /// </summary>
-    /// <param name="other">The value of other.</param>
-    /// <returns>The result of the Equals operation.</returns>
+    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
+    /// <returns>Returns the result produced by the Equals operation.</returns>
     public bool Equals(ShaderDescription other) {
         return this.Stage == other.Stage
                && this.ShaderBytes == other.ShaderBytes
@@ -74,9 +74,9 @@ public struct ShaderDescription : IEquatable<ShaderDescription> {
     }
 
     /// <summary>
-    /// Performs the GetHashCode operation.
+    /// Executes the GetHashCode operation.
     /// </summary>
-    /// <returns>The result of the GetHashCode operation.</returns>
+    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine((int)this.Stage, this.ShaderBytes.GetHashCode(), this.EntryPoint.GetHashCode(), this.Debug.GetHashCode());
     }

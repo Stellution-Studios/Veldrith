@@ -3,7 +3,7 @@ using System;
 namespace Veldrith;
 
 /// <summary>
-/// Represents the Swapchain class.
+/// Defines the behavior and responsibilities of the Swapchain class.
 /// </summary>
 public abstract class Swapchain : IDeviceResource, IDisposable {
 
@@ -32,16 +32,16 @@ public abstract class Swapchain : IDeviceResource, IDisposable {
     #region Disposal
 
     /// <summary>
-    /// Performs the Dispose operation.
+    /// Executes the Dispose operation.
     /// </summary>
     public abstract void Dispose();
 
     #endregion
 
     /// <summary>
-    /// Performs the Resize operation.
+    /// Executes the Resize operation.
     /// </summary>
-    /// <param name="width">The value of width.</param>
-    /// <param name="height">The value of height.</param>
+    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
+    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
     public abstract void Resize(uint width, uint height);
 }

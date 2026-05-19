@@ -11,171 +11,165 @@ using Veldrith.MetalBindings;
 namespace Veldrith.MTL;
 
 /// <summary>
-/// Represents the MtlGraphicsDevice class.
+/// Defines the behavior and responsibilities of the MtlGraphicsDevice class.
 /// </summary>
 internal unsafe class MtlGraphicsDevice : GraphicsDevice {
 
     /// <summary>
-    /// Represents the _unaligned_buffer_copy_pipeline_mac_os_name field.
+    /// Stores the value associated with <c>_unaligned_buffer_copy_pipeline_mac_os_name</c>.
     /// </summary>
     private const string _unaligned_buffer_copy_pipeline_mac_os_name = "MTL_UnalignedBufferCopy_macOS";
 
     /// <summary>
-    /// Represents the _unaligned_buffer_copy_pipelinei_os_name field.
+    /// Stores the value associated with <c>_unaligned_buffer_copy_pipelinei_os_name</c>.
     /// </summary>
     private const string _unaligned_buffer_copy_pipelinei_os_name = "MTL_UnalignedBufferCopy_iOS";
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>name</c>.
     /// </summary>
-    /// <param name="GetIsSupported">The value of GetIsSupported.</param>
-    /// <returns>The result of the new operation.</returns>
+    /// <param name="GetIsSupported">Specifies the value of <paramref name="GetIsSupported" />.</param>
+    /// <returns>Returns the result produced by the new operation.</returns>
     private static readonly Lazy<bool> _s_is_supported = new(GetIsSupported);
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>_s_aot_registered_blocks</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     private static readonly Dictionary<IntPtr, MtlGraphicsDevice> _s_aot_registered_blocks = new();
 
     /// <summary>
-    /// Represents the _commandQueue field.
+    /// Stores the value associated with <c>_commandQueue</c>.
     /// </summary>
     private readonly MTLCommandQueue _commandQueue;
 
     /// <summary>
-    /// Represents the _completionBlockDescriptor field.
+    /// Stores the value associated with <c>_completionBlockDescriptor</c>.
     /// </summary>
     private readonly IntPtr _completionBlockDescriptor;
 
     /// <summary>
-    /// Represents the _completionBlockLiteral field.
+    /// Stores the value associated with <c>_completionBlockLiteral</c>.
     /// </summary>
     private readonly IntPtr _completionBlockLiteral;
 
     // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
 
     /// <summary>
-    /// Represents the _completionHandler field.
+    /// Stores the value associated with <c>_completionHandler</c>.
     /// </summary>
     private readonly MTLCommandBufferHandler _completionHandler;
 
     // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
 
     /// <summary>
-    /// Represents the _completionHandlerFuncPtr field.
+    /// Stores the value associated with <c>_completionHandlerFuncPtr</c>.
     /// </summary>
     private readonly IntPtr _completionHandlerFuncPtr;
 
     // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
 
     /// <summary>
-    /// Represents the _concreteGlobalBlock field.
+    /// Stores the value associated with <c>_concreteGlobalBlock</c>.
     /// </summary>
     private readonly IntPtr _concreteGlobalBlock;
 
     /// <summary>
-    /// Represents the _device field.
+    /// Stores the value associated with <c>_device</c>.
     /// </summary>
     private readonly MTLDevice _device;
 
     /// <summary>
-    /// Represents the _displayLink field.
+    /// Stores the value associated with <c>_displayLink</c>.
     /// </summary>
     private readonly IMtlDisplayLink _displayLink;
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>name</c>.
     /// </summary>
-    /// <param name="true">The value of true.</param>
-    /// <param name="ManualReset">The value of ManualReset.</param>
-    /// <returns>The result of the new operation.</returns>
+    /// <param name="true">Specifies the value of <paramref name="true" />.</param>
+    /// <param name="ManualReset">Specifies the value of <paramref name="ManualReset" />.</param>
+    /// <returns>Returns the result produced by the new operation.</returns>
     private readonly EventWaitHandle _frameEndedEvent = new(true, EventResetMode.ManualReset);
 
     /// <summary>
-    /// Represents the _libSystem field.
+    /// Stores the value associated with <c>_libSystem</c>.
     /// </summary>
     private readonly IntPtr _libSystem;
 
     /// <summary>
-    /// Represents the _mainSwapchain field.
+    /// Stores the value associated with <c>_mainSwapchain</c>.
     /// </summary>
     private readonly MtlSwapchain _mainSwapchain;
 
     /// <summary>
-    /// Represents the _metalInfo field.
+    /// Stores the value associated with <c>_metalInfo</c>.
     /// </summary>
     private readonly BackendInfoMetal _metalInfo;
 
     /// <summary>
-    /// Represents the _nextFrameReadyEvent field.
+    /// Stores the value associated with <c>_nextFrameReadyEvent</c>.
     /// </summary>
     private readonly AutoResetEvent _nextFrameReadyEvent;
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>_resetEvents</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     private readonly List<ManualResetEvent[]> _resetEvents = new();
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>_resetEventsLock</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     private readonly object _resetEventsLock = new();
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>_submittedCLs</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     private readonly CommandBufferUsageList<MtlCommandList> _submittedCLs = new();
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>_submittedCommandsLock</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     private readonly object _submittedCommandsLock = new();
 
     /// <summary>
-    /// Represents the _supportedSampleCounts field.
+    /// Stores the value associated with <c>_supportedSampleCounts</c>.
     /// </summary>
     private readonly bool[] _supportedSampleCounts;
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>_unalignedBufferCopyPipelineLock</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     private readonly object _unalignedBufferCopyPipelineLock = new();
 
     /// <summary>
-    /// Represents the _latestSubmittedCb field.
+    /// Stores the value associated with <c>_latestSubmittedCb</c>.
     /// </summary>
     private MTLCommandBuffer _latestSubmittedCb;
 
     /// <summary>
-    /// Represents the _unalignedBufferCopyPipeline field.
+    /// Stores the value associated with <c>_unalignedBufferCopyPipeline</c>.
     /// </summary>
     private MTLComputePipelineState _unalignedBufferCopyPipeline;
 
     /// <summary>
-    /// Represents the _unalignedBufferCopyShader field.
+    /// Stores the value associated with <c>_unalignedBufferCopyShader</c>.
     /// </summary>
     private MtlShader _unalignedBufferCopyShader;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MtlGraphicsDevice" /> type.
     /// </summary>
-    /// <param name="options">The value of options.</param>
-    /// <param name="swapchainDesc">The value of swapchainDesc.</param>
+    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
+    /// <param name="swapchainDesc">Specifies the value of <paramref name="swapchainDesc" />.</param>
     public MtlGraphicsDevice(GraphicsDeviceOptions options, SwapchainDescription? swapchainDesc)
         : this(options, swapchainDesc, new MetalDeviceOptions()) { }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MtlGraphicsDevice" /> type.
     /// </summary>
-    /// <param name="options">The value of options.</param>
-    /// <param name="swapchainDesc">The value of swapchainDesc.</param>
-    /// <param name="metalOptions">The value of metalOptions.</param>
+    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
+    /// <param name="swapchainDesc">Specifies the value of <paramref name="swapchainDesc" />.</param>
+    /// <param name="metalOptions">Specifies the value of <paramref name="metalOptions" />.</param>
     public MtlGraphicsDevice(GraphicsDeviceOptions options, SwapchainDescription? swapchainDesc, MetalDeviceOptions metalOptions) {
         this._device = MTLDevice.MTLCreateSystemDefaultDevice();
         this.DeviceName = this._device.name;
@@ -250,12 +244,12 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Represents the Device field.
+    /// Stores the value associated with <c>Device</c>.
     /// </summary>
     public MTLDevice Device => this._device;
 
     /// <summary>
-    /// Represents the CommandQueue field.
+    /// Stores the value associated with <c>CommandQueue</c>.
     /// </summary>
     public MTLCommandQueue CommandQueue => this._commandQueue;
 
@@ -325,20 +319,20 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
     public override GraphicsDeviceFeatures Features { get; }
 
     /// <summary>
-    /// Performs the UpdateActiveDisplay operation.
+    /// Executes the UpdateActiveDisplay operation.
     /// </summary>
-    /// <param name="x">The value of x.</param>
-    /// <param name="y">The value of y.</param>
-    /// <param name="w">The value of w.</param>
-    /// <param name="h">The value of h.</param>
+    /// <param name="x">Specifies the value of <paramref name="x" />.</param>
+    /// <param name="y">Specifies the value of <paramref name="y" />.</param>
+    /// <param name="w">Specifies the value of <paramref name="w" />.</param>
+    /// <param name="h">Specifies the value of <paramref name="h" />.</param>
     public override void UpdateActiveDisplay(int x, int y, int w, int h) {
         this._displayLink?.UpdateActiveDisplay(x, y, w, h);
     }
 
     /// <summary>
-    /// Performs the GetActualRefreshPeriod operation.
+    /// Executes the GetActualRefreshPeriod operation.
     /// </summary>
-    /// <returns>The result of the GetActualRefreshPeriod operation.</returns>
+    /// <returns>Returns the result produced by the GetActualRefreshPeriod operation.</returns>
     public override double GetActualRefreshPeriod() {
         if (this._displayLink != null) {
             return this._displayLink.GetActualOutputVideoRefreshPeriod();
@@ -348,11 +342,11 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Performs the GetSampleCountLimit operation.
+    /// Executes the GetSampleCountLimit operation.
     /// </summary>
-    /// <param name="format">The value of format.</param>
-    /// <param name="depthFormat">The value of depthFormat.</param>
-    /// <returns>The result of the GetSampleCountLimit operation.</returns>
+    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
+    /// <param name="depthFormat">Specifies the value of <paramref name="depthFormat" />.</param>
+    /// <returns>Returns the result produced by the GetSampleCountLimit operation.</returns>
     public override TextureSampleCount GetSampleCountLimit(PixelFormat format, bool depthFormat) {
         for (int i = this._supportedSampleCounts.Length - 1; i >= 0; i--) {
             if (this._supportedSampleCounts[i]) {
@@ -364,32 +358,32 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Performs the GetMetalInfo operation.
+    /// Executes the GetMetalInfo operation.
     /// </summary>
-    /// <param name="info">The value of info.</param>
-    /// <returns>The result of the GetMetalInfo operation.</returns>
+    /// <param name="info">Specifies the value of <paramref name="info" />.</param>
+    /// <returns>Returns the result produced by the GetMetalInfo operation.</returns>
     public override bool GetMetalInfo(out BackendInfoMetal info) {
         info = this._metalInfo;
         return true;
     }
 
     /// <summary>
-    /// Performs the WaitForFence operation.
+    /// Executes the WaitForFence operation.
     /// </summary>
-    /// <param name="fence">The value of fence.</param>
-    /// <param name="nanosecondTimeout">The value of nanosecondTimeout.</param>
-    /// <returns>The result of the WaitForFence operation.</returns>
+    /// <param name="fence">Specifies the value of <paramref name="fence" />.</param>
+    /// <param name="nanosecondTimeout">Specifies the value of <paramref name="nanosecondTimeout" />.</param>
+    /// <returns>Returns the result produced by the WaitForFence operation.</returns>
     public override bool WaitForFence(Fence fence, ulong nanosecondTimeout) {
         return Util.AssertSubtype<Fence, MtlFence>(fence).Wait(nanosecondTimeout);
     }
 
     /// <summary>
-    /// Performs the WaitForFences operation.
+    /// Executes the WaitForFences operation.
     /// </summary>
-    /// <param name="fences">The value of fences.</param>
-    /// <param name="waitAll">The value of waitAll.</param>
-    /// <param name="nanosecondTimeout">The value of nanosecondTimeout.</param>
-    /// <returns>The result of the WaitForFences operation.</returns>
+    /// <param name="fences">Specifies the value of <paramref name="fences" />.</param>
+    /// <param name="waitAll">Specifies the value of <paramref name="waitAll" />.</param>
+    /// <param name="nanosecondTimeout">Specifies the value of <paramref name="nanosecondTimeout" />.</param>
+    /// <returns>Returns the result produced by the WaitForFences operation.</returns>
     public override bool WaitForFences(Fence[] fences, bool waitAll, ulong nanosecondTimeout) {
         int msTimeout;
         if (nanosecondTimeout == ulong.MaxValue) {
@@ -420,25 +414,25 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Performs the ResetFence operation.
+    /// Executes the ResetFence operation.
     /// </summary>
-    /// <param name="fence">The value of fence.</param>
+    /// <param name="fence">Specifies the value of <paramref name="fence" />.</param>
     public override void ResetFence(Fence fence) {
         Util.AssertSubtype<Fence, MtlFence>(fence).Reset();
     }
 
     /// <summary>
-    /// Performs the IsSupported operation.
+    /// Executes the IsSupported operation.
     /// </summary>
-    /// <returns>The result of the IsSupported operation.</returns>
+    /// <returns>Returns the result produced by the IsSupported operation.</returns>
     internal static bool IsSupported() {
         return _s_is_supported.Value;
     }
 
     /// <summary>
-    /// Performs the GetUnalignedBufferCopyPipeline operation.
+    /// Executes the GetUnalignedBufferCopyPipeline operation.
     /// </summary>
-    /// <returns>The result of the GetUnalignedBufferCopyPipeline operation.</returns>
+    /// <returns>Returns the result produced by the GetUnalignedBufferCopyPipeline operation.</returns>
     internal MTLComputePipelineState GetUnalignedBufferCopyPipeline() {
         lock (this._unalignedBufferCopyPipelineLock) {
             if (this._unalignedBufferCopyPipeline.IsNull) {
@@ -473,28 +467,28 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Performs the GetUniformBufferMinOffsetAlignmentCore operation.
+    /// Executes the GetUniformBufferMinOffsetAlignmentCore operation.
     /// </summary>
-    /// <returns>The result of the GetUniformBufferMinOffsetAlignmentCore operation.</returns>
+    /// <returns>Returns the result produced by the GetUniformBufferMinOffsetAlignmentCore operation.</returns>
     internal override uint GetUniformBufferMinOffsetAlignmentCore() {
         return this.MetalFeatures.IsMacOS ? 16u : 256u;
     }
 
     /// <summary>
-    /// Performs the GetStructuredBufferMinOffsetAlignmentCore operation.
+    /// Executes the GetStructuredBufferMinOffsetAlignmentCore operation.
     /// </summary>
-    /// <returns>The result of the GetStructuredBufferMinOffsetAlignmentCore operation.</returns>
+    /// <returns>Returns the result produced by the GetStructuredBufferMinOffsetAlignmentCore operation.</returns>
     internal override uint GetStructuredBufferMinOffsetAlignmentCore() {
         return 16u;
     }
 
     /// <summary>
-    /// Performs the MapCore operation.
+    /// Executes the MapCore operation.
     /// </summary>
-    /// <param name="resource">The value of resource.</param>
-    /// <param name="mode">The value of mode.</param>
-    /// <param name="subresource">The value of subresource.</param>
-    /// <returns>The result of the MapCore operation.</returns>
+    /// <param name="resource">Specifies the value of <paramref name="resource" />.</param>
+    /// <param name="mode">Specifies the value of <paramref name="mode" />.</param>
+    /// <param name="subresource">Specifies the value of <paramref name="subresource" />.</param>
+    /// <returns>Returns the result produced by the MapCore operation.</returns>
     protected override MappedResource MapCore(IMappableResource resource, MapMode mode, uint subresource) {
         if (resource is MtlBuffer buffer) {
             return this.MapBuffer(buffer, mode);
@@ -505,7 +499,7 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Performs the PlatformDispose operation.
+    /// Executes the PlatformDispose operation.
     /// </summary>
     protected override void PlatformDispose() {
         this.WaitForIdle();
@@ -532,20 +526,20 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Performs the UnmapCore operation.
+    /// Executes the UnmapCore operation.
     /// </summary>
-    /// <param name="resource">The value of resource.</param>
-    /// <param name="subresource">The value of subresource.</param>
+    /// <param name="resource">Specifies the value of <paramref name="resource" />.</param>
+    /// <param name="subresource">Specifies the value of <paramref name="subresource" />.</param>
     protected override void UnmapCore(IMappableResource resource, uint subresource) { }
 
     // Xamarin AOT requires native callbacks be static.
     [MonoPInvokeCallback(typeof(MTLCommandBufferHandler))]
 
     /// <summary>
-    /// Performs the OnCommandBufferCompleted_Static operation.
+    /// Executes the OnCommandBufferCompleted_Static operation.
     /// </summary>
-    /// <param name="block">The value of block.</param>
-    /// <param name="cb">The value of cb.</param>
+    /// <param name="block">Specifies the value of <paramref name="block" />.</param>
+    /// <param name="cb">Specifies the value of <paramref name="cb" />.</param>
     private static void OnCommandBufferCompleted_Static(IntPtr block, MTLCommandBuffer cb) {
         lock (_s_aot_registered_blocks) {
             if (_s_aot_registered_blocks.TryGetValue(block, out MtlGraphicsDevice gd)) {
@@ -555,9 +549,9 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Performs the GetIsSupported operation.
+    /// Executes the GetIsSupported operation.
     /// </summary>
-    /// <returns>The result of the GetIsSupported operation.</returns>
+    /// <returns>Returns the result produced by the GetIsSupported operation.</returns>
     private static bool GetIsSupported() {
         bool result = false;
 
@@ -586,10 +580,10 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Performs the OnCommandBufferCompleted operation.
+    /// Executes the OnCommandBufferCompleted operation.
     /// </summary>
-    /// <param name="block">The value of block.</param>
-    /// <param name="cb">The value of cb.</param>
+    /// <param name="block">Specifies the value of <paramref name="block" />.</param>
+    /// <param name="cb">Specifies the value of <paramref name="cb" />.</param>
     private void OnCommandBufferCompleted(IntPtr block, MTLCommandBuffer cb) {
         lock (this._submittedCommandsLock) {
             foreach (MtlCommandList cl in this._submittedCLs.EnumerateAndRemove(cb)) {
@@ -605,7 +599,7 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Performs the OnDisplayLinkCallback operation.
+    /// Executes the OnDisplayLinkCallback operation.
     /// </summary>
     private void OnDisplayLinkCallback() {
         this._nextFrameReadyEvent.Set();
@@ -613,22 +607,22 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Performs the MapBuffer operation.
+    /// Executes the MapBuffer operation.
     /// </summary>
-    /// <param name="buffer">The value of buffer.</param>
-    /// <param name="mode">The value of mode.</param>
-    /// <returns>The result of the MapBuffer operation.</returns>
+    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
+    /// <param name="mode">Specifies the value of <paramref name="mode" />.</param>
+    /// <returns>Returns the result produced by the MapBuffer operation.</returns>
     private MappedResource MapBuffer(MtlBuffer buffer, MapMode mode) {
         return new MappedResource(buffer, mode, (IntPtr)buffer.Pointer, buffer.SizeInBytes, 0, buffer.SizeInBytes, buffer.SizeInBytes);
     }
 
     /// <summary>
-    /// Performs the MapTexture operation.
+    /// Executes the MapTexture operation.
     /// </summary>
-    /// <param name="texture">The value of texture.</param>
-    /// <param name="mode">The value of mode.</param>
-    /// <param name="subresource">The value of subresource.</param>
-    /// <returns>The result of the MapTexture operation.</returns>
+    /// <param name="texture">Specifies the value of <paramref name="texture" />.</param>
+    /// <param name="mode">Specifies the value of <paramref name="mode" />.</param>
+    /// <param name="subresource">Specifies the value of <paramref name="subresource" />.</param>
+    /// <returns>Returns the result produced by the MapTexture operation.</returns>
     private MappedResource MapTexture(MtlTexture texture, MapMode mode, uint subresource) {
         Debug.Assert(!texture.StagingBuffer.IsNull);
         void* data = texture.StagingBufferPointer;
@@ -642,10 +636,10 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Performs the GetResetEventArray operation.
+    /// Executes the GetResetEventArray operation.
     /// </summary>
-    /// <param name="length">The value of length.</param>
-    /// <returns>The result of the GetResetEventArray operation.</returns>
+    /// <param name="length">Specifies the value of <paramref name="length" />.</param>
+    /// <returns>Returns the result produced by the GetResetEventArray operation.</returns>
     private ManualResetEvent[] GetResetEventArray(int length) {
         lock (this._resetEventsLock) {
             for (int i = this._resetEvents.Count - 1; i > 0; i--) {
@@ -663,9 +657,9 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Performs the ReturnResetEventArray operation.
+    /// Executes the ReturnResetEventArray operation.
     /// </summary>
-    /// <param name="array">The value of array.</param>
+    /// <param name="array">Specifies the value of <paramref name="array" />.</param>
     private void ReturnResetEventArray(ManualResetEvent[] array) {
         lock (this._resetEventsLock) {
             this._resetEvents.Add(array);
@@ -673,10 +667,10 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Performs the SubmitCommandsCore operation.
+    /// Executes the SubmitCommandsCore operation.
     /// </summary>
-    /// <param name="commandList">The value of commandList.</param>
-    /// <param name="fence">The value of fence.</param>
+    /// <param name="commandList">Specifies the value of <paramref name="commandList" />.</param>
+    /// <param name="fence">Specifies the value of <paramref name="fence" />.</param>
     private protected override void SubmitCommandsCore(CommandList commandList, Fence fence) {
         MtlCommandList mtlCl = Util.AssertSubtype<CommandList, MtlCommandList>(commandList);
 
@@ -693,7 +687,7 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Performs the WaitForNextFrameReadyCore operation.
+    /// Executes the WaitForNextFrameReadyCore operation.
     /// </summary>
     private protected override void WaitForNextFrameReadyCore() {
         this._frameEndedEvent.Reset();
@@ -708,13 +702,13 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Performs the GetPixelFormatSupportCore operation.
+    /// Executes the GetPixelFormatSupportCore operation.
     /// </summary>
-    /// <param name="format">The value of format.</param>
-    /// <param name="type">The value of type.</param>
-    /// <param name="usage">The value of usage.</param>
-    /// <param name="properties">The value of properties.</param>
-    /// <returns>The result of the GetPixelFormatSupportCore operation.</returns>
+    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
+    /// <param name="type">Specifies the value of <paramref name="type" />.</param>
+    /// <param name="usage">Specifies the value of <paramref name="usage" />.</param>
+    /// <param name="properties">Specifies the value of <paramref name="properties" />.</param>
+    /// <returns>Returns the result produced by the GetPixelFormatSupportCore operation.</returns>
     private protected override bool GetPixelFormatSupportCore(PixelFormat format, TextureType type, TextureUsage usage, out PixelFormatProperties properties) {
         if (!MtlFormats.IsFormatSupported(format, usage, this.MetalFeatures)) {
             properties = default;
@@ -764,9 +758,9 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Performs the SwapBuffersCore operation.
+    /// Executes the SwapBuffersCore operation.
     /// </summary>
-    /// <param name="swapchain">The value of swapchain.</param>
+    /// <param name="swapchain">Specifies the value of <paramref name="swapchain" />.</param>
     private protected override void SwapBuffersCore(Swapchain swapchain) {
         MtlSwapchain mtlSc = Util.AssertSubtype<Swapchain, MtlSwapchain>(swapchain);
         IntPtr currentDrawablePtr = mtlSc.CurrentDrawable.NativePtr;
@@ -785,12 +779,12 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Performs the UpdateBufferCore operation.
+    /// Executes the UpdateBufferCore operation.
     /// </summary>
-    /// <param name="buffer">The value of buffer.</param>
-    /// <param name="bufferOffsetInBytes">The value of bufferOffsetInBytes.</param>
-    /// <param name="source">The value of source.</param>
-    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
+    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
+    /// <param name="bufferOffsetInBytes">Specifies the value of <paramref name="bufferOffsetInBytes" />.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
+    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
     private protected override void UpdateBufferCore(DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes) {
         MtlBuffer mtlBuffer = Util.AssertSubtype<DeviceBuffer, MtlBuffer>(buffer);
         void* destPtr = mtlBuffer.Pointer;
@@ -804,19 +798,19 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Performs the UpdateTextureCore operation.
+    /// Executes the UpdateTextureCore operation.
     /// </summary>
-    /// <param name="texture">The value of texture.</param>
-    /// <param name="source">The value of source.</param>
-    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
-    /// <param name="x">The value of x.</param>
-    /// <param name="y">The value of y.</param>
-    /// <param name="z">The value of z.</param>
-    /// <param name="width">The value of width.</param>
-    /// <param name="height">The value of height.</param>
-    /// <param name="depth">The value of depth.</param>
-    /// <param name="mipLevel">The value of mipLevel.</param>
-    /// <param name="arrayLayer">The value of arrayLayer.</param>
+    /// <param name="texture">Specifies the value of <paramref name="texture" />.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
+    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
+    /// <param name="x">Specifies the value of <paramref name="x" />.</param>
+    /// <param name="y">Specifies the value of <paramref name="y" />.</param>
+    /// <param name="z">Specifies the value of <paramref name="z" />.</param>
+    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
+    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
+    /// <param name="depth">Specifies the value of <paramref name="depth" />.</param>
+    /// <param name="mipLevel">Specifies the value of <paramref name="mipLevel" />.</param>
+    /// <param name="arrayLayer">Specifies the value of <paramref name="arrayLayer" />.</param>
     private protected override void UpdateTextureCore(Texture texture, IntPtr source, uint sizeInBytes, uint x, uint y, uint z, uint width, uint height, uint depth, uint mipLevel, uint arrayLayer) {
         MtlTexture mtlTex = Util.AssertSubtype<Texture, MtlTexture>(texture);
 
@@ -842,7 +836,7 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Performs the WaitForIdleCore operation.
+    /// Executes the WaitForIdleCore operation.
     /// </summary>
     private protected override void WaitForIdleCore() {
         MTLCommandBuffer lastCb;
@@ -861,13 +855,13 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
 }
 
 /// <summary>
-/// Represents the MonoPInvokeCallbackAttribute class.
+/// Defines the behavior and responsibilities of the MonoPInvokeCallbackAttribute class.
 /// </summary>
 internal sealed class MonoPInvokeCallbackAttribute : Attribute {
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MonoPInvokeCallbackAttribute" /> type.
     /// </summary>
-    /// <param name="t">The value of t.</param>
+    /// <param name="t">Specifies the value of <paramref name="t" />.</param>
     public MonoPInvokeCallbackAttribute(Type t) { }
 }

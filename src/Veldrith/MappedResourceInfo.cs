@@ -1,22 +1,22 @@
 namespace Veldrith;
 
 /// <summary>
-/// Represents the MappedResourceInfo struct.
+/// Defines the data layout and behavior of the MappedResourceInfo struct.
 /// </summary>
 internal struct MappedResourceInfo {
 
     /// <summary>
-    /// Represents the RefCount field.
+    /// Stores the value associated with <c>RefCount</c>.
     /// </summary>
     public int RefCount;
 
     /// <summary>
-    /// Represents the Mode field.
+    /// Stores the value associated with <c>Mode</c>.
     /// </summary>
     public MapMode Mode;
 
     /// <summary>
-    /// Represents the MappedResource field.
+    /// Stores the value associated with <c>MappedResource</c>.
     /// </summary>
     public MappedResource MappedResource;
 }

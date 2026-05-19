@@ -43,11 +43,11 @@ public struct SwapchainDescription : IEquatable<SwapchainDescription> {
     /// <summary>
     /// Initializes a new instance of the <see cref="SwapchainDescription" /> type.
     /// </summary>
-    /// <param name="source">The value of source.</param>
-    /// <param name="width">The value of width.</param>
-    /// <param name="height">The value of height.</param>
-    /// <param name="depthFormat">The value of depthFormat.</param>
-    /// <param name="syncToVerticalBlank">The value of syncToVerticalBlank.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
+    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
+    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
+    /// <param name="depthFormat">Specifies the value of <paramref name="depthFormat" />.</param>
+    /// <param name="syncToVerticalBlank">Specifies the value of <paramref name="syncToVerticalBlank" />.</param>
     public SwapchainDescription(SwapchainSource source, uint width, uint height, PixelFormat? depthFormat, bool syncToVerticalBlank) {
         this.Source = source;
         this.Width = width;
@@ -60,12 +60,12 @@ public struct SwapchainDescription : IEquatable<SwapchainDescription> {
     /// <summary>
     /// Initializes a new instance of the <see cref="SwapchainDescription" /> type.
     /// </summary>
-    /// <param name="source">The value of source.</param>
-    /// <param name="width">The value of width.</param>
-    /// <param name="height">The value of height.</param>
-    /// <param name="depthFormat">The value of depthFormat.</param>
-    /// <param name="syncToVerticalBlank">The value of syncToVerticalBlank.</param>
-    /// <param name="colorSrgb">The value of colorSrgb.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
+    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
+    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
+    /// <param name="depthFormat">Specifies the value of <paramref name="depthFormat" />.</param>
+    /// <param name="syncToVerticalBlank">Specifies the value of <paramref name="syncToVerticalBlank" />.</param>
+    /// <param name="colorSrgb">Specifies the value of <paramref name="colorSrgb" />.</param>
     public SwapchainDescription(SwapchainSource source, uint width, uint height, PixelFormat? depthFormat, bool syncToVerticalBlank, bool colorSrgb) {
         this.Source = source;
         this.Width = width;
@@ -76,10 +76,10 @@ public struct SwapchainDescription : IEquatable<SwapchainDescription> {
     }
 
     /// <summary>
-    /// Performs the Equals operation.
+    /// Executes the Equals operation.
     /// </summary>
-    /// <param name="other">The value of other.</param>
-    /// <returns>The result of the Equals operation.</returns>
+    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
+    /// <returns>Returns the result produced by the Equals operation.</returns>
     public bool Equals(SwapchainDescription other) {
         return this.Source.Equals(other.Source)
                && this.Width.Equals(other.Width)
@@ -90,9 +90,9 @@ public struct SwapchainDescription : IEquatable<SwapchainDescription> {
     }
 
     /// <summary>
-    /// Performs the GetHashCode operation.
+    /// Executes the GetHashCode operation.
     /// </summary>
-    /// <returns>The result of the GetHashCode operation.</returns>
+    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(this.Source.GetHashCode(), this.Width.GetHashCode(), this.Height.GetHashCode(), this.DepthFormat.GetHashCode(), this.SyncToVerticalBlank.GetHashCode(), this.ColorSrgb.GetHashCode());
     }

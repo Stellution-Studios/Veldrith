@@ -1,15 +1,15 @@
 namespace Veldrith.SPIRV;
 
 /// <summary>
-/// Represents the ComputeCompilationResult class.
+/// Defines the behavior and responsibilities of the ComputeCompilationResult class.
 /// </summary>
 public class ComputeCompilationResult {
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ComputeCompilationResult" /> type.
     /// </summary>
-    /// <param name="computeCode">The value of computeCode.</param>
-    /// <param name="reflection">The value of reflection.</param>
+    /// <param name="computeCode">Specifies the value of <paramref name="computeCode" />.</param>
+    /// <param name="reflection">Specifies the value of <paramref name="reflection" />.</param>
     internal ComputeCompilationResult(string computeCode, SpirvReflection reflection) {
         this.ComputeShader = computeCode;
         this.Reflection = reflection;

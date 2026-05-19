@@ -4,14 +4,13 @@ using System.Text.Json.Serialization;
 namespace Veldrith.SPIRV;
 
 /// <summary>
-/// Represents the SpirvReflection class.
+/// Defines the behavior and responsibilities of the SpirvReflection class.
 /// </summary>
 public class SpirvReflection {
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>s_jsonOptions</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     private static readonly JsonSerializerOptions s_jsonOptions = new() {
         WriteIndented = true,
         IncludeFields = true,
@@ -23,8 +22,8 @@ public class SpirvReflection {
     /// <summary>
     /// Initializes a new instance of the <see cref="SpirvReflection" /> type.
     /// </summary>
-    /// <param name="vertexElements">The value of vertexElements.</param>
-    /// <param name="resourceLayouts">The value of resourceLayouts.</param>
+    /// <param name="vertexElements">Specifies the value of <paramref name="vertexElements" />.</param>
+    /// <param name="resourceLayouts">Specifies the value of <paramref name="resourceLayouts" />.</param>
     public SpirvReflection(VertexElementDescription[] vertexElements, ResourceLayoutDescription[] resourceLayouts) {
         this.VertexElements = vertexElements;
         this.ResourceLayouts = resourceLayouts;
@@ -42,20 +41,20 @@ public class SpirvReflection {
     public ResourceLayoutDescription[] ResourceLayouts { get; }
 
     /// <summary>
-    /// Performs the LoadFromJson operation.
+    /// Executes the LoadFromJson operation.
     /// </summary>
-    /// <param name="jsonPath">The value of jsonPath.</param>
-    /// <returns>The result of the LoadFromJson operation.</returns>
+    /// <param name="jsonPath">Specifies the value of <paramref name="jsonPath" />.</param>
+    /// <returns>Returns the result produced by the LoadFromJson operation.</returns>
     public static SpirvReflection LoadFromJson(string jsonPath) {
         using FileStream jsonStream = File.OpenRead(jsonPath);
         return LoadFromJson(jsonStream);
     }
 
     /// <summary>
-    /// Performs the LoadFromJson operation.
+    /// Executes the LoadFromJson operation.
     /// </summary>
-    /// <param name="jsonStream">The value of jsonStream.</param>
-    /// <returns>The result of the LoadFromJson operation.</returns>
+    /// <param name="jsonStream">Specifies the value of <paramref name="jsonStream" />.</param>
+    /// <returns>Returns the result produced by the LoadFromJson operation.</returns>
     public static SpirvReflection LoadFromJson(Stream jsonStream) {
         return JsonSerializer.Deserialize<SpirvReflection>(jsonStream, s_jsonOptions);
     }

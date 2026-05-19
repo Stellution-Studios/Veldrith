@@ -7,46 +7,46 @@ using Veldrith.MetalBindings;
 namespace Veldrith.MTL;
 
 /// <summary>
-/// Represents the CommandBufferUsageList class.
+/// Defines the behavior and responsibilities of the CommandBufferUsageList class.
 /// </summary>
 internal class CommandBufferUsageList<T> {
 
     /// <summary>
-    /// Represents the _items field.
+    /// Stores the value associated with <c>_items</c>.
     /// </summary>
     private readonly List<(MTLCommandBuffer buffer, T value)> _items = new List<(MTLCommandBuffer buffer, T item)>();
 
     /// <summary>
-    /// Performs the Add operation.
+    /// Executes the Add operation.
     /// </summary>
-    /// <param name="cb">The value of cb.</param>
-    /// <param name="value">The value of value.</param>
+    /// <param name="cb">Specifies the value of <paramref name="cb" />.</param>
+    /// <param name="value">Specifies the value of <paramref name="value" />.</param>
     public void Add(MTLCommandBuffer cb, T value) {
         this._items.Add((cb, value));
     }
 
     /// <summary>
-    /// Performs the EnumerateItems operation.
+    /// Executes the EnumerateItems operation.
     /// </summary>
-    /// <returns>The result of the EnumerateItems operation.</returns>
+    /// <returns>Returns the result produced by the EnumerateItems operation.</returns>
     public ItemsEnumerator EnumerateItems() {
         return new ItemsEnumerator(this._items);
     }
 
     /// <summary>
-    /// Performs the EnumerateAndRemove operation.
+    /// Executes the EnumerateAndRemove operation.
     /// </summary>
-    /// <param name="cb">The value of cb.</param>
-    /// <returns>The result of the EnumerateAndRemove operation.</returns>
+    /// <param name="cb">Specifies the value of <paramref name="cb" />.</param>
+    /// <returns>Returns the result produced by the EnumerateAndRemove operation.</returns>
     public RemovalEnumerator EnumerateAndRemove(MTLCommandBuffer cb) {
         return new RemovalEnumerator(this._items, cb);
     }
 
     /// <summary>
-    /// Performs the Contains operation.
+    /// Executes the Contains operation.
     /// </summary>
-    /// <param name="cb">The value of cb.</param>
-    /// <returns>The result of the Contains operation.</returns>
+    /// <param name="cb">Specifies the value of <paramref name="cb" />.</param>
+    /// <returns>Returns the result produced by the Contains operation.</returns>
     public bool Contains(MTLCommandBuffer cb) {
         foreach ((MTLCommandBuffer buffer, T _) in this._items) {
             if (buffer.Equals(cb)) {
@@ -58,7 +58,7 @@ internal class CommandBufferUsageList<T> {
     }
 
     /// <summary>
-    /// Performs the Clear operation.
+    /// Executes the Clear operation.
     /// </summary>
     public void Clear() {
         this._items.Clear();
@@ -70,27 +70,27 @@ internal class CommandBufferUsageList<T> {
     public struct ItemsEnumerator : IEnumerator<T>, IEnumerable {
 
         /// <summary>
-        /// Represents the list field.
+        /// Stores the value associated with <c>list</c>.
         /// </summary>
         private readonly List<(MTLCommandBuffer buffer, T value)> list;
 
         /// <summary>
-        /// Represents the _index field.
+        /// Stores the value associated with <c>_index</c>.
         /// </summary>
         private int _index;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ItemsEnumerator" /> type.
         /// </summary>
-        /// <param name="value">The value of value.</param>
+        /// <param name="value">Specifies the value of <paramref name="value" />.</param>
         public ItemsEnumerator(List<(MTLCommandBuffer buffer, T value)> list) {
             this.list = list;
         }
 
         /// <summary>
-        /// Performs the MoveNext operation.
+        /// Executes the MoveNext operation.
         /// </summary>
-        /// <returns>The result of the MoveNext operation.</returns>
+        /// <returns>Returns the result produced by the MoveNext operation.</returns>
         public bool MoveNext() {
             if (this._index == this.list.Count) {
                 return false;
@@ -103,7 +103,7 @@ internal class CommandBufferUsageList<T> {
         }
 
         /// <summary>
-        /// Performs the Reset operation.
+        /// Executes the Reset operation.
         /// </summary>
         public void Reset() {
             this._index = 0;
@@ -120,22 +120,22 @@ internal class CommandBufferUsageList<T> {
         object IEnumerator.Current => this.Current;
 
         /// <summary>
-        /// Performs the Dispose operation.
+        /// Executes the Dispose operation.
         /// </summary>
         public void Dispose() { }
 
         /// <summary>
-        /// Performs the GetEnumerator operation.
+        /// Executes the GetEnumerator operation.
         /// </summary>
-        /// <returns>The result of the GetEnumerator operation.</returns>
+        /// <returns>Returns the result produced by the GetEnumerator operation.</returns>
         public ItemsEnumerator GetEnumerator() {
             return this;
         }
 
         /// <summary>
-        /// Performs the GetEnumerator operation.
+        /// Executes the GetEnumerator operation.
         /// </summary>
-        /// <returns>The result of the GetEnumerator operation.</returns>
+        /// <returns>Returns the result produced by the GetEnumerator operation.</returns>
         IEnumerator IEnumerable.GetEnumerator() {
             return this.GetEnumerator();
         }
@@ -150,30 +150,30 @@ internal class CommandBufferUsageList<T> {
     public struct RemovalEnumerator : IEnumerator<T>, IEnumerable {
 
         /// <summary>
-        /// Represents the list field.
+        /// Stores the value associated with <c>list</c>.
         /// </summary>
         private readonly List<(MTLCommandBuffer buffer, T value)> list;
 
         /// <summary>
-        /// Represents the cb field.
+        /// Stores the value associated with <c>cb</c>.
         /// </summary>
         private readonly MTLCommandBuffer cb;
 
         /// <summary>
-        /// Represents the _count field.
+        /// Stores the value associated with <c>_count</c>.
         /// </summary>
         private readonly int _count;
 
         /// <summary>
-        /// Represents the _index field.
+        /// Stores the value associated with <c>_index</c>.
         /// </summary>
         private int _index;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RemovalEnumerator" /> type.
         /// </summary>
-        /// <param name="value">The value of value.</param>
-        /// <param name="cb">The value of cb.</param>
+        /// <param name="value">Specifies the value of <paramref name="value" />.</param>
+        /// <param name="cb">Specifies the value of <paramref name="cb" />.</param>
         public RemovalEnumerator(List<(MTLCommandBuffer buffer, T value)> list, MTLCommandBuffer cb) {
             this.list = list;
             this.cb = cb;
@@ -183,9 +183,9 @@ internal class CommandBufferUsageList<T> {
         }
 
         /// <summary>
-        /// Performs the MoveNext operation.
+        /// Executes the MoveNext operation.
         /// </summary>
-        /// <returns>The result of the MoveNext operation.</returns>
+        /// <returns>Returns the result produced by the MoveNext operation.</returns>
         public bool MoveNext() {
             while (true) {
                 if (this._index == this._count) {
@@ -208,7 +208,7 @@ internal class CommandBufferUsageList<T> {
         }
 
         /// <summary>
-        /// Performs the Reset operation.
+        /// Executes the Reset operation.
         /// </summary>
         public void Reset() {
             this._index = 0;
@@ -225,7 +225,7 @@ internal class CommandBufferUsageList<T> {
         object IEnumerator.Current => this.Current;
 
         /// <summary>
-        /// Performs the Dispose operation.
+        /// Executes the Dispose operation.
         /// </summary>
         public void Dispose() {
             if (this.list.Count == 0) {
@@ -240,17 +240,17 @@ internal class CommandBufferUsageList<T> {
         }
 
         /// <summary>
-        /// Performs the GetEnumerator operation.
+        /// Executes the GetEnumerator operation.
         /// </summary>
-        /// <returns>The result of the GetEnumerator operation.</returns>
+        /// <returns>Returns the result produced by the GetEnumerator operation.</returns>
         public RemovalEnumerator GetEnumerator() {
             return this;
         }
 
         /// <summary>
-        /// Performs the GetEnumerator operation.
+        /// Executes the GetEnumerator operation.
         /// </summary>
-        /// <returns>The result of the GetEnumerator operation.</returns>
+        /// <returns>Returns the result produced by the GetEnumerator operation.</returns>
         IEnumerator IEnumerable.GetEnumerator() {
             return this.GetEnumerator();
         }

@@ -5,37 +5,37 @@ namespace Veldrith.MetalBindings;
 [StructLayout(LayoutKind.Sequential)]
 
 /// <summary>
-/// Represents the MTLClearColor struct.
+/// Defines the data layout and behavior of the MTLClearColor struct.
 /// </summary>
 public struct MTLClearColor {
 
     /// <summary>
-    /// Represents the red field.
+    /// Stores the value associated with <c>red</c>.
     /// </summary>
     public double red;
 
     /// <summary>
-    /// Represents the green field.
+    /// Stores the value associated with <c>green</c>.
     /// </summary>
     public double green;
 
     /// <summary>
-    /// Represents the blue field.
+    /// Stores the value associated with <c>blue</c>.
     /// </summary>
     public double blue;
 
     /// <summary>
-    /// Represents the alpha field.
+    /// Stores the value associated with <c>alpha</c>.
     /// </summary>
     public double alpha;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MTLClearColor" /> type.
     /// </summary>
-    /// <param name="r">The value of r.</param>
-    /// <param name="g">The value of g.</param>
-    /// <param name="b">The value of b.</param>
-    /// <param name="a">The value of a.</param>
+    /// <param name="r">Specifies the value of <paramref name="r" />.</param>
+    /// <param name="g">Specifies the value of <paramref name="g" />.</param>
+    /// <param name="b">Specifies the value of <paramref name="b" />.</param>
+    /// <param name="a">Specifies the value of <paramref name="a" />.</param>
     public MTLClearColor(double r, double g, double b, double a) {
         this.red = r;
         this.green = g;

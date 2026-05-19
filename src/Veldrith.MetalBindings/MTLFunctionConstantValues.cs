@@ -3,42 +3,42 @@ using System;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the MTLFunctionConstantValues struct.
+/// Defines the data layout and behavior of the MTLFunctionConstantValues struct.
 /// </summary>
 public struct MTLFunctionConstantValues {
 
     /// <summary>
-    /// Represents the NativePtr field.
+    /// Stores the value associated with <c>NativePtr</c>.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Performs the New operation.
+    /// Creates and returns a new instance.
     /// </summary>
-    /// <returns>The result of the New operation.</returns>
+    /// <returns>Returns the result produced by the New operation.</returns>
     public static MTLFunctionConstantValues New() {
         return s_class.AllocInit<MTLFunctionConstantValues>();
     }
 
     /// <summary>
-    /// Performs the setConstantValuetypeatIndex operation.
+    /// Executes the setConstantValuetypeatIndex operation.
     /// </summary>
-    /// <param name="value">The value of value.</param>
-    /// <param name="type">The value of type.</param>
-    /// <param name="index">The value of index.</param>
+    /// <param name="value">Specifies the value of <paramref name="value" />.</param>
+    /// <param name="type">Specifies the value of <paramref name="type" />.</param>
+    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
     public unsafe void setConstantValuetypeatIndex(void* value, MTLDataType type, UIntPtr index) {
         ObjectiveCRuntime.objc_msgSend(this.NativePtr, sel_setConstantValuetypeatIndex, value, (uint)type, index);
     }
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>name</c>.
     /// </summary>
-    /// <param name="MTLFunctionConstantValues">The value of MTLFunctionConstantValues.</param>
-    /// <returns>The result of the new operation.</returns>
+    /// <param name="MTLFunctionConstantValues">Specifies the value of <paramref name="MTLFunctionConstantValues" />.</param>
+    /// <returns>Returns the result produced by the new operation.</returns>
     private static readonly ObjCClass s_class = new(nameof(MTLFunctionConstantValues));
 
     /// <summary>
-    /// Represents the sel_setConstantValuetypeatIndex field.
+    /// Stores the value associated with <c>sel_setConstantValuetypeatIndex</c>.
     /// </summary>
     private static readonly Selector sel_setConstantValuetypeatIndex = "setConstantValue:type:atIndex:";
 }

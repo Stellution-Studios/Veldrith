@@ -5,41 +5,41 @@ using static Vulkan.VulkanNative;
 namespace Veldrith.Vk;
 
 /// <summary>
-/// Represents the VkResourceSet class.
+/// Defines the behavior and responsibilities of the VkResourceSet class.
 /// </summary>
 internal unsafe class VkResourceSet : ResourceSet {
 
     /// <summary>
-    /// Represents the _descriptorAllocationToken field.
+    /// Stores the value associated with <c>_descriptorAllocationToken</c>.
     /// </summary>
     private readonly DescriptorAllocationToken _descriptorAllocationToken;
 
     /// <summary>
-    /// Represents the _descriptorCounts field.
+    /// Stores the value associated with <c>_descriptorCounts</c>.
     /// </summary>
     private readonly DescriptorResourceCounts _descriptorCounts;
 
     /// <summary>
-    /// Represents the gd field.
+    /// Stores the value associated with <c>gd</c>.
     /// </summary>
     private readonly VkGraphicsDevice gd;
 
     /// <summary>
-    /// Represents the _destroyed field.
+    /// Stores the value associated with <c>_destroyed</c>.
     /// </summary>
     private bool _destroyed;
 
     /// <summary>
-    /// Represents the _name field.
+    /// Stores the value associated with <c>_name</c>.
     /// </summary>
     private string _name;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VkResourceSet" /> class.
     /// </summary>
-    /// <param name="gd">The value of gd.</param>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the base operation.</returns>
+    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the base operation.</returns>
     public VkResourceSet(VkGraphicsDevice gd, ref ResourceSetDescription description) : base(ref description) {
         this.gd = gd;
         this.RefCount = new ResourceRefCount(this.DisposeCore);
@@ -104,20 +104,18 @@ internal unsafe class VkResourceSet : ResourceSet {
     }
 
     /// <summary>
-    /// Represents the DescriptorSet field.
+    /// Stores the value associated with <c>DescriptorSet</c>.
     /// </summary>
     public VkDescriptorSet DescriptorSet => this._descriptorAllocationToken.Set;
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>get</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public List<VkTexture> SampledTextures { get; } = new();
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>get</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public List<VkTexture> StorageTextures { get; } = new();
 
     /// <summary>
@@ -126,9 +124,8 @@ internal unsafe class VkResourceSet : ResourceSet {
     public ResourceRefCount RefCount { get; }
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>get</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public List<ResourceRefCount> RefCounts { get; } = new();
 
     /// <summary>
@@ -150,7 +147,7 @@ internal unsafe class VkResourceSet : ResourceSet {
     #region Disposal
 
     /// <summary>
-    /// Performs the Dispose operation.
+    /// Executes the Dispose operation.
     /// </summary>
     public override void Dispose() {
         this.RefCount.Decrement();
@@ -159,7 +156,7 @@ internal unsafe class VkResourceSet : ResourceSet {
     #endregion
 
     /// <summary>
-    /// Performs the DisposeCore operation.
+    /// Executes the DisposeCore operation.
     /// </summary>
     private void DisposeCore() {
         if (!this._destroyed) {

@@ -29,17 +29,17 @@ public struct FramebufferAttachmentDescription : IEquatable<FramebufferAttachmen
     /// <summary>
     /// Initializes a new instance of the <see cref="FramebufferAttachmentDescription" /> type.
     /// </summary>
-    /// <param name="target">The value of target.</param>
-    /// <param name="arrayLayer">The value of arrayLayer.</param>
+    /// <param name="target">Specifies the value of <paramref name="target" />.</param>
+    /// <param name="arrayLayer">Specifies the value of <paramref name="arrayLayer" />.</param>
     public FramebufferAttachmentDescription(Texture target, uint arrayLayer)
         : this(target, arrayLayer, 0) { }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FramebufferAttachmentDescription" /> type.
     /// </summary>
-    /// <param name="target">The value of target.</param>
-    /// <param name="arrayLayer">The value of arrayLayer.</param>
-    /// <param name="mipLevel">The value of mipLevel.</param>
+    /// <param name="target">Specifies the value of <paramref name="target" />.</param>
+    /// <param name="arrayLayer">Specifies the value of <paramref name="arrayLayer" />.</param>
+    /// <param name="mipLevel">Specifies the value of <paramref name="mipLevel" />.</param>
     public FramebufferAttachmentDescription(Texture target, uint arrayLayer, uint mipLevel) {
 #if VALIDATE_USAGE
         uint effectiveArrayLayers = target.ArrayLayers;
@@ -61,18 +61,18 @@ public struct FramebufferAttachmentDescription : IEquatable<FramebufferAttachmen
     }
 
     /// <summary>
-    /// Performs the Equals operation.
+    /// Executes the Equals operation.
     /// </summary>
-    /// <param name="other">The value of other.</param>
-    /// <returns>The result of the Equals operation.</returns>
+    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
+    /// <returns>Returns the result produced by the Equals operation.</returns>
     public bool Equals(FramebufferAttachmentDescription other) {
         return this.Target.Equals(other.Target) && this.ArrayLayer.Equals(other.ArrayLayer) && this.MipLevel.Equals(other.MipLevel);
     }
 
     /// <summary>
-    /// Performs the GetHashCode operation.
+    /// Executes the GetHashCode operation.
     /// </summary>
-    /// <returns>The result of the GetHashCode operation.</returns>
+    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(this.Target.GetHashCode(), this.ArrayLayer.GetHashCode(), this.MipLevel.GetHashCode());
     }

@@ -1,14 +1,14 @@
 namespace Veldrith.SPIRV;
 
 /// <summary>
-/// Represents the MacroDefinition class.
+/// Defines the behavior and responsibilities of the MacroDefinition class.
 /// </summary>
 public class MacroDefinition {
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MacroDefinition" /> type.
     /// </summary>
-    /// <param name="name">The value of name.</param>
+    /// <param name="name">Specifies the value of <paramref name="name" />.</param>
     public MacroDefinition(string name) {
         this.Name = name;
     }
@@ -16,8 +16,8 @@ public class MacroDefinition {
     /// <summary>
     /// Initializes a new instance of the <see cref="MacroDefinition" /> type.
     /// </summary>
-    /// <param name="name">The value of name.</param>
-    /// <param name="value">The value of value.</param>
+    /// <param name="name">Specifies the value of <paramref name="name" />.</param>
+    /// <param name="value">Specifies the value of <paramref name="value" />.</param>
     public MacroDefinition(string name, string value) {
         this.Name = name;
         this.Value = value;

@@ -25,8 +25,8 @@ public struct OutputDescription : IEquatable<OutputDescription> {
     /// <summary>
     /// Initializes a new instance of the <see cref="OutputDescription" /> type.
     /// </summary>
-    /// <param name="depthAttachment">The value of depthAttachment.</param>
-    /// <param name="colorAttachments">The value of colorAttachments.</param>
+    /// <param name="depthAttachment">Specifies the value of <paramref name="depthAttachment" />.</param>
+    /// <param name="colorAttachments">Specifies the value of <paramref name="colorAttachments" />.</param>
     public OutputDescription(OutputAttachmentDescription? depthAttachment, params OutputAttachmentDescription[] colorAttachments) {
         this.DepthAttachment = depthAttachment;
         this.ColorAttachments = colorAttachments ?? Array.Empty<OutputAttachmentDescription>();
@@ -36,9 +36,9 @@ public struct OutputDescription : IEquatable<OutputDescription> {
     /// <summary>
     /// Initializes a new instance of the <see cref="OutputDescription" /> type.
     /// </summary>
-    /// <param name="depthAttachment">The value of depthAttachment.</param>
-    /// <param name="colorAttachments">The value of colorAttachments.</param>
-    /// <param name="sampleCount">The value of sampleCount.</param>
+    /// <param name="depthAttachment">Specifies the value of <paramref name="depthAttachment" />.</param>
+    /// <param name="colorAttachments">Specifies the value of <paramref name="colorAttachments" />.</param>
+    /// <param name="sampleCount">Specifies the value of <paramref name="sampleCount" />.</param>
     public OutputDescription(OutputAttachmentDescription? depthAttachment, OutputAttachmentDescription[] colorAttachments, TextureSampleCount sampleCount) {
         this.DepthAttachment = depthAttachment;
         this.ColorAttachments = colorAttachments ?? Array.Empty<OutputAttachmentDescription>();
@@ -46,10 +46,10 @@ public struct OutputDescription : IEquatable<OutputDescription> {
     }
 
     /// <summary>
-    /// Performs the CreateFromFramebuffer operation.
+    /// Executes the CreateFromFramebuffer operation.
     /// </summary>
-    /// <param name="fb">The value of fb.</param>
-    /// <returns>The result of the CreateFromFramebuffer operation.</returns>
+    /// <param name="fb">Specifies the value of <paramref name="fb" />.</param>
+    /// <returns>Returns the result produced by the CreateFromFramebuffer operation.</returns>
     internal static OutputDescription CreateFromFramebuffer(Framebuffer fb) {
         TextureSampleCount sampleCount = 0;
         OutputAttachmentDescription? depthAttachment = null;
@@ -70,10 +70,10 @@ public struct OutputDescription : IEquatable<OutputDescription> {
     }
 
     /// <summary>
-    /// Performs the Equals operation.
+    /// Executes the Equals operation.
     /// </summary>
-    /// <param name="other">The value of other.</param>
-    /// <returns>The result of the Equals operation.</returns>
+    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
+    /// <returns>Returns the result produced by the Equals operation.</returns>
     public bool Equals(OutputDescription other) {
         return this.DepthAttachment.GetValueOrDefault().Equals(other.DepthAttachment.GetValueOrDefault())
                && Util.ArrayEqualsEquatable(this.ColorAttachments, other.ColorAttachments)
@@ -81,9 +81,9 @@ public struct OutputDescription : IEquatable<OutputDescription> {
     }
 
     /// <summary>
-    /// Performs the GetHashCode operation.
+    /// Executes the GetHashCode operation.
     /// </summary>
-    /// <returns>The result of the GetHashCode operation.</returns>
+    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(this.DepthAttachment.GetHashCode(), HashHelper.Array(this.ColorAttachments), (int)this.SampleCount);
     }

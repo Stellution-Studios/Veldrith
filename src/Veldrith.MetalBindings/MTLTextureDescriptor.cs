@@ -4,26 +4,26 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the MTLTextureDescriptor struct.
+/// Defines the data layout and behavior of the MTLTextureDescriptor struct.
 /// </summary>
 public struct MTLTextureDescriptor {
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>name</c>.
     /// </summary>
-    /// <param name="MTLTextureDescriptor">The value of MTLTextureDescriptor.</param>
-    /// <returns>The result of the new operation.</returns>
+    /// <param name="MTLTextureDescriptor">Specifies the value of <paramref name="MTLTextureDescriptor" />.</param>
+    /// <returns>Returns the result produced by the new operation.</returns>
     private static readonly ObjCClass s_class = new(nameof(MTLTextureDescriptor));
 
     /// <summary>
-    /// Represents the NativePtr field.
+    /// Stores the value associated with <c>NativePtr</c>.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Performs the New operation.
+    /// Creates and returns a new instance.
     /// </summary>
-    /// <returns>The result of the New operation.</returns>
+    /// <returns>Returns the result produced by the New operation.</returns>
     public static MTLTextureDescriptor New() {
         return s_class.AllocInit<MTLTextureDescriptor>();
     }
@@ -125,112 +125,112 @@ public struct MTLTextureDescriptor {
     }
 
     /// <summary>
-    /// Represents the sel_textureType field.
+    /// Stores the value associated with <c>sel_textureType</c>.
     /// </summary>
     private static readonly Selector sel_textureType = "textureType";
 
     /// <summary>
-    /// Represents the sel_setTextureType field.
+    /// Stores the value associated with <c>sel_setTextureType</c>.
     /// </summary>
     private static readonly Selector sel_setTextureType = "setTextureType:";
 
     /// <summary>
-    /// Represents the sel_width field.
+    /// Stores the value associated with <c>sel_width</c>.
     /// </summary>
     private static readonly Selector sel_width = "width";
 
     /// <summary>
-    /// Represents the sel_setWidth field.
+    /// Stores the value associated with <c>sel_setWidth</c>.
     /// </summary>
     private static readonly Selector sel_setWidth = "setWidth:";
 
     /// <summary>
-    /// Represents the sel_height field.
+    /// Stores the value associated with <c>sel_height</c>.
     /// </summary>
     private static readonly Selector sel_height = "height";
 
     /// <summary>
-    /// Represents the sel_setHeight field.
+    /// Stores the value associated with <c>sel_setHeight</c>.
     /// </summary>
     private static readonly Selector sel_setHeight = "setHeight:";
 
     /// <summary>
-    /// Represents the sel_depth field.
+    /// Stores the value associated with <c>sel_depth</c>.
     /// </summary>
     private static readonly Selector sel_depth = "depth";
 
     /// <summary>
-    /// Represents the sel_setDepth field.
+    /// Stores the value associated with <c>sel_setDepth</c>.
     /// </summary>
     private static readonly Selector sel_setDepth = "setDepth:";
 
     /// <summary>
-    /// Represents the sel_mipmapLevelCount field.
+    /// Stores the value associated with <c>sel_mipmapLevelCount</c>.
     /// </summary>
     private static readonly Selector sel_mipmapLevelCount = "mipmapLevelCount";
 
     /// <summary>
-    /// Represents the sel_setMipmapLevelCount field.
+    /// Stores the value associated with <c>sel_setMipmapLevelCount</c>.
     /// </summary>
     private static readonly Selector sel_setMipmapLevelCount = "setMipmapLevelCount:";
 
     /// <summary>
-    /// Represents the sel_sampleCount field.
+    /// Stores the value associated with <c>sel_sampleCount</c>.
     /// </summary>
     private static readonly Selector sel_sampleCount = "sampleCount";
 
     /// <summary>
-    /// Represents the sel_setSampleCount field.
+    /// Stores the value associated with <c>sel_setSampleCount</c>.
     /// </summary>
     private static readonly Selector sel_setSampleCount = "setSampleCount:";
 
     /// <summary>
-    /// Represents the sel_arrayLength field.
+    /// Stores the value associated with <c>sel_arrayLength</c>.
     /// </summary>
     private static readonly Selector sel_arrayLength = "arrayLength";
 
     /// <summary>
-    /// Represents the sel_setArrayLength field.
+    /// Stores the value associated with <c>sel_setArrayLength</c>.
     /// </summary>
     private static readonly Selector sel_setArrayLength = "setArrayLength:";
 
     /// <summary>
-    /// Represents the sel_resourceOptions field.
+    /// Stores the value associated with <c>sel_resourceOptions</c>.
     /// </summary>
     private static readonly Selector sel_resourceOptions = "resourceOptions";
 
     /// <summary>
-    /// Represents the sel_setResourceOptions field.
+    /// Stores the value associated with <c>sel_setResourceOptions</c>.
     /// </summary>
     private static readonly Selector sel_setResourceOptions = "setResourceOptions:";
 
     /// <summary>
-    /// Represents the sel_cpuCacheMode field.
+    /// Stores the value associated with <c>sel_cpuCacheMode</c>.
     /// </summary>
     private static readonly Selector sel_cpuCacheMode = "cpuCacheMode";
 
     /// <summary>
-    /// Represents the sel_setCpuCacheMode field.
+    /// Stores the value associated with <c>sel_setCpuCacheMode</c>.
     /// </summary>
     private static readonly Selector sel_setCpuCacheMode = "setCpuCacheMode:";
 
     /// <summary>
-    /// Represents the sel_storageMode field.
+    /// Stores the value associated with <c>sel_storageMode</c>.
     /// </summary>
     private static readonly Selector sel_storageMode = "storageMode";
 
     /// <summary>
-    /// Represents the sel_setStorageMode field.
+    /// Stores the value associated with <c>sel_setStorageMode</c>.
     /// </summary>
     private static readonly Selector sel_setStorageMode = "setStorageMode:";
 
     /// <summary>
-    /// Represents the sel_textureUsage field.
+    /// Stores the value associated with <c>sel_textureUsage</c>.
     /// </summary>
     private static readonly Selector sel_textureUsage = "textureUsage";
 
     /// <summary>
-    /// Represents the sel_setTextureUsage field.
+    /// Stores the value associated with <c>sel_setTextureUsage</c>.
     /// </summary>
     private static readonly Selector sel_setTextureUsage = "setTextureUsage:";
 }

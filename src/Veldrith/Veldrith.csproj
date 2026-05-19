@@ -11,7 +11,7 @@
         <AssemblyName>ppy.Veldrid</AssemblyName>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <DocumentationFile>$(BinDir)\$(AssemblyName).xml</DocumentationFile>
-        <NoWarn>$(NoWarn);1571;1572;1573;1574;1587;0649;CA1416</NoWarn>
+        <NoWarn>$(NoWarn);1570;1571;1572;1573;1574;1587;1734;0649;CA1416</NoWarn>
         <NoWarn Condition="'$(Configuration)' == 'Debug'">$(NoWarn);1591</NoWarn>
         <DefineConstants>$(DefineConstants);VALIDATE_USAGE</DefineConstants>
         <LangVersion>14</LangVersion>

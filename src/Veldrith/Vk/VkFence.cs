@@ -4,35 +4,35 @@ using static Vulkan.VulkanNative;
 namespace Veldrith.Vk;
 
 /// <summary>
-/// Represents the VkFence class.
+/// Defines the behavior and responsibilities of the VkFence class.
 /// </summary>
 internal unsafe class VkFence : Fence {
 
     /// <summary>
-    /// Represents the _fence field.
+    /// Stores the value associated with <c>_fence</c>.
     /// </summary>
     private readonly Vulkan.VkFence _fence;
 
     /// <summary>
-    /// Represents the gd field.
+    /// Stores the value associated with <c>gd</c>.
     /// </summary>
     private readonly VkGraphicsDevice gd;
 
     /// <summary>
-    /// Represents the _destroyed field.
+    /// Stores the value associated with <c>_destroyed</c>.
     /// </summary>
     private bool _destroyed;
 
     /// <summary>
-    /// Represents the _name field.
+    /// Stores the value associated with <c>_name</c>.
     /// </summary>
     private string _name;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VkFence" /> type.
     /// </summary>
-    /// <param name="gd">The value of gd.</param>
-    /// <param name="signaled">The value of signaled.</param>
+    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
+    /// <param name="signaled">Specifies the value of <paramref name="signaled" />.</param>
     public VkFence(VkGraphicsDevice gd, bool signaled) {
         this.gd = gd;
         VkFenceCreateInfo fenceCi = VkFenceCreateInfo.New();
@@ -42,7 +42,7 @@ internal unsafe class VkFence : Fence {
     }
 
     /// <summary>
-    /// Represents the DeviceFence field.
+    /// Stores the value associated with <c>DeviceFence</c>.
     /// </summary>
     public Vulkan.VkFence DeviceFence => this._fence;
 
@@ -70,7 +70,7 @@ internal unsafe class VkFence : Fence {
     #region Disposal
 
     /// <summary>
-    /// Performs the Dispose operation.
+    /// Executes the Dispose operation.
     /// </summary>
     public override void Dispose() {
         if (!this._destroyed) {
@@ -82,7 +82,7 @@ internal unsafe class VkFence : Fence {
     #endregion
 
     /// <summary>
-    /// Performs the Reset operation.
+    /// Executes the Reset operation.
     /// </summary>
     public override void Reset() {
         this.gd.ResetFence(this);

@@ -6,36 +6,36 @@ using static Vulkan.VulkanNative;
 namespace Veldrith.Vk;
 
 /// <summary>
-/// Represents the VkShader class.
+/// Defines the behavior and responsibilities of the VkShader class.
 /// </summary>
 internal unsafe class VkShader : Shader {
 
     /// <summary>
-    /// Represents the _shaderModule field.
+    /// Stores the value associated with <c>_shaderModule</c>.
     /// </summary>
     private readonly VkShaderModule _shaderModule;
 
     /// <summary>
-    /// Represents the gd field.
+    /// Stores the value associated with <c>gd</c>.
     /// </summary>
     private readonly VkGraphicsDevice gd;
 
     /// <summary>
-    /// Represents the _disposed field.
+    /// Stores the value associated with <c>_disposed</c>.
     /// </summary>
     private bool _disposed;
 
     /// <summary>
-    /// Represents the _name field.
+    /// Stores the value associated with <c>_name</c>.
     /// </summary>
     private string _name;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VkShader" /> class.
     /// </summary>
-    /// <param name="gd">The value of gd.</param>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the base operation.</returns>
+    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the base operation.</returns>
     public VkShader(VkGraphicsDevice gd, ref ShaderDescription description) : base(description.Stage, description.EntryPoint) {
         this.gd = gd;
 
@@ -50,7 +50,7 @@ internal unsafe class VkShader : Shader {
     }
 
     /// <summary>
-    /// Represents the ShaderModule field.
+    /// Stores the value associated with <c>ShaderModule</c>.
     /// </summary>
     public VkShaderModule ShaderModule => this._shaderModule;
 
@@ -73,7 +73,7 @@ internal unsafe class VkShader : Shader {
     #region Disposal
 
     /// <summary>
-    /// Performs the Dispose operation.
+    /// Executes the Dispose operation.
     /// </summary>
     public override void Dispose() {
         if (!this._disposed) {

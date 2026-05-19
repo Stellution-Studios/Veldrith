@@ -4,19 +4,19 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the MTLDepthStencilDescriptor struct.
+/// Defines the data layout and behavior of the MTLDepthStencilDescriptor struct.
 /// </summary>
 public struct MTLDepthStencilDescriptor {
 
     /// <summary>
-    /// Represents the NativePtr field.
+    /// Stores the value associated with <c>NativePtr</c>.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MTLDepthStencilDescriptor" /> type.
     /// </summary>
-    /// <param name="ptr">The value of ptr.</param>
+    /// <param name="ptr">Specifies the value of <paramref name="ptr" />.</param>
     public MTLDepthStencilDescriptor(IntPtr ptr) {
         this.NativePtr = ptr;
     }
@@ -54,42 +54,42 @@ public struct MTLDepthStencilDescriptor {
     }
 
     /// <summary>
-    /// Represents the sel_depthCompareFunction field.
+    /// Stores the value associated with <c>sel_depthCompareFunction</c>.
     /// </summary>
     private static readonly Selector sel_depthCompareFunction = "depthCompareFunction";
 
     /// <summary>
-    /// Represents the sel_setDepthCompareFunction field.
+    /// Stores the value associated with <c>sel_setDepthCompareFunction</c>.
     /// </summary>
     private static readonly Selector sel_setDepthCompareFunction = "setDepthCompareFunction:";
 
     /// <summary>
-    /// Represents the sel_isDepthWriteEnabled field.
+    /// Stores the value associated with <c>sel_isDepthWriteEnabled</c>.
     /// </summary>
     private static readonly Selector sel_isDepthWriteEnabled = "isDepthWriteEnabled";
 
     /// <summary>
-    /// Represents the sel_setDepthWriteEnabled field.
+    /// Stores the value associated with <c>sel_setDepthWriteEnabled</c>.
     /// </summary>
     private static readonly Selector sel_setDepthWriteEnabled = "setDepthWriteEnabled:";
 
     /// <summary>
-    /// Represents the sel_backFaceStencil field.
+    /// Stores the value associated with <c>sel_backFaceStencil</c>.
     /// </summary>
     private static readonly Selector sel_backFaceStencil = "backFaceStencil";
 
     /// <summary>
-    /// Represents the sel_setBackFaceStencil field.
+    /// Stores the value associated with <c>sel_setBackFaceStencil</c>.
     /// </summary>
     private static readonly Selector sel_setBackFaceStencil = "setBackFaceStencil:";
 
     /// <summary>
-    /// Represents the sel_frontFaceStencil field.
+    /// Stores the value associated with <c>sel_frontFaceStencil</c>.
     /// </summary>
     private static readonly Selector sel_frontFaceStencil = "frontFaceStencil";
 
     /// <summary>
-    /// Represents the sel_setFrontFaceStencil field.
+    /// Stores the value associated with <c>sel_setFrontFaceStencil</c>.
     /// </summary>
     private static readonly Selector sel_setFrontFaceStencil = "setFrontFaceStencil:";
 }

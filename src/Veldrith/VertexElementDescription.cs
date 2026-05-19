@@ -32,18 +32,18 @@ public struct VertexElementDescription : IEquatable<VertexElementDescription> {
     /// <summary>
     /// Initializes a new instance of the <see cref="VertexElementDescription" /> type.
     /// </summary>
-    /// <param name="name">The value of name.</param>
-    /// <param name="semantic">The value of semantic.</param>
-    /// <param name="format">The value of format.</param>
+    /// <param name="name">Specifies the value of <paramref name="name" />.</param>
+    /// <param name="semantic">Specifies the value of <paramref name="semantic" />.</param>
+    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
     public VertexElementDescription(string name, VertexElementSemantic semantic, VertexElementFormat format)
         : this(name, format, semantic) { }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VertexElementDescription" /> type.
     /// </summary>
-    /// <param name="name">The value of name.</param>
-    /// <param name="format">The value of format.</param>
-    /// <param name="semantic">The value of semantic.</param>
+    /// <param name="name">Specifies the value of <paramref name="name" />.</param>
+    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
+    /// <param name="semantic">Specifies the value of <paramref name="semantic" />.</param>
     public VertexElementDescription(string name, VertexElementFormat format, VertexElementSemantic semantic) {
         this.Name = name;
         this.Format = format;
@@ -54,10 +54,10 @@ public struct VertexElementDescription : IEquatable<VertexElementDescription> {
     /// <summary>
     /// Initializes a new instance of the <see cref="VertexElementDescription" /> type.
     /// </summary>
-    /// <param name="name">The value of name.</param>
-    /// <param name="semantic">The value of semantic.</param>
-    /// <param name="format">The value of format.</param>
-    /// <param name="offset">The value of offset.</param>
+    /// <param name="name">Specifies the value of <paramref name="name" />.</param>
+    /// <param name="semantic">Specifies the value of <paramref name="semantic" />.</param>
+    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
+    /// <param name="offset">Specifies the value of <paramref name="offset" />.</param>
     public VertexElementDescription(string name, VertexElementSemantic semantic, VertexElementFormat format, uint offset) {
         this.Name = name;
         this.Format = format;
@@ -66,10 +66,10 @@ public struct VertexElementDescription : IEquatable<VertexElementDescription> {
     }
 
     /// <summary>
-    /// Performs the Equals operation.
+    /// Executes the Equals operation.
     /// </summary>
-    /// <param name="other">The value of other.</param>
-    /// <returns>The result of the Equals operation.</returns>
+    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
+    /// <returns>Returns the result produced by the Equals operation.</returns>
     public bool Equals(VertexElementDescription other) {
         return this.Name.Equals(other.Name)
                && this.Format == other.Format
@@ -78,9 +78,9 @@ public struct VertexElementDescription : IEquatable<VertexElementDescription> {
     }
 
     /// <summary>
-    /// Performs the GetHashCode operation.
+    /// Executes the GetHashCode operation.
     /// </summary>
-    /// <returns>The result of the GetHashCode operation.</returns>
+    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(this.Name.GetHashCode(), (int)this.Format, (int)this.Semantic, (int)this.Offset);
     }

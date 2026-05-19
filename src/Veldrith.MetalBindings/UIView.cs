@@ -5,19 +5,19 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the UIView struct.
+/// Defines the data layout and behavior of the UIView struct.
 /// </summary>
 public struct UIView {
 
     /// <summary>
-    /// Represents the NativePtr field.
+    /// Stores the value associated with <c>NativePtr</c>.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="UIView" /> type.
     /// </summary>
-    /// <param name="ptr">The value of ptr.</param>
+    /// <param name="ptr">Specifies the value of <paramref name="ptr" />.</param>
     public UIView(IntPtr ptr) {
         this.NativePtr = ptr;
     }
@@ -28,27 +28,27 @@ public struct UIView {
     public CALayer layer => objc_msgSend<CALayer>(this.NativePtr, sel_layer);
 
     /// <summary>
-    /// Represents the frame field.
+    /// Stores the value associated with <c>frame</c>.
     /// </summary>
     public CGRect frame =>
         RuntimeInformation.ProcessArchitecture == Architecture.Arm64
 
             /// <summary>
-            /// Performs the CGRect_objc_msgSend operation.
+            /// Executes the CGRect_objc_msgSend operation.
             /// </summary>
-            /// <param name="NativePtr">The value of NativePtr.</param>
-            /// <param name="sel_frame">The value of sel_frame.</param>
-            /// <returns>The result of the CGRect_objc_msgSend operation.</returns>
+            /// <param name="NativePtr">Specifies the value of <paramref name="NativePtr" />.</param>
+            /// <param name="sel_frame">Specifies the value of <paramref name="sel_frame" />.</param>
+            /// <returns>Returns the result produced by the CGRect_objc_msgSend operation.</returns>
             ? CGRect_objc_msgSend(this.NativePtr, sel_frame)
             : objc_msgSend_stret<CGRect>(this.NativePtr, sel_frame);
 
     /// <summary>
-    /// Represents the sel_layer field.
+    /// Stores the value associated with <c>sel_layer</c>.
     /// </summary>
     private static readonly Selector sel_layer = "layer";
 
     /// <summary>
-    /// Represents the sel_frame field.
+    /// Stores the value associated with <c>sel_frame</c>.
     /// </summary>
     private static readonly Selector sel_frame = "frame";
 }

@@ -5,7 +5,7 @@ using Vulkan.Xlib;
 namespace Veldrith.Vk;
 
 /// <summary>
-/// Represents the VkSurfaceSource class.
+/// Defines the behavior and responsibilities of the VkSurfaceSource class.
 /// </summary>
 public abstract class VkSurfaceSource {
 
@@ -15,120 +15,120 @@ public abstract class VkSurfaceSource {
     internal VkSurfaceSource() { }
 
     /// <summary>
-    /// Performs the CreateWin32 operation.
+    /// Executes the CreateWin32 operation.
     /// </summary>
-    /// <param name="hinstance">The value of hinstance.</param>
-    /// <param name="hwnd">The value of hwnd.</param>
-    /// <returns>The result of the CreateWin32 operation.</returns>
+    /// <param name="hinstance">Specifies the value of <paramref name="hinstance" />.</param>
+    /// <param name="hwnd">Specifies the value of <paramref name="hwnd" />.</param>
+    /// <returns>Returns the result produced by the CreateWin32 operation.</returns>
     public static VkSurfaceSource CreateWin32(IntPtr hinstance, IntPtr hwnd) {
         return new Win32VkSurfaceInfo(hinstance, hwnd);
     }
 
     /// <summary>
-    /// Performs the CreateXlib operation.
+    /// Executes the CreateXlib operation.
     /// </summary>
-    /// <param name="display">The value of display.</param>
-    /// <param name="window">The value of window.</param>
-    /// <returns>The result of the CreateXlib operation.</returns>
+    /// <param name="display">Specifies the value of <paramref name="display" />.</param>
+    /// <param name="window">Specifies the value of <paramref name="window" />.</param>
+    /// <returns>Returns the result produced by the CreateXlib operation.</returns>
     public static unsafe VkSurfaceSource CreateXlib(Display* display, Window window) {
         return new XlibVkSurfaceInfo(display, window);
     }
 
     /// <summary>
-    /// Performs the CreateSurface operation.
+    /// Executes the CreateSurface operation.
     /// </summary>
-    /// <param name="instance">The value of instance.</param>
-    /// <returns>The result of the CreateSurface operation.</returns>
+    /// <param name="instance">Specifies the value of <paramref name="instance" />.</param>
+    /// <returns>Returns the result produced by the CreateSurface operation.</returns>
     public abstract VkSurfaceKHR CreateSurface(VkInstance instance);
 
     /// <summary>
-    /// Performs the GetSurfaceSource operation.
+    /// Executes the GetSurfaceSource operation.
     /// </summary>
-    /// <returns>The result of the GetSurfaceSource operation.</returns>
+    /// <returns>Returns the result produced by the GetSurfaceSource operation.</returns>
     internal abstract SwapchainSource GetSurfaceSource();
 }
 
 /// <summary>
-/// Represents the Win32VkSurfaceInfo class.
+/// Defines the behavior and responsibilities of the Win32VkSurfaceInfo class.
 /// </summary>
 internal class Win32VkSurfaceInfo : VkSurfaceSource {
 
     /// <summary>
-    /// Represents the hinstance field.
+    /// Stores the value associated with <c>hinstance</c>.
     /// </summary>
     private readonly IntPtr hinstance;
 
     /// <summary>
-    /// Represents the hwnd field.
+    /// Stores the value associated with <c>hwnd</c>.
     /// </summary>
     private readonly IntPtr hwnd;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Win32VkSurfaceInfo" /> type.
     /// </summary>
-    /// <param name="hinstance">The value of hinstance.</param>
-    /// <param name="hwnd">The value of hwnd.</param>
+    /// <param name="hinstance">Specifies the value of <paramref name="hinstance" />.</param>
+    /// <param name="hwnd">Specifies the value of <paramref name="hwnd" />.</param>
     public Win32VkSurfaceInfo(IntPtr hinstance, IntPtr hwnd) {
         this.hinstance = hinstance;
         this.hwnd = hwnd;
     }
 
     /// <summary>
-    /// Performs the CreateSurface operation.
+    /// Executes the CreateSurface operation.
     /// </summary>
-    /// <param name="instance">The value of instance.</param>
-    /// <returns>The result of the CreateSurface operation.</returns>
+    /// <param name="instance">Specifies the value of <paramref name="instance" />.</param>
+    /// <returns>Returns the result produced by the CreateSurface operation.</returns>
     public override VkSurfaceKHR CreateSurface(VkInstance instance) {
         return VkSurfaceUtil.CreateSurface(null, instance, this.GetSurfaceSource());
     }
 
     /// <summary>
-    /// Performs the GetSurfaceSource operation.
+    /// Executes the GetSurfaceSource operation.
     /// </summary>
-    /// <returns>The result of the GetSurfaceSource operation.</returns>
+    /// <returns>Returns the result produced by the GetSurfaceSource operation.</returns>
     internal override SwapchainSource GetSurfaceSource() {
         return new Win32SwapchainSource(this.hwnd, this.hinstance);
     }
 }
 
 /// <summary>
-/// Represents the XlibVkSurfaceInfo class.
+/// Defines the behavior and responsibilities of the XlibVkSurfaceInfo class.
 /// </summary>
 internal class XlibVkSurfaceInfo : VkSurfaceSource {
 
     /// <summary>
-    /// Represents the display field.
+    /// Stores the value associated with <c>display</c>.
     /// </summary>
     private readonly unsafe Display* display;
 
     /// <summary>
-    /// Represents the window field.
+    /// Stores the value associated with <c>window</c>.
     /// </summary>
     private readonly Window window;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="XlibVkSurfaceInfo" /> type.
     /// </summary>
-    /// <param name="display">The value of display.</param>
-    /// <param name="window">The value of window.</param>
+    /// <param name="display">Specifies the value of <paramref name="display" />.</param>
+    /// <param name="window">Specifies the value of <paramref name="window" />.</param>
     public unsafe XlibVkSurfaceInfo(Display* display, Window window) {
         this.display = display;
         this.window = window;
     }
 
     /// <summary>
-    /// Performs the CreateSurface operation.
+    /// Executes the CreateSurface operation.
     /// </summary>
-    /// <param name="instance">The value of instance.</param>
-    /// <returns>The result of the CreateSurface operation.</returns>
+    /// <param name="instance">Specifies the value of <paramref name="instance" />.</param>
+    /// <returns>Returns the result produced by the CreateSurface operation.</returns>
     public override VkSurfaceKHR CreateSurface(VkInstance instance) {
         return VkSurfaceUtil.CreateSurface(null, instance, this.GetSurfaceSource());
     }
 
     /// <summary>
-    /// Performs the GetSurfaceSource operation.
+    /// Executes the GetSurfaceSource operation.
     /// </summary>
-    /// <returns>The result of the GetSurfaceSource operation.</returns>
+    /// <returns>Returns the result produced by the GetSurfaceSource operation.</returns>
     internal override unsafe SwapchainSource GetSurfaceSource() {
         return new XlibSwapchainSource((IntPtr)this.display, this.window.Value);
     }

@@ -29,9 +29,9 @@ public struct DeviceBufferRange : IBindableResource, IEquatable<DeviceBufferRang
     /// <summary>
     /// Initializes a new instance of the <see cref="DeviceBufferRange" /> type.
     /// </summary>
-    /// <param name="buffer">The value of buffer.</param>
-    /// <param name="offset">The value of offset.</param>
-    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
+    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
+    /// <param name="offset">Specifies the value of <paramref name="offset" />.</param>
+    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
     public DeviceBufferRange(DeviceBuffer buffer, uint offset, uint sizeInBytes) {
         this.Buffer = buffer;
         this.Offset = offset;
@@ -39,18 +39,18 @@ public struct DeviceBufferRange : IBindableResource, IEquatable<DeviceBufferRang
     }
 
     /// <summary>
-    /// Performs the Equals operation.
+    /// Executes the Equals operation.
     /// </summary>
-    /// <param name="other">The value of other.</param>
-    /// <returns>The result of the Equals operation.</returns>
+    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
+    /// <returns>Returns the result produced by the Equals operation.</returns>
     public bool Equals(DeviceBufferRange other) {
         return this.Buffer == other.Buffer && this.Offset.Equals(other.Offset) && this.SizeInBytes.Equals(other.SizeInBytes);
     }
 
     /// <summary>
-    /// Performs the GetHashCode operation.
+    /// Executes the GetHashCode operation.
     /// </summary>
-    /// <returns>The result of the GetHashCode operation.</returns>
+    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
     public override int GetHashCode() {
         int bufferHash = this.Buffer?.GetHashCode() ?? 0;
         return HashHelper.Combine(bufferHash, this.Offset.GetHashCode(), this.SizeInBytes.GetHashCode());

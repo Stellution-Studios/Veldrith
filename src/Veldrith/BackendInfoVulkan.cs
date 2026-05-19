@@ -7,29 +7,29 @@ using Vulkan;
 namespace Veldrith;
 
 /// <summary>
-/// Represents the BackendInfoVulkan class.
+/// Defines the behavior and responsibilities of the BackendInfoVulkan class.
 /// </summary>
 public class BackendInfoVulkan {
 
     /// <summary>
-    /// Represents the _deviceExtensions field.
+    /// Stores the value associated with <c>_deviceExtensions</c>.
     /// </summary>
     private readonly Lazy<ReadOnlyCollection<ExtensionProperties>> _deviceExtensions;
 
     /// <summary>
-    /// Represents the _instanceLayers field.
+    /// Stores the value associated with <c>_instanceLayers</c>.
     /// </summary>
     private readonly Lazy<ReadOnlyCollection<string>> _instanceLayers;
 
     /// <summary>
-    /// Represents the gd field.
+    /// Stores the value associated with <c>gd</c>.
     /// </summary>
     private readonly VkGraphicsDevice gd;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BackendInfoVulkan" /> type.
     /// </summary>
-    /// <param name="gd">The value of gd.</param>
+    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
     internal BackendInfoVulkan(VkGraphicsDevice gd) {
         this.gd = gd;
         this._instanceLayers = new Lazy<ReadOnlyCollection<string>>(() =>
@@ -74,7 +74,7 @@ public class BackendInfoVulkan {
     public string DriverInfo => this.gd.DriverInfo;
 
     /// <summary>
-    /// Represents the AvailableInstanceLayers field.
+    /// Stores the value associated with <c>AvailableInstanceLayers</c>.
     /// </summary>
     public ReadOnlyCollection<string> AvailableInstanceLayers => this._instanceLayers.Value;
 
@@ -84,15 +84,15 @@ public class BackendInfoVulkan {
     public ReadOnlyCollection<string> AvailableInstanceExtensions { get; }
 
     /// <summary>
-    /// Represents the AvailableDeviceExtensions field.
+    /// Stores the value associated with <c>AvailableDeviceExtensions</c>.
     /// </summary>
     public ReadOnlyCollection<ExtensionProperties> AvailableDeviceExtensions => this._deviceExtensions.Value;
 
     /// <summary>
-    /// Performs the OverrideImageLayout operation.
+    /// Executes the OverrideImageLayout operation.
     /// </summary>
-    /// <param name="texture">The value of texture.</param>
-    /// <param name="layout">The value of layout.</param>
+    /// <param name="texture">Specifies the value of <paramref name="texture" />.</param>
+    /// <param name="layout">Specifies the value of <paramref name="layout" />.</param>
     public void OverrideImageLayout(Texture texture, uint layout) {
         VkTexture vkTex = Util.AssertSubtype<Texture, VkTexture>(texture);
 
@@ -104,10 +104,10 @@ public class BackendInfoVulkan {
     }
 
     /// <summary>
-    /// Performs the GetVkImage operation.
+    /// Executes the GetVkImage operation.
     /// </summary>
-    /// <param name="texture">The value of texture.</param>
-    /// <returns>The result of the GetVkImage operation.</returns>
+    /// <param name="texture">Specifies the value of <paramref name="texture" />.</param>
+    /// <returns>Returns the result produced by the GetVkImage operation.</returns>
     public ulong GetVkImage(Texture texture) {
         VkTexture vkTexture = Util.AssertSubtype<Texture, VkTexture>(texture);
 
@@ -119,18 +119,18 @@ public class BackendInfoVulkan {
     }
 
     /// <summary>
-    /// Performs the TransitionImageLayout operation.
+    /// Executes the TransitionImageLayout operation.
     /// </summary>
-    /// <param name="texture">The value of texture.</param>
-    /// <param name="layout">The value of layout.</param>
+    /// <param name="texture">Specifies the value of <paramref name="texture" />.</param>
+    /// <param name="layout">Specifies the value of <paramref name="layout" />.</param>
     public void TransitionImageLayout(Texture texture, uint layout) {
         this.gd.TransitionImageLayout(Util.AssertSubtype<Texture, VkTexture>(texture), (VkImageLayout)layout);
     }
 
     /// <summary>
-    /// Performs the EnumerateDeviceExtensions operation.
+    /// Executes the EnumerateDeviceExtensions operation.
     /// </summary>
-    /// <returns>The result of the EnumerateDeviceExtensions operation.</returns>
+    /// <returns>Returns the result produced by the EnumerateDeviceExtensions operation.</returns>
     private unsafe ReadOnlyCollection<ExtensionProperties> EnumerateDeviceExtensions() {
         VkExtensionProperties[] vkProps = this.gd.GetDeviceExtensionProperties();
         ExtensionProperties[] veldridProps = new ExtensionProperties[vkProps.Length];
@@ -144,34 +144,34 @@ public class BackendInfoVulkan {
     }
 
     /// <summary>
-    /// Represents the ExtensionProperties struct.
+    /// Defines the data layout and behavior of the ExtensionProperties struct.
     /// </summary>
     public readonly struct ExtensionProperties {
 
         /// <summary>
-        /// Represents the Name field.
+        /// Stores the value associated with <c>Name</c>.
         /// </summary>
         public readonly string Name;
 
         /// <summary>
-        /// Represents the SpecVersion field.
+        /// Stores the value associated with <c>SpecVersion</c>.
         /// </summary>
         public readonly uint SpecVersion;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ExtensionProperties" /> type.
         /// </summary>
-        /// <param name="name">The value of name.</param>
-        /// <param name="specVersion">The value of specVersion.</param>
+        /// <param name="name">Specifies the value of <paramref name="name" />.</param>
+        /// <param name="specVersion">Specifies the value of <paramref name="specVersion" />.</param>
         public ExtensionProperties(string name, uint specVersion) {
             this.Name = name ?? throw new ArgumentNullException(nameof(name));
             this.SpecVersion = specVersion;
         }
 
         /// <summary>
-        /// Performs the ToString operation.
+        /// Executes the ToString operation.
         /// </summary>
-        /// <returns>The result of the ToString operation.</returns>
+        /// <returns>Returns the result produced by the ToString operation.</returns>
         public override string ToString() {
             return this.Name;
         }

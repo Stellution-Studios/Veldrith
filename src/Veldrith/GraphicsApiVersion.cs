@@ -1,7 +1,7 @@
 namespace Veldrith;
 
 /// <summary>
-/// Represents the GraphicsApiVersion struct.
+/// Defines the data layout and behavior of the GraphicsApiVersion struct.
 /// </summary>
 public readonly struct GraphicsApiVersion {
 
@@ -38,10 +38,10 @@ public readonly struct GraphicsApiVersion {
     /// <summary>
     /// Initializes a new instance of the <see cref="GraphicsApiVersion" /> type.
     /// </summary>
-    /// <param name="major">The value of major.</param>
-    /// <param name="minor">The value of minor.</param>
-    /// <param name="subminor">The value of subminor.</param>
-    /// <param name="patch">The value of patch.</param>
+    /// <param name="major">Specifies the value of <paramref name="major" />.</param>
+    /// <param name="minor">Specifies the value of <paramref name="minor" />.</param>
+    /// <param name="subminor">Specifies the value of <paramref name="subminor" />.</param>
+    /// <param name="patch">Specifies the value of <paramref name="patch" />.</param>
     public GraphicsApiVersion(int major, int minor, int subminor, int patch) {
         this.Major = major;
         this.Minor = minor;
@@ -50,9 +50,9 @@ public readonly struct GraphicsApiVersion {
     }
 
     /// <summary>
-    /// Performs the ToString operation.
+    /// Executes the ToString operation.
     /// </summary>
-    /// <returns>The result of the ToString operation.</returns>
+    /// <returns>Returns the result produced by the ToString operation.</returns>
     public override string ToString() {
         return $"{this.Major}.{this.Minor}.{this.Subminor}.{this.Patch}";
     }

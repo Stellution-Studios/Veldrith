@@ -3,16 +3,16 @@ using Veldrith.MetalBindings;
 namespace Veldrith.MTL;
 
 /// <summary>
-/// Represents the MtlFormats class.
+/// Defines the behavior and responsibilities of the MtlFormats class.
 /// </summary>
 internal static class MtlFormats {
 
     /// <summary>
-    /// Performs the VdToMtlPixelFormat operation.
+    /// Executes the VdToMtlPixelFormat operation.
     /// </summary>
-    /// <param name="format">The value of format.</param>
-    /// <param name="depthFormat">The value of depthFormat.</param>
-    /// <returns>The result of the VdToMtlPixelFormat operation.</returns>
+    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
+    /// <param name="depthFormat">Specifies the value of <paramref name="depthFormat" />.</param>
+    /// <returns>Returns the result produced by the VdToMtlPixelFormat operation.</returns>
     internal static MTLPixelFormat VdToMtlPixelFormat(PixelFormat format, bool depthFormat) {
         switch (format) {
             case PixelFormat.R8UNorm: return MTLPixelFormat.R8Unorm;
@@ -138,12 +138,12 @@ internal static class MtlFormats {
     }
 
     /// <summary>
-    /// Performs the IsFormatSupported operation.
+    /// Executes the IsFormatSupported operation.
     /// </summary>
-    /// <param name="format">The value of format.</param>
-    /// <param name="usage">The value of usage.</param>
-    /// <param name="metalFeatures">The value of metalFeatures.</param>
-    /// <returns>The result of the IsFormatSupported operation.</returns>
+    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
+    /// <param name="usage">Specifies the value of <paramref name="usage" />.</param>
+    /// <param name="metalFeatures">Specifies the value of <paramref name="metalFeatures" />.</param>
+    /// <returns>Returns the result produced by the IsFormatSupported operation.</returns>
     internal static bool IsFormatSupported(PixelFormat format, TextureUsage usage, MtlFeatureSupport metalFeatures) {
         switch (format) {
             case PixelFormat.Bc1RgbUNorm:
@@ -182,10 +182,10 @@ internal static class MtlFormats {
     }
 
     /// <summary>
-    /// Performs the VdToMtlFillMode operation.
+    /// Executes the VdToMtlFillMode operation.
     /// </summary>
-    /// <param name="fillMode">The value of fillMode.</param>
-    /// <returns>The result of the VdToMtlFillMode operation.</returns>
+    /// <param name="fillMode">Specifies the value of <paramref name="fillMode" />.</param>
+    /// <returns>Returns the result produced by the VdToMtlFillMode operation.</returns>
     internal static MTLTriangleFillMode VdToMtlFillMode(PolygonFillMode fillMode) {
         switch (fillMode) {
             case PolygonFillMode.Solid: return MTLTriangleFillMode.Fill;
@@ -197,21 +197,21 @@ internal static class MtlFormats {
     }
 
     /// <summary>
-    /// Performs the VdVoMtlFrontFace operation.
+    /// Executes the VdVoMtlFrontFace operation.
     /// </summary>
-    /// <param name="frontFace">The value of frontFace.</param>
-    /// <returns>The result of the VdVoMtlFrontFace operation.</returns>
+    /// <param name="frontFace">Specifies the value of <paramref name="frontFace" />.</param>
+    /// <returns>Returns the result produced by the VdVoMtlFrontFace operation.</returns>
     internal static MTLWinding VdVoMtlFrontFace(FrontFace frontFace) {
         return frontFace == FrontFace.CounterClockwise ? MTLWinding.CounterClockwise : MTLWinding.Clockwise;
     }
 
     /// <summary>
-    /// Performs the GetMinMagMipFilter operation.
+    /// Executes the GetMinMagMipFilter operation.
     /// </summary>
-    /// <param name="filter">The value of filter.</param>
-    /// <param name="min">The value of min.</param>
-    /// <param name="mag">The value of mag.</param>
-    /// <param name="mip">The value of mip.</param>
+    /// <param name="filter">Specifies the value of <paramref name="filter" />.</param>
+    /// <param name="min">Specifies the value of <paramref name="min" />.</param>
+    /// <param name="mag">Specifies the value of <paramref name="mag" />.</param>
+    /// <param name="mip">Specifies the value of <paramref name="mip" />.</param>
     internal static void GetMinMagMipFilter(SamplerFilter filter, out MTLSamplerMinMagFilter min, out MTLSamplerMinMagFilter mag, out MTLSamplerMipFilter mip) {
         switch (filter) {
             case SamplerFilter.Anisotropic:
@@ -272,13 +272,13 @@ internal static class MtlFormats {
     }
 
     /// <summary>
-    /// Performs the VdToMtlTextureType operation.
+    /// Executes the VdToMtlTextureType operation.
     /// </summary>
-    /// <param name="type">The value of type.</param>
-    /// <param name="arrayLayers">The value of arrayLayers.</param>
-    /// <param name="multiSampled">The value of multiSampled.</param>
-    /// <param name="cube">The value of cube.</param>
-    /// <returns>The result of the VdToMtlTextureType operation.</returns>
+    /// <param name="type">Specifies the value of <paramref name="type" />.</param>
+    /// <param name="arrayLayers">Specifies the value of <paramref name="arrayLayers" />.</param>
+    /// <param name="multiSampled">Specifies the value of <paramref name="multiSampled" />.</param>
+    /// <param name="cube">Specifies the value of <paramref name="cube" />.</param>
+    /// <returns>Returns the result produced by the VdToMtlTextureType operation.</returns>
     internal static MTLTextureType VdToMtlTextureType(TextureType type, uint arrayLayers, bool multiSampled, bool cube) {
         switch (type) {
             case TextureType.Texture1D: return arrayLayers > 1 ? MTLTextureType.Type1DArray : MTLTextureType.Type1D;
@@ -301,10 +301,10 @@ internal static class MtlFormats {
     }
 
     /// <summary>
-    /// Performs the VdToMtlBlendFactor operation.
+    /// Executes the VdToMtlBlendFactor operation.
     /// </summary>
-    /// <param name="vdFactor">The value of vdFactor.</param>
-    /// <returns>The result of the VdToMtlBlendFactor operation.</returns>
+    /// <param name="vdFactor">Specifies the value of <paramref name="vdFactor" />.</param>
+    /// <returns>Returns the result produced by the VdToMtlBlendFactor operation.</returns>
     internal static MTLBlendFactor VdToMtlBlendFactor(BlendFactor vdFactor) {
         switch (vdFactor) {
             case BlendFactor.Zero: return MTLBlendFactor.Zero;
@@ -336,10 +336,10 @@ internal static class MtlFormats {
     }
 
     /// <summary>
-    /// Performs the VdToMtlBlendOp operation.
+    /// Executes the VdToMtlBlendOp operation.
     /// </summary>
-    /// <param name="vdFunction">The value of vdFunction.</param>
-    /// <returns>The result of the VdToMtlBlendOp operation.</returns>
+    /// <param name="vdFunction">Specifies the value of <paramref name="vdFunction" />.</param>
+    /// <returns>Returns the result produced by the VdToMtlBlendOp operation.</returns>
     internal static MTLBlendOperation VdToMtlBlendOp(BlendFunction vdFunction) {
         switch (vdFunction) {
             case BlendFunction.Add: return MTLBlendOperation.Add;
@@ -357,10 +357,10 @@ internal static class MtlFormats {
     }
 
     /// <summary>
-    /// Performs the VdToMtlColorWriteMask operation.
+    /// Executes the VdToMtlColorWriteMask operation.
     /// </summary>
-    /// <param name="vdMask">The value of vdMask.</param>
-    /// <returns>The result of the VdToMtlColorWriteMask operation.</returns>
+    /// <param name="vdMask">Specifies the value of <paramref name="vdMask" />.</param>
+    /// <returns>Returns the result produced by the VdToMtlColorWriteMask operation.</returns>
     internal static MTLColorWriteMask VdToMtlColorWriteMask(ColorWriteMask vdMask) {
         MTLColorWriteMask mask = MTLColorWriteMask.None;
 
@@ -384,10 +384,10 @@ internal static class MtlFormats {
     }
 
     /// <summary>
-    /// Performs the VdVoMtlShaderConstantType operation.
+    /// Executes the VdVoMtlShaderConstantType operation.
     /// </summary>
-    /// <param name="type">The value of type.</param>
-    /// <returns>The result of the VdVoMtlShaderConstantType operation.</returns>
+    /// <param name="type">Specifies the value of <paramref name="type" />.</param>
+    /// <returns>Returns the result produced by the VdVoMtlShaderConstantType operation.</returns>
     internal static MTLDataType VdVoMtlShaderConstantType(ShaderConstantType type) {
         switch (type) {
             case ShaderConstantType.Bool: return MTLDataType.Bool;
@@ -409,10 +409,10 @@ internal static class MtlFormats {
     }
 
     /// <summary>
-    /// Performs the VdToMtlCompareFunction operation.
+    /// Executes the VdToMtlCompareFunction operation.
     /// </summary>
-    /// <param name="comparisonKind">The value of comparisonKind.</param>
-    /// <returns>The result of the VdToMtlCompareFunction operation.</returns>
+    /// <param name="comparisonKind">Specifies the value of <paramref name="comparisonKind" />.</param>
+    /// <returns>Returns the result produced by the VdToMtlCompareFunction operation.</returns>
     internal static MTLCompareFunction VdToMtlCompareFunction(ComparisonKind comparisonKind) {
         switch (comparisonKind) {
             case ComparisonKind.Always: return MTLCompareFunction.Always;
@@ -436,10 +436,10 @@ internal static class MtlFormats {
     }
 
     /// <summary>
-    /// Performs the VdToMtlCullMode operation.
+    /// Executes the VdToMtlCullMode operation.
     /// </summary>
-    /// <param name="cullMode">The value of cullMode.</param>
-    /// <returns>The result of the VdToMtlCullMode operation.</returns>
+    /// <param name="cullMode">Specifies the value of <paramref name="cullMode" />.</param>
+    /// <returns>Returns the result produced by the VdToMtlCullMode operation.</returns>
     internal static MTLCullMode VdToMtlCullMode(FaceCullMode cullMode) {
         switch (cullMode) {
             case FaceCullMode.Front: return MTLCullMode.Front;
@@ -453,10 +453,10 @@ internal static class MtlFormats {
     }
 
     /// <summary>
-    /// Performs the VdToMtlBorderColor operation.
+    /// Executes the VdToMtlBorderColor operation.
     /// </summary>
-    /// <param name="borderColor">The value of borderColor.</param>
-    /// <returns>The result of the VdToMtlBorderColor operation.</returns>
+    /// <param name="borderColor">Specifies the value of <paramref name="borderColor" />.</param>
+    /// <returns>Returns the result produced by the VdToMtlBorderColor operation.</returns>
     internal static MTLSamplerBorderColor VdToMtlBorderColor(SamplerBorderColor borderColor) {
         switch (borderColor) {
             case SamplerBorderColor.TransparentBlack: return MTLSamplerBorderColor.TransparentBlack;
@@ -470,10 +470,10 @@ internal static class MtlFormats {
     }
 
     /// <summary>
-    /// Performs the VdToMtlAddressMode operation.
+    /// Executes the VdToMtlAddressMode operation.
     /// </summary>
-    /// <param name="mode">The value of mode.</param>
-    /// <returns>The result of the VdToMtlAddressMode operation.</returns>
+    /// <param name="mode">Specifies the value of <paramref name="mode" />.</param>
+    /// <returns>Returns the result produced by the VdToMtlAddressMode operation.</returns>
     internal static MTLSamplerAddressMode VdToMtlAddressMode(SamplerAddressMode mode) {
         switch (mode) {
             case SamplerAddressMode.Border: return MTLSamplerAddressMode.ClampToBorderColor;
@@ -489,10 +489,10 @@ internal static class MtlFormats {
     }
 
     /// <summary>
-    /// Performs the VdToMtlPrimitiveTopology operation.
+    /// Executes the VdToMtlPrimitiveTopology operation.
     /// </summary>
-    /// <param name="primitiveTopology">The value of primitiveTopology.</param>
-    /// <returns>The result of the VdToMtlPrimitiveTopology operation.</returns>
+    /// <param name="primitiveTopology">Specifies the value of <paramref name="primitiveTopology" />.</param>
+    /// <returns>Returns the result produced by the VdToMtlPrimitiveTopology operation.</returns>
     internal static MTLPrimitiveType VdToMtlPrimitiveTopology(PrimitiveTopology primitiveTopology) {
         switch (primitiveTopology) {
             case PrimitiveTopology.LineList: return MTLPrimitiveType.Line;
@@ -510,10 +510,10 @@ internal static class MtlFormats {
     }
 
     /// <summary>
-    /// Performs the VdToMtlTextureUsage operation.
+    /// Executes the VdToMtlTextureUsage operation.
     /// </summary>
-    /// <param name="usage">The value of usage.</param>
-    /// <returns>The result of the VdToMtlTextureUsage operation.</returns>
+    /// <param name="usage">Specifies the value of <paramref name="usage" />.</param>
+    /// <returns>Returns the result produced by the VdToMtlTextureUsage operation.</returns>
     internal static MTLTextureUsage VdToMtlTextureUsage(TextureUsage usage) {
         MTLTextureUsage ret = MTLTextureUsage.Unknown;
 
@@ -534,10 +534,10 @@ internal static class MtlFormats {
     }
 
     /// <summary>
-    /// Performs the VdToMtlVertexFormat operation.
+    /// Executes the VdToMtlVertexFormat operation.
     /// </summary>
-    /// <param name="format">The value of format.</param>
-    /// <returns>The result of the VdToMtlVertexFormat operation.</returns>
+    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
+    /// <returns>Returns the result produced by the VdToMtlVertexFormat operation.</returns>
     internal static MTLVertexFormat VdToMtlVertexFormat(VertexElementFormat format) {
         switch (format) {
             case VertexElementFormat.Byte2Norm: return MTLVertexFormat.uchar2Normalized;
@@ -607,19 +607,19 @@ internal static class MtlFormats {
     }
 
     /// <summary>
-    /// Performs the VdToMtlIndexFormat operation.
+    /// Executes the VdToMtlIndexFormat operation.
     /// </summary>
-    /// <param name="format">The value of format.</param>
-    /// <returns>The result of the VdToMtlIndexFormat operation.</returns>
+    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
+    /// <returns>Returns the result produced by the VdToMtlIndexFormat operation.</returns>
     internal static MTLIndexType VdToMtlIndexFormat(IndexFormat format) {
         return format == IndexFormat.UInt16 ? MTLIndexType.UInt16 : MTLIndexType.UInt32;
     }
 
     /// <summary>
-    /// Performs the VdToMtlStencilOperation operation.
+    /// Executes the VdToMtlStencilOperation operation.
     /// </summary>
-    /// <param name="op">The value of op.</param>
-    /// <returns>The result of the VdToMtlStencilOperation operation.</returns>
+    /// <param name="op">Specifies the value of <paramref name="op" />.</param>
+    /// <returns>Returns the result produced by the VdToMtlStencilOperation operation.</returns>
     internal static MTLStencilOperation VdToMtlStencilOperation(StencilOperation op) {
         switch (op) {
             case StencilOperation.Keep: return MTLStencilOperation.Keep;
@@ -643,10 +643,10 @@ internal static class MtlFormats {
     }
 
     /// <summary>
-    /// Performs the GetMaxTexture1DWidth operation.
+    /// Executes the GetMaxTexture1DWidth operation.
     /// </summary>
-    /// <param name="fs">The value of fs.</param>
-    /// <returns>The result of the GetMaxTexture1DWidth operation.</returns>
+    /// <param name="fs">Specifies the value of <paramref name="fs" />.</param>
+    /// <returns>Returns the result produced by the GetMaxTexture1DWidth operation.</returns>
     internal static uint GetMaxTexture1DWidth(MTLFeatureSet fs) {
         switch (fs) {
             case MTLFeatureSet.iOS_GPUFamily1_v1: case MTLFeatureSet.iOS_GPUFamily2_v1: return 4096;
@@ -660,10 +660,10 @@ internal static class MtlFormats {
     }
 
     /// <summary>
-    /// Performs the GetMaxTexture2DDimensions operation.
+    /// Executes the GetMaxTexture2DDimensions operation.
     /// </summary>
-    /// <param name="fs">The value of fs.</param>
-    /// <returns>The result of the GetMaxTexture2DDimensions operation.</returns>
+    /// <param name="fs">Specifies the value of <paramref name="fs" />.</param>
+    /// <returns>Returns the result produced by the GetMaxTexture2DDimensions operation.</returns>
     internal static uint GetMaxTexture2DDimensions(MTLFeatureSet fs) {
         switch (fs) {
             case MTLFeatureSet.iOS_GPUFamily1_v1: case MTLFeatureSet.iOS_GPUFamily2_v1: return 4096;
@@ -677,10 +677,10 @@ internal static class MtlFormats {
     }
 
     /// <summary>
-    /// Performs the GetMaxTextureCubeDimensions operation.
+    /// Executes the GetMaxTextureCubeDimensions operation.
     /// </summary>
-    /// <param name="fs">The value of fs.</param>
-    /// <returns>The result of the GetMaxTextureCubeDimensions operation.</returns>
+    /// <param name="fs">Specifies the value of <paramref name="fs" />.</param>
+    /// <returns>Returns the result produced by the GetMaxTextureCubeDimensions operation.</returns>
     internal static uint GetMaxTextureCubeDimensions(MTLFeatureSet fs) {
         switch (fs) {
             case MTLFeatureSet.iOS_GPUFamily1_v1: case MTLFeatureSet.iOS_GPUFamily2_v1: return 4096;
@@ -694,10 +694,10 @@ internal static class MtlFormats {
     }
 
     /// <summary>
-    /// Performs the GetMaxTextureVolume operation.
+    /// Executes the GetMaxTextureVolume operation.
     /// </summary>
-    /// <param name="fs">The value of fs.</param>
-    /// <returns>The result of the GetMaxTextureVolume operation.</returns>
+    /// <param name="fs">Specifies the value of <paramref name="fs" />.</param>
+    /// <returns>Returns the result produced by the GetMaxTextureVolume operation.</returns>
     internal static uint GetMaxTextureVolume(MTLFeatureSet fs) {
         return 2048;
     }

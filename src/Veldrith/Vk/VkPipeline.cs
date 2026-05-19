@@ -6,46 +6,46 @@ using static Vulkan.VulkanNative;
 namespace Veldrith.Vk;
 
 /// <summary>
-/// Represents the VkPipeline class.
+/// Defines the behavior and responsibilities of the VkPipeline class.
 /// </summary>
 internal unsafe class VkPipeline : Pipeline {
 
     /// <summary>
-    /// Represents the _devicePipeline field.
+    /// Stores the value associated with <c>_devicePipeline</c>.
     /// </summary>
     private readonly Vulkan.VkPipeline _devicePipeline;
 
     /// <summary>
-    /// Represents the _pipelineLayout field.
+    /// Stores the value associated with <c>_pipelineLayout</c>.
     /// </summary>
     private readonly VkPipelineLayout _pipelineLayout;
 
     /// <summary>
-    /// Represents the _renderPass field.
+    /// Stores the value associated with <c>_renderPass</c>.
     /// </summary>
     private readonly VkRenderPass _renderPass;
 
     /// <summary>
-    /// Represents the gd field.
+    /// Stores the value associated with <c>gd</c>.
     /// </summary>
     private readonly VkGraphicsDevice gd;
 
     /// <summary>
-    /// Represents the _destroyed field.
+    /// Stores the value associated with <c>_destroyed</c>.
     /// </summary>
     private bool _destroyed;
 
     /// <summary>
-    /// Represents the _name field.
+    /// Stores the value associated with <c>_name</c>.
     /// </summary>
     private string _name;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VkPipeline" /> class.
     /// </summary>
-    /// <param name="gd">The value of gd.</param>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the base operation.</returns>
+    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the base operation.</returns>
     public VkPipeline(VkGraphicsDevice gd, ref GraphicsPipelineDescription description) : base(ref description) {
         this.gd = gd;
         this.IsComputePipeline = false;
@@ -359,9 +359,9 @@ internal unsafe class VkPipeline : Pipeline {
     /// <summary>
     /// Initializes a new instance of the <see cref="VkPipeline" /> class.
     /// </summary>
-    /// <param name="gd">The value of gd.</param>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the base operation.</returns>
+    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the base operation.</returns>
     public VkPipeline(VkGraphicsDevice gd, ref ComputePipelineDescription description) : base(ref description) {
         this.gd = gd;
         this.IsComputePipeline = true;
@@ -436,12 +436,12 @@ internal unsafe class VkPipeline : Pipeline {
     }
 
     /// <summary>
-    /// Represents the DevicePipeline field.
+    /// Stores the value associated with <c>DevicePipeline</c>.
     /// </summary>
     public Vulkan.VkPipeline DevicePipeline => this._devicePipeline;
 
     /// <summary>
-    /// Represents the PipelineLayout field.
+    /// Stores the value associated with <c>PipelineLayout</c>.
     /// </summary>
     public VkPipelineLayout PipelineLayout => this._pipelineLayout;
 
@@ -489,7 +489,7 @@ internal unsafe class VkPipeline : Pipeline {
     #region Disposal
 
     /// <summary>
-    /// Performs the Dispose operation.
+    /// Executes the Dispose operation.
     /// </summary>
     public override void Dispose() {
         this.RefCount.Decrement();
@@ -498,7 +498,7 @@ internal unsafe class VkPipeline : Pipeline {
     #endregion
 
     /// <summary>
-    /// Performs the DisposeCore operation.
+    /// Executes the DisposeCore operation.
     /// </summary>
     private void DisposeCore() {
         if (!this._destroyed) {

@@ -3,27 +3,27 @@ using Veldrith.MetalBindings;
 namespace Veldrith.MTL;
 
 /// <summary>
-/// Represents the MtlSwapchainTexture class.
+/// Defines the behavior and responsibilities of the MtlSwapchainTexture class.
 /// </summary>
 internal class MtlSwapchainTexture : MtlTexture {
 
     /// <summary>
-    /// Represents the _deviceTexture field.
+    /// Stores the value associated with <c>_deviceTexture</c>.
     /// </summary>
     private MTLTexture _deviceTexture;
 
     /// <summary>
-    /// Represents the _height field.
+    /// Stores the value associated with <c>_height</c>.
     /// </summary>
     private uint _height;
 
     /// <summary>
-    /// Represents the _mtlPixelFormat field.
+    /// Stores the value associated with <c>_mtlPixelFormat</c>.
     /// </summary>
     private MTLPixelFormat _mtlPixelFormat;
 
     /// <summary>
-    /// Represents the _width field.
+    /// Stores the value associated with <c>_width</c>.
     /// </summary>
     private uint _width;
 
@@ -83,11 +83,11 @@ internal class MtlSwapchainTexture : MtlTexture {
     public override MTLTextureType MtlTextureType => MTLTextureType.Type2D;
 
     /// <summary>
-    /// Performs the SetDrawable operation.
+    /// Executes the SetDrawable operation.
     /// </summary>
-    /// <param name="drawable">The value of drawable.</param>
-    /// <param name="size">The value of size.</param>
-    /// <param name="format">The value of format.</param>
+    /// <param name="drawable">Specifies the value of <paramref name="drawable" />.</param>
+    /// <param name="size">Specifies the value of <paramref name="size" />.</param>
+    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
     public void SetDrawable(CAMetalDrawable drawable, CGSize size, PixelFormat format) {
         this._deviceTexture = drawable.texture;
         this._width = (uint)size.width;

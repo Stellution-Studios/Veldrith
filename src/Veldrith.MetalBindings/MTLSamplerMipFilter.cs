@@ -1,12 +1,12 @@
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the MTLSamplerMipFilter enum.
+/// Defines the available values of the MTLSamplerMipFilter enumeration.
 /// </summary>
 public enum MTLSamplerMipFilter {
 
     /// <summary>
-    /// Represents the NotMipmapped field.
+    /// Stores the value associated with <c>NotMipmapped</c>.
     /// </summary>
     NotMipmapped = 0, Nearest = 1, Linear = 2
 }

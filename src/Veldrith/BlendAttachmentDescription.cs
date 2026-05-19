@@ -51,13 +51,13 @@ public struct BlendAttachmentDescription : IEquatable<BlendAttachmentDescription
     /// <summary>
     /// Initializes a new instance of the <see cref="BlendAttachmentDescription" /> type.
     /// </summary>
-    /// <param name="blendEnabled">The value of blendEnabled.</param>
-    /// <param name="sourceColorFactor">The value of sourceColorFactor.</param>
-    /// <param name="destinationColorFactor">The value of destinationColorFactor.</param>
-    /// <param name="colorFunction">The value of colorFunction.</param>
-    /// <param name="sourceAlphaFactor">The value of sourceAlphaFactor.</param>
-    /// <param name="destinationAlphaFactor">The value of destinationAlphaFactor.</param>
-    /// <param name="alphaFunction">The value of alphaFunction.</param>
+    /// <param name="blendEnabled">Specifies the value of <paramref name="blendEnabled" />.</param>
+    /// <param name="sourceColorFactor">Specifies the value of <paramref name="sourceColorFactor" />.</param>
+    /// <param name="destinationColorFactor">Specifies the value of <paramref name="destinationColorFactor" />.</param>
+    /// <param name="colorFunction">Specifies the value of <paramref name="colorFunction" />.</param>
+    /// <param name="sourceAlphaFactor">Specifies the value of <paramref name="sourceAlphaFactor" />.</param>
+    /// <param name="destinationAlphaFactor">Specifies the value of <paramref name="destinationAlphaFactor" />.</param>
+    /// <param name="alphaFunction">Specifies the value of <paramref name="alphaFunction" />.</param>
     public BlendAttachmentDescription(bool blendEnabled, BlendFactor sourceColorFactor, BlendFactor destinationColorFactor, BlendFunction colorFunction, BlendFactor sourceAlphaFactor, BlendFactor destinationAlphaFactor, BlendFunction alphaFunction) {
         this.BlendEnabled = blendEnabled;
         this.SourceColorFactor = sourceColorFactor;
@@ -72,14 +72,14 @@ public struct BlendAttachmentDescription : IEquatable<BlendAttachmentDescription
     /// <summary>
     /// Initializes a new instance of the <see cref="BlendAttachmentDescription" /> type.
     /// </summary>
-    /// <param name="blendEnabled">The value of blendEnabled.</param>
-    /// <param name="colorWriteMask">The value of colorWriteMask.</param>
-    /// <param name="sourceColorFactor">The value of sourceColorFactor.</param>
-    /// <param name="destinationColorFactor">The value of destinationColorFactor.</param>
-    /// <param name="colorFunction">The value of colorFunction.</param>
-    /// <param name="sourceAlphaFactor">The value of sourceAlphaFactor.</param>
-    /// <param name="destinationAlphaFactor">The value of destinationAlphaFactor.</param>
-    /// <param name="alphaFunction">The value of alphaFunction.</param>
+    /// <param name="blendEnabled">Specifies the value of <paramref name="blendEnabled" />.</param>
+    /// <param name="colorWriteMask">Specifies the value of <paramref name="colorWriteMask" />.</param>
+    /// <param name="sourceColorFactor">Specifies the value of <paramref name="sourceColorFactor" />.</param>
+    /// <param name="destinationColorFactor">Specifies the value of <paramref name="destinationColorFactor" />.</param>
+    /// <param name="colorFunction">Specifies the value of <paramref name="colorFunction" />.</param>
+    /// <param name="sourceAlphaFactor">Specifies the value of <paramref name="sourceAlphaFactor" />.</param>
+    /// <param name="destinationAlphaFactor">Specifies the value of <paramref name="destinationAlphaFactor" />.</param>
+    /// <param name="alphaFunction">Specifies the value of <paramref name="alphaFunction" />.</param>
     public BlendAttachmentDescription(bool blendEnabled, ColorWriteMask colorWriteMask, BlendFactor sourceColorFactor, BlendFactor destinationColorFactor, BlendFunction colorFunction, BlendFactor sourceAlphaFactor, BlendFactor destinationAlphaFactor, BlendFunction alphaFunction) {
         this.BlendEnabled = blendEnabled;
         this.ColorWriteMask = colorWriteMask;
@@ -92,9 +92,8 @@ public struct BlendAttachmentDescription : IEquatable<BlendAttachmentDescription
     }
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>OVERRIDE_BLEND</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly BlendAttachmentDescription OVERRIDE_BLEND = new() {
         BlendEnabled = true,
         SourceColorFactor = BlendFactor.One,
@@ -106,9 +105,8 @@ public struct BlendAttachmentDescription : IEquatable<BlendAttachmentDescription
     };
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>ALPHA_BLEND</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly BlendAttachmentDescription ALPHA_BLEND = new() {
         BlendEnabled = true,
         SourceColorFactor = BlendFactor.SourceAlpha,
@@ -120,9 +118,8 @@ public struct BlendAttachmentDescription : IEquatable<BlendAttachmentDescription
     };
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>ADDITIVE_BLEND</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly BlendAttachmentDescription ADDITIVE_BLEND = new() {
         BlendEnabled = true,
         SourceColorFactor = BlendFactor.SourceAlpha,
@@ -134,9 +131,8 @@ public struct BlendAttachmentDescription : IEquatable<BlendAttachmentDescription
     };
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>DISABLED</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly BlendAttachmentDescription DISABLED = new() {
         BlendEnabled = false,
         SourceColorFactor = BlendFactor.One,
@@ -148,10 +144,10 @@ public struct BlendAttachmentDescription : IEquatable<BlendAttachmentDescription
     };
 
     /// <summary>
-    /// Performs the Equals operation.
+    /// Executes the Equals operation.
     /// </summary>
-    /// <param name="other">The value of other.</param>
-    /// <returns>The result of the Equals operation.</returns>
+    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
+    /// <returns>Returns the result produced by the Equals operation.</returns>
     public bool Equals(BlendAttachmentDescription other) {
         return this.BlendEnabled == other.BlendEnabled
                && this.ColorWriteMask == other.ColorWriteMask
@@ -162,9 +158,9 @@ public struct BlendAttachmentDescription : IEquatable<BlendAttachmentDescription
     }
 
     /// <summary>
-    /// Performs the GetHashCode operation.
+    /// Executes the GetHashCode operation.
     /// </summary>
-    /// <returns>The result of the GetHashCode operation.</returns>
+    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(this.BlendEnabled.GetHashCode(), this.ColorWriteMask.GetHashCode(), (int)this.SourceColorFactor, (int)this.DestinationColorFactor, (int)this.ColorFunction, (int)this.SourceAlphaFactor, (int)this.DestinationAlphaFactor, (int)this.AlphaFunction);
     }

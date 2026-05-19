@@ -1,12 +1,12 @@
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the MTLMutability enum.
+/// Defines the available values of the MTLMutability enumeration.
 /// </summary>
 public enum MTLMutability {
 
     /// <summary>
-    /// Represents the Default field.
+    /// Stores the value associated with <c>Default</c>.
     /// </summary>
     Default = 0, Mutable = 1, Immutable = 2
 }

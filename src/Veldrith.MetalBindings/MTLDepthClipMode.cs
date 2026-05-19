@@ -1,12 +1,12 @@
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the MTLDepthClipMode enum.
+/// Defines the available values of the MTLDepthClipMode enumeration.
 /// </summary>
 public enum MTLDepthClipMode {
 
     /// <summary>
-    /// Represents the Clip field.
+    /// Stores the value associated with <c>Clip</c>.
     /// </summary>
     Clip = 0, Clamp = 1
 }

@@ -3,15 +3,15 @@ using System.Diagnostics;
 namespace Veldrith;
 
 /// <summary>
-/// Represents the FormatSizeHelpers class.
+/// Defines the behavior and responsibilities of the FormatSizeHelpers class.
 /// </summary>
 public static class FormatSizeHelpers {
 
     /// <summary>
-    /// Performs the GetSizeInBytes operation.
+    /// Executes the GetSizeInBytes operation.
     /// </summary>
-    /// <param name="format">The value of format.</param>
-    /// <returns>The result of the GetSizeInBytes operation.</returns>
+    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
+    /// <returns>Returns the result produced by the GetSizeInBytes operation.</returns>
     public static uint GetSizeInBytes(PixelFormat format) {
         switch (format) {
             case PixelFormat.R8UNorm: case PixelFormat.R8SNorm: case PixelFormat.R8UInt: case PixelFormat.R8SInt: return 1;
@@ -51,10 +51,10 @@ public static class FormatSizeHelpers {
     }
 
     /// <summary>
-    /// Performs the GetSizeInBytes operation.
+    /// Executes the GetSizeInBytes operation.
     /// </summary>
-    /// <param name="format">The value of format.</param>
-    /// <returns>The result of the GetSizeInBytes operation.</returns>
+    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
+    /// <returns>Returns the result produced by the GetSizeInBytes operation.</returns>
     public static uint GetSizeInBytes(VertexElementFormat format) {
         switch (format) {
             case VertexElementFormat.Byte2Norm: case VertexElementFormat.Byte2: case VertexElementFormat.SByte2Norm: case VertexElementFormat.SByte2: case VertexElementFormat.Half1: return 2;

@@ -7,19 +7,19 @@ namespace Veldrith.MetalBindings;
 [StructLayout(LayoutKind.Sequential)]
 
 /// <summary>
-/// Represents the MTLRenderPipelineColorAttachmentDescriptor struct.
+/// Defines the data layout and behavior of the MTLRenderPipelineColorAttachmentDescriptor struct.
 /// </summary>
 public struct MTLRenderPipelineColorAttachmentDescriptor {
 
     /// <summary>
-    /// Represents the NativePtr field.
+    /// Stores the value associated with <c>NativePtr</c>.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MTLRenderPipelineColorAttachmentDescriptor" /> type.
     /// </summary>
-    /// <param name="ptr">The value of ptr.</param>
+    /// <param name="ptr">Specifies the value of <paramref name="ptr" />.</param>
     public MTLRenderPipelineColorAttachmentDescriptor(IntPtr ptr) {
         this.NativePtr = ptr;
     }
@@ -97,82 +97,82 @@ public struct MTLRenderPipelineColorAttachmentDescriptor {
     }
 
     /// <summary>
-    /// Represents the sel_isBlendingEnabled field.
+    /// Stores the value associated with <c>sel_isBlendingEnabled</c>.
     /// </summary>
     private static readonly Selector sel_isBlendingEnabled = "isBlendingEnabled";
 
     /// <summary>
-    /// Represents the sel_setBlendingEnabled field.
+    /// Stores the value associated with <c>sel_setBlendingEnabled</c>.
     /// </summary>
     private static readonly Selector sel_setBlendingEnabled = "setBlendingEnabled:";
 
     /// <summary>
-    /// Represents the sel_writeMask field.
+    /// Stores the value associated with <c>sel_writeMask</c>.
     /// </summary>
     private static readonly Selector sel_writeMask = "writeMask";
 
     /// <summary>
-    /// Represents the sel_setWriteMask field.
+    /// Stores the value associated with <c>sel_setWriteMask</c>.
     /// </summary>
     private static readonly Selector sel_setWriteMask = "setWriteMask:";
 
     /// <summary>
-    /// Represents the sel_alphaBlendOperation field.
+    /// Stores the value associated with <c>sel_alphaBlendOperation</c>.
     /// </summary>
     private static readonly Selector sel_alphaBlendOperation = "alphaBlendOperation";
 
     /// <summary>
-    /// Represents the sel_setAlphaBlendOperation field.
+    /// Stores the value associated with <c>sel_setAlphaBlendOperation</c>.
     /// </summary>
     private static readonly Selector sel_setAlphaBlendOperation = "setAlphaBlendOperation:";
 
     /// <summary>
-    /// Represents the sel_rgbBlendOperation field.
+    /// Stores the value associated with <c>sel_rgbBlendOperation</c>.
     /// </summary>
     private static readonly Selector sel_rgbBlendOperation = "rgbBlendOperation";
 
     /// <summary>
-    /// Represents the sel_setRGBBlendOperation field.
+    /// Stores the value associated with <c>sel_setRGBBlendOperation</c>.
     /// </summary>
     private static readonly Selector sel_setRGBBlendOperation = "setRgbBlendOperation:";
 
     /// <summary>
-    /// Represents the sel_destinationAlphaBlendFactor field.
+    /// Stores the value associated with <c>sel_destinationAlphaBlendFactor</c>.
     /// </summary>
     private static readonly Selector sel_destinationAlphaBlendFactor = "destinationAlphaBlendFactor";
 
     /// <summary>
-    /// Represents the sel_setDestinationAlphaBlendFactor field.
+    /// Stores the value associated with <c>sel_setDestinationAlphaBlendFactor</c>.
     /// </summary>
     private static readonly Selector sel_setDestinationAlphaBlendFactor = "setDestinationAlphaBlendFactor:";
 
     /// <summary>
-    /// Represents the sel_destinationRGBBlendFactor field.
+    /// Stores the value associated with <c>sel_destinationRGBBlendFactor</c>.
     /// </summary>
     private static readonly Selector sel_destinationRGBBlendFactor = "destinationRGBBlendFactor";
 
     /// <summary>
-    /// Represents the sel_setDestinationRGBBlendFactor field.
+    /// Stores the value associated with <c>sel_setDestinationRGBBlendFactor</c>.
     /// </summary>
     private static readonly Selector sel_setDestinationRGBBlendFactor = "setDestinationRGBBlendFactor:";
 
     /// <summary>
-    /// Represents the sel_sourceAlphaBlendFactor field.
+    /// Stores the value associated with <c>sel_sourceAlphaBlendFactor</c>.
     /// </summary>
     private static readonly Selector sel_sourceAlphaBlendFactor = "sourceAlphaBlendFactor";
 
     /// <summary>
-    /// Represents the sel_setSourceAlphaBlendFactor field.
+    /// Stores the value associated with <c>sel_setSourceAlphaBlendFactor</c>.
     /// </summary>
     private static readonly Selector sel_setSourceAlphaBlendFactor = "setSourceAlphaBlendFactor:";
 
     /// <summary>
-    /// Represents the sel_sourceRGBBlendFactor field.
+    /// Stores the value associated with <c>sel_sourceRGBBlendFactor</c>.
     /// </summary>
     private static readonly Selector sel_sourceRGBBlendFactor = "sourceRGBBlendFactor";
 
     /// <summary>
-    /// Represents the sel_setSourceRGBBlendFactor field.
+    /// Stores the value associated with <c>sel_setSourceRGBBlendFactor</c>.
     /// </summary>
     private static readonly Selector sel_setSourceRGBBlendFactor = "setSourceRGBBlendFactor:";
 }

@@ -1,112 +1,112 @@
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the Selectors class.
+/// Defines the behavior and responsibilities of the Selectors class.
 /// </summary>
 internal static class Selectors {
 
     /// <summary>
-    /// Represents the texture field.
+    /// Stores the value associated with <c>texture</c>.
     /// </summary>
     internal static readonly Selector texture = "texture";
 
     /// <summary>
-    /// Represents the setTexture field.
+    /// Stores the value associated with <c>setTexture</c>.
     /// </summary>
     internal static readonly Selector setTexture = "setTexture:";
 
     /// <summary>
-    /// Represents the loadAction field.
+    /// Stores the value associated with <c>loadAction</c>.
     /// </summary>
     internal static readonly Selector loadAction = "loadAction";
 
     /// <summary>
-    /// Represents the setLoadAction field.
+    /// Stores the value associated with <c>setLoadAction</c>.
     /// </summary>
     internal static readonly Selector setLoadAction = "setLoadAction:";
 
     /// <summary>
-    /// Represents the storeAction field.
+    /// Stores the value associated with <c>storeAction</c>.
     /// </summary>
     internal static readonly Selector storeAction = "storeAction";
 
     /// <summary>
-    /// Represents the setStoreAction field.
+    /// Stores the value associated with <c>setStoreAction</c>.
     /// </summary>
     internal static readonly Selector setStoreAction = "setStoreAction:";
 
     /// <summary>
-    /// Represents the resolveTexture field.
+    /// Stores the value associated with <c>resolveTexture</c>.
     /// </summary>
     internal static readonly Selector resolveTexture = "resolveTexture";
 
     /// <summary>
-    /// Represents the setResolveTexture field.
+    /// Stores the value associated with <c>setResolveTexture</c>.
     /// </summary>
     internal static readonly Selector setResolveTexture = "setResolveTexture:";
 
     /// <summary>
-    /// Represents the slice field.
+    /// Stores the value associated with <c>slice</c>.
     /// </summary>
     internal static readonly Selector slice = "slice";
 
     /// <summary>
-    /// Represents the setSlice field.
+    /// Stores the value associated with <c>setSlice</c>.
     /// </summary>
     internal static readonly Selector setSlice = "setSlice:";
 
     /// <summary>
-    /// Represents the level field.
+    /// Stores the value associated with <c>level</c>.
     /// </summary>
     internal static readonly Selector level = "level";
 
     /// <summary>
-    /// Represents the setLevel field.
+    /// Stores the value associated with <c>setLevel</c>.
     /// </summary>
     internal static readonly Selector setLevel = "setLevel:";
 
     /// <summary>
-    /// Represents the objectAtIndexedSubscript field.
+    /// Stores the value associated with <c>objectAtIndexedSubscript</c>.
     /// </summary>
     internal static readonly Selector objectAtIndexedSubscript = "objectAtIndexedSubscript:";
 
     /// <summary>
-    /// Represents the setObjectAtIndexedSubscript field.
+    /// Stores the value associated with <c>setObjectAtIndexedSubscript</c>.
     /// </summary>
     internal static readonly Selector setObjectAtIndexedSubscript = "setObject:atIndexedSubscript:";
 
     /// <summary>
-    /// Represents the pixelFormat field.
+    /// Stores the value associated with <c>pixelFormat</c>.
     /// </summary>
     internal static readonly Selector pixelFormat = "pixelFormat";
 
     /// <summary>
-    /// Represents the setPixelFormat field.
+    /// Stores the value associated with <c>setPixelFormat</c>.
     /// </summary>
     internal static readonly Selector setPixelFormat = "setPixelFormat:";
 
     /// <summary>
-    /// Represents the alloc field.
+    /// Stores the value associated with <c>alloc</c>.
     /// </summary>
     internal static readonly Selector alloc = "alloc";
 
     /// <summary>
-    /// Represents the init field.
+    /// Stores the value associated with <c>init</c>.
     /// </summary>
     internal static readonly Selector init = "init";
 
     /// <summary>
-    /// Represents the pushDebugGroup field.
+    /// Stores the value associated with <c>pushDebugGroup</c>.
     /// </summary>
     internal static readonly Selector pushDebugGroup = "pushDebugGroup:";
 
     /// <summary>
-    /// Represents the popDebugGroup field.
+    /// Stores the value associated with <c>popDebugGroup</c>.
     /// </summary>
     internal static readonly Selector popDebugGroup = "popDebugGroup";
 
     /// <summary>
-    /// Represents the insertDebugSignpost field.
+    /// Stores the value associated with <c>insertDebugSignpost</c>.
     /// </summary>
     internal static readonly Selector insertDebugSignpost = "insertDebugSignpost:";
 }

@@ -4,12 +4,12 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the MTLStencilDescriptor struct.
+/// Defines the data layout and behavior of the MTLStencilDescriptor struct.
 /// </summary>
 public struct MTLStencilDescriptor {
 
     /// <summary>
-    /// Represents the NativePtr field.
+    /// Stores the value associated with <c>NativePtr</c>.
     /// </summary>
     public readonly IntPtr NativePtr;
 
@@ -62,62 +62,62 @@ public struct MTLStencilDescriptor {
     }
 
     /// <summary>
-    /// Represents the sel_depthFailureOperation field.
+    /// Stores the value associated with <c>sel_depthFailureOperation</c>.
     /// </summary>
     private static readonly Selector sel_depthFailureOperation = "depthFailureOperation";
 
     /// <summary>
-    /// Represents the sel_stencilFailureOperation field.
+    /// Stores the value associated with <c>sel_stencilFailureOperation</c>.
     /// </summary>
     private static readonly Selector sel_stencilFailureOperation = "stencilFailureOperation";
 
     /// <summary>
-    /// Represents the sel_setStencilFailureOperation field.
+    /// Stores the value associated with <c>sel_setStencilFailureOperation</c>.
     /// </summary>
     private static readonly Selector sel_setStencilFailureOperation = "setStencilFailureOperation:";
 
     /// <summary>
-    /// Represents the sel_setDepthFailureOperation field.
+    /// Stores the value associated with <c>sel_setDepthFailureOperation</c>.
     /// </summary>
     private static readonly Selector sel_setDepthFailureOperation = "setDepthFailureOperation:";
 
     /// <summary>
-    /// Represents the sel_depthStencilPassOperation field.
+    /// Stores the value associated with <c>sel_depthStencilPassOperation</c>.
     /// </summary>
     private static readonly Selector sel_depthStencilPassOperation = "depthStencilPassOperation";
 
     /// <summary>
-    /// Represents the sel_setDepthStencilPassOperation field.
+    /// Stores the value associated with <c>sel_setDepthStencilPassOperation</c>.
     /// </summary>
     private static readonly Selector sel_setDepthStencilPassOperation = "setDepthStencilPassOperation:";
 
     /// <summary>
-    /// Represents the sel_stencilCompareFunction field.
+    /// Stores the value associated with <c>sel_stencilCompareFunction</c>.
     /// </summary>
     private static readonly Selector sel_stencilCompareFunction = "stencilCompareFunction";
 
     /// <summary>
-    /// Represents the sel_setStencilCompareFunction field.
+    /// Stores the value associated with <c>sel_setStencilCompareFunction</c>.
     /// </summary>
     private static readonly Selector sel_setStencilCompareFunction = "setStencilCompareFunction:";
 
     /// <summary>
-    /// Represents the sel_readMask field.
+    /// Stores the value associated with <c>sel_readMask</c>.
     /// </summary>
     private static readonly Selector sel_readMask = "readMask";
 
     /// <summary>
-    /// Represents the sel_setReadMask field.
+    /// Stores the value associated with <c>sel_setReadMask</c>.
     /// </summary>
     private static readonly Selector sel_setReadMask = "setReadMask:";
 
     /// <summary>
-    /// Represents the sel_writeMask field.
+    /// Stores the value associated with <c>sel_writeMask</c>.
     /// </summary>
     private static readonly Selector sel_writeMask = "writeMask";
 
     /// <summary>
-    /// Represents the sel_setWriteMask field.
+    /// Stores the value associated with <c>sel_setWriteMask</c>.
     /// </summary>
     private static readonly Selector sel_setWriteMask = "setWriteMask:";
 }

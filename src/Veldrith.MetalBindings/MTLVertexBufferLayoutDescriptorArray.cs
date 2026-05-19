@@ -4,12 +4,12 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the MTLVertexBufferLayoutDescriptorArray struct.
+/// Defines the data layout and behavior of the MTLVertexBufferLayoutDescriptorArray struct.
 /// </summary>
 public struct MTLVertexBufferLayoutDescriptorArray {
 
     /// <summary>
-    /// Represents the NativePtr field.
+    /// Stores the value associated with <c>NativePtr</c>.
     /// </summary>
     public readonly IntPtr NativePtr;
 

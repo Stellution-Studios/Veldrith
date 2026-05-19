@@ -29,96 +29,82 @@ public struct RgbaByte : IEquatable<RgbaByte> {
     public readonly byte A;
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>RED</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaByte RED = new(255, 0, 0, 255);
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>DARK_RED</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaByte DARK_RED = new(153, 0, 0, 255);
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>GREEN</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaByte GREEN = new(0, 255, 0, 255);
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>BLUE</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaByte BLUE = new(0, 0, 255, 255);
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>YELLOW</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaByte YELLOW = new(255, 255, 0, 255);
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>GREY</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaByte GREY = new(64, 64, 64, 255);
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>LIGHT_GREY</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaByte LIGHT_GREY = new(166, 166, 166, 255);
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>CYAN</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaByte CYAN = new(0, 255, 255, 255);
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>WHITE</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaByte WHITE = new(255, 255, 255, 255);
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>CORNFLOWER_BLUE</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaByte CORNFLOWER_BLUE = new(100, 149, 237, 255);
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>CLEAR</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaByte CLEAR = new(0, 0, 0, 0);
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>BLACK</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaByte BLACK = new(0, 0, 0, 255);
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>PINK</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaByte PINK = new(255, 155, 191, 255);
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>ORANGE</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaByte ORANGE = new(255, 92, 0, 255);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RgbaByte" /> type.
     /// </summary>
-    /// <param name="r">The value of r.</param>
-    /// <param name="g">The value of g.</param>
-    /// <param name="b">The value of b.</param>
-    /// <param name="a">The value of a.</param>
+    /// <param name="r">Specifies the value of <paramref name="r" />.</param>
+    /// <param name="g">Specifies the value of <paramref name="g" />.</param>
+    /// <param name="b">Specifies the value of <paramref name="b" />.</param>
+    /// <param name="a">Specifies the value of <paramref name="a" />.</param>
     public RgbaByte(byte r, byte g, byte b, byte a) {
         this.R = r;
         this.G = g;
@@ -129,7 +115,7 @@ public struct RgbaByte : IEquatable<RgbaByte> {
     /// <summary>
     /// Compares this color with another <see cref="RgbaByte" /> value.
     /// </summary>
-    /// <param name="other">The color to compare against.</param>
+    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
     /// <returns><see langword="true" /> if all RGBA components are equal; otherwise, <see langword="false" />.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Equals(RgbaByte other) {
@@ -137,10 +123,10 @@ public struct RgbaByte : IEquatable<RgbaByte> {
     }
 
     /// <summary>
-    /// Performs the Equals operation.
+    /// Executes the Equals operation.
     /// </summary>
-    /// <param name="obj">The value of obj.</param>
-    /// <returns>The result of the Equals operation.</returns>
+    /// <param name="obj">Specifies the value of <paramref name="obj" />.</param>
+    /// <returns>Returns the result produced by the Equals operation.</returns>
     public override bool Equals(object obj) {
         return obj is RgbaByte other && this.Equals(other);
     }
@@ -155,9 +141,9 @@ public struct RgbaByte : IEquatable<RgbaByte> {
     }
 
     /// <summary>
-    /// Performs the ToString operation.
+    /// Executes the ToString operation.
     /// </summary>
-    /// <returns>The result of the ToString operation.</returns>
+    /// <returns>Returns the result produced by the ToString operation.</returns>
     public override string ToString() {
         return $"R:{this.R}, G:{this.G}, B:{this.B}, A:{this.A}";
     }
@@ -165,8 +151,8 @@ public struct RgbaByte : IEquatable<RgbaByte> {
     /// <summary>
     /// Compares two <see cref="RgbaByte" /> values for component-wise equality.
     /// </summary>
-    /// <param name="left">The first color value.</param>
-    /// <param name="right">The second color value.</param>
+    /// <param name="left">Specifies the value of <paramref name="left" />.</param>
+    /// <param name="right">Specifies the value of <paramref name="right" />.</param>
     /// <returns><see langword="true" /> if both values are equal; otherwise, <see langword="false" />.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool operator ==(RgbaByte left, RgbaByte right) {
@@ -176,8 +162,8 @@ public struct RgbaByte : IEquatable<RgbaByte> {
     /// <summary>
     /// Compares two <see cref="RgbaByte" /> values for component-wise inequality.
     /// </summary>
-    /// <param name="left">The first color value.</param>
-    /// <param name="right">The second color value.</param>
+    /// <param name="left">Specifies the value of <paramref name="left" />.</param>
+    /// <param name="right">Specifies the value of <paramref name="right" />.</param>
     /// <returns><see langword="true" /> if at least one component differs; otherwise, <see langword="false" />.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool operator !=(RgbaByte left, RgbaByte right) {

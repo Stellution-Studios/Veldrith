@@ -6,17 +6,17 @@ using System.Text;
 namespace Veldrith;
 
 /// <summary>
-/// Represents the Util class.
+/// Defines the behavior and responsibilities of the Util class.
 /// </summary>
 internal static class Util {
 
     /// <summary>
-    /// Performs the Clamp operation.
+    /// Executes the Clamp operation.
     /// </summary>
-    /// <param name="value">The value of value.</param>
-    /// <param name="min">The value of min.</param>
-    /// <param name="max">The value of max.</param>
-    /// <returns>The result of the Clamp operation.</returns>
+    /// <param name="value">Specifies the value of <paramref name="value" />.</param>
+    /// <param name="min">Specifies the value of <paramref name="min" />.</param>
+    /// <param name="max">Specifies the value of <paramref name="max" />.</param>
+    /// <returns>Returns the result produced by the Clamp operation.</returns>
     public static uint Clamp(uint value, uint min, uint max) {
         if (value <= min) {
             return min;
@@ -30,24 +30,24 @@ internal static class Util {
     }
 
     /// <summary>
-    /// Performs the CopyTextureRegion operation.
+    /// Executes the CopyTextureRegion operation.
     /// </summary>
-    /// <param name="src">The value of src.</param>
-    /// <param name="srcX">The value of srcX.</param>
-    /// <param name="srcY">The value of srcY.</param>
-    /// <param name="srcZ">The value of srcZ.</param>
-    /// <param name="srcRowPitch">The value of srcRowPitch.</param>
-    /// <param name="srcDepthPitch">The value of srcDepthPitch.</param>
-    /// <param name="dst">The value of dst.</param>
-    /// <param name="dstX">The value of dstX.</param>
-    /// <param name="dstY">The value of dstY.</param>
-    /// <param name="dstZ">The value of dstZ.</param>
-    /// <param name="dstRowPitch">The value of dstRowPitch.</param>
-    /// <param name="dstDepthPitch">The value of dstDepthPitch.</param>
-    /// <param name="width">The value of width.</param>
-    /// <param name="height">The value of height.</param>
-    /// <param name="depth">The value of depth.</param>
-    /// <param name="format">The value of format.</param>
+    /// <param name="src">Specifies the value of <paramref name="src" />.</param>
+    /// <param name="srcX">Specifies the value of <paramref name="srcX" />.</param>
+    /// <param name="srcY">Specifies the value of <paramref name="srcY" />.</param>
+    /// <param name="srcZ">Specifies the value of <paramref name="srcZ" />.</param>
+    /// <param name="srcRowPitch">Specifies the value of <paramref name="srcRowPitch" />.</param>
+    /// <param name="srcDepthPitch">Specifies the value of <paramref name="srcDepthPitch" />.</param>
+    /// <param name="dst">Specifies the value of <paramref name="dst" />.</param>
+    /// <param name="dstX">Specifies the value of <paramref name="dstX" />.</param>
+    /// <param name="dstY">Specifies the value of <paramref name="dstY" />.</param>
+    /// <param name="dstZ">Specifies the value of <paramref name="dstZ" />.</param>
+    /// <param name="dstRowPitch">Specifies the value of <paramref name="dstRowPitch" />.</param>
+    /// <param name="dstDepthPitch">Specifies the value of <paramref name="dstDepthPitch" />.</param>
+    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
+    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
+    /// <param name="depth">Specifies the value of <paramref name="depth" />.</param>
+    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
     public static unsafe void CopyTextureRegion(void* src, uint srcX, uint srcY, uint srcZ, uint srcRowPitch, uint srcDepthPitch, void* dst, uint dstX, uint dstY, uint dstZ, uint dstRowPitch, uint dstDepthPitch, uint width, uint height, uint depth, PixelFormat format) {
         uint blockSize = FormatHelpers.IsCompressedFormat(format) ? 4u : 1u;
         uint blockSizeInBytes = blockSize > 1
@@ -84,11 +84,11 @@ internal static class Util {
     }
 
     /// <summary>
-    /// Performs the GetBufferRange operation.
+    /// Executes the GetBufferRange operation.
     /// </summary>
-    /// <param name="resource">The value of resource.</param>
-    /// <param name="additionalOffset">The value of additionalOffset.</param>
-    /// <returns>The result of the GetBufferRange operation.</returns>
+    /// <param name="resource">Specifies the value of <paramref name="resource" />.</param>
+    /// <param name="additionalOffset">Specifies the value of <paramref name="additionalOffset" />.</param>
+    /// <returns>Returns the result produced by the GetBufferRange operation.</returns>
     public static DeviceBufferRange GetBufferRange(IBindableResource resource, uint additionalOffset) {
         if (resource is DeviceBufferRange range) {
             return new DeviceBufferRange(range.Buffer, range.Offset + additionalOffset, range.SizeInBytes);
@@ -99,11 +99,11 @@ internal static class Util {
     }
 
     /// <summary>
-    /// Performs the GetDeviceBuffer operation.
+    /// Executes the GetDeviceBuffer operation.
     /// </summary>
-    /// <param name="resource">The value of resource.</param>
-    /// <param name="buffer">The value of buffer.</param>
-    /// <returns>The result of the GetDeviceBuffer operation.</returns>
+    /// <param name="resource">Specifies the value of <paramref name="resource" />.</param>
+    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
+    /// <returns>Returns the result produced by the GetDeviceBuffer operation.</returns>
     public static bool GetDeviceBuffer(IBindableResource resource, out DeviceBuffer buffer) {
         if (resource is DeviceBuffer db) {
             buffer = db;
@@ -124,7 +124,7 @@ internal static class Util {
     /// <summary>
     /// Casts a base-type reference to a required derived type and validates the cast in debug builds.
     /// </summary>
-    /// <param name="value">The value to cast.</param>
+    /// <param name="value">Specifies the value of <paramref name="value" />.</param>
     /// <typeparam name="TBase">The expected base type.</typeparam>
     /// <typeparam name="TDerived">The required derived type.</typeparam>
     /// <returns>The cast value as <typeparamref name="TDerived" />.</returns>
@@ -146,8 +146,8 @@ internal static class Util {
     /// <summary>
     /// Ensures that an array reference exists and can hold at least the requested number of elements.
     /// </summary>
-    /// <param name="array">The array reference to validate or grow.</param>
-    /// <param name="size">The minimum required length.</param>
+    /// <param name="array">Specifies the value of <paramref name="array" />.</param>
+    /// <param name="size">Specifies the value of <paramref name="size" />.</param>
     /// <typeparam name="T">The array element type.</typeparam>
     internal static void EnsureArrayMinimumSize<T>(ref T[] array, uint size) {
         if (array == null) {
@@ -168,10 +168,10 @@ internal static class Util {
     }
 
     /// <summary>
-    /// Performs the GetString operation.
+    /// Executes the GetString operation.
     /// </summary>
-    /// <param name="stringStart">The value of stringStart.</param>
-    /// <returns>The result of the GetString operation.</returns>
+    /// <param name="stringStart">Specifies the value of <paramref name="stringStart" />.</param>
+    /// <returns>Returns the result produced by the GetString operation.</returns>
     internal static unsafe string GetString(byte* stringStart) {
         int characters = 0;
         while (stringStart[characters] != 0) {
@@ -184,8 +184,8 @@ internal static class Util {
     /// <summary>
     /// Compares two nullable value types for equality.
     /// </summary>
-    /// <param name="left">The first value.</param>
-    /// <param name="right">The second value.</param>
+    /// <param name="left">Specifies the value of <paramref name="left" />.</param>
+    /// <param name="right">Specifies the value of <paramref name="right" />.</param>
     /// <typeparam name="T">The nullable value type.</typeparam>
     /// <returns><see langword="true" /> if both values are equal or both are null; otherwise, <see langword="false" />.</returns>
     internal static bool NullableEquals<T>(T? left, T? right) where T : struct, IEquatable<T> {
@@ -199,8 +199,8 @@ internal static class Util {
     /// <summary>
     /// Compares two arrays of reference types by length and reference identity of each element.
     /// </summary>
-    /// <param name="left">The first array.</param>
-    /// <param name="right">The second array.</param>
+    /// <param name="left">Specifies the value of <paramref name="left" />.</param>
+    /// <param name="right">Specifies the value of <paramref name="right" />.</param>
     /// <typeparam name="T">The reference element type.</typeparam>
     /// <returns><see langword="true" /> if both arrays are equal by reference semantics; otherwise, <see langword="false" />.</returns>
     internal static bool ArrayEquals<T>(T[] left, T[] right) where T : class {
@@ -224,8 +224,8 @@ internal static class Util {
     /// <summary>
     /// Compares two arrays of value types using each element's <see cref="IEquatable{T}" /> implementation.
     /// </summary>
-    /// <param name="left">The first array.</param>
-    /// <param name="right">The second array.</param>
+    /// <param name="left">Specifies the value of <paramref name="left" />.</param>
+    /// <param name="right">Specifies the value of <paramref name="right" />.</param>
     /// <typeparam name="T">The equatable value type.</typeparam>
     /// <returns><see langword="true" /> if both arrays contain equal elements in the same order; otherwise, <see langword="false" />.</returns>
     internal static bool ArrayEqualsEquatable<T>(T[] left, T[] right) where T : struct, IEquatable<T> {
@@ -249,7 +249,7 @@ internal static class Util {
     /// <summary>
     /// Clears all elements in an array when the array is not null.
     /// </summary>
-    /// <param name="array">The array to clear.</param>
+    /// <param name="array">Specifies the value of <paramref name="array" />.</param>
     /// <typeparam name="T">The array element type.</typeparam>
     internal static void ClearArray<T>(T[] array) {
         if (array != null) {
@@ -260,23 +260,23 @@ internal static class Util {
     /// <summary>
     /// Computes the mip level and array layer indices from a subresource index.
     /// </summary>
-    /// <param name="tex">The texture whose subresource layout is used.</param>
-    /// <param name="subresource">The combined subresource index.</param>
-    /// <param name="mipLevel">Receives the extracted mip level index.</param>
-    /// <param name="arrayLayer">Receives the extracted array layer index.</param>
+    /// <param name="tex">Specifies the value of <paramref name="tex" />.</param>
+    /// <param name="subresource">Specifies the value of <paramref name="subresource" />.</param>
+    /// <param name="mipLevel">Specifies the value of <paramref name="mipLevel" />.</param>
+    /// <param name="arrayLayer">Specifies the value of <paramref name="arrayLayer" />.</param>
     internal static void GetMipLevelAndArrayLayer(Texture tex, uint subresource, out uint mipLevel, out uint arrayLayer) {
         arrayLayer = subresource / tex.MipLevels;
         mipLevel = subresource - arrayLayer * tex.MipLevels;
     }
 
     /// <summary>
-    /// Performs the GetMipDimensions operation.
+    /// Executes the GetMipDimensions operation.
     /// </summary>
-    /// <param name="tex">The value of tex.</param>
-    /// <param name="mipLevel">The value of mipLevel.</param>
-    /// <param name="width">The value of width.</param>
-    /// <param name="height">The value of height.</param>
-    /// <param name="depth">The value of depth.</param>
+    /// <param name="tex">Specifies the value of <paramref name="tex" />.</param>
+    /// <param name="mipLevel">Specifies the value of <paramref name="mipLevel" />.</param>
+    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
+    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
+    /// <param name="depth">Specifies the value of <paramref name="depth" />.</param>
     internal static void GetMipDimensions(Texture tex, uint mipLevel, out uint width, out uint height, out uint depth) {
         width = GetDimension(tex.Width, mipLevel);
         height = GetDimension(tex.Height, mipLevel);
@@ -284,11 +284,11 @@ internal static class Util {
     }
 
     /// <summary>
-    /// Performs the GetDimension operation.
+    /// Executes the GetDimension operation.
     /// </summary>
-    /// <param name="largestLevelDimension">The value of largestLevelDimension.</param>
-    /// <param name="mipLevel">The value of mipLevel.</param>
-    /// <returns>The result of the GetDimension operation.</returns>
+    /// <param name="largestLevelDimension">Specifies the value of <paramref name="largestLevelDimension" />.</param>
+    /// <param name="mipLevel">Specifies the value of <paramref name="mipLevel" />.</param>
+    /// <returns>Returns the result produced by the GetDimension operation.</returns>
     internal static uint GetDimension(uint largestLevelDimension, uint mipLevel) {
         uint ret = largestLevelDimension;
         for (uint i = 0; i < mipLevel; i++) {
@@ -299,23 +299,23 @@ internal static class Util {
     }
 
     /// <summary>
-    /// Performs the ComputeSubresourceOffset operation.
+    /// Executes the ComputeSubresourceOffset operation.
     /// </summary>
-    /// <param name="tex">The value of tex.</param>
-    /// <param name="mipLevel">The value of mipLevel.</param>
-    /// <param name="arrayLayer">The value of arrayLayer.</param>
-    /// <returns>The result of the ComputeSubresourceOffset operation.</returns>
+    /// <param name="tex">Specifies the value of <paramref name="tex" />.</param>
+    /// <param name="mipLevel">Specifies the value of <paramref name="mipLevel" />.</param>
+    /// <param name="arrayLayer">Specifies the value of <paramref name="arrayLayer" />.</param>
+    /// <returns>Returns the result produced by the ComputeSubresourceOffset operation.</returns>
     internal static ulong ComputeSubresourceOffset(Texture tex, uint mipLevel, uint arrayLayer) {
         Debug.Assert((tex.Usage & TextureUsage.Staging) == TextureUsage.Staging);
         return ComputeArrayLayerOffset(tex, arrayLayer) + ComputeMipOffset(tex, mipLevel);
     }
 
     /// <summary>
-    /// Performs the ComputeMipOffset operation.
+    /// Executes the ComputeMipOffset operation.
     /// </summary>
-    /// <param name="tex">The value of tex.</param>
-    /// <param name="mipLevel">The value of mipLevel.</param>
-    /// <returns>The result of the ComputeMipOffset operation.</returns>
+    /// <param name="tex">Specifies the value of <paramref name="tex" />.</param>
+    /// <param name="mipLevel">Specifies the value of <paramref name="mipLevel" />.</param>
+    /// <returns>Returns the result produced by the ComputeMipOffset operation.</returns>
     internal static uint ComputeMipOffset(Texture tex, uint mipLevel) {
         uint blockSize = FormatHelpers.IsCompressedFormat(tex.Format) ? 4u : 1u;
         uint offset = 0;
@@ -331,11 +331,11 @@ internal static class Util {
     }
 
     /// <summary>
-    /// Performs the ComputeArrayLayerOffset operation.
+    /// Executes the ComputeArrayLayerOffset operation.
     /// </summary>
-    /// <param name="tex">The value of tex.</param>
-    /// <param name="arrayLayer">The value of arrayLayer.</param>
-    /// <returns>The result of the ComputeArrayLayerOffset operation.</returns>
+    /// <param name="tex">Specifies the value of <paramref name="tex" />.</param>
+    /// <param name="arrayLayer">Specifies the value of <paramref name="arrayLayer" />.</param>
+    /// <returns>Returns the result produced by the ComputeArrayLayerOffset operation.</returns>
     internal static uint ComputeArrayLayerOffset(Texture tex, uint arrayLayer) {
         if (arrayLayer == 0) {
             return 0;
@@ -357,7 +357,7 @@ internal static class Util {
     /// <summary>
     /// Creates a shallow clone of an array.
     /// </summary>
-    /// <param name="array">The array to clone.</param>
+    /// <param name="array">Specifies the value of <paramref name="array" />.</param>
     /// <typeparam name="T">The element type.</typeparam>
     /// <returns>A new array instance containing the same element references or values.</returns>
     internal static T[] ShallowClone<T>(T[] array) {
@@ -365,11 +365,11 @@ internal static class Util {
     }
 
     /// <summary>
-    /// Performs the GetTextureView operation.
+    /// Executes the GetTextureView operation.
     /// </summary>
-    /// <param name="gd">The value of gd.</param>
-    /// <param name="resource">The value of resource.</param>
-    /// <returns>The result of the GetTextureView operation.</returns>
+    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
+    /// <param name="resource">Specifies the value of <paramref name="resource" />.</param>
+    /// <returns>Returns the result produced by the GetTextureView operation.</returns>
     internal static TextureView GetTextureView(GraphicsDevice gd, IBindableResource resource) {
         if (resource is TextureView view) {
             return view;
@@ -383,11 +383,11 @@ internal static class Util {
     }
 
     /// <summary>
-    /// Performs the PackIntPtr operation.
+    /// Executes the PackIntPtr operation.
     /// </summary>
-    /// <param name="sourcePtr">The value of sourcePtr.</param>
-    /// <param name="low">The value of low.</param>
-    /// <param name="high">The value of high.</param>
+    /// <param name="sourcePtr">Specifies the value of <paramref name="sourcePtr" />.</param>
+    /// <param name="low">Specifies the value of <paramref name="low" />.</param>
+    /// <param name="high">Specifies the value of <paramref name="high" />.</param>
     internal static void PackIntPtr(IntPtr sourcePtr, out uint low, out uint high) {
         ulong src64 = (ulong)sourcePtr;
         low = (uint)(src64 & 0x00000000FFFFFFFF);
@@ -395,11 +395,11 @@ internal static class Util {
     }
 
     /// <summary>
-    /// Performs the UnpackIntPtr operation.
+    /// Executes the UnpackIntPtr operation.
     /// </summary>
-    /// <param name="low">The value of low.</param>
-    /// <param name="high">The value of high.</param>
-    /// <returns>The result of the UnpackIntPtr operation.</returns>
+    /// <param name="low">Specifies the value of <paramref name="low" />.</param>
+    /// <param name="high">Specifies the value of <paramref name="high" />.</param>
+    /// <returns>Returns the result produced by the UnpackIntPtr operation.</returns>
     internal static IntPtr UnpackIntPtr(uint low, uint high) {
         ulong src64 = low | ((ulong)high << 32);
         return (IntPtr)src64;

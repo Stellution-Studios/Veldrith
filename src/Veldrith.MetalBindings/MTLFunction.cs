@@ -4,19 +4,19 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the MTLFunction struct.
+/// Defines the data layout and behavior of the MTLFunction struct.
 /// </summary>
 public struct MTLFunction {
 
     /// <summary>
-    /// Represents the NativePtr field.
+    /// Stores the value associated with <c>NativePtr</c>.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MTLFunction" /> type.
     /// </summary>
-    /// <param name="ptr">The value of ptr.</param>
+    /// <param name="ptr">Specifies the value of <paramref name="ptr" />.</param>
     public MTLFunction(IntPtr ptr) {
         this.NativePtr = ptr;
     }
@@ -27,7 +27,7 @@ public struct MTLFunction {
     public NSDictionary functionConstantsDictionary => objc_msgSend<NSDictionary>(this.NativePtr, sel_functionConstantsDictionary);
 
     /// <summary>
-    /// Represents the sel_functionConstantsDictionary field.
+    /// Stores the value associated with <c>sel_functionConstantsDictionary</c>.
     /// </summary>
     private static readonly Selector sel_functionConstantsDictionary = "functionConstantsDictionary";
 }

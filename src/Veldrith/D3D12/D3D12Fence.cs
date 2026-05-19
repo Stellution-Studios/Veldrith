@@ -5,35 +5,35 @@ using Vortice.Direct3D12;
 namespace Veldrith.D3D12;
 
 /// <summary>
-/// Represents the D3D12Fence class.
+/// Defines the behavior and responsibilities of the D3D12Fence class.
 /// </summary>
 internal sealed class D3D12Fence : Fence {
 
     /// <summary>
-    /// Represents the _nativeFence field.
+    /// Stores the value associated with <c>_nativeFence</c>.
     /// </summary>
     private readonly ID3D12Fence _nativeFence;
 
     /// <summary>
-    /// Represents the _waitEvent field.
+    /// Stores the value associated with <c>_waitEvent</c>.
     /// </summary>
     private readonly AutoResetEvent _waitEvent;
 
     /// <summary>
-    /// Represents the _disposed field.
+    /// Stores the value associated with <c>_disposed</c>.
     /// </summary>
     private bool _disposed;
 
     /// <summary>
-    /// Represents the _fenceValue field.
+    /// Stores the value associated with <c>_fenceValue</c>.
     /// </summary>
     private ulong _fenceValue;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="D3D12Fence" /> type.
     /// </summary>
-    /// <param name="gd">The value of gd.</param>
-    /// <param name="signaled">The value of signaled.</param>
+    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
+    /// <param name="signaled">Specifies the value of <paramref name="signaled" />.</param>
     public D3D12Fence(D3D12GraphicsDevice gd, bool signaled) {
         ulong initialValue = signaled ? 1UL : 0UL;
         this._nativeFence = gd.Device.CreateFence(initialValue);
@@ -57,7 +57,7 @@ internal sealed class D3D12Fence : Fence {
     public override string Name { get; set; }
 
     /// <summary>
-    /// Performs the Dispose operation.
+    /// Executes the Dispose operation.
     /// </summary>
     public override void Dispose() {
         if (this._disposed) {
@@ -70,16 +70,16 @@ internal sealed class D3D12Fence : Fence {
     }
 
     /// <summary>
-    /// Performs the Reset operation.
+    /// Executes the Reset operation.
     /// </summary>
     public override void Reset() {
         this._fenceValue = this._nativeFence.CompletedValue + 1;
     }
 
     /// <summary>
-    /// Performs the Signal operation.
+    /// Executes the Signal operation.
     /// </summary>
-    /// <param name="commandQueue">The value of commandQueue.</param>
+    /// <param name="commandQueue">Specifies the value of <paramref name="commandQueue" />.</param>
     internal void Signal(ID3D12CommandQueue commandQueue) {
         if (this._fenceValue <= this._nativeFence.CompletedValue) {
             this._fenceValue = this._nativeFence.CompletedValue + 1;
@@ -89,10 +89,10 @@ internal sealed class D3D12Fence : Fence {
     }
 
     /// <summary>
-    /// Performs the Wait operation.
+    /// Executes the Wait operation.
     /// </summary>
-    /// <param name="nanosecondTimeout">The value of nanosecondTimeout.</param>
-    /// <returns>The result of the Wait operation.</returns>
+    /// <param name="nanosecondTimeout">Specifies the value of <paramref name="nanosecondTimeout" />.</param>
+    /// <returns>Returns the result produced by the Wait operation.</returns>
     internal bool Wait(ulong nanosecondTimeout) {
         if (this.Signaled) {
             return true;

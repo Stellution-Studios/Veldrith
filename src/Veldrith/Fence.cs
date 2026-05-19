@@ -27,14 +27,14 @@ public abstract class Fence : IDeviceResource, IDisposable {
     #region Disposal
 
     /// <summary>
-    /// Performs the Dispose operation.
+    /// Executes the Dispose operation.
     /// </summary>
     public abstract void Dispose();
 
     #endregion
 
     /// <summary>
-    /// Performs the Reset operation.
+    /// Executes the Reset operation.
     /// </summary>
     public abstract void Reset();
 }

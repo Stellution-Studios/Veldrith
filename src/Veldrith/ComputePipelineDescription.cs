@@ -45,11 +45,11 @@ public struct ComputePipelineDescription : IEquatable<ComputePipelineDescription
     /// <summary>
     /// Initializes a new instance of the <see cref="ComputePipelineDescription" /> type.
     /// </summary>
-    /// <param name="computeShader">The value of computeShader.</param>
-    /// <param name="resourceLayouts">The value of resourceLayouts.</param>
-    /// <param name="threadGroupSizeX">The value of threadGroupSizeX.</param>
-    /// <param name="threadGroupSizeY">The value of threadGroupSizeY.</param>
-    /// <param name="threadGroupSizeZ">The value of threadGroupSizeZ.</param>
+    /// <param name="computeShader">Specifies the value of <paramref name="computeShader" />.</param>
+    /// <param name="resourceLayouts">Specifies the value of <paramref name="resourceLayouts" />.</param>
+    /// <param name="threadGroupSizeX">Specifies the value of <paramref name="threadGroupSizeX" />.</param>
+    /// <param name="threadGroupSizeY">Specifies the value of <paramref name="threadGroupSizeY" />.</param>
+    /// <param name="threadGroupSizeZ">Specifies the value of <paramref name="threadGroupSizeZ" />.</param>
     public ComputePipelineDescription(Shader computeShader, ResourceLayout[] resourceLayouts, uint threadGroupSizeX, uint threadGroupSizeY, uint threadGroupSizeZ) {
         this.ComputeShader = computeShader;
         this.ResourceLayouts = resourceLayouts;
@@ -62,11 +62,11 @@ public struct ComputePipelineDescription : IEquatable<ComputePipelineDescription
     /// <summary>
     /// Initializes a new instance of the <see cref="ComputePipelineDescription" /> type.
     /// </summary>
-    /// <param name="shaderStage">The value of shaderStage.</param>
-    /// <param name="resourceLayout">The value of resourceLayout.</param>
-    /// <param name="threadGroupSizeX">The value of threadGroupSizeX.</param>
-    /// <param name="threadGroupSizeY">The value of threadGroupSizeY.</param>
-    /// <param name="threadGroupSizeZ">The value of threadGroupSizeZ.</param>
+    /// <param name="shaderStage">Specifies the value of <paramref name="shaderStage" />.</param>
+    /// <param name="resourceLayout">Specifies the value of <paramref name="resourceLayout" />.</param>
+    /// <param name="threadGroupSizeX">Specifies the value of <paramref name="threadGroupSizeX" />.</param>
+    /// <param name="threadGroupSizeY">Specifies the value of <paramref name="threadGroupSizeY" />.</param>
+    /// <param name="threadGroupSizeZ">Specifies the value of <paramref name="threadGroupSizeZ" />.</param>
     public ComputePipelineDescription(Shader shaderStage, ResourceLayout resourceLayout, uint threadGroupSizeX, uint threadGroupSizeY, uint threadGroupSizeZ) {
         this.ComputeShader = shaderStage;
         this.ResourceLayouts = new[] { resourceLayout };
@@ -79,12 +79,12 @@ public struct ComputePipelineDescription : IEquatable<ComputePipelineDescription
     /// <summary>
     /// Initializes a new instance of the <see cref="ComputePipelineDescription" /> type.
     /// </summary>
-    /// <param name="shaderStage">The value of shaderStage.</param>
-    /// <param name="resourceLayout">The value of resourceLayout.</param>
-    /// <param name="threadGroupSizeX">The value of threadGroupSizeX.</param>
-    /// <param name="threadGroupSizeY">The value of threadGroupSizeY.</param>
-    /// <param name="threadGroupSizeZ">The value of threadGroupSizeZ.</param>
-    /// <param name="specializations">The value of specializations.</param>
+    /// <param name="shaderStage">Specifies the value of <paramref name="shaderStage" />.</param>
+    /// <param name="resourceLayout">Specifies the value of <paramref name="resourceLayout" />.</param>
+    /// <param name="threadGroupSizeX">Specifies the value of <paramref name="threadGroupSizeX" />.</param>
+    /// <param name="threadGroupSizeY">Specifies the value of <paramref name="threadGroupSizeY" />.</param>
+    /// <param name="threadGroupSizeZ">Specifies the value of <paramref name="threadGroupSizeZ" />.</param>
+    /// <param name="specializations">Specifies the value of <paramref name="specializations" />.</param>
     public ComputePipelineDescription(Shader shaderStage, ResourceLayout resourceLayout, uint threadGroupSizeX, uint threadGroupSizeY, uint threadGroupSizeZ, SpecializationConstant[] specializations) {
         this.ComputeShader = shaderStage;
         this.ResourceLayouts = new[] { resourceLayout };
@@ -95,10 +95,10 @@ public struct ComputePipelineDescription : IEquatable<ComputePipelineDescription
     }
 
     /// <summary>
-    /// Performs the Equals operation.
+    /// Executes the Equals operation.
     /// </summary>
-    /// <param name="other">The value of other.</param>
-    /// <returns>The result of the Equals operation.</returns>
+    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
+    /// <returns>Returns the result produced by the Equals operation.</returns>
     public bool Equals(ComputePipelineDescription other) {
         return this.ComputeShader.Equals(other.ComputeShader)
                && Util.ArrayEquals(this.ResourceLayouts, other.ResourceLayouts)
@@ -108,9 +108,9 @@ public struct ComputePipelineDescription : IEquatable<ComputePipelineDescription
     }
 
     /// <summary>
-    /// Performs the GetHashCode operation.
+    /// Executes the GetHashCode operation.
     /// </summary>
-    /// <returns>The result of the GetHashCode operation.</returns>
+    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(this.ComputeShader.GetHashCode(), HashHelper.Array(this.ResourceLayouts), this.ThreadGroupSizeX.GetHashCode(), this.ThreadGroupSizeY.GetHashCode(), this.ThreadGroupSizeZ.GetHashCode());
     }

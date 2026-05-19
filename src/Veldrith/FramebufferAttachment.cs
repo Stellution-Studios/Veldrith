@@ -23,8 +23,8 @@ public struct FramebufferAttachment {
     /// <summary>
     /// Initializes a new instance of the <see cref="FramebufferAttachment" /> type.
     /// </summary>
-    /// <param name="target">The value of target.</param>
-    /// <param name="arrayLayer">The value of arrayLayer.</param>
+    /// <param name="target">Specifies the value of <paramref name="target" />.</param>
+    /// <param name="arrayLayer">Specifies the value of <paramref name="arrayLayer" />.</param>
     public FramebufferAttachment(Texture target, uint arrayLayer) {
         this.Target = target;
         this.ArrayLayer = arrayLayer;
@@ -34,9 +34,9 @@ public struct FramebufferAttachment {
     /// <summary>
     /// Initializes a new instance of the <see cref="FramebufferAttachment" /> type.
     /// </summary>
-    /// <param name="target">The value of target.</param>
-    /// <param name="arrayLayer">The value of arrayLayer.</param>
-    /// <param name="mipLevel">The value of mipLevel.</param>
+    /// <param name="target">Specifies the value of <paramref name="target" />.</param>
+    /// <param name="arrayLayer">Specifies the value of <paramref name="arrayLayer" />.</param>
+    /// <param name="mipLevel">Specifies the value of <paramref name="mipLevel" />.</param>
     public FramebufferAttachment(Texture target, uint arrayLayer, uint mipLevel) {
         this.Target = target;
         this.ArrayLayer = arrayLayer;

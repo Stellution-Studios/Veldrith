@@ -10,7 +10,7 @@ namespace Veldrith;
 public struct RgbaFloat : IEquatable<RgbaFloat> {
 
     /// <summary>
-    /// Represents the channels field.
+    /// Stores the value associated with <c>channels</c>.
     /// </summary>
     private readonly Vector4 channels;
 
@@ -37,10 +37,10 @@ public struct RgbaFloat : IEquatable<RgbaFloat> {
     /// <summary>
     /// Initializes a new instance of the <see cref="RgbaFloat" /> type.
     /// </summary>
-    /// <param name="r">The value of r.</param>
-    /// <param name="g">The value of g.</param>
-    /// <param name="b">The value of b.</param>
-    /// <param name="a">The value of a.</param>
+    /// <param name="r">Specifies the value of <paramref name="r" />.</param>
+    /// <param name="g">Specifies the value of <paramref name="g" />.</param>
+    /// <param name="b">Specifies the value of <paramref name="b" />.</param>
+    /// <param name="a">Specifies the value of <paramref name="a" />.</param>
     public RgbaFloat(float r, float g, float b, float a) {
         this.channels = new Vector4(r, g, b, a);
     }
@@ -48,7 +48,7 @@ public struct RgbaFloat : IEquatable<RgbaFloat> {
     /// <summary>
     /// Initializes a new instance of the <see cref="RgbaFloat" /> type.
     /// </summary>
-    /// <param name="channels">The value of channels.</param>
+    /// <param name="channels">Specifies the value of <paramref name="channels" />.</param>
     public RgbaFloat(Vector4 channels) {
         this.channels = channels;
     }
@@ -59,103 +59,95 @@ public struct RgbaFloat : IEquatable<RgbaFloat> {
     public static readonly int SIZE_IN_BYTES = 16;
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>RED</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaFloat RED = new(1, 0, 0, 1);
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>name</c>.
     /// </summary>
-    /// <param name="f">The value of f.</param>
-    /// <returns>The result of the new operation.</returns>
+    /// <param name="f">Specifies the value of <paramref name="f" />.</param>
+    /// <returns>Returns the result produced by the new operation.</returns>
     public static readonly RgbaFloat DARK_RED = new(0.6f, 0, 0, 1);
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>GREEN</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaFloat GREEN = new(0, 1, 0, 1);
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>BLUE</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaFloat BLUE = new(0, 0, 1, 1);
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>YELLOW</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaFloat YELLOW = new(1, 1, 0, 1);
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>name</c>.
     /// </summary>
-    /// <param name="f">The value of f.</param>
-    /// <param name="f">The value of f.</param>
-    /// <param name="f">The value of f.</param>
-    /// <returns>The result of the new operation.</returns>
+    /// <param name="f">Specifies the value of <paramref name="f" />.</param>
+    /// <param name="f">Specifies the value of <paramref name="f" />.</param>
+    /// <param name="f">Specifies the value of <paramref name="f" />.</param>
+    /// <returns>Returns the result produced by the new operation.</returns>
     public static readonly RgbaFloat GREY = new(.25f, .25f, .25f, 1);
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>name</c>.
     /// </summary>
-    /// <param name="f">The value of f.</param>
-    /// <param name="f">The value of f.</param>
-    /// <param name="f">The value of f.</param>
-    /// <returns>The result of the new operation.</returns>
+    /// <param name="f">Specifies the value of <paramref name="f" />.</param>
+    /// <param name="f">Specifies the value of <paramref name="f" />.</param>
+    /// <param name="f">Specifies the value of <paramref name="f" />.</param>
+    /// <returns>Returns the result produced by the new operation.</returns>
     public static readonly RgbaFloat LIGHT_GREY = new(.65f, .65f, .65f, 1);
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>CYAN</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaFloat CYAN = new(0, 1, 1, 1);
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>WHITE</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaFloat WHITE = new(1, 1, 1, 1);
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>name</c>.
     /// </summary>
-    /// <param name="f">The value of f.</param>
-    /// <param name="f">The value of f.</param>
-    /// <param name="f">The value of f.</param>
-    /// <returns>The result of the new operation.</returns>
+    /// <param name="f">Specifies the value of <paramref name="f" />.</param>
+    /// <param name="f">Specifies the value of <paramref name="f" />.</param>
+    /// <param name="f">Specifies the value of <paramref name="f" />.</param>
+    /// <returns>Returns the result produced by the new operation.</returns>
     public static readonly RgbaFloat CORNFLOWER_BLUE = new(0.3921f, 0.5843f, 0.9294f, 1);
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>CLEAR</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaFloat CLEAR = new(0, 0, 0, 0);
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>BLACK</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly RgbaFloat BLACK = new(0, 0, 0, 1);
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>name</c>.
     /// </summary>
-    /// <param name="f">The value of f.</param>
-    /// <param name="f">The value of f.</param>
-    /// <param name="f">The value of f.</param>
-    /// <returns>The result of the new operation.</returns>
+    /// <param name="f">Specifies the value of <paramref name="f" />.</param>
+    /// <param name="f">Specifies the value of <paramref name="f" />.</param>
+    /// <param name="f">Specifies the value of <paramref name="f" />.</param>
+    /// <returns>Returns the result produced by the new operation.</returns>
     public static readonly RgbaFloat PINK = new(1f, 0.45f, 0.75f, 1);
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>name</c>.
     /// </summary>
-    /// <param name="f">The value of f.</param>
-    /// <param name="f">The value of f.</param>
-    /// <param name="f">The value of f.</param>
-    /// <returns>The result of the new operation.</returns>
+    /// <param name="f">Specifies the value of <paramref name="f" />.</param>
+    /// <param name="f">Specifies the value of <paramref name="f" />.</param>
+    /// <param name="f">Specifies the value of <paramref name="f" />.</param>
+    /// <returns>Returns the result produced by the new operation.</returns>
     public static readonly RgbaFloat ORANGE = new(1f, 0.36f, 0f, 1);
 
     /// <summary>
@@ -170,7 +162,7 @@ public struct RgbaFloat : IEquatable<RgbaFloat> {
     /// <summary>
     /// Compares this color with another <see cref="RgbaFloat" /> value.
     /// </summary>
-    /// <param name="other">The color to compare against.</param>
+    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
     /// <returns><see langword="true" /> if all RGBA components are equal; otherwise, <see langword="false" />.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Equals(RgbaFloat other) {
@@ -178,10 +170,10 @@ public struct RgbaFloat : IEquatable<RgbaFloat> {
     }
 
     /// <summary>
-    /// Performs the Equals operation.
+    /// Executes the Equals operation.
     /// </summary>
-    /// <param name="obj">The value of obj.</param>
-    /// <returns>The result of the Equals operation.</returns>
+    /// <param name="obj">Specifies the value of <paramref name="obj" />.</param>
+    /// <returns>Returns the result produced by the Equals operation.</returns>
     public override bool Equals(object obj) {
         return obj is RgbaFloat other && this.Equals(other);
     }
@@ -196,9 +188,9 @@ public struct RgbaFloat : IEquatable<RgbaFloat> {
     }
 
     /// <summary>
-    /// Performs the ToString operation.
+    /// Executes the ToString operation.
     /// </summary>
-    /// <returns>The result of the ToString operation.</returns>
+    /// <returns>Returns the result produced by the ToString operation.</returns>
     public override string ToString() {
         return $"R:{this.R}, G:{this.G}, B:{this.B}, A:{this.A}";
     }
@@ -206,8 +198,8 @@ public struct RgbaFloat : IEquatable<RgbaFloat> {
     /// <summary>
     /// Compares two <see cref="RgbaFloat" /> values for component-wise equality.
     /// </summary>
-    /// <param name="left">The first color value.</param>
-    /// <param name="right">The second color value.</param>
+    /// <param name="left">Specifies the value of <paramref name="left" />.</param>
+    /// <param name="right">Specifies the value of <paramref name="right" />.</param>
     /// <returns><see langword="true" /> if both values are equal; otherwise, <see langword="false" />.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool operator ==(RgbaFloat left, RgbaFloat right) {
@@ -217,8 +209,8 @@ public struct RgbaFloat : IEquatable<RgbaFloat> {
     /// <summary>
     /// Compares two <see cref="RgbaFloat" /> values for component-wise inequality.
     /// </summary>
-    /// <param name="left">The first color value.</param>
-    /// <param name="right">The second color value.</param>
+    /// <param name="left">Specifies the value of <paramref name="left" />.</param>
+    /// <param name="right">Specifies the value of <paramref name="right" />.</param>
     /// <returns><see langword="true" /> if at least one component differs; otherwise, <see langword="false" />.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool operator !=(RgbaFloat left, RgbaFloat right) {

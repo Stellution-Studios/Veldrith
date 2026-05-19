@@ -44,7 +44,7 @@ public struct TextureViewDescription : IEquatable<TextureViewDescription> {
     /// <summary>
     /// Initializes a new instance of the <see cref="TextureViewDescription" /> type.
     /// </summary>
-    /// <param name="target">The value of target.</param>
+    /// <param name="target">Specifies the value of <paramref name="target" />.</param>
     public TextureViewDescription(Texture target) {
         this.Target = target;
         this.BaseMipLevel = 0;
@@ -57,8 +57,8 @@ public struct TextureViewDescription : IEquatable<TextureViewDescription> {
     /// <summary>
     /// Initializes a new instance of the <see cref="TextureViewDescription" /> type.
     /// </summary>
-    /// <param name="target">The value of target.</param>
-    /// <param name="format">The value of format.</param>
+    /// <param name="target">Specifies the value of <paramref name="target" />.</param>
+    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
     public TextureViewDescription(Texture target, PixelFormat format) {
         this.Target = target;
         this.BaseMipLevel = 0;
@@ -71,11 +71,11 @@ public struct TextureViewDescription : IEquatable<TextureViewDescription> {
     /// <summary>
     /// Initializes a new instance of the <see cref="TextureViewDescription" /> type.
     /// </summary>
-    /// <param name="target">The value of target.</param>
-    /// <param name="baseMipLevel">The value of baseMipLevel.</param>
-    /// <param name="mipLevels">The value of mipLevels.</param>
-    /// <param name="baseArrayLayer">The value of baseArrayLayer.</param>
-    /// <param name="arrayLayers">The value of arrayLayers.</param>
+    /// <param name="target">Specifies the value of <paramref name="target" />.</param>
+    /// <param name="baseMipLevel">Specifies the value of <paramref name="baseMipLevel" />.</param>
+    /// <param name="mipLevels">Specifies the value of <paramref name="mipLevels" />.</param>
+    /// <param name="baseArrayLayer">Specifies the value of <paramref name="baseArrayLayer" />.</param>
+    /// <param name="arrayLayers">Specifies the value of <paramref name="arrayLayers" />.</param>
     public TextureViewDescription(Texture target, uint baseMipLevel, uint mipLevels, uint baseArrayLayer, uint arrayLayers) {
         this.Target = target;
         this.BaseMipLevel = baseMipLevel;
@@ -88,12 +88,12 @@ public struct TextureViewDescription : IEquatable<TextureViewDescription> {
     /// <summary>
     /// Initializes a new instance of the <see cref="TextureViewDescription" /> type.
     /// </summary>
-    /// <param name="target">The value of target.</param>
-    /// <param name="format">The value of format.</param>
-    /// <param name="baseMipLevel">The value of baseMipLevel.</param>
-    /// <param name="mipLevels">The value of mipLevels.</param>
-    /// <param name="baseArrayLayer">The value of baseArrayLayer.</param>
-    /// <param name="arrayLayers">The value of arrayLayers.</param>
+    /// <param name="target">Specifies the value of <paramref name="target" />.</param>
+    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
+    /// <param name="baseMipLevel">Specifies the value of <paramref name="baseMipLevel" />.</param>
+    /// <param name="mipLevels">Specifies the value of <paramref name="mipLevels" />.</param>
+    /// <param name="baseArrayLayer">Specifies the value of <paramref name="baseArrayLayer" />.</param>
+    /// <param name="arrayLayers">Specifies the value of <paramref name="arrayLayers" />.</param>
     public TextureViewDescription(Texture target, PixelFormat format, uint baseMipLevel, uint mipLevels, uint baseArrayLayer, uint arrayLayers) {
         this.Target = target;
         this.BaseMipLevel = baseMipLevel;
@@ -104,10 +104,10 @@ public struct TextureViewDescription : IEquatable<TextureViewDescription> {
     }
 
     /// <summary>
-    /// Performs the Equals operation.
+    /// Executes the Equals operation.
     /// </summary>
-    /// <param name="other">The value of other.</param>
-    /// <returns>The result of the Equals operation.</returns>
+    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
+    /// <returns>Returns the result produced by the Equals operation.</returns>
     public bool Equals(TextureViewDescription other) {
         return this.Target.Equals(other.Target)
                && this.BaseMipLevel.Equals(other.BaseMipLevel)
@@ -118,9 +118,9 @@ public struct TextureViewDescription : IEquatable<TextureViewDescription> {
     }
 
     /// <summary>
-    /// Performs the GetHashCode operation.
+    /// Executes the GetHashCode operation.
     /// </summary>
-    /// <returns>The result of the GetHashCode operation.</returns>
+    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(this.Target.GetHashCode(), this.BaseMipLevel.GetHashCode(), this.MipLevels.GetHashCode(), this.BaseArrayLayer.GetHashCode(), this.ArrayLayers.GetHashCode(), this.Format?.GetHashCode() ?? 0);
     }

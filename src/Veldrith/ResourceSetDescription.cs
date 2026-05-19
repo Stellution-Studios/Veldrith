@@ -21,26 +21,26 @@ public struct ResourceSetDescription : IEquatable<ResourceSetDescription> {
     /// <summary>
     /// Initializes a new instance of the <see cref="ResourceSetDescription" /> type.
     /// </summary>
-    /// <param name="layout">The value of layout.</param>
-    /// <param name="boundResources">The value of boundResources.</param>
+    /// <param name="layout">Specifies the value of <paramref name="layout" />.</param>
+    /// <param name="boundResources">Specifies the value of <paramref name="boundResources" />.</param>
     public ResourceSetDescription(ResourceLayout layout, params IBindableResource[] boundResources) {
         this.Layout = layout;
         this.BoundResources = boundResources;
     }
 
     /// <summary>
-    /// Performs the Equals operation.
+    /// Executes the Equals operation.
     /// </summary>
-    /// <param name="other">The value of other.</param>
-    /// <returns>The result of the Equals operation.</returns>
+    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
+    /// <returns>Returns the result produced by the Equals operation.</returns>
     public bool Equals(ResourceSetDescription other) {
         return this.Layout.Equals(other.Layout) && Util.ArrayEquals(this.BoundResources, other.BoundResources);
     }
 
     /// <summary>
-    /// Performs the GetHashCode operation.
+    /// Executes the GetHashCode operation.
     /// </summary>
-    /// <returns>The result of the GetHashCode operation.</returns>
+    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(this.Layout.GetHashCode(), HashHelper.Array(this.BoundResources));
     }

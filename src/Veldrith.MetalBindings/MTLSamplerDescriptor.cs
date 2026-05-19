@@ -4,26 +4,26 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the MTLSamplerDescriptor struct.
+/// Defines the data layout and behavior of the MTLSamplerDescriptor struct.
 /// </summary>
 public struct MTLSamplerDescriptor {
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>name</c>.
     /// </summary>
-    /// <param name="MTLSamplerDescriptor">The value of MTLSamplerDescriptor.</param>
-    /// <returns>The result of the new operation.</returns>
+    /// <param name="MTLSamplerDescriptor">Specifies the value of <paramref name="MTLSamplerDescriptor" />.</param>
+    /// <returns>Returns the result produced by the new operation.</returns>
     private static readonly ObjCClass s_class = new(nameof(MTLSamplerDescriptor));
 
     /// <summary>
-    /// Represents the NativePtr field.
+    /// Stores the value associated with <c>NativePtr</c>.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Performs the New operation.
+    /// Creates and returns a new instance.
     /// </summary>
-    /// <returns>The result of the New operation.</returns>
+    /// <returns>Returns the result produced by the New operation.</returns>
     public static MTLSamplerDescriptor New() {
         return s_class.AllocInit<MTLSamplerDescriptor>();
     }
@@ -125,122 +125,122 @@ public struct MTLSamplerDescriptor {
     }
 
     /// <summary>
-    /// Represents the sel_rAddressMode field.
+    /// Stores the value associated with <c>sel_rAddressMode</c>.
     /// </summary>
     private static readonly Selector sel_rAddressMode = "rAddressMode";
 
     /// <summary>
-    /// Represents the sel_setRAddressMode field.
+    /// Stores the value associated with <c>sel_setRAddressMode</c>.
     /// </summary>
     private static readonly Selector sel_setRAddressMode = "setRAddressMode:";
 
     /// <summary>
-    /// Represents the sel_sAddressMode field.
+    /// Stores the value associated with <c>sel_sAddressMode</c>.
     /// </summary>
     private static readonly Selector sel_sAddressMode = "sAddressMode";
 
     /// <summary>
-    /// Represents the sel_setSAddressMode field.
+    /// Stores the value associated with <c>sel_setSAddressMode</c>.
     /// </summary>
     private static readonly Selector sel_setSAddressMode = "setSAddressMode:";
 
     /// <summary>
-    /// Represents the sel_tAddressMode field.
+    /// Stores the value associated with <c>sel_tAddressMode</c>.
     /// </summary>
     private static readonly Selector sel_tAddressMode = "tAddressMode";
 
     /// <summary>
-    /// Represents the sel_setTAddressMode field.
+    /// Stores the value associated with <c>sel_setTAddressMode</c>.
     /// </summary>
     private static readonly Selector sel_setTAddressMode = "setTAddressMode:";
 
     /// <summary>
-    /// Represents the sel_minFilter field.
+    /// Stores the value associated with <c>sel_minFilter</c>.
     /// </summary>
     private static readonly Selector sel_minFilter = "minFilter";
 
     /// <summary>
-    /// Represents the sel_setMinFilter field.
+    /// Stores the value associated with <c>sel_setMinFilter</c>.
     /// </summary>
     private static readonly Selector sel_setMinFilter = "setMinFilter:";
 
     /// <summary>
-    /// Represents the sel_magFilter field.
+    /// Stores the value associated with <c>sel_magFilter</c>.
     /// </summary>
     private static readonly Selector sel_magFilter = "magFilter";
 
     /// <summary>
-    /// Represents the sel_setMagFilter field.
+    /// Stores the value associated with <c>sel_setMagFilter</c>.
     /// </summary>
     private static readonly Selector sel_setMagFilter = "setMagFilter:";
 
     /// <summary>
-    /// Represents the sel_mipFilter field.
+    /// Stores the value associated with <c>sel_mipFilter</c>.
     /// </summary>
     private static readonly Selector sel_mipFilter = "mipFilter";
 
     /// <summary>
-    /// Represents the sel_setMipFilter field.
+    /// Stores the value associated with <c>sel_setMipFilter</c>.
     /// </summary>
     private static readonly Selector sel_setMipFilter = "setMipFilter:";
 
     /// <summary>
-    /// Represents the sel_lodMinClamp field.
+    /// Stores the value associated with <c>sel_lodMinClamp</c>.
     /// </summary>
     private static readonly Selector sel_lodMinClamp = "lodMinClamp";
 
     /// <summary>
-    /// Represents the sel_setLodMinClamp field.
+    /// Stores the value associated with <c>sel_setLodMinClamp</c>.
     /// </summary>
     private static readonly Selector sel_setLodMinClamp = "setLodMinClamp:";
 
     /// <summary>
-    /// Represents the sel_lodMaxClamp field.
+    /// Stores the value associated with <c>sel_lodMaxClamp</c>.
     /// </summary>
     private static readonly Selector sel_lodMaxClamp = "lodMaxClamp";
 
     /// <summary>
-    /// Represents the sel_setLodMaxClamp field.
+    /// Stores the value associated with <c>sel_setLodMaxClamp</c>.
     /// </summary>
     private static readonly Selector sel_setLodMaxClamp = "setLodMaxClamp:";
 
     /// <summary>
-    /// Represents the sel_lodAverage field.
+    /// Stores the value associated with <c>sel_lodAverage</c>.
     /// </summary>
     private static readonly Selector sel_lodAverage = "lodAverage";
 
     /// <summary>
-    /// Represents the sel_setLodAverage field.
+    /// Stores the value associated with <c>sel_setLodAverage</c>.
     /// </summary>
     private static readonly Selector sel_setLodAverage = "setLodAverage:";
 
     /// <summary>
-    /// Represents the sel_maxAnisotropy field.
+    /// Stores the value associated with <c>sel_maxAnisotropy</c>.
     /// </summary>
     private static readonly Selector sel_maxAnisotropy = "maxAnisotropy";
 
     /// <summary>
-    /// Represents the sel_setMaAnisotropy field.
+    /// Stores the value associated with <c>sel_setMaAnisotropy</c>.
     /// </summary>
     private static readonly Selector sel_setMaAnisotropy = "setMaxAnisotropy:";
 
     /// <summary>
-    /// Represents the sel_compareFunction field.
+    /// Stores the value associated with <c>sel_compareFunction</c>.
     /// </summary>
     private static readonly Selector sel_compareFunction = "compareFunction";
 
     /// <summary>
-    /// Represents the sel_setCompareFunction field.
+    /// Stores the value associated with <c>sel_setCompareFunction</c>.
     /// </summary>
     private static readonly Selector sel_setCompareFunction = "setCompareFunction:";
 
     /// <summary>
-    /// Represents the sel_borderColor field.
+    /// Stores the value associated with <c>sel_borderColor</c>.
     /// </summary>
     private static readonly Selector sel_borderColor = "borderColor";
 
     /// <summary>
-    /// Represents the sel_setBorderColor field.
+    /// Stores the value associated with <c>sel_setBorderColor</c>.
     /// </summary>
     private static readonly Selector sel_setBorderColor = "setBorderColor:";
 }

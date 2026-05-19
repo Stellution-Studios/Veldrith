@@ -1,17 +1,17 @@
 namespace Veldrith.MTL;
 
 /// <summary>
-/// Represents the MtlResourceLayout class.
+/// Defines the behavior and responsibilities of the MtlResourceLayout class.
 /// </summary>
 internal class MtlResourceLayout : ResourceLayout {
 
     /// <summary>
-    /// Represents the _bindingInfosByVdIndex field.
+    /// Stores the value associated with <c>_bindingInfosByVdIndex</c>.
     /// </summary>
     private readonly ResourceBindingInfo[] _bindingInfosByVdIndex;
 
     /// <summary>
-    /// Represents the _disposed field.
+    /// Stores the value associated with <c>_disposed</c>.
     /// </summary>
     private bool _disposed;
 
@@ -38,10 +38,10 @@ internal class MtlResourceLayout : ResourceLayout {
 #endif
 
     /// <summary>
-    /// Performs the GetBindingInfo operation.
+    /// Executes the GetBindingInfo operation.
     /// </summary>
-    /// <param name="index">The value of index.</param>
-    /// <returns>The result of the GetBindingInfo operation.</returns>
+    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
+    /// <returns>Returns the result produced by the GetBindingInfo operation.</returns>
     public ResourceBindingInfo GetBindingInfo(int index) {
         return this._bindingInfosByVdIndex[index];
     }
@@ -57,9 +57,9 @@ internal class MtlResourceLayout : ResourceLayout {
     /// <summary>
     /// Initializes a new instance of the <see cref="MtlResourceLayout" /> class.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <param name="gd">The value of gd.</param>
-    /// <returns>The result of the base operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
+    /// <returns>Returns the result produced by the base operation.</returns>
     public MtlResourceLayout(ref ResourceLayoutDescription description, MtlGraphicsDevice gd) : base(ref description) {
 #if !VALIDATE_USAGE
             Description = description;
@@ -130,44 +130,44 @@ internal class MtlResourceLayout : ResourceLayout {
     public override bool IsDisposed => this._disposed;
 
     /// <summary>
-    /// Performs the Dispose operation.
+    /// Executes the Dispose operation.
     /// </summary>
     public override void Dispose() {
         this._disposed = true;
     }
 
     /// <summary>
-    /// Represents the ResourceBindingInfo struct.
+    /// Defines the data layout and behavior of the ResourceBindingInfo struct.
     /// </summary>
     internal struct ResourceBindingInfo {
 
         /// <summary>
-        /// Represents the Slot field.
+        /// Stores the value associated with <c>Slot</c>.
         /// </summary>
         public uint Slot;
 
         /// <summary>
-        /// Represents the Stages field.
+        /// Stores the value associated with <c>Stages</c>.
         /// </summary>
         public ShaderStages Stages;
 
         /// <summary>
-        /// Represents the Kind field.
+        /// Stores the value associated with <c>Kind</c>.
         /// </summary>
         public ResourceKind Kind;
 
         /// <summary>
-        /// Represents the DynamicBuffer field.
+        /// Stores the value associated with <c>DynamicBuffer</c>.
         /// </summary>
         public bool DynamicBuffer;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ResourceBindingInfo" /> type.
         /// </summary>
-        /// <param name="slot">The value of slot.</param>
-        /// <param name="stages">The value of stages.</param>
-        /// <param name="kind">The value of kind.</param>
-        /// <param name="dynamicBuffer">The value of dynamicBuffer.</param>
+        /// <param name="slot">Specifies the value of <paramref name="slot" />.</param>
+        /// <param name="stages">Specifies the value of <paramref name="stages" />.</param>
+        /// <param name="kind">Specifies the value of <paramref name="kind" />.</param>
+        /// <param name="dynamicBuffer">Specifies the value of <paramref name="dynamicBuffer" />.</param>
         public ResourceBindingInfo(uint slot, ShaderStages stages, ResourceKind kind, bool dynamicBuffer) {
             this.Slot = slot;
             this.Stages = stages;

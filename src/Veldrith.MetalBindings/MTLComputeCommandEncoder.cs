@@ -4,12 +4,12 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the MTLComputeCommandEncoder struct.
+/// Defines the data layout and behavior of the MTLComputeCommandEncoder struct.
 /// </summary>
 public struct MTLComputeCommandEncoder {
 
     /// <summary>
-    /// Represents the NativePtr field.
+    /// Stores the value associated with <c>NativePtr</c>.
     /// </summary>
     public readonly IntPtr NativePtr;
 
@@ -19,136 +19,136 @@ public struct MTLComputeCommandEncoder {
     public bool IsNull => this.NativePtr == IntPtr.Zero;
 
     /// <summary>
-    /// Represents the sel_setComputePipelineState field.
+    /// Stores the value associated with <c>sel_setComputePipelineState</c>.
     /// </summary>
     private static readonly Selector sel_setComputePipelineState = "setComputePipelineState:";
 
     /// <summary>
-    /// Represents the sel_setBuffer field.
+    /// Stores the value associated with <c>sel_setBuffer</c>.
     /// </summary>
     private static readonly Selector sel_setBuffer = "setBuffer:offset:atIndex:";
 
     /// <summary>
-    /// Represents the sel_dispatchThreadgroups0 field.
+    /// Stores the value associated with <c>sel_dispatchThreadgroups0</c>.
     /// </summary>
     private static readonly Selector sel_dispatchThreadgroups0 = "dispatchThreadgroups:threadsPerThreadgroup:";
 
     /// <summary>
-    /// Represents the sel_dispatchThreadgroups1 field.
+    /// Stores the value associated with <c>sel_dispatchThreadgroups1</c>.
     /// </summary>
     private static readonly Selector sel_dispatchThreadgroups1 = "dispatchThreadgroupsWithIndirectBuffer:indirectBufferOffset:threadsPerThreadgroup:";
 
     /// <summary>
-    /// Represents the sel_endEncoding field.
+    /// Stores the value associated with <c>sel_endEncoding</c>.
     /// </summary>
     private static readonly Selector sel_endEncoding = "endEncoding";
 
     /// <summary>
-    /// Represents the sel_setTexture field.
+    /// Stores the value associated with <c>sel_setTexture</c>.
     /// </summary>
     private static readonly Selector sel_setTexture = "setTexture:atIndex:";
 
     /// <summary>
-    /// Represents the sel_setSamplerState field.
+    /// Stores the value associated with <c>sel_setSamplerState</c>.
     /// </summary>
     private static readonly Selector sel_setSamplerState = "setSamplerState:atIndex:";
 
     /// <summary>
-    /// Represents the sel_setBytes field.
+    /// Stores the value associated with <c>sel_setBytes</c>.
     /// </summary>
     private static readonly Selector sel_setBytes = "setBytes:length:atIndex:";
 
     /// <summary>
-    /// Performs the setComputePipelineState operation.
+    /// Executes the setComputePipelineState operation.
     /// </summary>
-    /// <param name="state">The value of state.</param>
+    /// <param name="state">Specifies the value of <paramref name="state" />.</param>
     public void setComputePipelineState(MTLComputePipelineState state) {
         objc_msgSend(this.NativePtr, sel_setComputePipelineState, state.NativePtr);
     }
 
     /// <summary>
-    /// Performs the setBuffer operation.
+    /// Executes the setBuffer operation.
     /// </summary>
-    /// <param name="buffer">The value of buffer.</param>
-    /// <param name="offset">The value of offset.</param>
-    /// <param name="index">The value of index.</param>
+    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
+    /// <param name="offset">Specifies the value of <paramref name="offset" />.</param>
+    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
     public void setBuffer(MTLBuffer buffer, UIntPtr offset, UIntPtr index) {
         objc_msgSend(this.NativePtr, sel_setBuffer, buffer.NativePtr, offset, index);
     }
 
     /// <summary>
-    /// Performs the setBytes operation.
+    /// Executes the setBytes operation.
     /// </summary>
-    /// <param name="bytes">The value of bytes.</param>
-    /// <param name="length">The value of length.</param>
-    /// <param name="index">The value of index.</param>
+    /// <param name="bytes">Specifies the value of <paramref name="bytes" />.</param>
+    /// <param name="length">Specifies the value of <paramref name="length" />.</param>
+    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
     public unsafe void setBytes(void* bytes, UIntPtr length, UIntPtr index) {
         objc_msgSend(this.NativePtr, sel_setBytes, bytes, length, index);
     }
 
     /// <summary>
-    /// Performs the dispatchThreadGroups operation.
+    /// Executes the dispatchThreadGroups operation.
     /// </summary>
-    /// <param name="threadgroupsPerGrid">The value of threadgroupsPerGrid.</param>
-    /// <param name="threadsPerThreadgroup">The value of threadsPerThreadgroup.</param>
+    /// <param name="threadgroupsPerGrid">Specifies the value of <paramref name="threadgroupsPerGrid" />.</param>
+    /// <param name="threadsPerThreadgroup">Specifies the value of <paramref name="threadsPerThreadgroup" />.</param>
     public void dispatchThreadGroups(MTLSize threadgroupsPerGrid, MTLSize threadsPerThreadgroup) {
         objc_msgSend(this.NativePtr, sel_dispatchThreadgroups0, threadgroupsPerGrid, threadsPerThreadgroup);
     }
 
     /// <summary>
-    /// Performs the dispatchThreadgroupsWithIndirectBuffer operation.
+    /// Executes the dispatchThreadgroupsWithIndirectBuffer operation.
     /// </summary>
-    /// <param name="indirectBuffer">The value of indirectBuffer.</param>
-    /// <param name="indirectBufferOffset">The value of indirectBufferOffset.</param>
-    /// <param name="threadsPerThreadgroup">The value of threadsPerThreadgroup.</param>
+    /// <param name="indirectBuffer">Specifies the value of <paramref name="indirectBuffer" />.</param>
+    /// <param name="indirectBufferOffset">Specifies the value of <paramref name="indirectBufferOffset" />.</param>
+    /// <param name="threadsPerThreadgroup">Specifies the value of <paramref name="threadsPerThreadgroup" />.</param>
     public void dispatchThreadgroupsWithIndirectBuffer(MTLBuffer indirectBuffer, UIntPtr indirectBufferOffset, MTLSize threadsPerThreadgroup) {
         objc_msgSend(this.NativePtr, sel_dispatchThreadgroups1, indirectBuffer.NativePtr, indirectBufferOffset, threadsPerThreadgroup);
     }
 
     /// <summary>
-    /// Performs the endEncoding operation.
+    /// Executes the endEncoding operation.
     /// </summary>
     public void endEncoding() {
         objc_msgSend(this.NativePtr, sel_endEncoding);
     }
 
     /// <summary>
-    /// Performs the setTexture operation.
+    /// Executes the setTexture operation.
     /// </summary>
-    /// <param name="texture">The value of texture.</param>
-    /// <param name="index">The value of index.</param>
+    /// <param name="texture">Specifies the value of <paramref name="texture" />.</param>
+    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
     public void setTexture(MTLTexture texture, UIntPtr index) {
         objc_msgSend(this.NativePtr, sel_setTexture, texture.NativePtr, index);
     }
 
     /// <summary>
-    /// Performs the setSamplerState operation.
+    /// Executes the setSamplerState operation.
     /// </summary>
-    /// <param name="sampler">The value of sampler.</param>
-    /// <param name="index">The value of index.</param>
+    /// <param name="sampler">Specifies the value of <paramref name="sampler" />.</param>
+    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
     public void setSamplerState(MTLSamplerState sampler, UIntPtr index) {
         objc_msgSend(this.NativePtr, sel_setSamplerState, sampler.NativePtr, index);
     }
 
     /// <summary>
-    /// Performs the pushDebugGroup operation.
+    /// Executes the pushDebugGroup operation.
     /// </summary>
-    /// <param name="string">The value of string.</param>
+    /// <param name="string">Specifies the value of <paramref name="string" />.</param>
     public void pushDebugGroup(NSString @string) {
         objc_msgSend(this.NativePtr, Selectors.pushDebugGroup, @string.NativePtr);
     }
 
     /// <summary>
-    /// Performs the popDebugGroup operation.
+    /// Executes the popDebugGroup operation.
     /// </summary>
     public void popDebugGroup() {
         objc_msgSend(this.NativePtr, Selectors.popDebugGroup);
     }
 
     /// <summary>
-    /// Performs the insertDebugSignpost operation.
+    /// Executes the insertDebugSignpost operation.
     /// </summary>
-    /// <param name="string">The value of string.</param>
+    /// <param name="string">Specifies the value of <paramref name="string" />.</param>
     public void insertDebugSignpost(NSString @string) {
         objc_msgSend(this.NativePtr, Selectors.insertDebugSignpost, @string.NativePtr);
     }

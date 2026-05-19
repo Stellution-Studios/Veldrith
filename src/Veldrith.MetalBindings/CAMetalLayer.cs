@@ -4,37 +4,37 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the CAMetalLayer struct.
+/// Defines the data layout and behavior of the CAMetalLayer struct.
 /// </summary>
 public struct CAMetalLayer {
 
     /// <summary>
-    /// Represents the NativePtr field.
+    /// Stores the value associated with <c>NativePtr</c>.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CAMetalLayer" /> type.
     /// </summary>
-    /// <param name="ptr">The value of ptr.</param>
+    /// <param name="ptr">Specifies the value of <paramref name="ptr" />.</param>
     public CAMetalLayer(IntPtr ptr) {
         this.NativePtr = ptr;
     }
 
     /// <summary>
-    /// Performs the New operation.
+    /// Creates and returns a new instance.
     /// </summary>
-    /// <returns>The result of the New operation.</returns>
+    /// <returns>Returns the result produced by the New operation.</returns>
     public static CAMetalLayer New() {
         return s_class.AllocInit<CAMetalLayer>();
     }
 
     /// <summary>
-    /// Performs the TryCast operation.
+    /// Executes the TryCast operation.
     /// </summary>
-    /// <param name="layerPointer">The value of layerPointer.</param>
-    /// <param name="metalLayer">The value of metalLayer.</param>
-    /// <returns>The result of the TryCast operation.</returns>
+    /// <param name="layerPointer">Specifies the value of <paramref name="layerPointer" />.</param>
+    /// <param name="metalLayer">Specifies the value of <paramref name="metalLayer" />.</param>
+    /// <returns>Returns the result produced by the TryCast operation.</returns>
     public static bool TryCast(IntPtr layerPointer, out CAMetalLayer metalLayer) {
         NSObject layerObject = new(layerPointer);
 
@@ -96,9 +96,9 @@ public struct CAMetalLayer {
     }
 
     /// <summary>
-    /// Performs the nextDrawable operation.
+    /// Executes the nextDrawable operation.
     /// </summary>
-    /// <returns>The result of the nextDrawable operation.</returns>
+    /// <returns>Returns the result produced by the nextDrawable operation.</returns>
     public CAMetalDrawable nextDrawable() {
         return objc_msgSend<CAMetalDrawable>(this.NativePtr, sel_nextDrawable);
     }
@@ -112,84 +112,84 @@ public struct CAMetalLayer {
     }
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>name</c>.
     /// </summary>
-    /// <param name="CAMetalLayer">The value of CAMetalLayer.</param>
-    /// <returns>The result of the new operation.</returns>
+    /// <param name="CAMetalLayer">Specifies the value of <paramref name="CAMetalLayer" />.</param>
+    /// <returns>Returns the result produced by the new operation.</returns>
     private static readonly ObjCClass s_class = new(nameof(CAMetalLayer));
 
     /// <summary>
-    /// Represents the sel_device field.
+    /// Stores the value associated with <c>sel_device</c>.
     /// </summary>
     private static readonly Selector sel_device = "device";
 
     /// <summary>
-    /// Represents the sel_setDevice field.
+    /// Stores the value associated with <c>sel_setDevice</c>.
     /// </summary>
     private static readonly Selector sel_setDevice = "setDevice:";
 
     /// <summary>
-    /// Represents the sel_pixelFormat field.
+    /// Stores the value associated with <c>sel_pixelFormat</c>.
     /// </summary>
     private static readonly Selector sel_pixelFormat = "pixelFormat";
 
     /// <summary>
-    /// Represents the sel_setPixelFormat field.
+    /// Stores the value associated with <c>sel_setPixelFormat</c>.
     /// </summary>
     private static readonly Selector sel_setPixelFormat = "setPixelFormat:";
 
     /// <summary>
-    /// Represents the sel_framebufferOnly field.
+    /// Stores the value associated with <c>sel_framebufferOnly</c>.
     /// </summary>
     private static readonly Selector sel_framebufferOnly = "framebufferOnly";
 
     /// <summary>
-    /// Represents the sel_setFramebufferOnly field.
+    /// Stores the value associated with <c>sel_setFramebufferOnly</c>.
     /// </summary>
     private static readonly Selector sel_setFramebufferOnly = "setFramebufferOnly:";
 
     /// <summary>
-    /// Represents the sel_drawableSize field.
+    /// Stores the value associated with <c>sel_drawableSize</c>.
     /// </summary>
     private static readonly Selector sel_drawableSize = "drawableSize";
 
     /// <summary>
-    /// Represents the sel_setDrawableSize field.
+    /// Stores the value associated with <c>sel_setDrawableSize</c>.
     /// </summary>
     private static readonly Selector sel_setDrawableSize = "setDrawableSize:";
 
     /// <summary>
-    /// Represents the sel_frame field.
+    /// Stores the value associated with <c>sel_frame</c>.
     /// </summary>
     private static readonly Selector sel_frame = "frame";
 
     /// <summary>
-    /// Represents the sel_setFrame field.
+    /// Stores the value associated with <c>sel_setFrame</c>.
     /// </summary>
     private static readonly Selector sel_setFrame = "setFrame:";
 
     /// <summary>
-    /// Represents the sel_isOpaque field.
+    /// Stores the value associated with <c>sel_isOpaque</c>.
     /// </summary>
     private static readonly Selector sel_isOpaque = "isOpaque";
 
     /// <summary>
-    /// Represents the sel_setOpaque field.
+    /// Stores the value associated with <c>sel_setOpaque</c>.
     /// </summary>
     private static readonly Selector sel_setOpaque = "setOpaque:";
 
     /// <summary>
-    /// Represents the sel_displaySyncEnabled field.
+    /// Stores the value associated with <c>sel_displaySyncEnabled</c>.
     /// </summary>
     private static readonly Selector sel_displaySyncEnabled = "displaySyncEnabled";
 
     /// <summary>
-    /// Represents the sel_setDisplaySyncEnabled field.
+    /// Stores the value associated with <c>sel_setDisplaySyncEnabled</c>.
     /// </summary>
     private static readonly Selector sel_setDisplaySyncEnabled = "setDisplaySyncEnabled:";
 
     /// <summary>
-    /// Represents the sel_nextDrawable field.
+    /// Stores the value associated with <c>sel_nextDrawable</c>.
     /// </summary>
     private static readonly Selector sel_nextDrawable = "nextDrawable";
 }

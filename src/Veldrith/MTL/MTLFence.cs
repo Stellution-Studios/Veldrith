@@ -4,19 +4,19 @@ using System.Threading;
 namespace Veldrith.MTL;
 
 /// <summary>
-/// Represents the MtlFence class.
+/// Defines the behavior and responsibilities of the MtlFence class.
 /// </summary>
 internal class MtlFence : Fence {
 
     /// <summary>
-    /// Represents the _disposed field.
+    /// Stores the value associated with <c>_disposed</c>.
     /// </summary>
     private bool _disposed;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MtlFence" /> type.
     /// </summary>
-    /// <param name="signaled">The value of signaled.</param>
+    /// <param name="signaled">Specifies the value of <paramref name="signaled" />.</param>
     public MtlFence(bool signaled) {
         this.ResetEvent = new ManualResetEvent(signaled);
     }
@@ -27,9 +27,9 @@ internal class MtlFence : Fence {
     public ManualResetEvent ResetEvent { get; }
 
     /// <summary>
-    /// Performs the WaitOne operation.
+    /// Executes the WaitOne operation.
     /// </summary>
-    /// <returns>The result of the WaitOne operation.</returns>
+    /// <returns>Returns the result produced by the WaitOne operation.</returns>
     public override bool Signaled => this.ResetEvent.WaitOne(0);
 
     /// <summary>
@@ -45,7 +45,7 @@ internal class MtlFence : Fence {
     #region Disposal
 
     /// <summary>
-    /// Performs the Dispose operation.
+    /// Executes the Dispose operation.
     /// </summary>
     public override void Dispose() {
         if (!this._disposed) {
@@ -57,24 +57,24 @@ internal class MtlFence : Fence {
     #endregion
 
     /// <summary>
-    /// Performs the Set operation.
+    /// Executes the Set operation.
     /// </summary>
     public void Set() {
         this.ResetEvent.Set();
     }
 
     /// <summary>
-    /// Performs the Reset operation.
+    /// Executes the Reset operation.
     /// </summary>
     public override void Reset() {
         this.ResetEvent.Reset();
     }
 
     /// <summary>
-    /// Performs the Wait operation.
+    /// Executes the Wait operation.
     /// </summary>
-    /// <param name="nanosecondTimeout">The value of nanosecondTimeout.</param>
-    /// <returns>The result of the Wait operation.</returns>
+    /// <param name="nanosecondTimeout">Specifies the value of <paramref name="nanosecondTimeout" />.</param>
+    /// <returns>Returns the result produced by the Wait operation.</returns>
     internal bool Wait(ulong nanosecondTimeout) {
         ulong timeout = Math.Min(int.MaxValue, nanosecondTimeout / 1_000_000);
         return this.ResetEvent.WaitOne((int)timeout);

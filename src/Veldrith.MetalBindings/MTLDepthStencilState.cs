@@ -3,12 +3,12 @@ using System;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the MTLDepthStencilState struct.
+/// Defines the data layout and behavior of the MTLDepthStencilState struct.
 /// </summary>
 public struct MTLDepthStencilState {
 
     /// <summary>
-    /// Represents the NativePtr field.
+    /// Stores the value associated with <c>NativePtr</c>.
     /// </summary>
     public readonly IntPtr NativePtr;
 }

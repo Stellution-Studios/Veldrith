@@ -55,9 +55,9 @@ public struct DepthStencilStateDescription : IEquatable<DepthStencilStateDescrip
     /// <summary>
     /// Initializes a new instance of the <see cref="DepthStencilStateDescription" /> type.
     /// </summary>
-    /// <param name="depthTestEnabled">The value of depthTestEnabled.</param>
-    /// <param name="depthWriteEnabled">The value of depthWriteEnabled.</param>
-    /// <param name="comparisonKind">The value of comparisonKind.</param>
+    /// <param name="depthTestEnabled">Specifies the value of <paramref name="depthTestEnabled" />.</param>
+    /// <param name="depthWriteEnabled">Specifies the value of <paramref name="depthWriteEnabled" />.</param>
+    /// <param name="comparisonKind">Specifies the value of <paramref name="comparisonKind" />.</param>
     public DepthStencilStateDescription(bool depthTestEnabled, bool depthWriteEnabled, ComparisonKind comparisonKind) {
         this.DepthTestEnabled = depthTestEnabled;
         this.DepthWriteEnabled = depthWriteEnabled;
@@ -74,15 +74,15 @@ public struct DepthStencilStateDescription : IEquatable<DepthStencilStateDescrip
     /// <summary>
     /// Initializes a new instance of the <see cref="DepthStencilStateDescription" /> type.
     /// </summary>
-    /// <param name="depthTestEnabled">The value of depthTestEnabled.</param>
-    /// <param name="depthWriteEnabled">The value of depthWriteEnabled.</param>
-    /// <param name="comparisonKind">The value of comparisonKind.</param>
-    /// <param name="stencilTestEnabled">The value of stencilTestEnabled.</param>
-    /// <param name="stencilFront">The value of stencilFront.</param>
-    /// <param name="stencilBack">The value of stencilBack.</param>
-    /// <param name="stencilReadMask">The value of stencilReadMask.</param>
-    /// <param name="stencilWriteMask">The value of stencilWriteMask.</param>
-    /// <param name="stencilReference">The value of stencilReference.</param>
+    /// <param name="depthTestEnabled">Specifies the value of <paramref name="depthTestEnabled" />.</param>
+    /// <param name="depthWriteEnabled">Specifies the value of <paramref name="depthWriteEnabled" />.</param>
+    /// <param name="comparisonKind">Specifies the value of <paramref name="comparisonKind" />.</param>
+    /// <param name="stencilTestEnabled">Specifies the value of <paramref name="stencilTestEnabled" />.</param>
+    /// <param name="stencilFront">Specifies the value of <paramref name="stencilFront" />.</param>
+    /// <param name="stencilBack">Specifies the value of <paramref name="stencilBack" />.</param>
+    /// <param name="stencilReadMask">Specifies the value of <paramref name="stencilReadMask" />.</param>
+    /// <param name="stencilWriteMask">Specifies the value of <paramref name="stencilWriteMask" />.</param>
+    /// <param name="stencilReference">Specifies the value of <paramref name="stencilReference" />.</param>
     public DepthStencilStateDescription(bool depthTestEnabled, bool depthWriteEnabled, ComparisonKind comparisonKind, bool stencilTestEnabled, StencilBehaviorDescription stencilFront, StencilBehaviorDescription stencilBack, byte stencilReadMask, byte stencilWriteMask, uint stencilReference) {
         this.DepthTestEnabled = depthTestEnabled;
         this.DepthWriteEnabled = depthWriteEnabled;
@@ -97,9 +97,8 @@ public struct DepthStencilStateDescription : IEquatable<DepthStencilStateDescrip
     }
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>DEPTH_ONLY_LESS_EQUAL</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly DepthStencilStateDescription DEPTH_ONLY_LESS_EQUAL = new() {
         DepthTestEnabled = true,
         DepthWriteEnabled = true,
@@ -107,9 +106,8 @@ public struct DepthStencilStateDescription : IEquatable<DepthStencilStateDescrip
     };
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>DEPTH_ONLY_LESS_EQUAL_READ</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly DepthStencilStateDescription DEPTH_ONLY_LESS_EQUAL_READ = new() {
         DepthTestEnabled = true,
         DepthWriteEnabled = false,
@@ -117,9 +115,8 @@ public struct DepthStencilStateDescription : IEquatable<DepthStencilStateDescrip
     };
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>DEPTH_ONLY_GREATER_EQUAL</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly DepthStencilStateDescription DEPTH_ONLY_GREATER_EQUAL = new() {
         DepthTestEnabled = true,
         DepthWriteEnabled = true,
@@ -127,9 +124,8 @@ public struct DepthStencilStateDescription : IEquatable<DepthStencilStateDescrip
     };
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>DEPTH_ONLY_GREATER_EQUAL_READ</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly DepthStencilStateDescription DEPTH_ONLY_GREATER_EQUAL_READ = new() {
         DepthTestEnabled = true,
         DepthWriteEnabled = false,
@@ -137,9 +133,8 @@ public struct DepthStencilStateDescription : IEquatable<DepthStencilStateDescrip
     };
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>DISABLED</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly DepthStencilStateDescription DISABLED = new() {
         DepthTestEnabled = false,
         DepthWriteEnabled = false,
@@ -147,10 +142,10 @@ public struct DepthStencilStateDescription : IEquatable<DepthStencilStateDescrip
     };
 
     /// <summary>
-    /// Performs the Equals operation.
+    /// Executes the Equals operation.
     /// </summary>
-    /// <param name="other">The value of other.</param>
-    /// <returns>The result of the Equals operation.</returns>
+    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
+    /// <returns>Returns the result produced by the Equals operation.</returns>
     public bool Equals(DepthStencilStateDescription other) {
         return this.DepthTestEnabled.Equals(other.DepthTestEnabled)
                && this.DepthWriteEnabled.Equals(other.DepthWriteEnabled)
@@ -164,9 +159,9 @@ public struct DepthStencilStateDescription : IEquatable<DepthStencilStateDescrip
     }
 
     /// <summary>
-    /// Performs the GetHashCode operation.
+    /// Executes the GetHashCode operation.
     /// </summary>
-    /// <returns>The result of the GetHashCode operation.</returns>
+    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(this.DepthTestEnabled.GetHashCode(), this.DepthWriteEnabled.GetHashCode(), (int)this.DepthComparison, this.StencilTestEnabled.GetHashCode(), this.StencilFront.GetHashCode(), this.StencilBack.GetHashCode(), this.StencilReadMask.GetHashCode(), this.StencilWriteMask.GetHashCode(), this.StencilReference.GetHashCode());
     }

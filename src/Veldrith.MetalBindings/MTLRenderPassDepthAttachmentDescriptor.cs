@@ -4,19 +4,19 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the MTLRenderPassDepthAttachmentDescriptor struct.
+/// Defines the data layout and behavior of the MTLRenderPassDepthAttachmentDescriptor struct.
 /// </summary>
 public struct MTLRenderPassDepthAttachmentDescriptor {
 
     /// <summary>
-    /// Represents the NativePtr field.
+    /// Stores the value associated with <c>NativePtr</c>.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MTLRenderPassDepthAttachmentDescriptor" /> type.
     /// </summary>
-    /// <param name="ptr">The value of ptr.</param>
+    /// <param name="ptr">Specifies the value of <paramref name="ptr" />.</param>
     public MTLRenderPassDepthAttachmentDescriptor(IntPtr ptr) {
         this.NativePtr = ptr;
     }
@@ -70,12 +70,12 @@ public struct MTLRenderPassDepthAttachmentDescriptor {
     }
 
     /// <summary>
-    /// Represents the sel_clearDepth field.
+    /// Stores the value associated with <c>sel_clearDepth</c>.
     /// </summary>
     private static readonly Selector sel_clearDepth = "clearDepth";
 
     /// <summary>
-    /// Represents the sel_setClearDepth field.
+    /// Stores the value associated with <c>sel_setClearDepth</c>.
     /// </summary>
     private static readonly Selector sel_setClearDepth = "setClearDepth:";
 }

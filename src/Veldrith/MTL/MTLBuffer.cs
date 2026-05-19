@@ -3,20 +3,20 @@ using Veldrith.MetalBindings;
 namespace Veldrith.MTL;
 
 /// <summary>
-/// Represents the MtlBuffer class.
+/// Defines the behavior and responsibilities of the MtlBuffer class.
 /// </summary>
 internal class MtlBuffer : DeviceBuffer {
 
     /// <summary>
-    /// Represents the _disposed field.
+    /// Stores the value associated with <c>_disposed</c>.
     /// </summary>
     private bool _disposed;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MtlBuffer" /> type.
     /// </summary>
-    /// <param name="bd">The value of bd.</param>
-    /// <param name="gd">The value of gd.</param>
+    /// <param name="bd">Specifies the value of <paramref name="bd" />.</param>
+    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
     public MtlBuffer(ref BufferDescription bd, MtlGraphicsDevice gd) {
         this.SizeInBytes = bd.SizeInBytes;
         uint roundFactor = (4 - this.SizeInBytes % 4) % 4;
@@ -81,7 +81,7 @@ internal class MtlBuffer : DeviceBuffer {
     #region Disposal
 
     /// <summary>
-    /// Performs the Dispose operation.
+    /// Executes the Dispose operation.
     /// </summary>
     public override void Dispose() {
         if (!this._disposed) {

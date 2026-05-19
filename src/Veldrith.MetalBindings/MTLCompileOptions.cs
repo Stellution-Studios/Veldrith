@@ -7,28 +7,28 @@ namespace Veldrith.MetalBindings;
 [StructLayout(LayoutKind.Sequential)]
 
 /// <summary>
-/// Represents the MTLCompileOptions struct.
+/// Defines the data layout and behavior of the MTLCompileOptions struct.
 /// </summary>
 public struct MTLCompileOptions {
 
     /// <summary>
-    /// Represents the NativePtr field.
+    /// Stores the value associated with <c>NativePtr</c>.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Performs the operator IntPtr operation.
+    /// Executes the operator IntPtr operation.
     /// </summary>
-    /// <param name="mco">The value of mco.</param>
-    /// <returns>The result of the operator IntPtr operation.</returns>
+    /// <param name="mco">Specifies the value of <paramref name="mco" />.</param>
+    /// <returns>Returns the result produced by the operator IntPtr operation.</returns>
     public static implicit operator IntPtr(MTLCompileOptions mco) {
         return mco.NativePtr;
     }
 
     /// <summary>
-    /// Performs the New operation.
+    /// Creates and returns a new instance.
     /// </summary>
-    /// <returns>The result of the New operation.</returns>
+    /// <returns>Returns the result produced by the New operation.</returns>
     public static MTLCompileOptions New() {
         return s_class.AllocInit<MTLCompileOptions>();
     }
@@ -50,29 +50,29 @@ public struct MTLCompileOptions {
     }
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>name</c>.
     /// </summary>
-    /// <param name="MTLCompileOptions">The value of MTLCompileOptions.</param>
-    /// <returns>The result of the new operation.</returns>
+    /// <param name="MTLCompileOptions">Specifies the value of <paramref name="MTLCompileOptions" />.</param>
+    /// <returns>Returns the result produced by the new operation.</returns>
     private static readonly ObjCClass s_class = new(nameof(MTLCompileOptions));
 
     /// <summary>
-    /// Represents the sel_fastMathEnabled field.
+    /// Stores the value associated with <c>sel_fastMathEnabled</c>.
     /// </summary>
     private static readonly Selector sel_fastMathEnabled = "fastMathEnabled";
 
     /// <summary>
-    /// Represents the sel_setFastMathEnabled field.
+    /// Stores the value associated with <c>sel_setFastMathEnabled</c>.
     /// </summary>
     private static readonly Selector sel_setFastMathEnabled = "setFastMathEnabled:";
 
     /// <summary>
-    /// Represents the sel_languageVersion field.
+    /// Stores the value associated with <c>sel_languageVersion</c>.
     /// </summary>
     private static readonly Selector sel_languageVersion = "languageVersion";
 
     /// <summary>
-    /// Represents the sel_setLanguageVersion field.
+    /// Stores the value associated with <c>sel_setLanguageVersion</c>.
     /// </summary>
     private static readonly Selector sel_setLanguageVersion = "setLanguageVersion:";
 }

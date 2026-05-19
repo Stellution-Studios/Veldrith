@@ -6,47 +6,47 @@ using System.Runtime.InteropServices;
 namespace Veldrith;
 
 /// <summary>
-/// Represents the CommandList class.
+/// Defines the behavior and responsibilities of the CommandList class.
 /// </summary>
 public abstract class CommandList : IDeviceResource, IDisposable {
 
     /// <summary>
-    /// Represents the _structuredBufferAlignment field.
+    /// Stores the value associated with <c>_structuredBufferAlignment</c>.
     /// </summary>
     private readonly uint _structuredBufferAlignment;
 
     /// <summary>
-    /// Represents the _uniformBufferAlignment field.
+    /// Stores the value associated with <c>_uniformBufferAlignment</c>.
     /// </summary>
     private readonly uint _uniformBufferAlignment;
 
     /// <summary>
-    /// Represents the features field.
+    /// Stores the value associated with <c>features</c>.
     /// </summary>
     private readonly GraphicsDeviceFeatures features;
 
     /// <summary>
-    /// Represents the ComputePipeline field.
+    /// Stores the value associated with <c>ComputePipeline</c>.
     /// </summary>
     private protected Pipeline ComputePipeline;
 
     /// <summary>
-    /// Represents the Framebuffer field.
+    /// Stores the value associated with <c>Framebuffer</c>.
     /// </summary>
     private protected Framebuffer Framebuffer;
 
     /// <summary>
-    /// Represents the GraphicsPipeline field.
+    /// Stores the value associated with <c>GraphicsPipeline</c>.
     /// </summary>
     private protected Pipeline GraphicsPipeline;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CommandList" /> type.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <param name="features">The value of features.</param>
-    /// <param name="uniformAlignment">The value of uniformAlignment.</param>
-    /// <param name="structuredAlignment">The value of structuredAlignment.</param>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <param name="features">Specifies the value of <paramref name="features" />.</param>
+    /// <param name="uniformAlignment">Specifies the value of <paramref name="uniformAlignment" />.</param>
+    /// <param name="structuredAlignment">Specifies the value of <paramref name="structuredAlignment" />.</param>
     internal CommandList(ref CommandListDescription description, GraphicsDeviceFeatures features, uint uniformAlignment, uint structuredAlignment) {
         this.features = features;
         this._uniformBufferAlignment = uniformAlignment;
@@ -67,26 +67,26 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     #region Disposal
 
     /// <summary>
-    /// Performs the Dispose operation.
+    /// Executes the Dispose operation.
     /// </summary>
     public abstract void Dispose();
 
     #endregion
 
     /// <summary>
-    /// Performs the Begin operation.
+    /// Executes the Begin operation.
     /// </summary>
     public abstract void Begin();
 
     /// <summary>
-    /// Performs the End operation.
+    /// Executes the End operation.
     /// </summary>
     public abstract void End();
 
     /// <summary>
-    /// Performs the SetPipeline operation.
+    /// Executes the SetPipeline operation.
     /// </summary>
-    /// <param name="pipeline">The value of pipeline.</param>
+    /// <param name="pipeline">Specifies the value of <paramref name="pipeline" />.</param>
     public void SetPipeline(Pipeline pipeline) {
         if (pipeline.IsComputePipeline) {
             this.ComputePipeline = pipeline;
@@ -99,20 +99,20 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    /// Performs the SetVertexBuffer operation.
+    /// Executes the SetVertexBuffer operation.
     /// </summary>
-    /// <param name="index">The value of index.</param>
-    /// <param name="buffer">The value of buffer.</param>
+    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
+    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
     public void SetVertexBuffer(uint index, DeviceBuffer buffer) {
         this.SetVertexBuffer(index, buffer, 0);
     }
 
     /// <summary>
-    /// Performs the SetVertexBuffer operation.
+    /// Executes the SetVertexBuffer operation.
     /// </summary>
-    /// <param name="index">The value of index.</param>
-    /// <param name="buffer">The value of buffer.</param>
-    /// <param name="offset">The value of offset.</param>
+    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
+    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
+    /// <param name="offset">Specifies the value of <paramref name="offset" />.</param>
     public void SetVertexBuffer(uint index, DeviceBuffer buffer, uint offset) {
 #if VALIDATE_USAGE
         if ((buffer.Usage & BufferUsage.VertexBuffer) == 0) {
@@ -123,20 +123,20 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    /// Performs the SetIndexBuffer operation.
+    /// Executes the SetIndexBuffer operation.
     /// </summary>
-    /// <param name="buffer">The value of buffer.</param>
-    /// <param name="format">The value of format.</param>
+    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
+    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
     public void SetIndexBuffer(DeviceBuffer buffer, IndexFormat format) {
         this.SetIndexBuffer(buffer, format, 0);
     }
 
     /// <summary>
-    /// Performs the SetIndexBuffer operation.
+    /// Executes the SetIndexBuffer operation.
     /// </summary>
-    /// <param name="buffer">The value of buffer.</param>
-    /// <param name="format">The value of format.</param>
-    /// <param name="offset">The value of offset.</param>
+    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
+    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
+    /// <param name="offset">Specifies the value of <paramref name="offset" />.</param>
     public void SetIndexBuffer(DeviceBuffer buffer, IndexFormat format, uint offset) {
 #if VALIDATE_USAGE
         if ((buffer.Usage & BufferUsage.IndexBuffer) == 0) {
@@ -150,31 +150,31 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    /// Performs the SetGraphicsResourceSet operation.
+    /// Executes the SetGraphicsResourceSet operation.
     /// </summary>
-    /// <param name="slot">The value of slot.</param>
-    /// <param name="rs">The value of rs.</param>
+    /// <param name="slot">Specifies the value of <paramref name="slot" />.</param>
+    /// <param name="rs">Specifies the value of <paramref name="rs" />.</param>
     public unsafe void SetGraphicsResourceSet(uint slot, ResourceSet rs) {
         this.SetGraphicsResourceSet(slot, rs, 0, ref Unsafe.AsRef<uint>(null));
     }
 
     /// <summary>
-    /// Performs the SetGraphicsResourceSet operation.
+    /// Executes the SetGraphicsResourceSet operation.
     /// </summary>
-    /// <param name="slot">The value of slot.</param>
-    /// <param name="rs">The value of rs.</param>
-    /// <param name="dynamicOffsets">The value of dynamicOffsets.</param>
+    /// <param name="slot">Specifies the value of <paramref name="slot" />.</param>
+    /// <param name="rs">Specifies the value of <paramref name="rs" />.</param>
+    /// <param name="dynamicOffsets">Specifies the value of <paramref name="dynamicOffsets" />.</param>
     public void SetGraphicsResourceSet(uint slot, ResourceSet rs, uint[] dynamicOffsets) {
         this.SetGraphicsResourceSet(slot, rs, (uint)dynamicOffsets.Length, ref dynamicOffsets[0]);
     }
 
     /// <summary>
-    /// Performs the SetGraphicsResourceSet operation.
+    /// Executes the SetGraphicsResourceSet operation.
     /// </summary>
-    /// <param name="slot">The value of slot.</param>
-    /// <param name="rs">The value of rs.</param>
-    /// <param name="dynamicOffsetsCount">The value of dynamicOffsetsCount.</param>
-    /// <param name="dynamicOffsets">The value of dynamicOffsets.</param>
+    /// <param name="slot">Specifies the value of <paramref name="slot" />.</param>
+    /// <param name="rs">Specifies the value of <paramref name="rs" />.</param>
+    /// <param name="dynamicOffsetsCount">Specifies the value of <paramref name="dynamicOffsetsCount" />.</param>
+    /// <param name="dynamicOffsets">Specifies the value of <paramref name="dynamicOffsets" />.</param>
     public void SetGraphicsResourceSet(uint slot, ResourceSet rs, uint dynamicOffsetsCount, ref uint dynamicOffsets) {
 #if VALIDATE_USAGE
         if (this.GraphicsPipeline == null) {
@@ -231,31 +231,31 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    /// Performs the SetComputeResourceSet operation.
+    /// Executes the SetComputeResourceSet operation.
     /// </summary>
-    /// <param name="slot">The value of slot.</param>
-    /// <param name="rs">The value of rs.</param>
+    /// <param name="slot">Specifies the value of <paramref name="slot" />.</param>
+    /// <param name="rs">Specifies the value of <paramref name="rs" />.</param>
     public unsafe void SetComputeResourceSet(uint slot, ResourceSet rs) {
         this.SetComputeResourceSet(slot, rs, 0, ref Unsafe.AsRef<uint>(null));
     }
 
     /// <summary>
-    /// Performs the SetComputeResourceSet operation.
+    /// Executes the SetComputeResourceSet operation.
     /// </summary>
-    /// <param name="slot">The value of slot.</param>
-    /// <param name="rs">The value of rs.</param>
-    /// <param name="dynamicOffsets">The value of dynamicOffsets.</param>
+    /// <param name="slot">Specifies the value of <paramref name="slot" />.</param>
+    /// <param name="rs">Specifies the value of <paramref name="rs" />.</param>
+    /// <param name="dynamicOffsets">Specifies the value of <paramref name="dynamicOffsets" />.</param>
     public void SetComputeResourceSet(uint slot, ResourceSet rs, uint[] dynamicOffsets) {
         this.SetComputeResourceSet(slot, rs, (uint)dynamicOffsets.Length, ref dynamicOffsets[0]);
     }
 
     /// <summary>
-    /// Performs the SetComputeResourceSet operation.
+    /// Executes the SetComputeResourceSet operation.
     /// </summary>
-    /// <param name="slot">The value of slot.</param>
-    /// <param name="rs">The value of rs.</param>
-    /// <param name="dynamicOffsetsCount">The value of dynamicOffsetsCount.</param>
-    /// <param name="dynamicOffsets">The value of dynamicOffsets.</param>
+    /// <param name="slot">Specifies the value of <paramref name="slot" />.</param>
+    /// <param name="rs">Specifies the value of <paramref name="rs" />.</param>
+    /// <param name="dynamicOffsetsCount">Specifies the value of <paramref name="dynamicOffsetsCount" />.</param>
+    /// <param name="dynamicOffsets">Specifies the value of <paramref name="dynamicOffsets" />.</param>
     public void SetComputeResourceSet(uint slot, ResourceSet rs, uint dynamicOffsetsCount, ref uint dynamicOffsets) {
 #if VALIDATE_USAGE
         if (this.ComputePipeline == null) {
@@ -289,9 +289,9 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    /// Performs the SetFramebuffer operation.
+    /// Executes the SetFramebuffer operation.
     /// </summary>
-    /// <param name="fb">The value of fb.</param>
+    /// <param name="fb">Specifies the value of <paramref name="fb" />.</param>
     public void SetFramebuffer(Framebuffer fb) {
         if (this.Framebuffer != fb) {
             this.Framebuffer = fb;
@@ -302,10 +302,10 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    /// Performs the ClearColorTarget operation.
+    /// Executes the ClearColorTarget operation.
     /// </summary>
-    /// <param name="index">The value of index.</param>
-    /// <param name="clearColor">The value of clearColor.</param>
+    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
+    /// <param name="clearColor">Specifies the value of <paramref name="clearColor" />.</param>
     public void ClearColorTarget(uint index, RgbaFloat clearColor) {
 #if VALIDATE_USAGE
         if (this.Framebuffer == null) {
@@ -320,18 +320,18 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    /// Performs the ClearDepthStencil operation.
+    /// Executes the ClearDepthStencil operation.
     /// </summary>
-    /// <param name="depth">The value of depth.</param>
+    /// <param name="depth">Specifies the value of <paramref name="depth" />.</param>
     public void ClearDepthStencil(float depth) {
         this.ClearDepthStencil(depth, 0);
     }
 
     /// <summary>
-    /// Performs the ClearDepthStencil operation.
+    /// Executes the ClearDepthStencil operation.
     /// </summary>
-    /// <param name="depth">The value of depth.</param>
-    /// <param name="stencil">The value of stencil.</param>
+    /// <param name="depth">Specifies the value of <paramref name="depth" />.</param>
+    /// <param name="stencil">Specifies the value of <paramref name="stencil" />.</param>
     public void ClearDepthStencil(float depth, byte stencil) {
 #if VALIDATE_USAGE
         if (this.Framebuffer == null) {
@@ -347,7 +347,7 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    /// Performs the SetFullViewports operation.
+    /// Executes the SetFullViewports operation.
     /// </summary>
     public void SetFullViewports() {
         this.SetViewport(0, new Viewport(0, 0, this.Framebuffer.Width, this.Framebuffer.Height, 0, 1));
@@ -358,31 +358,31 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    /// Performs the SetFullViewport operation.
+    /// Executes the SetFullViewport operation.
     /// </summary>
-    /// <param name="index">The value of index.</param>
+    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
     public void SetFullViewport(uint index) {
         this.SetViewport(index, new Viewport(0, 0, this.Framebuffer.Width, this.Framebuffer.Height, 0, 1));
     }
 
     /// <summary>
-    /// Performs the SetViewport operation.
+    /// Executes the SetViewport operation.
     /// </summary>
-    /// <param name="index">The value of index.</param>
-    /// <param name="viewport">The value of viewport.</param>
+    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
+    /// <param name="viewport">Specifies the value of <paramref name="viewport" />.</param>
     public void SetViewport(uint index, Viewport viewport) {
         this.SetViewport(index, ref viewport);
     }
 
     /// <summary>
-    /// Performs the SetViewport operation.
+    /// Executes the SetViewport operation.
     /// </summary>
-    /// <param name="index">The value of index.</param>
-    /// <param name="viewport">The value of viewport.</param>
+    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
+    /// <param name="viewport">Specifies the value of <paramref name="viewport" />.</param>
     public abstract void SetViewport(uint index, ref Viewport viewport);
 
     /// <summary>
-    /// Performs the SetFullScissorRects operation.
+    /// Executes the SetFullScissorRects operation.
     /// </summary>
     public void SetFullScissorRects() {
         this.SetScissorRect(0, 0, 0, this.Framebuffer.Width, this.Framebuffer.Height);
@@ -393,59 +393,59 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    /// Performs the SetFullScissorRect operation.
+    /// Executes the SetFullScissorRect operation.
     /// </summary>
-    /// <param name="index">The value of index.</param>
+    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
     public void SetFullScissorRect(uint index) {
         this.SetScissorRect(index, 0, 0, this.Framebuffer.Width, this.Framebuffer.Height);
     }
 
     /// <summary>
-    /// Performs the SetScissorRect operation.
+    /// Executes the SetScissorRect operation.
     /// </summary>
-    /// <param name="index">The value of index.</param>
-    /// <param name="x">The value of x.</param>
-    /// <param name="y">The value of y.</param>
-    /// <param name="width">The value of width.</param>
-    /// <param name="height">The value of height.</param>
+    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
+    /// <param name="x">Specifies the value of <paramref name="x" />.</param>
+    /// <param name="y">Specifies the value of <paramref name="y" />.</param>
+    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
+    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
     public abstract void SetScissorRect(uint index, uint x, uint y, uint width, uint height);
 
     /// <summary>
-    /// Performs the Draw operation.
+    /// Executes the Draw operation.
     /// </summary>
-    /// <param name="vertexCount">The value of vertexCount.</param>
+    /// <param name="vertexCount">Specifies the value of <paramref name="vertexCount" />.</param>
     public void Draw(uint vertexCount) {
         this.Draw(vertexCount, 1, 0, 0);
     }
 
     /// <summary>
-    /// Performs the Draw operation.
+    /// Executes the Draw operation.
     /// </summary>
-    /// <param name="vertexCount">The value of vertexCount.</param>
-    /// <param name="instanceCount">The value of instanceCount.</param>
-    /// <param name="vertexStart">The value of vertexStart.</param>
-    /// <param name="instanceStart">The value of instanceStart.</param>
+    /// <param name="vertexCount">Specifies the value of <paramref name="vertexCount" />.</param>
+    /// <param name="instanceCount">Specifies the value of <paramref name="instanceCount" />.</param>
+    /// <param name="vertexStart">Specifies the value of <paramref name="vertexStart" />.</param>
+    /// <param name="instanceStart">Specifies the value of <paramref name="instanceStart" />.</param>
     public void Draw(uint vertexCount, uint instanceCount, uint vertexStart, uint instanceStart) {
         this.preDrawValidation();
         this.DrawCore(vertexCount, instanceCount, vertexStart, instanceStart);
     }
 
     /// <summary>
-    /// Performs the DrawIndexed operation.
+    /// Executes the DrawIndexed operation.
     /// </summary>
-    /// <param name="indexCount">The value of indexCount.</param>
+    /// <param name="indexCount">Specifies the value of <paramref name="indexCount" />.</param>
     public void DrawIndexed(uint indexCount) {
         this.DrawIndexed(indexCount, 1, 0, 0, 0);
     }
 
     /// <summary>
-    /// Performs the DrawIndexed operation.
+    /// Executes the DrawIndexed operation.
     /// </summary>
-    /// <param name="indexCount">The value of indexCount.</param>
-    /// <param name="instanceCount">The value of instanceCount.</param>
-    /// <param name="indexStart">The value of indexStart.</param>
-    /// <param name="vertexOffset">The value of vertexOffset.</param>
-    /// <param name="instanceStart">The value of instanceStart.</param>
+    /// <param name="indexCount">Specifies the value of <paramref name="indexCount" />.</param>
+    /// <param name="instanceCount">Specifies the value of <paramref name="instanceCount" />.</param>
+    /// <param name="indexStart">Specifies the value of <paramref name="indexStart" />.</param>
+    /// <param name="vertexOffset">Specifies the value of <paramref name="vertexOffset" />.</param>
+    /// <param name="instanceStart">Specifies the value of <paramref name="instanceStart" />.</param>
     public void DrawIndexed(uint indexCount, uint instanceCount, uint indexStart, int vertexOffset, uint instanceStart) {
         this.validateIndexBuffer(indexCount);
         this.preDrawValidation();
@@ -464,12 +464,12 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    /// Performs the DrawIndirect operation.
+    /// Executes the DrawIndirect operation.
     /// </summary>
-    /// <param name="indirectBuffer">The value of indirectBuffer.</param>
-    /// <param name="offset">The value of offset.</param>
-    /// <param name="drawCount">The value of drawCount.</param>
-    /// <param name="stride">The value of stride.</param>
+    /// <param name="indirectBuffer">Specifies the value of <paramref name="indirectBuffer" />.</param>
+    /// <param name="offset">Specifies the value of <paramref name="offset" />.</param>
+    /// <param name="drawCount">Specifies the value of <paramref name="drawCount" />.</param>
+    /// <param name="stride">Specifies the value of <paramref name="stride" />.</param>
     public unsafe void DrawIndirect(DeviceBuffer indirectBuffer, uint offset, uint drawCount, uint stride) {
         this.validateDrawIndirectSupport();
         validateIndirectBuffer(indirectBuffer);
@@ -481,12 +481,12 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    /// Performs the DrawIndexedIndirect operation.
+    /// Executes the DrawIndexedIndirect operation.
     /// </summary>
-    /// <param name="indirectBuffer">The value of indirectBuffer.</param>
-    /// <param name="offset">The value of offset.</param>
-    /// <param name="drawCount">The value of drawCount.</param>
-    /// <param name="stride">The value of stride.</param>
+    /// <param name="indirectBuffer">Specifies the value of <paramref name="indirectBuffer" />.</param>
+    /// <param name="offset">Specifies the value of <paramref name="offset" />.</param>
+    /// <param name="drawCount">Specifies the value of <paramref name="drawCount" />.</param>
+    /// <param name="stride">Specifies the value of <paramref name="stride" />.</param>
     public unsafe void DrawIndexedIndirect(DeviceBuffer indirectBuffer, uint offset, uint drawCount, uint stride) {
         this.validateDrawIndirectSupport();
         validateIndirectBuffer(indirectBuffer);
@@ -498,18 +498,18 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    /// Performs the Dispatch operation.
+    /// Executes the Dispatch operation.
     /// </summary>
-    /// <param name="groupCountX">The value of groupCountX.</param>
-    /// <param name="groupCountY">The value of groupCountY.</param>
-    /// <param name="groupCountZ">The value of groupCountZ.</param>
+    /// <param name="groupCountX">Specifies the value of <paramref name="groupCountX" />.</param>
+    /// <param name="groupCountY">Specifies the value of <paramref name="groupCountY" />.</param>
+    /// <param name="groupCountZ">Specifies the value of <paramref name="groupCountZ" />.</param>
     public abstract void Dispatch(uint groupCountX, uint groupCountY, uint groupCountZ);
 
     /// <summary>
-    /// Performs the DispatchIndirect operation.
+    /// Executes the DispatchIndirect operation.
     /// </summary>
-    /// <param name="indirectBuffer">The value of indirectBuffer.</param>
-    /// <param name="offset">The value of offset.</param>
+    /// <param name="indirectBuffer">Specifies the value of <paramref name="indirectBuffer" />.</param>
+    /// <param name="offset">Specifies the value of <paramref name="offset" />.</param>
     public void DispatchIndirect(DeviceBuffer indirectBuffer, uint offset) {
         validateIndirectBuffer(indirectBuffer);
         validateIndirectOffset(offset);
@@ -517,10 +517,10 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    /// Performs the ResolveTexture operation.
+    /// Executes the ResolveTexture operation.
     /// </summary>
-    /// <param name="source">The value of source.</param>
-    /// <param name="destination">The value of destination.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
+    /// <param name="destination">Specifies the value of <paramref name="destination" />.</param>
     public void ResolveTexture(Texture source, Texture destination) {
 #if VALIDATE_USAGE
         if (source.SampleCount == TextureSampleCount.Count1) {
@@ -540,12 +540,12 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     /// This function must be used with a blittable value type <typeparamref name="T" />.
     /// </summary>
     /// <typeparam name="T">The type of data to upload.</typeparam>
-    /// <param name="buffer">The resource to update.</param>
-    /// <param name="bufferOffsetInBytes">
+    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
+    /// <param name="bufferOffsetInBytes">Specifies the value of <paramref name="bufferOffsetInBytes" />.</param>
     /// An offset, in bytes, from the beginning of the <see cref="DeviceBuffer" /> storage, at
     /// which new data will be uploaded.
     /// </param>
-    /// <param name="source">The value to upload.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
     public unsafe void UpdateBuffer<T>(DeviceBuffer buffer, uint bufferOffsetInBytes, T source) where T : unmanaged {
         this.UpdateBuffer(buffer, bufferOffsetInBytes, (IntPtr)(&source), (uint)sizeof(T));
     }
@@ -555,12 +555,12 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     /// This function must be used with a blittable value type <typeparamref name="T" />.
     /// </summary>
     /// <typeparam name="T">The type of data to upload.</typeparam>
-    /// <param name="buffer">The resource to update.</param>
-    /// <param name="bufferOffsetInBytes">
+    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
+    /// <param name="bufferOffsetInBytes">Specifies the value of <paramref name="bufferOffsetInBytes" />.</param>
     /// An offset, in bytes, from the beginning of the <see cref="DeviceBuffer" />'s storage, at
     /// which new data will be uploaded.
     /// </param>
-    /// <param name="source">A reference to the single value to upload.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
     public unsafe void UpdateBuffer<T>(DeviceBuffer buffer, uint bufferOffsetInBytes, ref T source) where T : unmanaged {
         fixed (T* ptr = &source) {
             this.UpdateBuffer(buffer, bufferOffsetInBytes, (IntPtr)ptr, Util.USizeOf<T>());
@@ -572,13 +572,13 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     /// This function must be used with a blittable value type <typeparamref name="T" />.
     /// </summary>
     /// <typeparam name="T">The type of data to upload.</typeparam>
-    /// <param name="buffer">The resource to update.</param>
-    /// <param name="bufferOffsetInBytes">
+    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
+    /// <param name="bufferOffsetInBytes">Specifies the value of <paramref name="bufferOffsetInBytes" />.</param>
     /// An offset, in bytes, from the beginning of the <see cref="DeviceBuffer" />'s storage, at
     /// which new data will be uploaded.
     /// </param>
-    /// <param name="source">A reference to the first of a series of values to upload.</param>
-    /// <param name="sizeInBytes">The total size of the uploaded data, in bytes.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
+    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
     public unsafe void UpdateBuffer<T>(DeviceBuffer buffer, uint bufferOffsetInBytes, ref T source, uint sizeInBytes) where T : unmanaged {
         fixed (T* ptr = &source) {
             this.UpdateBuffer(buffer, bufferOffsetInBytes, (IntPtr)ptr, sizeInBytes);
@@ -590,12 +590,12 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     /// This function must be used with a blittable value type <typeparamref name="T" />.
     /// </summary>
     /// <typeparam name="T">The type of data to upload.</typeparam>
-    /// <param name="buffer">The resource to update.</param>
-    /// <param name="bufferOffsetInBytes">
+    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
+    /// <param name="bufferOffsetInBytes">Specifies the value of <paramref name="bufferOffsetInBytes" />.</param>
     /// An offset, in bytes, from the beginning of the <see cref="DeviceBuffer" />'s storage, at
     /// which new data will be uploaded.
     /// </param>
-    /// <param name="source">An array containing the data to upload.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
     public void UpdateBuffer<T>(DeviceBuffer buffer, uint bufferOffsetInBytes, T[] source) where T : unmanaged {
         this.UpdateBuffer(buffer, bufferOffsetInBytes, (ReadOnlySpan<T>)source);
     }
@@ -605,12 +605,12 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     /// This function must be used with a blittable value type <typeparamref name="T" />.
     /// </summary>
     /// <typeparam name="T">The type of data to upload.</typeparam>
-    /// <param name="buffer">The resource to update.</param>
-    /// <param name="bufferOffsetInBytes">
+    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
+    /// <param name="bufferOffsetInBytes">Specifies the value of <paramref name="bufferOffsetInBytes" />.</param>
     /// An offset, in bytes, from the beginning of the <see cref="DeviceBuffer" />'s storage, at
     /// which new data will be uploaded.
     /// </param>
-    /// <param name="source">An readonly span containing the data to upload.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
     public unsafe void UpdateBuffer<T>(DeviceBuffer buffer, uint bufferOffsetInBytes, ReadOnlySpan<T> source) where T : unmanaged {
         fixed (void* pin = &MemoryMarshal.GetReference(source)) {
             this.UpdateBuffer(buffer, bufferOffsetInBytes, (IntPtr)pin, (uint)(sizeof(T) * source.Length));
@@ -622,23 +622,23 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     /// This function must be used with a blittable value type <typeparamref name="T" />.
     /// </summary>
     /// <typeparam name="T">The type of data to upload.</typeparam>
-    /// <param name="buffer">The resource to update.</param>
-    /// <param name="bufferOffsetInBytes">
+    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
+    /// <param name="bufferOffsetInBytes">Specifies the value of <paramref name="bufferOffsetInBytes" />.</param>
     /// An offset, in bytes, from the beginning of the <see cref="DeviceBuffer" />'s storage, at
     /// which new data will be uploaded.
     /// </param>
-    /// <param name="source">An span containing the data to upload.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
     public void UpdateBuffer<T>(DeviceBuffer buffer, uint bufferOffsetInBytes, Span<T> source) where T : unmanaged {
         this.UpdateBuffer(buffer, bufferOffsetInBytes, (ReadOnlySpan<T>)source);
     }
 
     /// <summary>
-    /// Performs the UpdateBuffer operation.
+    /// Executes the UpdateBuffer operation.
     /// </summary>
-    /// <param name="buffer">The value of buffer.</param>
-    /// <param name="bufferOffsetInBytes">The value of bufferOffsetInBytes.</param>
-    /// <param name="source">The value of source.</param>
-    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
+    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
+    /// <param name="bufferOffsetInBytes">Specifies the value of <paramref name="bufferOffsetInBytes" />.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
+    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
     public void UpdateBuffer(DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes) {
         if (bufferOffsetInBytes + sizeInBytes > buffer.SizeInBytes) {
             throw new VeldridException($"The DeviceBuffer's capacity ({buffer.SizeInBytes}) is not large enough to store the amount of " + $"data specified ({sizeInBytes}) at the given offset ({bufferOffsetInBytes}).");
@@ -652,13 +652,13 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    /// Performs the CopyBuffer operation.
+    /// Executes the CopyBuffer operation.
     /// </summary>
-    /// <param name="source">The value of source.</param>
-    /// <param name="sourceOffset">The value of sourceOffset.</param>
-    /// <param name="destination">The value of destination.</param>
-    /// <param name="destinationOffset">The value of destinationOffset.</param>
-    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
+    /// <param name="sourceOffset">Specifies the value of <paramref name="sourceOffset" />.</param>
+    /// <param name="destination">Specifies the value of <paramref name="destination" />.</param>
+    /// <param name="destinationOffset">Specifies the value of <paramref name="destinationOffset" />.</param>
+    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
     public void CopyBuffer(DeviceBuffer source, uint sourceOffset, DeviceBuffer destination, uint destinationOffset, uint sizeInBytes) {
 #if VALIDATE_USAGE
 #endif
@@ -670,10 +670,10 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    /// Performs the CopyTexture operation.
+    /// Executes the CopyTexture operation.
     /// </summary>
-    /// <param name="source">The value of source.</param>
-    /// <param name="destination">The value of destination.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
+    /// <param name="destination">Specifies the value of <paramref name="destination" />.</param>
     public void CopyTexture(Texture source, Texture destination) {
         uint effectiveSrcArrayLayers = (source.Usage & TextureUsage.Cubemap) != 0
             ? source.ArrayLayers * 6
@@ -697,12 +697,12 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    /// Performs the CopyTexture operation.
+    /// Executes the CopyTexture operation.
     /// </summary>
-    /// <param name="source">The value of source.</param>
-    /// <param name="destination">The value of destination.</param>
-    /// <param name="mipLevel">The value of mipLevel.</param>
-    /// <param name="arrayLayer">The value of arrayLayer.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
+    /// <param name="destination">Specifies the value of <paramref name="destination" />.</param>
+    /// <param name="mipLevel">Specifies the value of <paramref name="mipLevel" />.</param>
+    /// <param name="arrayLayer">Specifies the value of <paramref name="arrayLayer" />.</param>
     public void CopyTexture(Texture source, Texture destination, uint mipLevel, uint arrayLayer) {
 #if VALIDATE_USAGE
         uint effectiveSrcArrayLayers = (source.Usage & TextureUsage.Cubemap) != 0
@@ -727,24 +727,24 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    /// Performs the CopyTexture operation.
+    /// Executes the CopyTexture operation.
     /// </summary>
-    /// <param name="source">The value of source.</param>
-    /// <param name="srcX">The value of srcX.</param>
-    /// <param name="srcY">The value of srcY.</param>
-    /// <param name="srcZ">The value of srcZ.</param>
-    /// <param name="srcMipLevel">The value of srcMipLevel.</param>
-    /// <param name="srcBaseArrayLayer">The value of srcBaseArrayLayer.</param>
-    /// <param name="destination">The value of destination.</param>
-    /// <param name="dstX">The value of dstX.</param>
-    /// <param name="dstY">The value of dstY.</param>
-    /// <param name="dstZ">The value of dstZ.</param>
-    /// <param name="dstMipLevel">The value of dstMipLevel.</param>
-    /// <param name="dstBaseArrayLayer">The value of dstBaseArrayLayer.</param>
-    /// <param name="width">The value of width.</param>
-    /// <param name="height">The value of height.</param>
-    /// <param name="depth">The value of depth.</param>
-    /// <param name="layerCount">The value of layerCount.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
+    /// <param name="srcX">Specifies the value of <paramref name="srcX" />.</param>
+    /// <param name="srcY">Specifies the value of <paramref name="srcY" />.</param>
+    /// <param name="srcZ">Specifies the value of <paramref name="srcZ" />.</param>
+    /// <param name="srcMipLevel">Specifies the value of <paramref name="srcMipLevel" />.</param>
+    /// <param name="srcBaseArrayLayer">Specifies the value of <paramref name="srcBaseArrayLayer" />.</param>
+    /// <param name="destination">Specifies the value of <paramref name="destination" />.</param>
+    /// <param name="dstX">Specifies the value of <paramref name="dstX" />.</param>
+    /// <param name="dstY">Specifies the value of <paramref name="dstY" />.</param>
+    /// <param name="dstZ">Specifies the value of <paramref name="dstZ" />.</param>
+    /// <param name="dstMipLevel">Specifies the value of <paramref name="dstMipLevel" />.</param>
+    /// <param name="dstBaseArrayLayer">Specifies the value of <paramref name="dstBaseArrayLayer" />.</param>
+    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
+    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
+    /// <param name="depth">Specifies the value of <paramref name="depth" />.</param>
+    /// <param name="layerCount">Specifies the value of <paramref name="layerCount" />.</param>
     public void CopyTexture(Texture source, uint srcX, uint srcY, uint srcZ, uint srcMipLevel, uint srcBaseArrayLayer, Texture destination, uint dstX, uint dstY, uint dstZ, uint dstMipLevel, uint dstBaseArrayLayer, uint width, uint height, uint depth, uint layerCount) {
 #if VALIDATE_USAGE
         if (width == 0 || height == 0 || depth == 0) {
@@ -797,9 +797,9 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    /// Performs the GenerateMipmaps operation.
+    /// Executes the GenerateMipmaps operation.
     /// </summary>
-    /// <param name="texture">The value of texture.</param>
+    /// <param name="texture">Specifies the value of <paramref name="texture" />.</param>
     public void GenerateMipmaps(Texture texture) {
         if ((texture.Usage & TextureUsage.GenerateMipmaps) == 0) {
             throw new VeldridException($"{nameof(this.GenerateMipmaps)} requires a target Texture with {nameof(TextureUsage)}.{nameof(TextureUsage.GenerateMipmaps)}");
@@ -811,30 +811,30 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    /// Performs the PushDebugGroup operation.
+    /// Executes the PushDebugGroup operation.
     /// </summary>
-    /// <param name="name">The value of name.</param>
+    /// <param name="name">Specifies the value of <paramref name="name" />.</param>
     public void PushDebugGroup(string name) {
         this.PushDebugGroupCore(name);
     }
 
     /// <summary>
-    /// Performs the PopDebugGroup operation.
+    /// Executes the PopDebugGroup operation.
     /// </summary>
     public void PopDebugGroup() {
         this.PopDebugGroupCore();
     }
 
     /// <summary>
-    /// Performs the InsertDebugMarker operation.
+    /// Executes the InsertDebugMarker operation.
     /// </summary>
-    /// <param name="name">The value of name.</param>
+    /// <param name="name">Specifies the value of <paramref name="name" />.</param>
     public void InsertDebugMarker(string name) {
         this.InsertDebugMarkerCore(name);
     }
 
     /// <summary>
-    /// Performs the ClearCachedState operation.
+    /// Executes the ClearCachedState operation.
     /// </summary>
     internal void ClearCachedState() {
         this.Framebuffer = null;
@@ -848,106 +848,106 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     // TODO: private protected
 
     /// <summary>
-    /// Performs the SetGraphicsResourceSetCore operation.
+    /// Executes the SetGraphicsResourceSetCore operation.
     /// </summary>
-    /// <param name="slot">The value of slot.</param>
-    /// <param name="rs">The value of rs.</param>
-    /// <param name="dynamicOffsetsCount">The value of dynamicOffsetsCount.</param>
-    /// <param name="dynamicOffsets">The value of dynamicOffsets.</param>
+    /// <param name="slot">Specifies the value of <paramref name="slot" />.</param>
+    /// <param name="rs">Specifies the value of <paramref name="rs" />.</param>
+    /// <param name="dynamicOffsetsCount">Specifies the value of <paramref name="dynamicOffsetsCount" />.</param>
+    /// <param name="dynamicOffsets">Specifies the value of <paramref name="dynamicOffsets" />.</param>
     protected abstract void SetGraphicsResourceSetCore(uint slot, ResourceSet rs, uint dynamicOffsetsCount, ref uint dynamicOffsets);
 
     // TODO: private protected
 
     /// <summary>
-    /// Performs the SetComputeResourceSetCore operation.
+    /// Executes the SetComputeResourceSetCore operation.
     /// </summary>
-    /// <param name="slot">The value of slot.</param>
-    /// <param name="set">The value of set.</param>
-    /// <param name="dynamicOffsetsCount">The value of dynamicOffsetsCount.</param>
-    /// <param name="dynamicOffsets">The value of dynamicOffsets.</param>
+    /// <param name="slot">Specifies the value of <paramref name="slot" />.</param>
+    /// <param name="set">Specifies the value of <paramref name="set" />.</param>
+    /// <param name="dynamicOffsetsCount">Specifies the value of <paramref name="dynamicOffsetsCount" />.</param>
+    /// <param name="dynamicOffsets">Specifies the value of <paramref name="dynamicOffsets" />.</param>
     protected abstract void SetComputeResourceSetCore(uint slot, ResourceSet set, uint dynamicOffsetsCount, ref uint dynamicOffsets);
 
     /// <summary>
-    /// Performs the SetFramebufferCore operation.
+    /// Executes the SetFramebufferCore operation.
     /// </summary>
-    /// <param name="fb">The value of fb.</param>
+    /// <param name="fb">Specifies the value of <paramref name="fb" />.</param>
     protected abstract void SetFramebufferCore(Framebuffer fb);
 
     // TODO: private protected
 
     /// <summary>
-    /// Performs the DrawIndirectCore operation.
+    /// Executes the DrawIndirectCore operation.
     /// </summary>
-    /// <param name="indirectBuffer">The value of indirectBuffer.</param>
-    /// <param name="offset">The value of offset.</param>
-    /// <param name="drawCount">The value of drawCount.</param>
-    /// <param name="stride">The value of stride.</param>
+    /// <param name="indirectBuffer">Specifies the value of <paramref name="indirectBuffer" />.</param>
+    /// <param name="offset">Specifies the value of <paramref name="offset" />.</param>
+    /// <param name="drawCount">Specifies the value of <paramref name="drawCount" />.</param>
+    /// <param name="stride">Specifies the value of <paramref name="stride" />.</param>
     protected abstract void DrawIndirectCore(DeviceBuffer indirectBuffer, uint offset, uint drawCount, uint stride);
 
     // TODO: private protected
 
     /// <summary>
-    /// Performs the DrawIndexedIndirectCore operation.
+    /// Executes the DrawIndexedIndirectCore operation.
     /// </summary>
-    /// <param name="indirectBuffer">The value of indirectBuffer.</param>
-    /// <param name="offset">The value of offset.</param>
-    /// <param name="drawCount">The value of drawCount.</param>
-    /// <param name="stride">The value of stride.</param>
+    /// <param name="indirectBuffer">Specifies the value of <paramref name="indirectBuffer" />.</param>
+    /// <param name="offset">Specifies the value of <paramref name="offset" />.</param>
+    /// <param name="drawCount">Specifies the value of <paramref name="drawCount" />.</param>
+    /// <param name="stride">Specifies the value of <paramref name="stride" />.</param>
     protected abstract void DrawIndexedIndirectCore(DeviceBuffer indirectBuffer, uint offset, uint drawCount, uint stride);
 
     // TODO: private protected
 
     /// <summary>
-    /// Performs the DispatchIndirectCore operation.
+    /// Executes the DispatchIndirectCore operation.
     /// </summary>
-    /// <param name="indirectBuffer">The value of indirectBuffer.</param>
-    /// <param name="offset">The value of offset.</param>
+    /// <param name="indirectBuffer">Specifies the value of <paramref name="indirectBuffer" />.</param>
+    /// <param name="offset">Specifies the value of <paramref name="offset" />.</param>
     protected abstract void DispatchIndirectCore(DeviceBuffer indirectBuffer, uint offset);
 
     /// <summary>
-    /// Performs the ResolveTextureCore operation.
+    /// Executes the ResolveTextureCore operation.
     /// </summary>
-    /// <param name="source">The value of source.</param>
-    /// <param name="destination">The value of destination.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
+    /// <param name="destination">Specifies the value of <paramref name="destination" />.</param>
     protected abstract void ResolveTextureCore(Texture source, Texture destination);
 
     /// <summary>
-    /// Performs the CopyBufferCore operation.
+    /// Executes the CopyBufferCore operation.
     /// </summary>
-    /// <param name="source">The value of source.</param>
-    /// <param name="sourceOffset">The value of sourceOffset.</param>
-    /// <param name="destination">The value of destination.</param>
-    /// <param name="destinationOffset">The value of destinationOffset.</param>
-    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
+    /// <param name="sourceOffset">Specifies the value of <paramref name="sourceOffset" />.</param>
+    /// <param name="destination">Specifies the value of <paramref name="destination" />.</param>
+    /// <param name="destinationOffset">Specifies the value of <paramref name="destinationOffset" />.</param>
+    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
     protected abstract void CopyBufferCore(DeviceBuffer source, uint sourceOffset, DeviceBuffer destination, uint destinationOffset, uint sizeInBytes);
 
     /// <summary>
-    /// Performs the CopyTextureCore operation.
+    /// Executes the CopyTextureCore operation.
     /// </summary>
-    /// <param name="source">The value of source.</param>
-    /// <param name="srcX">The value of srcX.</param>
-    /// <param name="srcY">The value of srcY.</param>
-    /// <param name="srcZ">The value of srcZ.</param>
-    /// <param name="srcMipLevel">The value of srcMipLevel.</param>
-    /// <param name="srcBaseArrayLayer">The value of srcBaseArrayLayer.</param>
-    /// <param name="destination">The value of destination.</param>
-    /// <param name="dstX">The value of dstX.</param>
-    /// <param name="dstY">The value of dstY.</param>
-    /// <param name="dstZ">The value of dstZ.</param>
-    /// <param name="dstMipLevel">The value of dstMipLevel.</param>
-    /// <param name="dstBaseArrayLayer">The value of dstBaseArrayLayer.</param>
-    /// <param name="width">The value of width.</param>
-    /// <param name="height">The value of height.</param>
-    /// <param name="depth">The value of depth.</param>
-    /// <param name="layerCount">The value of layerCount.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
+    /// <param name="srcX">Specifies the value of <paramref name="srcX" />.</param>
+    /// <param name="srcY">Specifies the value of <paramref name="srcY" />.</param>
+    /// <param name="srcZ">Specifies the value of <paramref name="srcZ" />.</param>
+    /// <param name="srcMipLevel">Specifies the value of <paramref name="srcMipLevel" />.</param>
+    /// <param name="srcBaseArrayLayer">Specifies the value of <paramref name="srcBaseArrayLayer" />.</param>
+    /// <param name="destination">Specifies the value of <paramref name="destination" />.</param>
+    /// <param name="dstX">Specifies the value of <paramref name="dstX" />.</param>
+    /// <param name="dstY">Specifies the value of <paramref name="dstY" />.</param>
+    /// <param name="dstZ">Specifies the value of <paramref name="dstZ" />.</param>
+    /// <param name="dstMipLevel">Specifies the value of <paramref name="dstMipLevel" />.</param>
+    /// <param name="dstBaseArrayLayer">Specifies the value of <paramref name="dstBaseArrayLayer" />.</param>
+    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
+    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
+    /// <param name="depth">Specifies the value of <paramref name="depth" />.</param>
+    /// <param name="layerCount">Specifies the value of <paramref name="layerCount" />.</param>
     protected abstract void CopyTextureCore(Texture source, uint srcX, uint srcY, uint srcZ, uint srcMipLevel, uint srcBaseArrayLayer, Texture destination, uint dstX, uint dstY, uint dstZ, uint dstMipLevel, uint dstBaseArrayLayer, uint width, uint height, uint depth, uint layerCount);
 
     [Conditional("VALIDATE_USAGE")]
 
     /// <summary>
-    /// Performs the validateIndirectOffset operation.
+    /// Executes the validateIndirectOffset operation.
     /// </summary>
-    /// <param name="offset">The value of offset.</param>
+    /// <param name="offset">Specifies the value of <paramref name="offset" />.</param>
     private static void validateIndirectOffset(uint offset) {
         if (offset % 4 != 0) {
             throw new VeldridException($"{nameof(offset)} must be a multiple of 4.");
@@ -957,9 +957,9 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     [Conditional("VALIDATE_USAGE")]
 
     /// <summary>
-    /// Performs the validateIndirectBuffer operation.
+    /// Executes the validateIndirectBuffer operation.
     /// </summary>
-    /// <param name="indirectBuffer">The value of indirectBuffer.</param>
+    /// <param name="indirectBuffer">Specifies the value of <paramref name="indirectBuffer" />.</param>
     private static void validateIndirectBuffer(DeviceBuffer indirectBuffer) {
         if ((indirectBuffer.Usage & BufferUsage.IndirectBuffer) != BufferUsage.IndirectBuffer) {
             throw new VeldridException($"{nameof(indirectBuffer)} parameter must have been created with BufferUsage.IndirectBuffer. Instead, it was {indirectBuffer.Usage}.");
@@ -969,10 +969,10 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     [Conditional("VALIDATE_USAGE")]
 
     /// <summary>
-    /// Performs the validateIndirectStride operation.
+    /// Executes the validateIndirectStride operation.
     /// </summary>
-    /// <param name="stride">The value of stride.</param>
-    /// <param name="argumentSize">The value of argumentSize.</param>
+    /// <param name="stride">Specifies the value of <paramref name="stride" />.</param>
+    /// <param name="argumentSize">Specifies the value of <paramref name="argumentSize" />.</param>
     private static void validateIndirectStride(uint stride, int argumentSize) {
         if (stride < argumentSize || stride % 4 != 0) {
             throw new VeldridException($"{nameof(stride)} parameter must be a multiple of 4, and must be larger than the size of the corresponding argument structure.");
@@ -982,7 +982,7 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     [Conditional("VALIDATE_USAGE")]
 
     /// <summary>
-    /// Performs the validateDrawIndirectSupport operation.
+    /// Executes the validateDrawIndirectSupport operation.
     /// </summary>
     private void validateDrawIndirectSupport() {
         if (!this.features.DrawIndirect) {
@@ -993,9 +993,9 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     [Conditional("VALIDATE_USAGE")]
 
     /// <summary>
-    /// Performs the validateIndexBuffer operation.
+    /// Executes the validateIndexBuffer operation.
     /// </summary>
-    /// <param name="indexCount">The value of indexCount.</param>
+    /// <param name="indexCount">Specifies the value of <paramref name="indexCount" />.</param>
     private void validateIndexBuffer(uint indexCount) {
 #if VALIDATE_USAGE
         if (this.indexBuffer == null) {
@@ -1014,7 +1014,7 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     [Conditional("VALIDATE_USAGE")]
 
     /// <summary>
-    /// Performs the preDrawValidation operation.
+    /// Executes the preDrawValidation operation.
     /// </summary>
     private void preDrawValidation() {
 #if VALIDATE_USAGE
@@ -1034,101 +1034,101 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     }
 
     /// <summary>
-    /// Performs the SetPipelineCore operation.
+    /// Executes the SetPipelineCore operation.
     /// </summary>
-    /// <param name="pipeline">The value of pipeline.</param>
+    /// <param name="pipeline">Specifies the value of <paramref name="pipeline" />.</param>
     private protected abstract void SetPipelineCore(Pipeline pipeline);
 
     /// <summary>
-    /// Performs the SetVertexBufferCore operation.
+    /// Executes the SetVertexBufferCore operation.
     /// </summary>
-    /// <param name="index">The value of index.</param>
-    /// <param name="buffer">The value of buffer.</param>
-    /// <param name="offset">The value of offset.</param>
+    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
+    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
+    /// <param name="offset">Specifies the value of <paramref name="offset" />.</param>
     private protected abstract void SetVertexBufferCore(uint index, DeviceBuffer buffer, uint offset);
 
     /// <summary>
-    /// Performs the SetIndexBufferCore operation.
+    /// Executes the SetIndexBufferCore operation.
     /// </summary>
-    /// <param name="buffer">The value of buffer.</param>
-    /// <param name="format">The value of format.</param>
-    /// <param name="offset">The value of offset.</param>
+    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
+    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
+    /// <param name="offset">Specifies the value of <paramref name="offset" />.</param>
     private protected abstract void SetIndexBufferCore(DeviceBuffer buffer, IndexFormat format, uint offset);
 
     /// <summary>
-    /// Performs the ClearColorTargetCore operation.
+    /// Executes the ClearColorTargetCore operation.
     /// </summary>
-    /// <param name="index">The value of index.</param>
-    /// <param name="clearColor">The value of clearColor.</param>
+    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
+    /// <param name="clearColor">Specifies the value of <paramref name="clearColor" />.</param>
     private protected abstract void ClearColorTargetCore(uint index, RgbaFloat clearColor);
 
     /// <summary>
-    /// Performs the ClearDepthStencilCore operation.
+    /// Executes the ClearDepthStencilCore operation.
     /// </summary>
-    /// <param name="depth">The value of depth.</param>
-    /// <param name="stencil">The value of stencil.</param>
+    /// <param name="depth">Specifies the value of <paramref name="depth" />.</param>
+    /// <param name="stencil">Specifies the value of <paramref name="stencil" />.</param>
     private protected abstract void ClearDepthStencilCore(float depth, byte stencil);
 
     /// <summary>
-    /// Performs the DrawCore operation.
+    /// Executes the DrawCore operation.
     /// </summary>
-    /// <param name="vertexCount">The value of vertexCount.</param>
-    /// <param name="instanceCount">The value of instanceCount.</param>
-    /// <param name="vertexStart">The value of vertexStart.</param>
-    /// <param name="instanceStart">The value of instanceStart.</param>
+    /// <param name="vertexCount">Specifies the value of <paramref name="vertexCount" />.</param>
+    /// <param name="instanceCount">Specifies the value of <paramref name="instanceCount" />.</param>
+    /// <param name="vertexStart">Specifies the value of <paramref name="vertexStart" />.</param>
+    /// <param name="instanceStart">Specifies the value of <paramref name="instanceStart" />.</param>
     private protected abstract void DrawCore(uint vertexCount, uint instanceCount, uint vertexStart, uint instanceStart);
 
     /// <summary>
-    /// Performs the DrawIndexedCore operation.
+    /// Executes the DrawIndexedCore operation.
     /// </summary>
-    /// <param name="indexCount">The value of indexCount.</param>
-    /// <param name="instanceCount">The value of instanceCount.</param>
-    /// <param name="indexStart">The value of indexStart.</param>
-    /// <param name="vertexOffset">The value of vertexOffset.</param>
-    /// <param name="instanceStart">The value of instanceStart.</param>
+    /// <param name="indexCount">Specifies the value of <paramref name="indexCount" />.</param>
+    /// <param name="instanceCount">Specifies the value of <paramref name="instanceCount" />.</param>
+    /// <param name="indexStart">Specifies the value of <paramref name="indexStart" />.</param>
+    /// <param name="vertexOffset">Specifies the value of <paramref name="vertexOffset" />.</param>
+    /// <param name="instanceStart">Specifies the value of <paramref name="instanceStart" />.</param>
     private protected abstract void DrawIndexedCore(uint indexCount, uint instanceCount, uint indexStart, int vertexOffset, uint instanceStart);
 
     /// <summary>
-    /// Performs the UpdateBufferCore operation.
+    /// Executes the UpdateBufferCore operation.
     /// </summary>
-    /// <param name="buffer">The value of buffer.</param>
-    /// <param name="bufferOffsetInBytes">The value of bufferOffsetInBytes.</param>
-    /// <param name="source">The value of source.</param>
-    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
+    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
+    /// <param name="bufferOffsetInBytes">Specifies the value of <paramref name="bufferOffsetInBytes" />.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
+    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
     private protected abstract void UpdateBufferCore(DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes);
 
     /// <summary>
-    /// Performs the GenerateMipmapsCore operation.
+    /// Executes the GenerateMipmapsCore operation.
     /// </summary>
-    /// <param name="texture">The value of texture.</param>
+    /// <param name="texture">Specifies the value of <paramref name="texture" />.</param>
     private protected abstract void GenerateMipmapsCore(Texture texture);
 
     /// <summary>
-    /// Performs the PushDebugGroupCore operation.
+    /// Executes the PushDebugGroupCore operation.
     /// </summary>
-    /// <param name="name">The value of name.</param>
+    /// <param name="name">Specifies the value of <paramref name="name" />.</param>
     private protected abstract void PushDebugGroupCore(string name);
 
     /// <summary>
-    /// Performs the PopDebugGroupCore operation.
+    /// Executes the PopDebugGroupCore operation.
     /// </summary>
     private protected abstract void PopDebugGroupCore();
 
     /// <summary>
-    /// Performs the InsertDebugMarkerCore operation.
+    /// Executes the InsertDebugMarkerCore operation.
     /// </summary>
-    /// <param name="name">The value of name.</param>
+    /// <param name="name">Specifies the value of <paramref name="name" />.</param>
     private protected abstract void InsertDebugMarkerCore(string name);
 
 #if VALIDATE_USAGE
 
     /// <summary>
-    /// Represents the indexBuffer field.
+    /// Stores the value associated with <c>indexBuffer</c>.
     /// </summary>
     private DeviceBuffer indexBuffer;
 
     /// <summary>
-    /// Represents the indexFormat field.
+    /// Stores the value associated with <c>indexFormat</c>.
     /// </summary>
     private IndexFormat indexFormat;
 #endif

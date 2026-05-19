@@ -4,50 +4,50 @@ using Veldrith.MetalBindings;
 namespace Veldrith.MTL;
 
 /// <summary>
-/// Represents the MtlSwapchain class.
+/// Defines the behavior and responsibilities of the MtlSwapchain class.
 /// </summary>
 internal class MtlSwapchain : Swapchain {
 
     /// <summary>
-    /// Represents the _framebuffer field.
+    /// Stores the value associated with <c>_framebuffer</c>.
     /// </summary>
     private readonly MtlSwapchainFramebuffer _framebuffer;
 
     /// <summary>
-    /// Represents the gd field.
+    /// Stores the value associated with <c>gd</c>.
     /// </summary>
     private readonly MtlGraphicsDevice gd;
 
     /// <summary>
-    /// Represents the _disposed field.
+    /// Stores the value associated with <c>_disposed</c>.
     /// </summary>
     private bool _disposed;
 
     /// <summary>
-    /// Represents the _drawable field.
+    /// Stores the value associated with <c>_drawable</c>.
     /// </summary>
     private CAMetalDrawable _drawable;
 
     /// <summary>
-    /// Represents the _metalLayer field.
+    /// Stores the value associated with <c>_metalLayer</c>.
     /// </summary>
     private CAMetalLayer _metalLayer;
 
     /// <summary>
-    /// Represents the _syncToVerticalBlank field.
+    /// Stores the value associated with <c>_syncToVerticalBlank</c>.
     /// </summary>
     private bool _syncToVerticalBlank;
 
     /// <summary>
-    /// Represents the _uiView field.
+    /// Stores the value associated with <c>_uiView</c>.
     /// </summary>
     private UIView _uiView; // Valid only when a UIViewSwapchainSource is used.
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MtlSwapchain" /> type.
     /// </summary>
-    /// <param name="gd">The value of gd.</param>
-    /// <param name="description">The value of description.</param>
+    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
     public MtlSwapchain(MtlGraphicsDevice gd, ref SwapchainDescription description) {
         this.gd = gd;
         this._syncToVerticalBlank = description.SyncToVerticalBlank;
@@ -126,7 +126,7 @@ internal class MtlSwapchain : Swapchain {
     public override bool IsDisposed => this._disposed;
 
     /// <summary>
-    /// Represents the CurrentDrawable field.
+    /// Stores the value associated with <c>CurrentDrawable</c>.
     /// </summary>
     public CAMetalDrawable CurrentDrawable => this._drawable;
 
@@ -150,7 +150,7 @@ internal class MtlSwapchain : Swapchain {
     #region Disposal
 
     /// <summary>
-    /// Performs the Dispose operation.
+    /// Executes the Dispose operation.
     /// </summary>
     public override void Dispose() {
         if (this._drawable.NativePtr != IntPtr.Zero) {
@@ -166,10 +166,10 @@ internal class MtlSwapchain : Swapchain {
     #endregion
 
     /// <summary>
-    /// Performs the Resize operation.
+    /// Executes the Resize operation.
     /// </summary>
-    /// <param name="width">The value of width.</param>
-    /// <param name="height">The value of height.</param>
+    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
+    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
     public override void Resize(uint width, uint height) {
         if (this._uiView.NativePtr != IntPtr.Zero) {
             this._metalLayer.frame = this._uiView.frame;
@@ -181,15 +181,15 @@ internal class MtlSwapchain : Swapchain {
     }
 
     /// <summary>
-    /// Performs the EnsureDrawableAvailable operation.
+    /// Executes the EnsureDrawableAvailable operation.
     /// </summary>
-    /// <returns>The result of the EnsureDrawableAvailable operation.</returns>
+    /// <returns>Returns the result produced by the EnsureDrawableAvailable operation.</returns>
     public bool EnsureDrawableAvailable() {
         return !this._drawable.IsNull || this.GetNextDrawable();
     }
 
     /// <summary>
-    /// Performs the InvalidateDrawable operation.
+    /// Executes the InvalidateDrawable operation.
     /// </summary>
     public void InvalidateDrawable() {
         ObjectiveCRuntime.release(this._drawable.NativePtr);
@@ -197,9 +197,9 @@ internal class MtlSwapchain : Swapchain {
     }
 
     /// <summary>
-    /// Performs the GetNextDrawable operation.
+    /// Executes the GetNextDrawable operation.
     /// </summary>
-    /// <returns>The result of the GetNextDrawable operation.</returns>
+    /// <returns>Returns the result produced by the GetNextDrawable operation.</returns>
     private bool GetNextDrawable() {
         if (!this._drawable.IsNull) {
             ObjectiveCRuntime.release(this._drawable.NativePtr);
@@ -219,9 +219,9 @@ internal class MtlSwapchain : Swapchain {
     }
 
     /// <summary>
-    /// Performs the SetSyncToVerticalBlank operation.
+    /// Executes the SetSyncToVerticalBlank operation.
     /// </summary>
-    /// <param name="value">The value of value.</param>
+    /// <param name="value">Specifies the value of <paramref name="value" />.</param>
     private void SetSyncToVerticalBlank(bool value) {
         this._syncToVerticalBlank = value;
 

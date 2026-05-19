@@ -3,15 +3,15 @@ using System.Text;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the MTLUtil class.
+/// Defines the behavior and responsibilities of the MTLUtil class.
 /// </summary>
 public static class MTLUtil {
 
     /// <summary>
-    /// Performs the GetUtf8String operation.
+    /// Executes the GetUtf8String operation.
     /// </summary>
-    /// <param name="stringStart">The value of stringStart.</param>
-    /// <returns>The result of the GetUtf8String operation.</returns>
+    /// <param name="stringStart">Specifies the value of <paramref name="stringStart" />.</param>
+    /// <returns>Returns the result produced by the GetUtf8String operation.</returns>
     public static unsafe string GetUtf8String(byte* stringStart) {
         int characters = 0;
         while (stringStart[characters] != 0) {

@@ -4,30 +4,30 @@ using System.Runtime.InteropServices;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the CVDisplayLink struct.
+/// Defines the data layout and behavior of the CVDisplayLink struct.
 /// </summary>
 public struct CVDisplayLink {
 
     /// <summary>
-    /// Represents the CVFramework field.
+    /// Stores the value associated with <c>CVFramework</c>.
     /// </summary>
     private const string CVFramework = "/System/Library/Frameworks/CoreVideo.framework/CoreVideo";
 
     /// <summary>
-    /// Represents the CGFramework field.
+    /// Stores the value associated with <c>CGFramework</c>.
     /// </summary>
     private const string CGFramework = "/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics";
 
     /// <summary>
-    /// Represents the NativePtr field.
+    /// Stores the value associated with <c>NativePtr</c>.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Performs the operator IntPtr operation.
+    /// Executes the operator IntPtr operation.
     /// </summary>
-    /// <param name="c">The value of c.</param>
-    /// <returns>The result of the operator IntPtr operation.</returns>
+    /// <param name="c">Specifies the value of <paramref name="c" />.</param>
+    /// <returns>Returns the result produced by the operator IntPtr operation.</returns>
     public static implicit operator IntPtr(CVDisplayLink c) {
         return c.NativePtr;
     }
@@ -35,43 +35,43 @@ public struct CVDisplayLink {
     /// <summary>
     /// Initializes a new instance of the <see cref="CVDisplayLink" /> type.
     /// </summary>
-    /// <param name="ptr">The value of ptr.</param>
+    /// <param name="ptr">Specifies the value of <paramref name="ptr" />.</param>
     public CVDisplayLink(IntPtr ptr) {
         this.NativePtr = ptr;
     }
 
     /// <summary>
-    /// Performs the CreateWithActiveCGDisplays operation.
+    /// Executes the CreateWithActiveCGDisplays operation.
     /// </summary>
-    /// <returns>The result of the CreateWithActiveCGDisplays operation.</returns>
+    /// <returns>Returns the result produced by the CreateWithActiveCGDisplays operation.</returns>
     public static CVDisplayLink CreateWithActiveCGDisplays() {
         CVDisplayLinkCreateWithActiveCGDisplays(out CVDisplayLink link);
         return link;
     }
 
     /// <summary>
-    /// Performs the SetOutputCallback operation.
+    /// Executes the SetOutputCallback operation.
     /// </summary>
-    /// <param name="callback">The value of callback.</param>
-    /// <param name="userData">The value of userData.</param>
+    /// <param name="callback">Specifies the value of <paramref name="callback" />.</param>
+    /// <param name="userData">Specifies the value of <paramref name="userData" />.</param>
     public void SetOutputCallback(CVDisplayLinkOutputCallbackDelegate callback, IntPtr userData) {
         CVDisplayLinkSetOutputCallback(this, callback, userData);
     }
 
     /// <summary>
-    /// Performs the Start operation.
+    /// Executes the Start operation.
     /// </summary>
     public void Start() {
         CVDisplayLinkStart(this);
     }
 
     /// <summary>
-    /// Performs the UpdateActiveMonitor operation.
+    /// Executes the UpdateActiveMonitor operation.
     /// </summary>
-    /// <param name="x">The value of x.</param>
-    /// <param name="y">The value of y.</param>
-    /// <param name="w">The value of w.</param>
-    /// <param name="h">The value of h.</param>
+    /// <param name="x">Specifies the value of <paramref name="x" />.</param>
+    /// <param name="y">Specifies the value of <paramref name="y" />.</param>
+    /// <param name="w">Specifies the value of <paramref name="w" />.</param>
+    /// <param name="h">Specifies the value of <paramref name="h" />.</param>
     public void UpdateActiveMonitor(int x, int y, int w, int h) {
         uint[] displays = new uint[1];
         uint displayCount = 0;
@@ -89,32 +89,32 @@ public struct CVDisplayLink {
     [DllImport(CGFramework)]
 
     /// <summary>
-    /// Performs the CGGetDisplaysWithRect operation.
+    /// Executes the CGGetDisplaysWithRect operation.
     /// </summary>
-    /// <param name="rect">The value of rect.</param>
-    /// <param name="maxDisplays">The value of maxDisplays.</param>
-    /// <param name="displays">The value of displays.</param>
-    /// <param name="displayCount">The value of displayCount.</param>
-    /// <returns>The result of the CGGetDisplaysWithRect operation.</returns>
+    /// <param name="rect">Specifies the value of <paramref name="rect" />.</param>
+    /// <param name="maxDisplays">Specifies the value of <paramref name="maxDisplays" />.</param>
+    /// <param name="displays">Specifies the value of <paramref name="displays" />.</param>
+    /// <param name="displayCount">Specifies the value of <paramref name="displayCount" />.</param>
+    /// <returns>Returns the result produced by the CGGetDisplaysWithRect operation.</returns>
     private static extern int CGGetDisplaysWithRect(CGRect rect, int maxDisplays, uint[] displays, ref uint displayCount);
 
     /// <summary>
-    /// Performs the GetActualOutputVideoRefreshPeriod operation.
+    /// Executes the GetActualOutputVideoRefreshPeriod operation.
     /// </summary>
-    /// <returns>The result of the GetActualOutputVideoRefreshPeriod operation.</returns>
+    /// <returns>Returns the result produced by the GetActualOutputVideoRefreshPeriod operation.</returns>
     public double GetActualOutputVideoRefreshPeriod() {
         return CVDisplayLinkGetActualOutputVideoRefreshPeriod(this);
     }
 
     /// <summary>
-    /// Performs the Stop operation.
+    /// Executes the Stop operation.
     /// </summary>
     public void Stop() {
         CVDisplayLinkStop(this);
     }
 
     /// <summary>
-    /// Performs the Release operation.
+    /// Executes the Release operation.
     /// </summary>
     public void Release() {
         CVDisplayLinkRelease(this);
@@ -123,67 +123,67 @@ public struct CVDisplayLink {
     [DllImport(CVFramework)]
 
     /// <summary>
-    /// Performs the CVDisplayLinkCreateWithActiveCGDisplays operation.
+    /// Executes the CVDisplayLinkCreateWithActiveCGDisplays operation.
     /// </summary>
-    /// <param name="displayLink">The value of displayLink.</param>
-    /// <returns>The result of the CVDisplayLinkCreateWithActiveCGDisplays operation.</returns>
+    /// <param name="displayLink">Specifies the value of <paramref name="displayLink" />.</param>
+    /// <returns>Returns the result produced by the CVDisplayLinkCreateWithActiveCGDisplays operation.</returns>
     private static extern int CVDisplayLinkCreateWithActiveCGDisplays(out CVDisplayLink displayLink);
 
     [DllImport(CVFramework)]
 
     /// <summary>
-    /// Performs the CVDisplayLinkGetActualOutputVideoRefreshPeriod operation.
+    /// Executes the CVDisplayLinkGetActualOutputVideoRefreshPeriod operation.
     /// </summary>
-    /// <param name="displayLink">The value of displayLink.</param>
-    /// <returns>The result of the CVDisplayLinkGetActualOutputVideoRefreshPeriod operation.</returns>
+    /// <param name="displayLink">Specifies the value of <paramref name="displayLink" />.</param>
+    /// <returns>Returns the result produced by the CVDisplayLinkGetActualOutputVideoRefreshPeriod operation.</returns>
     private static extern double CVDisplayLinkGetActualOutputVideoRefreshPeriod(CVDisplayLink displayLink);
 
     [DllImport(CVFramework)]
 
     /// <summary>
-    /// Performs the CVDisplayLinkSetOutputCallback operation.
+    /// Executes the CVDisplayLinkSetOutputCallback operation.
     /// </summary>
-    /// <param name="displayLink">The value of displayLink.</param>
-    /// <param name="callback">The value of callback.</param>
-    /// <param name="userData">The value of userData.</param>
-    /// <returns>The result of the CVDisplayLinkSetOutputCallback operation.</returns>
+    /// <param name="displayLink">Specifies the value of <paramref name="displayLink" />.</param>
+    /// <param name="callback">Specifies the value of <paramref name="callback" />.</param>
+    /// <param name="userData">Specifies the value of <paramref name="userData" />.</param>
+    /// <returns>Returns the result produced by the CVDisplayLinkSetOutputCallback operation.</returns>
     private static extern int CVDisplayLinkSetOutputCallback(CVDisplayLink displayLink, CVDisplayLinkOutputCallbackDelegate callback, IntPtr userData);
 
     [DllImport(CVFramework)]
 
     /// <summary>
-    /// Performs the CVDisplayLinkSetCurrentCGDisplay operation.
+    /// Executes the CVDisplayLinkSetCurrentCGDisplay operation.
     /// </summary>
-    /// <param name="displayLink">The value of displayLink.</param>
-    /// <param name="displayId">The value of displayId.</param>
-    /// <returns>The result of the CVDisplayLinkSetCurrentCGDisplay operation.</returns>
+    /// <param name="displayLink">Specifies the value of <paramref name="displayLink" />.</param>
+    /// <param name="displayId">Specifies the value of <paramref name="displayId" />.</param>
+    /// <returns>Returns the result produced by the CVDisplayLinkSetCurrentCGDisplay operation.</returns>
     private static extern int CVDisplayLinkSetCurrentCGDisplay(CVDisplayLink displayLink, uint displayId);
 
     [DllImport(CVFramework)]
 
     /// <summary>
-    /// Performs the CVDisplayLinkStart operation.
+    /// Executes the CVDisplayLinkStart operation.
     /// </summary>
-    /// <param name="displayLink">The value of displayLink.</param>
-    /// <returns>The result of the CVDisplayLinkStart operation.</returns>
+    /// <param name="displayLink">Specifies the value of <paramref name="displayLink" />.</param>
+    /// <returns>Returns the result produced by the CVDisplayLinkStart operation.</returns>
     private static extern int CVDisplayLinkStart(CVDisplayLink displayLink);
 
     [DllImport(CVFramework)]
 
     /// <summary>
-    /// Performs the CVDisplayLinkStop operation.
+    /// Executes the CVDisplayLinkStop operation.
     /// </summary>
-    /// <param name="displayLink">The value of displayLink.</param>
-    /// <returns>The result of the CVDisplayLinkStop operation.</returns>
+    /// <param name="displayLink">Specifies the value of <paramref name="displayLink" />.</param>
+    /// <returns>Returns the result produced by the CVDisplayLinkStop operation.</returns>
     private static extern int CVDisplayLinkStop(CVDisplayLink displayLink);
 
     [DllImport(CVFramework)]
 
     /// <summary>
-    /// Performs the CVDisplayLinkRelease operation.
+    /// Executes the CVDisplayLinkRelease operation.
     /// </summary>
-    /// <param name="displayLink">The value of displayLink.</param>
-    /// <returns>The result of the CVDisplayLinkRelease operation.</returns>
+    /// <param name="displayLink">Specifies the value of <paramref name="displayLink" />.</param>
+    /// <returns>Returns the result produced by the CVDisplayLinkRelease operation.</returns>
     private static extern int CVDisplayLinkRelease(CVDisplayLink displayLink);
 }
 

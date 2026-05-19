@@ -4,20 +4,20 @@ using Veldrith.MetalBindings;
 namespace Veldrith.MTL;
 
 /// <summary>
-/// Represents the MtlTexture class.
+/// Defines the behavior and responsibilities of the MtlTexture class.
 /// </summary>
 internal class MtlTexture : Texture {
 
     /// <summary>
-    /// Represents the _disposed field.
+    /// Stores the value associated with <c>_disposed</c>.
     /// </summary>
     private bool _disposed;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MtlTexture" /> type.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <param name="gd">The value of gd.</param>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
     public MtlTexture(ref TextureDescription description, MtlGraphicsDevice gd) {
         this.Width = description.Width;
         this.Height = description.Height;
@@ -74,8 +74,8 @@ internal class MtlTexture : Texture {
     /// <summary>
     /// Initializes a new instance of the <see cref="MtlTexture" /> type.
     /// </summary>
-    /// <param name="nativeTexture">The value of nativeTexture.</param>
-    /// <param name="description">The value of description.</param>
+    /// <param name="nativeTexture">Specifies the value of <paramref name="nativeTexture" />.</param>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
     public MtlTexture(ulong nativeTexture, ref TextureDescription description) {
         this.DeviceTexture = new MTLTexture((IntPtr)nativeTexture);
         this.Width = description.Width;
@@ -184,11 +184,11 @@ internal class MtlTexture : Texture {
     public override string Name { get; set; }
 
     /// <summary>
-    /// Performs the GetSubresourceSize operation.
+    /// Executes the GetSubresourceSize operation.
     /// </summary>
-    /// <param name="mipLevel">The value of mipLevel.</param>
-    /// <param name="arrayLayer">The value of arrayLayer.</param>
-    /// <returns>The result of the GetSubresourceSize operation.</returns>
+    /// <param name="mipLevel">Specifies the value of <paramref name="mipLevel" />.</param>
+    /// <param name="arrayLayer">Specifies the value of <paramref name="arrayLayer" />.</param>
+    /// <returns>Returns the result produced by the GetSubresourceSize operation.</returns>
     internal uint GetSubresourceSize(uint mipLevel, uint arrayLayer) {
         uint blockSize = FormatHelpers.IsCompressedFormat(this.Format) ? 4u : 1u;
         Util.GetMipDimensions(this, mipLevel, out uint width, out uint height, out uint depth);
@@ -198,12 +198,12 @@ internal class MtlTexture : Texture {
     }
 
     /// <summary>
-    /// Performs the GetSubresourceLayout operation.
+    /// Executes the GetSubresourceLayout operation.
     /// </summary>
-    /// <param name="mipLevel">The value of mipLevel.</param>
-    /// <param name="arrayLayer">The value of arrayLayer.</param>
-    /// <param name="rowPitch">The value of rowPitch.</param>
-    /// <param name="depthPitch">The value of depthPitch.</param>
+    /// <param name="mipLevel">Specifies the value of <paramref name="mipLevel" />.</param>
+    /// <param name="arrayLayer">Specifies the value of <paramref name="arrayLayer" />.</param>
+    /// <param name="rowPitch">Specifies the value of <paramref name="rowPitch" />.</param>
+    /// <param name="depthPitch">Specifies the value of <paramref name="depthPitch" />.</param>
     internal void GetSubresourceLayout(uint mipLevel, uint arrayLayer, out uint rowPitch, out uint depthPitch) {
         uint blockSize = FormatHelpers.IsCompressedFormat(this.Format) ? 4u : 1u;
         Util.GetMipDimensions(this, mipLevel, out uint mipWidth, out uint mipHeight, out uint _);
@@ -214,7 +214,7 @@ internal class MtlTexture : Texture {
     }
 
     /// <summary>
-    /// Performs the DisposeCore operation.
+    /// Executes the DisposeCore operation.
     /// </summary>
     private protected override void DisposeCore() {
         if (!this._disposed) {

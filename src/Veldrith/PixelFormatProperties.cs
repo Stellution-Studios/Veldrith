@@ -35,15 +35,15 @@ public struct PixelFormatProperties {
     public readonly uint MaxArrayLayers;
 
     /// <summary>
-    /// Represents the sampleCounts field.
+    /// Stores the value associated with <c>sampleCounts</c>.
     /// </summary>
     private readonly uint sampleCounts;
 
     /// <summary>
-    /// Performs the IsSampleCountSupported operation.
+    /// Executes the IsSampleCountSupported operation.
     /// </summary>
-    /// <param name="count">The value of count.</param>
-    /// <returns>The result of the IsSampleCountSupported operation.</returns>
+    /// <param name="count">Specifies the value of <paramref name="count" />.</param>
+    /// <returns>Returns the result produced by the IsSampleCountSupported operation.</returns>
     public bool IsSampleCountSupported(TextureSampleCount count) {
         int bit = (int)count;
         return (this.sampleCounts & (1 << bit)) != 0;
@@ -52,12 +52,12 @@ public struct PixelFormatProperties {
     /// <summary>
     /// Initializes a new instance of the <see cref="PixelFormatProperties" /> type.
     /// </summary>
-    /// <param name="maxWidth">The value of maxWidth.</param>
-    /// <param name="maxHeight">The value of maxHeight.</param>
-    /// <param name="maxDepth">The value of maxDepth.</param>
-    /// <param name="maxMipLevels">The value of maxMipLevels.</param>
-    /// <param name="maxArrayLayers">The value of maxArrayLayers.</param>
-    /// <param name="sampleCounts">The value of sampleCounts.</param>
+    /// <param name="maxWidth">Specifies the value of <paramref name="maxWidth" />.</param>
+    /// <param name="maxHeight">Specifies the value of <paramref name="maxHeight" />.</param>
+    /// <param name="maxDepth">Specifies the value of <paramref name="maxDepth" />.</param>
+    /// <param name="maxMipLevels">Specifies the value of <paramref name="maxMipLevels" />.</param>
+    /// <param name="maxArrayLayers">Specifies the value of <paramref name="maxArrayLayers" />.</param>
+    /// <param name="sampleCounts">Specifies the value of <paramref name="sampleCounts" />.</param>
     internal PixelFormatProperties(uint maxWidth, uint maxHeight, uint maxDepth, uint maxMipLevels, uint maxArrayLayers, uint sampleCounts) {
         this.MaxWidth = maxWidth;
         this.MaxHeight = maxHeight;

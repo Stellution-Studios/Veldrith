@@ -10,173 +10,165 @@ using static Vulkan.VulkanNative;
 namespace Veldrith.Vk;
 
 /// <summary>
-/// Represents the VkCommandList class.
+/// Defines the behavior and responsibilities of the VkCommandList class.
 /// </summary>
 internal unsafe class VkCommandList : CommandList {
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>_availableCommandBuffers</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     private readonly Queue<VkCommandBuffer> _availableCommandBuffers = new();
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>_availableStagingBuffers</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     private readonly List<VkBuffer> _availableStagingBuffers = new();
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>_availableStagingInfos</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     private readonly List<StagingResourceInfo> _availableStagingInfos = new();
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>_commandBufferListLock</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     private readonly object _commandBufferListLock = new();
 
     /// <summary>
-    /// Represents the _pool field.
+    /// Stores the value associated with <c>_pool</c>.
     /// </summary>
     private readonly VkCommandPool _pool;
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>_preDrawSampledImages</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     private readonly List<VkTexture> _preDrawSampledImages = new();
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>_stagingLock</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     private readonly object _stagingLock = new();
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>_submittedCommandBuffers</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     private readonly List<VkCommandBuffer> _submittedCommandBuffers = new();
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>_submittedStagingInfos</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     private readonly Dictionary<VkCommandBuffer, StagingResourceInfo> _submittedStagingInfos = new();
 
     /// <summary>
-    /// Represents the gd field.
+    /// Stores the value associated with <c>gd</c>.
     /// </summary>
     private readonly VkGraphicsDevice gd;
 
     /// <summary>
-    /// Represents the _activeRenderPass field.
+    /// Stores the value associated with <c>_activeRenderPass</c>.
     /// </summary>
     private VkRenderPass _activeRenderPass;
 
     /// <summary>
-    /// Represents the _clearValues field.
+    /// Stores the value associated with <c>_clearValues</c>.
     /// </summary>
     private VkClearValue[] _clearValues = Array.Empty<VkClearValue>();
 
     /// <summary>
-    /// Represents the _commandBufferBegun field.
+    /// Stores the value associated with <c>_commandBufferBegun</c>.
     /// </summary>
     private bool _commandBufferBegun;
 
     /// <summary>
-    /// Represents the _commandBufferEnded field.
+    /// Stores the value associated with <c>_commandBufferEnded</c>.
     /// </summary>
     private bool _commandBufferEnded;
 
     /// <summary>
-    /// Represents the _computeResourceSetsChanged field.
+    /// Stores the value associated with <c>_computeResourceSetsChanged</c>.
     /// </summary>
     private bool[] _computeResourceSetsChanged;
 
     // Compute State
 
     /// <summary>
-    /// Represents the _currentComputePipeline field.
+    /// Stores the value associated with <c>_currentComputePipeline</c>.
     /// </summary>
     private VkPipeline _currentComputePipeline;
 
     /// <summary>
-    /// Represents the _currentComputeResourceSets field.
+    /// Stores the value associated with <c>_currentComputeResourceSets</c>.
     /// </summary>
     private BoundResourceSetInfo[] _currentComputeResourceSets = Array.Empty<BoundResourceSetInfo>();
 
     // Graphics State
 
     /// <summary>
-    /// Represents the _currentFramebuffer field.
+    /// Stores the value associated with <c>_currentFramebuffer</c>.
     /// </summary>
     private VkFramebufferBase _currentFramebuffer;
 
     /// <summary>
-    /// Represents the _currentFramebufferEverActive field.
+    /// Stores the value associated with <c>_currentFramebufferEverActive</c>.
     /// </summary>
     private bool _currentFramebufferEverActive;
 
     /// <summary>
-    /// Represents the _currentGraphicsPipeline field.
+    /// Stores the value associated with <c>_currentGraphicsPipeline</c>.
     /// </summary>
     private VkPipeline _currentGraphicsPipeline;
 
     /// <summary>
-    /// Represents the _currentGraphicsResourceSets field.
+    /// Stores the value associated with <c>_currentGraphicsResourceSets</c>.
     /// </summary>
     private BoundResourceSetInfo[] _currentGraphicsResourceSets = Array.Empty<BoundResourceSetInfo>();
 
     /// <summary>
-    /// Represents the _currentStagingInfo field.
+    /// Stores the value associated with <c>_currentStagingInfo</c>.
     /// </summary>
     private StagingResourceInfo _currentStagingInfo;
 
     /// <summary>
-    /// Represents the _depthClearValue field.
+    /// Stores the value associated with <c>_depthClearValue</c>.
     /// </summary>
     private VkClearValue? _depthClearValue;
 
     /// <summary>
-    /// Represents the _destroyed field.
+    /// Stores the value associated with <c>_destroyed</c>.
     /// </summary>
     private bool _destroyed;
 
     /// <summary>
-    /// Represents the _graphicsResourceSetsChanged field.
+    /// Stores the value associated with <c>_graphicsResourceSetsChanged</c>.
     /// </summary>
     private bool[] _graphicsResourceSetsChanged;
 
     /// <summary>
-    /// Represents the _newFramebuffer field.
+    /// Stores the value associated with <c>_newFramebuffer</c>.
     /// </summary>
     private bool _newFramebuffer; // Render pass cycle state
 
     /// <summary>
-    /// Represents the _scissorRects field.
+    /// Stores the value associated with <c>_scissorRects</c>.
     /// </summary>
     private VkRect2D[] _scissorRects = Array.Empty<VkRect2D>();
 
     /// <summary>
-    /// Represents the _validColorClearValues field.
+    /// Stores the value associated with <c>_validColorClearValues</c>.
     /// </summary>
     private bool[] _validColorClearValues = Array.Empty<bool>();
 
     /// <summary>
-    /// Represents the name field.
+    /// Stores the value associated with <c>name</c>.
     /// </summary>
     private string name;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VkCommandList" /> class.
     /// </summary>
-    /// <param name="gd">The value of gd.</param>
-    /// <param name="description">The value of description.</param>
-    /// <returns>The result of the base operation.</returns>
+    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <returns>Returns the result produced by the base operation.</returns>
     public VkCommandList(VkGraphicsDevice gd, ref CommandListDescription description) : base(ref description, gd.Features, gd.UniformBufferMinOffsetAlignment, gd.StructuredBufferMinOffsetAlignment) {
         this.gd = gd;
         VkCommandPoolCreateInfo poolCi = VkCommandPoolCreateInfo.New();
@@ -190,7 +182,7 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Represents the CommandPool field.
+    /// Stores the value associated with <c>CommandPool</c>.
     /// </summary>
     public VkCommandPool CommandPool => this._pool;
 
@@ -223,7 +215,7 @@ internal unsafe class VkCommandList : CommandList {
     #region Disposal
 
     /// <summary>
-    /// Performs the Dispose operation.
+    /// Executes the Dispose operation.
     /// </summary>
     public override void Dispose() {
         this.RefCount.Decrement();
@@ -232,9 +224,9 @@ internal unsafe class VkCommandList : CommandList {
     #endregion
 
     /// <summary>
-    /// Performs the CommandBufferSubmitted operation.
+    /// Executes the CommandBufferSubmitted operation.
     /// </summary>
-    /// <param name="cb">The value of cb.</param>
+    /// <param name="cb">Specifies the value of <paramref name="cb" />.</param>
     public void CommandBufferSubmitted(VkCommandBuffer cb) {
         this.RefCount.Increment();
         foreach (ResourceRefCount rrc in this._currentStagingInfo.Resources) {
@@ -246,9 +238,9 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the CommandBufferCompleted operation.
+    /// Executes the CommandBufferCompleted operation.
     /// </summary>
-    /// <param name="completedCb">The value of completedCb.</param>
+    /// <param name="completedCb">Specifies the value of <paramref name="completedCb" />.</param>
     public void CommandBufferCompleted(VkCommandBuffer completedCb) {
         lock (this._commandBufferListLock) {
             for (int i = 0; i < this._submittedCommandBuffers.Count; i++) {
@@ -273,7 +265,7 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the Begin operation.
+    /// Executes the Begin operation.
     /// </summary>
     public override void Begin() {
         if (this._commandBufferBegun) {
@@ -306,11 +298,11 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the Dispatch operation.
+    /// Executes the Dispatch operation.
     /// </summary>
-    /// <param name="groupCountX">The value of groupCountX.</param>
-    /// <param name="groupCountY">The value of groupCountY.</param>
-    /// <param name="groupCountZ">The value of groupCountZ.</param>
+    /// <param name="groupCountX">Specifies the value of <paramref name="groupCountX" />.</param>
+    /// <param name="groupCountY">Specifies the value of <paramref name="groupCountY" />.</param>
+    /// <param name="groupCountZ">Specifies the value of <paramref name="groupCountZ" />.</param>
     public override void Dispatch(uint groupCountX, uint groupCountY, uint groupCountZ) {
         this.PreDispatchCommand();
 
@@ -318,7 +310,7 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the End operation.
+    /// Executes the End operation.
     /// </summary>
     public override void End() {
         if (!this._commandBufferBegun) {
@@ -342,13 +334,13 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the SetScissorRect operation.
+    /// Executes the SetScissorRect operation.
     /// </summary>
-    /// <param name="index">The value of index.</param>
-    /// <param name="x">The value of x.</param>
-    /// <param name="y">The value of y.</param>
-    /// <param name="width">The value of width.</param>
-    /// <param name="height">The value of height.</param>
+    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
+    /// <param name="x">Specifies the value of <paramref name="x" />.</param>
+    /// <param name="y">Specifies the value of <paramref name="y" />.</param>
+    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
+    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
     public override void SetScissorRect(uint index, uint x, uint y, uint width, uint height) {
         if (index == 0 || this.gd.Features.MultipleViewports) {
             VkRect2D scissor = new((int)x, (int)y, (int)width, (int)height);
@@ -361,10 +353,10 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the SetViewport operation.
+    /// Executes the SetViewport operation.
     /// </summary>
-    /// <param name="index">The value of index.</param>
-    /// <param name="viewport">The value of viewport.</param>
+    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
+    /// <param name="viewport">Specifies the value of <paramref name="viewport" />.</param>
     public override void SetViewport(uint index, ref Viewport viewport) {
         if (index == 0 || this.gd.Features.MultipleViewports) {
             float vpY = this.gd.IsClipSpaceYInverted
@@ -388,12 +380,12 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the UpdateBufferCore operation.
+    /// Executes the UpdateBufferCore operation.
     /// </summary>
-    /// <param name="buffer">The value of buffer.</param>
-    /// <param name="bufferOffsetInBytes">The value of bufferOffsetInBytes.</param>
-    /// <param name="source">The value of source.</param>
-    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
+    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
+    /// <param name="bufferOffsetInBytes">Specifies the value of <paramref name="bufferOffsetInBytes" />.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
+    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
     private protected override void UpdateBufferCore(DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes) {
         VkBuffer stagingBuffer = this.GetStagingBuffer(sizeInBytes);
         this.gd.UpdateBuffer(stagingBuffer, 0, source, sizeInBytes);
@@ -401,13 +393,13 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the CopyBufferCore operation.
+    /// Executes the CopyBufferCore operation.
     /// </summary>
-    /// <param name="source">The value of source.</param>
-    /// <param name="sourceOffset">The value of sourceOffset.</param>
-    /// <param name="destination">The value of destination.</param>
-    /// <param name="destinationOffset">The value of destinationOffset.</param>
-    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
+    /// <param name="sourceOffset">Specifies the value of <paramref name="sourceOffset" />.</param>
+    /// <param name="destination">Specifies the value of <paramref name="destination" />.</param>
+    /// <param name="destinationOffset">Specifies the value of <paramref name="destinationOffset" />.</param>
+    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
     protected override void CopyBufferCore(DeviceBuffer source, uint sourceOffset, DeviceBuffer destination, uint destinationOffset, uint sizeInBytes) {
         this.EnsureNoRenderPass();
 
@@ -439,24 +431,24 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the CopyTextureCore operation.
+    /// Executes the CopyTextureCore operation.
     /// </summary>
-    /// <param name="source">The value of source.</param>
-    /// <param name="srcX">The value of srcX.</param>
-    /// <param name="srcY">The value of srcY.</param>
-    /// <param name="srcZ">The value of srcZ.</param>
-    /// <param name="srcMipLevel">The value of srcMipLevel.</param>
-    /// <param name="srcBaseArrayLayer">The value of srcBaseArrayLayer.</param>
-    /// <param name="destination">The value of destination.</param>
-    /// <param name="dstX">The value of dstX.</param>
-    /// <param name="dstY">The value of dstY.</param>
-    /// <param name="dstZ">The value of dstZ.</param>
-    /// <param name="dstMipLevel">The value of dstMipLevel.</param>
-    /// <param name="dstBaseArrayLayer">The value of dstBaseArrayLayer.</param>
-    /// <param name="width">The value of width.</param>
-    /// <param name="height">The value of height.</param>
-    /// <param name="depth">The value of depth.</param>
-    /// <param name="layerCount">The value of layerCount.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
+    /// <param name="srcX">Specifies the value of <paramref name="srcX" />.</param>
+    /// <param name="srcY">Specifies the value of <paramref name="srcY" />.</param>
+    /// <param name="srcZ">Specifies the value of <paramref name="srcZ" />.</param>
+    /// <param name="srcMipLevel">Specifies the value of <paramref name="srcMipLevel" />.</param>
+    /// <param name="srcBaseArrayLayer">Specifies the value of <paramref name="srcBaseArrayLayer" />.</param>
+    /// <param name="destination">Specifies the value of <paramref name="destination" />.</param>
+    /// <param name="dstX">Specifies the value of <paramref name="dstX" />.</param>
+    /// <param name="dstY">Specifies the value of <paramref name="dstY" />.</param>
+    /// <param name="dstZ">Specifies the value of <paramref name="dstZ" />.</param>
+    /// <param name="dstMipLevel">Specifies the value of <paramref name="dstMipLevel" />.</param>
+    /// <param name="dstBaseArrayLayer">Specifies the value of <paramref name="dstBaseArrayLayer" />.</param>
+    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
+    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
+    /// <param name="depth">Specifies the value of <paramref name="depth" />.</param>
+    /// <param name="layerCount">Specifies the value of <paramref name="layerCount" />.</param>
     protected override void CopyTextureCore(Texture source, uint srcX, uint srcY, uint srcZ, uint srcMipLevel, uint srcBaseArrayLayer, Texture destination, uint dstX, uint dstY, uint dstZ, uint dstMipLevel, uint dstBaseArrayLayer, uint width, uint height, uint depth, uint layerCount) {
         this.EnsureNoRenderPass();
         CopyTextureCore_VkCommandBuffer(this.CommandBuffer, source, srcX, srcY, srcZ, srcMipLevel, srcBaseArrayLayer, destination, dstX, dstY, dstZ, dstMipLevel, dstBaseArrayLayer, width, height, depth, layerCount);
@@ -468,25 +460,25 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the CopyTextureCore_VkCommandBuffer operation.
+    /// Executes the CopyTextureCore_VkCommandBuffer operation.
     /// </summary>
-    /// <param name="cb">The value of cb.</param>
-    /// <param name="source">The value of source.</param>
-    /// <param name="srcX">The value of srcX.</param>
-    /// <param name="srcY">The value of srcY.</param>
-    /// <param name="srcZ">The value of srcZ.</param>
-    /// <param name="srcMipLevel">The value of srcMipLevel.</param>
-    /// <param name="srcBaseArrayLayer">The value of srcBaseArrayLayer.</param>
-    /// <param name="destination">The value of destination.</param>
-    /// <param name="dstX">The value of dstX.</param>
-    /// <param name="dstY">The value of dstY.</param>
-    /// <param name="dstZ">The value of dstZ.</param>
-    /// <param name="dstMipLevel">The value of dstMipLevel.</param>
-    /// <param name="dstBaseArrayLayer">The value of dstBaseArrayLayer.</param>
-    /// <param name="width">The value of width.</param>
-    /// <param name="height">The value of height.</param>
-    /// <param name="depth">The value of depth.</param>
-    /// <param name="layerCount">The value of layerCount.</param>
+    /// <param name="cb">Specifies the value of <paramref name="cb" />.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
+    /// <param name="srcX">Specifies the value of <paramref name="srcX" />.</param>
+    /// <param name="srcY">Specifies the value of <paramref name="srcY" />.</param>
+    /// <param name="srcZ">Specifies the value of <paramref name="srcZ" />.</param>
+    /// <param name="srcMipLevel">Specifies the value of <paramref name="srcMipLevel" />.</param>
+    /// <param name="srcBaseArrayLayer">Specifies the value of <paramref name="srcBaseArrayLayer" />.</param>
+    /// <param name="destination">Specifies the value of <paramref name="destination" />.</param>
+    /// <param name="dstX">Specifies the value of <paramref name="dstX" />.</param>
+    /// <param name="dstY">Specifies the value of <paramref name="dstY" />.</param>
+    /// <param name="dstZ">Specifies the value of <paramref name="dstZ" />.</param>
+    /// <param name="dstMipLevel">Specifies the value of <paramref name="dstMipLevel" />.</param>
+    /// <param name="dstBaseArrayLayer">Specifies the value of <paramref name="dstBaseArrayLayer" />.</param>
+    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
+    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
+    /// <param name="depth">Specifies the value of <paramref name="depth" />.</param>
+    /// <param name="layerCount">Specifies the value of <paramref name="layerCount" />.</param>
     internal static void CopyTextureCore_VkCommandBuffer(VkCommandBuffer cb, Texture source, uint srcX, uint srcY, uint srcZ, uint srcMipLevel, uint srcBaseArrayLayer, Texture destination, uint dstX, uint dstY, uint dstZ, uint dstMipLevel, uint dstBaseArrayLayer, uint width, uint height, uint depth, uint layerCount) {
         VkTexture srcVkTexture = Util.AssertSubtype<Texture, VkTexture>(source);
         VkTexture dstVkTexture = Util.AssertSubtype<Texture, VkTexture>(destination);
@@ -694,12 +686,12 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the DrawIndirectCore operation.
+    /// Executes the DrawIndirectCore operation.
     /// </summary>
-    /// <param name="indirectBuffer">The value of indirectBuffer.</param>
-    /// <param name="offset">The value of offset.</param>
-    /// <param name="drawCount">The value of drawCount.</param>
-    /// <param name="stride">The value of stride.</param>
+    /// <param name="indirectBuffer">Specifies the value of <paramref name="indirectBuffer" />.</param>
+    /// <param name="offset">Specifies the value of <paramref name="offset" />.</param>
+    /// <param name="drawCount">Specifies the value of <paramref name="drawCount" />.</param>
+    /// <param name="stride">Specifies the value of <paramref name="stride" />.</param>
     protected override void DrawIndirectCore(DeviceBuffer indirectBuffer, uint offset, uint drawCount, uint stride) {
         this.PreDrawCommand();
         VkBuffer vkBuffer = Util.AssertSubtype<DeviceBuffer, VkBuffer>(indirectBuffer);
@@ -708,12 +700,12 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the DrawIndexedIndirectCore operation.
+    /// Executes the DrawIndexedIndirectCore operation.
     /// </summary>
-    /// <param name="indirectBuffer">The value of indirectBuffer.</param>
-    /// <param name="offset">The value of offset.</param>
-    /// <param name="drawCount">The value of drawCount.</param>
-    /// <param name="stride">The value of stride.</param>
+    /// <param name="indirectBuffer">Specifies the value of <paramref name="indirectBuffer" />.</param>
+    /// <param name="offset">Specifies the value of <paramref name="offset" />.</param>
+    /// <param name="drawCount">Specifies the value of <paramref name="drawCount" />.</param>
+    /// <param name="stride">Specifies the value of <paramref name="stride" />.</param>
     protected override void DrawIndexedIndirectCore(DeviceBuffer indirectBuffer, uint offset, uint drawCount, uint stride) {
         this.PreDrawCommand();
         VkBuffer vkBuffer = Util.AssertSubtype<DeviceBuffer, VkBuffer>(indirectBuffer);
@@ -722,10 +714,10 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the DispatchIndirectCore operation.
+    /// Executes the DispatchIndirectCore operation.
     /// </summary>
-    /// <param name="indirectBuffer">The value of indirectBuffer.</param>
-    /// <param name="offset">The value of offset.</param>
+    /// <param name="indirectBuffer">Specifies the value of <paramref name="indirectBuffer" />.</param>
+    /// <param name="offset">Specifies the value of <paramref name="offset" />.</param>
     protected override void DispatchIndirectCore(DeviceBuffer indirectBuffer, uint offset) {
         this.PreDispatchCommand();
 
@@ -735,10 +727,10 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the ResolveTextureCore operation.
+    /// Executes the ResolveTextureCore operation.
     /// </summary>
-    /// <param name="source">The value of source.</param>
-    /// <param name="destination">The value of destination.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
+    /// <param name="destination">Specifies the value of <paramref name="destination" />.</param>
     protected override void ResolveTextureCore(Texture source, Texture destination) {
         if (this._activeRenderPass != VkRenderPass.Null) {
             this.EndCurrentRenderPass();
@@ -768,9 +760,9 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the SetFramebufferCore operation.
+    /// Executes the SetFramebufferCore operation.
     /// </summary>
-    /// <param name="fb">The value of fb.</param>
+    /// <param name="fb">Specifies the value of <paramref name="fb" />.</param>
     protected override void SetFramebufferCore(Framebuffer fb) {
         if (this._activeRenderPass.Handle != VkRenderPass.Null) {
             this.EndCurrentRenderPass();
@@ -799,12 +791,12 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the SetGraphicsResourceSetCore operation.
+    /// Executes the SetGraphicsResourceSetCore operation.
     /// </summary>
-    /// <param name="slot">The value of slot.</param>
-    /// <param name="rs">The value of rs.</param>
-    /// <param name="dynamicOffsetsCount">The value of dynamicOffsetsCount.</param>
-    /// <param name="dynamicOffsets">The value of dynamicOffsets.</param>
+    /// <param name="slot">Specifies the value of <paramref name="slot" />.</param>
+    /// <param name="rs">Specifies the value of <paramref name="rs" />.</param>
+    /// <param name="dynamicOffsetsCount">Specifies the value of <paramref name="dynamicOffsetsCount" />.</param>
+    /// <param name="dynamicOffsets">Specifies the value of <paramref name="dynamicOffsets" />.</param>
     protected override void SetGraphicsResourceSetCore(uint slot, ResourceSet rs, uint dynamicOffsetsCount, ref uint dynamicOffsets) {
         if (!this._currentGraphicsResourceSets[slot].Equals(rs, dynamicOffsetsCount, ref dynamicOffsets)) {
             this._currentGraphicsResourceSets[slot].Offsets.Dispose();
@@ -815,12 +807,12 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the SetComputeResourceSetCore operation.
+    /// Executes the SetComputeResourceSetCore operation.
     /// </summary>
-    /// <param name="slot">The value of slot.</param>
-    /// <param name="rs">The value of rs.</param>
-    /// <param name="dynamicOffsetsCount">The value of dynamicOffsetsCount.</param>
-    /// <param name="dynamicOffsets">The value of dynamicOffsets.</param>
+    /// <param name="slot">Specifies the value of <paramref name="slot" />.</param>
+    /// <param name="rs">Specifies the value of <paramref name="rs" />.</param>
+    /// <param name="dynamicOffsetsCount">Specifies the value of <paramref name="dynamicOffsetsCount" />.</param>
+    /// <param name="dynamicOffsets">Specifies the value of <paramref name="dynamicOffsets" />.</param>
     protected override void SetComputeResourceSetCore(uint slot, ResourceSet rs, uint dynamicOffsetsCount, ref uint dynamicOffsets) {
         if (!this._currentComputeResourceSets[slot].Equals(rs, dynamicOffsetsCount, ref dynamicOffsets)) {
             this._currentComputeResourceSets[slot].Offsets.Dispose();
@@ -831,9 +823,9 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the GetNextCommandBuffer operation.
+    /// Executes the GetNextCommandBuffer operation.
     /// </summary>
-    /// <returns>The result of the GetNextCommandBuffer operation.</returns>
+    /// <returns>Returns the result produced by the GetNextCommandBuffer operation.</returns>
     private VkCommandBuffer GetNextCommandBuffer() {
         lock (this._commandBufferListLock) {
             if (this._availableCommandBuffers.Count > 0) {
@@ -854,7 +846,7 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the PreDrawCommand operation.
+    /// Executes the PreDrawCommand operation.
     /// </summary>
     private void PreDrawCommand() {
         this.TransitionImages(this._preDrawSampledImages, VkImageLayout.ShaderReadOnlyOptimal);
@@ -866,13 +858,13 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the FlushNewResourceSets operation.
+    /// Executes the FlushNewResourceSets operation.
     /// </summary>
-    /// <param name="resourceSets">The value of resourceSets.</param>
-    /// <param name="resourceSetsChanged">The value of resourceSetsChanged.</param>
-    /// <param name="resourceSetCount">The value of resourceSetCount.</param>
-    /// <param name="bindPoint">The value of bindPoint.</param>
-    /// <param name="pipelineLayout">The value of pipelineLayout.</param>
+    /// <param name="resourceSets">Specifies the value of <paramref name="resourceSets" />.</param>
+    /// <param name="resourceSetsChanged">Specifies the value of <paramref name="resourceSetsChanged" />.</param>
+    /// <param name="resourceSetCount">Specifies the value of <paramref name="resourceSetCount" />.</param>
+    /// <param name="bindPoint">Specifies the value of <paramref name="bindPoint" />.</param>
+    /// <param name="pipelineLayout">Specifies the value of <paramref name="pipelineLayout" />.</param>
     private void FlushNewResourceSets(BoundResourceSetInfo[] resourceSets, bool[] resourceSetsChanged, uint resourceSetCount, VkPipelineBindPoint bindPoint, VkPipelineLayout pipelineLayout) {
         VkPipeline pipeline = bindPoint == VkPipelineBindPoint.Graphics
             ? this._currentGraphicsPipeline
@@ -920,10 +912,10 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the TransitionImages operation.
+    /// Executes the TransitionImages operation.
     /// </summary>
-    /// <param name="sampledTextures">The value of sampledTextures.</param>
-    /// <param name="layout">The value of layout.</param>
+    /// <param name="sampledTextures">Specifies the value of <paramref name="sampledTextures" />.</param>
+    /// <param name="layout">Specifies the value of <paramref name="layout" />.</param>
     private void TransitionImages(List<VkTexture> sampledTextures, VkImageLayout layout) {
         for (int i = 0; i < sampledTextures.Count; i++) {
             VkTexture tex = sampledTextures[i];
@@ -932,7 +924,7 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the PreDispatchCommand operation.
+    /// Executes the PreDispatchCommand operation.
     /// </summary>
     private void PreDispatchCommand() {
         this.EnsureNoRenderPass();
@@ -955,7 +947,7 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the EnsureRenderPassActive operation.
+    /// Executes the EnsureRenderPassActive operation.
     /// </summary>
     private void EnsureRenderPassActive() {
         if (this._activeRenderPass == VkRenderPass.Null) {
@@ -964,7 +956,7 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the EnsureNoRenderPass operation.
+    /// Executes the EnsureNoRenderPass operation.
     /// </summary>
     private void EnsureNoRenderPass() {
         if (this._activeRenderPass != VkRenderPass.Null) {
@@ -973,7 +965,7 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the BeginCurrentRenderPass operation.
+    /// Executes the BeginCurrentRenderPass operation.
     /// </summary>
     private void BeginCurrentRenderPass() {
         Debug.Assert(this._activeRenderPass == VkRenderPass.Null);
@@ -1044,7 +1036,7 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the EndCurrentRenderPass operation.
+    /// Executes the EndCurrentRenderPass operation.
     /// </summary>
     private void EndCurrentRenderPass() {
         Debug.Assert(this._activeRenderPass != VkRenderPass.Null);
@@ -1058,9 +1050,9 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the ClearSets operation.
+    /// Executes the ClearSets operation.
     /// </summary>
-    /// <param name="boundSets">The value of boundSets.</param>
+    /// <param name="boundSets">Specifies the value of <paramref name="boundSets" />.</param>
     private void ClearSets(BoundResourceSetInfo[] boundSets) {
         foreach (BoundResourceSetInfo boundSetInfo in boundSets) {
             boundSetInfo.Offsets.Dispose();
@@ -1072,7 +1064,7 @@ internal unsafe class VkCommandList : CommandList {
     [Conditional("DEBUG")]
 
     /// <summary>
-    /// Performs the DebugFullPipelineBarrier operation.
+    /// Executes the DebugFullPipelineBarrier operation.
     /// </summary>
     private void DebugFullPipelineBarrier() {
         VkMemoryBarrier memoryBarrier = VkMemoryBarrier.New();
@@ -1115,10 +1107,10 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the GetStagingBuffer operation.
+    /// Executes the GetStagingBuffer operation.
     /// </summary>
-    /// <param name="size">The value of size.</param>
-    /// <returns>The result of the GetStagingBuffer operation.</returns>
+    /// <param name="size">Specifies the value of <paramref name="size" />.</param>
+    /// <returns>Returns the result produced by the GetStagingBuffer operation.</returns>
     private VkBuffer GetStagingBuffer(uint size) {
         lock (this._stagingLock) {
             VkBuffer ret = null;
@@ -1142,7 +1134,7 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the DisposeCore operation.
+    /// Executes the DisposeCore operation.
     /// </summary>
     private void DisposeCore() {
         if (!this._destroyed) {
@@ -1158,9 +1150,9 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the GetStagingResourceInfo operation.
+    /// Executes the GetStagingResourceInfo operation.
     /// </summary>
-    /// <returns>The result of the GetStagingResourceInfo operation.</returns>
+    /// <returns>Returns the result produced by the GetStagingResourceInfo operation.</returns>
     private StagingResourceInfo GetStagingResourceInfo() {
         lock (this._stagingLock) {
             StagingResourceInfo ret;
@@ -1179,9 +1171,9 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the RecycleStagingInfo operation.
+    /// Executes the RecycleStagingInfo operation.
     /// </summary>
-    /// <param name="info">The value of info.</param>
+    /// <param name="info">Specifies the value of <paramref name="info" />.</param>
     private void RecycleStagingInfo(StagingResourceInfo info) {
         lock (this._stagingLock) {
             foreach (VkBuffer buffer in info.BuffersUsed) {
@@ -1199,10 +1191,10 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the ClearColorTargetCore operation.
+    /// Executes the ClearColorTargetCore operation.
     /// </summary>
-    /// <param name="index">The value of index.</param>
-    /// <param name="clearColor">The value of clearColor.</param>
+    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
+    /// <param name="clearColor">Specifies the value of <paramref name="clearColor" />.</param>
     private protected override void ClearColorTargetCore(uint index, RgbaFloat clearColor) {
         VkClearValue clearValue = new() {
             color = new VkClearColorValue(clearColor.R, clearColor.G, clearColor.B, clearColor.A)
@@ -1232,10 +1224,10 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the ClearDepthStencilCore operation.
+    /// Executes the ClearDepthStencilCore operation.
     /// </summary>
-    /// <param name="depth">The value of depth.</param>
-    /// <param name="stencil">The value of stencil.</param>
+    /// <param name="depth">Specifies the value of <paramref name="depth" />.</param>
+    /// <param name="stencil">Specifies the value of <paramref name="stencil" />.</param>
     private protected override void ClearDepthStencilCore(float depth, byte stencil) {
         VkClearValue clearValue = new() { depthStencil = new VkClearDepthStencilValue(depth, stencil) };
 
@@ -1269,36 +1261,36 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the DrawCore operation.
+    /// Executes the DrawCore operation.
     /// </summary>
-    /// <param name="vertexCount">The value of vertexCount.</param>
-    /// <param name="instanceCount">The value of instanceCount.</param>
-    /// <param name="vertexStart">The value of vertexStart.</param>
-    /// <param name="instanceStart">The value of instanceStart.</param>
+    /// <param name="vertexCount">Specifies the value of <paramref name="vertexCount" />.</param>
+    /// <param name="instanceCount">Specifies the value of <paramref name="instanceCount" />.</param>
+    /// <param name="vertexStart">Specifies the value of <paramref name="vertexStart" />.</param>
+    /// <param name="instanceStart">Specifies the value of <paramref name="instanceStart" />.</param>
     private protected override void DrawCore(uint vertexCount, uint instanceCount, uint vertexStart, uint instanceStart) {
         this.PreDrawCommand();
         vkCmdDraw(this.CommandBuffer, vertexCount, instanceCount, vertexStart, instanceStart);
     }
 
     /// <summary>
-    /// Performs the DrawIndexedCore operation.
+    /// Executes the DrawIndexedCore operation.
     /// </summary>
-    /// <param name="indexCount">The value of indexCount.</param>
-    /// <param name="instanceCount">The value of instanceCount.</param>
-    /// <param name="indexStart">The value of indexStart.</param>
-    /// <param name="vertexOffset">The value of vertexOffset.</param>
-    /// <param name="instanceStart">The value of instanceStart.</param>
+    /// <param name="indexCount">Specifies the value of <paramref name="indexCount" />.</param>
+    /// <param name="instanceCount">Specifies the value of <paramref name="instanceCount" />.</param>
+    /// <param name="indexStart">Specifies the value of <paramref name="indexStart" />.</param>
+    /// <param name="vertexOffset">Specifies the value of <paramref name="vertexOffset" />.</param>
+    /// <param name="instanceStart">Specifies the value of <paramref name="instanceStart" />.</param>
     private protected override void DrawIndexedCore(uint indexCount, uint instanceCount, uint indexStart, int vertexOffset, uint instanceStart) {
         this.PreDrawCommand();
         vkCmdDrawIndexed(this.CommandBuffer, indexCount, instanceCount, indexStart, vertexOffset, instanceStart);
     }
 
     /// <summary>
-    /// Performs the SetVertexBufferCore operation.
+    /// Executes the SetVertexBufferCore operation.
     /// </summary>
-    /// <param name="index">The value of index.</param>
-    /// <param name="buffer">The value of buffer.</param>
-    /// <param name="offset">The value of offset.</param>
+    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
+    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
+    /// <param name="offset">Specifies the value of <paramref name="offset" />.</param>
     private protected override void SetVertexBufferCore(uint index, DeviceBuffer buffer, uint offset) {
         VkBuffer vkBuffer = Util.AssertSubtype<DeviceBuffer, VkBuffer>(buffer);
         Vulkan.VkBuffer deviceBuffer = vkBuffer.DeviceBuffer;
@@ -1308,11 +1300,11 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the SetIndexBufferCore operation.
+    /// Executes the SetIndexBufferCore operation.
     /// </summary>
-    /// <param name="buffer">The value of buffer.</param>
-    /// <param name="format">The value of format.</param>
-    /// <param name="offset">The value of offset.</param>
+    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
+    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
+    /// <param name="offset">Specifies the value of <paramref name="offset" />.</param>
     private protected override void SetIndexBufferCore(DeviceBuffer buffer, IndexFormat format, uint offset) {
         VkBuffer vkBuffer = Util.AssertSubtype<DeviceBuffer, VkBuffer>(buffer);
         vkCmdBindIndexBuffer(this.CommandBuffer, vkBuffer.DeviceBuffer, offset, VkFormats.VdToVkIndexFormat(format));
@@ -1320,9 +1312,9 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the SetPipelineCore operation.
+    /// Executes the SetPipelineCore operation.
     /// </summary>
-    /// <param name="pipeline">The value of pipeline.</param>
+    /// <param name="pipeline">Specifies the value of <paramref name="pipeline" />.</param>
     private protected override void SetPipelineCore(Pipeline pipeline) {
         VkPipeline vkPipeline = Util.AssertSubtype<Pipeline, VkPipeline>(pipeline);
 
@@ -1345,9 +1337,9 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the GenerateMipmapsCore operation.
+    /// Executes the GenerateMipmapsCore operation.
     /// </summary>
-    /// <param name="texture">The value of texture.</param>
+    /// <param name="texture">Specifies the value of <paramref name="texture" />.</param>
     private protected override void GenerateMipmapsCore(Texture texture) {
         this.EnsureNoRenderPass();
         VkTexture vkTex = Util.AssertSubtype<Texture, VkTexture>(texture);
@@ -1403,9 +1395,9 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the PushDebugGroupCore operation.
+    /// Executes the PushDebugGroupCore operation.
     /// </summary>
-    /// <param name="name">The value of name.</param>
+    /// <param name="name">Specifies the value of <paramref name="name" />.</param>
     private protected override void PushDebugGroupCore(string name) {
         VkCmdDebugMarkerBeginExtT func = this.gd.MarkerBegin;
         if (func == null) {
@@ -1428,7 +1420,7 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the PopDebugGroupCore operation.
+    /// Executes the PopDebugGroupCore operation.
     /// </summary>
     private protected override void PopDebugGroupCore() {
         VkCmdDebugMarkerEndExtT func = this.gd.MarkerEnd;
@@ -1437,9 +1429,9 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Performs the InsertDebugMarkerCore operation.
+    /// Executes the InsertDebugMarkerCore operation.
     /// </summary>
-    /// <param name="name">The value of name.</param>
+    /// <param name="name">Specifies the value of <paramref name="name" />.</param>
     private protected override void InsertDebugMarkerCore(string name) {
         VkCmdDebugMarkerInsertExtT func = this.gd.MarkerInsert;
         if (func == null) {
@@ -1462,24 +1454,22 @@ internal unsafe class VkCommandList : CommandList {
     }
 
     /// <summary>
-    /// Represents the StagingResourceInfo class.
+    /// Defines the behavior and responsibilities of the StagingResourceInfo class.
     /// </summary>
     private class StagingResourceInfo {
 
         /// <summary>
-        /// Performs the new operation.
+        /// Stores the value associated with <c>get</c>.
         /// </summary>
-        /// <returns>The result of the new operation.</returns>
         public List<VkBuffer> BuffersUsed { get; } = new();
 
         /// <summary>
-        /// Performs the new operation.
+        /// Stores the value associated with <c>get</c>.
         /// </summary>
-        /// <returns>The result of the new operation.</returns>
         public HashSet<ResourceRefCount> Resources { get; } = new();
 
         /// <summary>
-        /// Performs the Clear operation.
+        /// Executes the Clear operation.
         /// </summary>
         public void Clear() {
             this.BuffersUsed.Clear();

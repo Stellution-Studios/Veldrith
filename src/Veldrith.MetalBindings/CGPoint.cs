@@ -1,34 +1,34 @@
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the CGPoint struct.
+/// Defines the data layout and behavior of the CGPoint struct.
 /// </summary>
 public struct CGPoint {
 
     /// <summary>
-    /// Represents the x field.
+    /// Stores the value associated with <c>x</c>.
     /// </summary>
     public CGFloat x;
 
     /// <summary>
-    /// Represents the y field.
+    /// Stores the value associated with <c>y</c>.
     /// </summary>
     public CGFloat y;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CGPoint" /> type.
     /// </summary>
-    /// <param name="x">The value of x.</param>
-    /// <param name="y">The value of y.</param>
+    /// <param name="x">Specifies the value of <paramref name="x" />.</param>
+    /// <param name="y">Specifies the value of <paramref name="y" />.</param>
     public CGPoint(double x, double y) {
         this.x = x;
         this.y = y;
     }
 
     /// <summary>
-    /// Performs the ToString operation.
+    /// Executes the ToString operation.
     /// </summary>
-    /// <returns>The result of the ToString operation.</returns>
+    /// <returns>Returns the result produced by the ToString operation.</returns>
     public override string ToString() {
         return string.Format("({0},{1})", this.x, this.y);
     }

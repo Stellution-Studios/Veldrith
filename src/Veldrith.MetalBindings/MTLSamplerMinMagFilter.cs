@@ -1,12 +1,12 @@
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the MTLSamplerMinMagFilter enum.
+/// Defines the available values of the MTLSamplerMinMagFilter enumeration.
 /// </summary>
 public enum MTLSamplerMinMagFilter {
 
     /// <summary>
-    /// Represents the Nearest field.
+    /// Stores the value associated with <c>Nearest</c>.
     /// </summary>
     Nearest = 0, Linear = 1
 }

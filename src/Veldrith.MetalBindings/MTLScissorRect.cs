@@ -3,37 +3,37 @@ using System;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the MTLScissorRect struct.
+/// Defines the data layout and behavior of the MTLScissorRect struct.
 /// </summary>
 public struct MTLScissorRect : IEquatable<MTLScissorRect> {
 
     /// <summary>
-    /// Represents the x field.
+    /// Stores the value associated with <c>x</c>.
     /// </summary>
     public UIntPtr x;
 
     /// <summary>
-    /// Represents the y field.
+    /// Stores the value associated with <c>y</c>.
     /// </summary>
     public UIntPtr y;
 
     /// <summary>
-    /// Represents the width field.
+    /// Stores the value associated with <c>width</c>.
     /// </summary>
     public UIntPtr width;
 
     /// <summary>
-    /// Represents the height field.
+    /// Stores the value associated with <c>height</c>.
     /// </summary>
     public UIntPtr height;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MTLScissorRect" /> type.
     /// </summary>
-    /// <param name="x">The value of x.</param>
-    /// <param name="y">The value of y.</param>
-    /// <param name="width">The value of width.</param>
-    /// <param name="height">The value of height.</param>
+    /// <param name="x">Specifies the value of <paramref name="x" />.</param>
+    /// <param name="y">Specifies the value of <paramref name="y" />.</param>
+    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
+    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
     public MTLScissorRect(uint x, uint y, uint width, uint height) {
         this.x = x;
         this.y = y;
@@ -42,10 +42,10 @@ public struct MTLScissorRect : IEquatable<MTLScissorRect> {
     }
 
     /// <summary>
-    /// Performs the Equals operation.
+    /// Executes the Equals operation.
     /// </summary>
-    /// <param name="other">The value of other.</param>
-    /// <returns>The result of the Equals operation.</returns>
+    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
+    /// <returns>Returns the result produced by the Equals operation.</returns>
     public bool Equals(MTLScissorRect other) {
         return this.x == other.x
                && this.y == other.y

@@ -30,9 +30,9 @@ public struct ResourceLayoutElementDescription : IEquatable<ResourceLayoutElemen
     /// <summary>
     /// Initializes a new instance of the <see cref="ResourceLayoutElementDescription" /> type.
     /// </summary>
-    /// <param name="name">The value of name.</param>
-    /// <param name="kind">The value of kind.</param>
-    /// <param name="stages">The value of stages.</param>
+    /// <param name="name">Specifies the value of <paramref name="name" />.</param>
+    /// <param name="kind">Specifies the value of <paramref name="kind" />.</param>
+    /// <param name="stages">Specifies the value of <paramref name="stages" />.</param>
     public ResourceLayoutElementDescription(string name, ResourceKind kind, ShaderStages stages) {
         this.Name = name;
         this.Kind = kind;
@@ -43,10 +43,10 @@ public struct ResourceLayoutElementDescription : IEquatable<ResourceLayoutElemen
     /// <summary>
     /// Initializes a new instance of the <see cref="ResourceLayoutElementDescription" /> type.
     /// </summary>
-    /// <param name="name">The value of name.</param>
-    /// <param name="kind">The value of kind.</param>
-    /// <param name="stages">The value of stages.</param>
-    /// <param name="options">The value of options.</param>
+    /// <param name="name">Specifies the value of <paramref name="name" />.</param>
+    /// <param name="kind">Specifies the value of <paramref name="kind" />.</param>
+    /// <param name="stages">Specifies the value of <paramref name="stages" />.</param>
+    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
     public ResourceLayoutElementDescription(string name, ResourceKind kind, ShaderStages stages, ResourceLayoutElementOptions options) {
         this.Name = name;
         this.Kind = kind;
@@ -55,18 +55,18 @@ public struct ResourceLayoutElementDescription : IEquatable<ResourceLayoutElemen
     }
 
     /// <summary>
-    /// Performs the Equals operation.
+    /// Executes the Equals operation.
     /// </summary>
-    /// <param name="other">The value of other.</param>
-    /// <returns>The result of the Equals operation.</returns>
+    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
+    /// <returns>Returns the result produced by the Equals operation.</returns>
     public bool Equals(ResourceLayoutElementDescription other) {
         return this.Name == other.Name && this.Kind == other.Kind && this.Stages == other.Stages && this.Options == other.Options;
     }
 
     /// <summary>
-    /// Performs the GetHashCode operation.
+    /// Executes the GetHashCode operation.
     /// </summary>
-    /// <returns>The result of the GetHashCode operation.</returns>
+    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(this.Name.GetHashCode(), (int)this.Kind, (int)this.Stages, (int)this.Options);
     }

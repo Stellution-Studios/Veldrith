@@ -53,13 +53,13 @@ public struct GraphicsPipelineDescription : IEquatable<GraphicsPipelineDescripti
     /// <summary>
     /// Initializes a new instance of the <see cref="GraphicsPipelineDescription" /> type.
     /// </summary>
-    /// <param name="blendState">The value of blendState.</param>
-    /// <param name="depthStencilStateDescription">The value of depthStencilStateDescription.</param>
-    /// <param name="rasterizerState">The value of rasterizerState.</param>
-    /// <param name="primitiveTopology">The value of primitiveTopology.</param>
-    /// <param name="shaderSet">The value of shaderSet.</param>
-    /// <param name="resourceLayouts">The value of resourceLayouts.</param>
-    /// <param name="outputs">The value of outputs.</param>
+    /// <param name="blendState">Specifies the value of <paramref name="blendState" />.</param>
+    /// <param name="depthStencilStateDescription">Specifies the value of <paramref name="depthStencilStateDescription" />.</param>
+    /// <param name="rasterizerState">Specifies the value of <paramref name="rasterizerState" />.</param>
+    /// <param name="primitiveTopology">Specifies the value of <paramref name="primitiveTopology" />.</param>
+    /// <param name="shaderSet">Specifies the value of <paramref name="shaderSet" />.</param>
+    /// <param name="resourceLayouts">Specifies the value of <paramref name="resourceLayouts" />.</param>
+    /// <param name="outputs">Specifies the value of <paramref name="outputs" />.</param>
     public GraphicsPipelineDescription(BlendStateDescription blendState, DepthStencilStateDescription depthStencilStateDescription, RasterizerStateDescription rasterizerState, PrimitiveTopology primitiveTopology, ShaderSetDescription shaderSet, ResourceLayout[] resourceLayouts, OutputDescription outputs) {
         this.BlendState = blendState;
         this.DepthStencilState = depthStencilStateDescription;
@@ -74,13 +74,13 @@ public struct GraphicsPipelineDescription : IEquatable<GraphicsPipelineDescripti
     /// <summary>
     /// Initializes a new instance of the <see cref="GraphicsPipelineDescription" /> type.
     /// </summary>
-    /// <param name="blendState">The value of blendState.</param>
-    /// <param name="depthStencilStateDescription">The value of depthStencilStateDescription.</param>
-    /// <param name="rasterizerState">The value of rasterizerState.</param>
-    /// <param name="primitiveTopology">The value of primitiveTopology.</param>
-    /// <param name="shaderSet">The value of shaderSet.</param>
-    /// <param name="resourceLayout">The value of resourceLayout.</param>
-    /// <param name="outputs">The value of outputs.</param>
+    /// <param name="blendState">Specifies the value of <paramref name="blendState" />.</param>
+    /// <param name="depthStencilStateDescription">Specifies the value of <paramref name="depthStencilStateDescription" />.</param>
+    /// <param name="rasterizerState">Specifies the value of <paramref name="rasterizerState" />.</param>
+    /// <param name="primitiveTopology">Specifies the value of <paramref name="primitiveTopology" />.</param>
+    /// <param name="shaderSet">Specifies the value of <paramref name="shaderSet" />.</param>
+    /// <param name="resourceLayout">Specifies the value of <paramref name="resourceLayout" />.</param>
+    /// <param name="outputs">Specifies the value of <paramref name="outputs" />.</param>
     public GraphicsPipelineDescription(BlendStateDescription blendState, DepthStencilStateDescription depthStencilStateDescription, RasterizerStateDescription rasterizerState, PrimitiveTopology primitiveTopology, ShaderSetDescription shaderSet, ResourceLayout resourceLayout, OutputDescription outputs) {
         this.BlendState = blendState;
         this.DepthStencilState = depthStencilStateDescription;
@@ -95,14 +95,14 @@ public struct GraphicsPipelineDescription : IEquatable<GraphicsPipelineDescripti
     /// <summary>
     /// Initializes a new instance of the <see cref="GraphicsPipelineDescription" /> type.
     /// </summary>
-    /// <param name="blendState">The value of blendState.</param>
-    /// <param name="depthStencilStateDescription">The value of depthStencilStateDescription.</param>
-    /// <param name="rasterizerState">The value of rasterizerState.</param>
-    /// <param name="primitiveTopology">The value of primitiveTopology.</param>
-    /// <param name="shaderSet">The value of shaderSet.</param>
-    /// <param name="resourceLayouts">The value of resourceLayouts.</param>
-    /// <param name="outputs">The value of outputs.</param>
-    /// <param name="resourceBindingModel">The value of resourceBindingModel.</param>
+    /// <param name="blendState">Specifies the value of <paramref name="blendState" />.</param>
+    /// <param name="depthStencilStateDescription">Specifies the value of <paramref name="depthStencilStateDescription" />.</param>
+    /// <param name="rasterizerState">Specifies the value of <paramref name="rasterizerState" />.</param>
+    /// <param name="primitiveTopology">Specifies the value of <paramref name="primitiveTopology" />.</param>
+    /// <param name="shaderSet">Specifies the value of <paramref name="shaderSet" />.</param>
+    /// <param name="resourceLayouts">Specifies the value of <paramref name="resourceLayouts" />.</param>
+    /// <param name="outputs">Specifies the value of <paramref name="outputs" />.</param>
+    /// <param name="resourceBindingModel">Specifies the value of <paramref name="resourceBindingModel" />.</param>
     public GraphicsPipelineDescription(BlendStateDescription blendState, DepthStencilStateDescription depthStencilStateDescription, RasterizerStateDescription rasterizerState, PrimitiveTopology primitiveTopology, ShaderSetDescription shaderSet, ResourceLayout[] resourceLayouts, OutputDescription outputs, ResourceBindingModel resourceBindingModel) {
         this.BlendState = blendState;
         this.DepthStencilState = depthStencilStateDescription;
@@ -115,10 +115,10 @@ public struct GraphicsPipelineDescription : IEquatable<GraphicsPipelineDescripti
     }
 
     /// <summary>
-    /// Performs the Equals operation.
+    /// Executes the Equals operation.
     /// </summary>
-    /// <param name="other">The value of other.</param>
-    /// <returns>The result of the Equals operation.</returns>
+    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
+    /// <returns>Returns the result produced by the Equals operation.</returns>
     public bool Equals(GraphicsPipelineDescription other) {
         return this.BlendState.Equals(other.BlendState)
                && this.DepthStencilState.Equals(other.DepthStencilState)
@@ -133,9 +133,9 @@ public struct GraphicsPipelineDescription : IEquatable<GraphicsPipelineDescripti
     }
 
     /// <summary>
-    /// Performs the GetHashCode operation.
+    /// Executes the GetHashCode operation.
     /// </summary>
-    /// <returns>The result of the GetHashCode operation.</returns>
+    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(this.BlendState.GetHashCode(), this.DepthStencilState.GetHashCode(), this.RasterizerState.GetHashCode(), (int)this.PrimitiveTopology, this.ShaderSet.GetHashCode(), HashHelper.Array(this.ResourceLayouts), this.ResourceBindingModel.GetHashCode(), this.Outputs.GetHashCode());
     }

@@ -3,7 +3,7 @@ using System;
 namespace Veldrith;
 
 /// <summary>
-/// Represents the Illegal class.
+/// Defines the behavior and responsibilities of the Illegal class.
 /// </summary>
 internal static class Illegal {
 
@@ -19,7 +19,7 @@ internal static class Illegal {
     // ReSharper disable once UnusedTypeParameter
 
     /// <summary>
-    /// Represents the IllegalValueException class.
+    /// Defines the behavior and responsibilities of the IllegalValueException class.
     /// </summary>
     internal class IllegalValueException<T> : VeldridException { }
 }

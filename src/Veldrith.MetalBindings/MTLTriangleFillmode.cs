@@ -1,12 +1,12 @@
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the MTLTriangleFillMode enum.
+/// Defines the available values of the MTLTriangleFillMode enumeration.
 /// </summary>
 public enum MTLTriangleFillMode : uint {
 
     /// <summary>
-    /// Represents the Fill field.
+    /// Stores the value associated with <c>Fill</c>.
     /// </summary>
     Fill = 0, Lines = 1
 }

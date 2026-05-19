@@ -3,25 +3,25 @@ using System;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the NSRange struct.
+/// Defines the data layout and behavior of the NSRange struct.
 /// </summary>
 public struct NSRange {
 
     /// <summary>
-    /// Represents the location field.
+    /// Stores the value associated with <c>location</c>.
     /// </summary>
     public UIntPtr location;
 
     /// <summary>
-    /// Represents the length field.
+    /// Stores the value associated with <c>length</c>.
     /// </summary>
     public UIntPtr length;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="NSRange" /> type.
     /// </summary>
-    /// <param name="location">The value of location.</param>
-    /// <param name="length">The value of length.</param>
+    /// <param name="location">Specifies the value of <paramref name="location" />.</param>
+    /// <param name="length">Specifies the value of <paramref name="length" />.</param>
     public NSRange(UIntPtr location, UIntPtr length) {
         this.location = location;
         this.length = length;
@@ -30,8 +30,8 @@ public struct NSRange {
     /// <summary>
     /// Initializes a new instance of the <see cref="NSRange" /> type.
     /// </summary>
-    /// <param name="location">The value of location.</param>
-    /// <param name="length">The value of length.</param>
+    /// <param name="location">Specifies the value of <paramref name="location" />.</param>
+    /// <param name="length">Specifies the value of <paramref name="length" />.</param>
     public NSRange(uint location, uint length) {
         this.location = location;
         this.length = length;

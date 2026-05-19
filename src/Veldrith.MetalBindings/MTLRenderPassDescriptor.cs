@@ -7,26 +7,26 @@ namespace Veldrith.MetalBindings;
 [StructLayout(LayoutKind.Sequential)]
 
 /// <summary>
-/// Represents the MTLRenderPassDescriptor struct.
+/// Defines the data layout and behavior of the MTLRenderPassDescriptor struct.
 /// </summary>
 public struct MTLRenderPassDescriptor {
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>name</c>.
     /// </summary>
-    /// <param name="MTLRenderPassDescriptor">The value of MTLRenderPassDescriptor.</param>
-    /// <returns>The result of the new operation.</returns>
+    /// <param name="MTLRenderPassDescriptor">Specifies the value of <paramref name="MTLRenderPassDescriptor" />.</param>
+    /// <returns>Returns the result produced by the new operation.</returns>
     private static readonly ObjCClass s_class = new(nameof(MTLRenderPassDescriptor));
 
     /// <summary>
-    /// Represents the NativePtr field.
+    /// Stores the value associated with <c>NativePtr</c>.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Performs the New operation.
+    /// Creates and returns a new instance.
     /// </summary>
-    /// <returns>The result of the New operation.</returns>
+    /// <returns>Returns the result produced by the New operation.</returns>
     public static MTLRenderPassDescriptor New() {
         return s_class.AllocInit<MTLRenderPassDescriptor>();
     }
@@ -41,17 +41,17 @@ public struct MTLRenderPassDescriptor {
         => objc_msgSend<MTLRenderPassStencilAttachmentDescriptor>(this.NativePtr, sel_stencilAttachment);
 
     /// <summary>
-    /// Represents the sel_colorAttachments field.
+    /// Stores the value associated with <c>sel_colorAttachments</c>.
     /// </summary>
     private static readonly Selector sel_colorAttachments = "colorAttachments";
 
     /// <summary>
-    /// Represents the sel_depthAttachment field.
+    /// Stores the value associated with <c>sel_depthAttachment</c>.
     /// </summary>
     private static readonly Selector sel_depthAttachment = "depthAttachment";
 
     /// <summary>
-    /// Represents the sel_stencilAttachment field.
+    /// Stores the value associated with <c>sel_stencilAttachment</c>.
     /// </summary>
     private static readonly Selector sel_stencilAttachment = "stencilAttachment";
 }

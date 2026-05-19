@@ -4,110 +4,110 @@ using Vortice.Direct3D12;
 namespace Veldrith.D3D12;
 
 /// <summary>
-/// Represents the D3D12DeviceBuffer class.
+/// Defines the behavior and responsibilities of the D3D12DeviceBuffer class.
 /// </summary>
 internal sealed class D3D12DeviceBuffer : DeviceBuffer {
 
     /// <summary>
-    /// Represents the _dynamicMappedPointer field.
+    /// Stores the value associated with <c>_dynamicMappedPointer</c>.
     /// </summary>
     private readonly IntPtr _dynamicMappedPointer;
 
     /// <summary>
-    /// Represents the _dynamicSnapshotCapacity field.
+    /// Stores the value associated with <c>_dynamicSnapshotCapacity</c>.
     /// </summary>
     private readonly uint _dynamicSnapshotCapacity;
 
     /// <summary>
-    /// Represents the _dynamicSnapshotEnabled field.
+    /// Stores the value associated with <c>_dynamicSnapshotEnabled</c>.
     /// </summary>
     private readonly bool _dynamicSnapshotEnabled;
 
     /// <summary>
-    /// Represents the _isDynamic field.
+    /// Stores the value associated with <c>_isDynamic</c>.
     /// </summary>
     private readonly bool _isDynamic;
 
     /// <summary>
-    /// Represents the _isStaging field.
+    /// Stores the value associated with <c>_isStaging</c>.
     /// </summary>
     private readonly bool _isStaging;
 
     /// <summary>
-    /// Represents the _stagingReadBuffer field.
+    /// Stores the value associated with <c>_stagingReadBuffer</c>.
     /// </summary>
     private readonly ID3D12Resource _stagingReadBuffer;
 
     /// <summary>
-    /// Represents the _stagingReadMappedPointer field.
+    /// Stores the value associated with <c>_stagingReadMappedPointer</c>.
     /// </summary>
     private readonly IntPtr _stagingReadMappedPointer;
 
     /// <summary>
-    /// Represents the _stagingWriteBuffer field.
+    /// Stores the value associated with <c>_stagingWriteBuffer</c>.
     /// </summary>
     private readonly ID3D12Resource _stagingWriteBuffer;
 
     /// <summary>
-    /// Represents the _stagingWriteMappedPointer field.
+    /// Stores the value associated with <c>_stagingWriteMappedPointer</c>.
     /// </summary>
     private readonly IntPtr _stagingWriteMappedPointer;
 
     /// <summary>
-    /// Represents the gd field.
+    /// Stores the value associated with <c>gd</c>.
     /// </summary>
     private readonly D3D12GraphicsDevice gd;
 
     /// <summary>
-    /// Represents the sizeInBytes field.
+    /// Stores the value associated with <c>sizeInBytes</c>.
     /// </summary>
     private readonly uint sizeInBytes;
 
     /// <summary>
-    /// Represents the _activeMapMode field.
+    /// Stores the value associated with <c>_activeMapMode</c>.
     /// </summary>
     private MapMode? _activeMapMode;
 
     /// <summary>
-    /// Represents the _disposed field.
+    /// Stores the value associated with <c>_disposed</c>.
     /// </summary>
     private bool _disposed;
 
     /// <summary>
-    /// Represents the _dynamicBindVersion field.
+    /// Stores the value associated with <c>_dynamicBindVersion</c>.
     /// </summary>
     private ulong _dynamicBindVersion;
 
     /// <summary>
-    /// Represents the _dynamicSnapshotBaseOffset field.
+    /// Stores the value associated with <c>_dynamicSnapshotBaseOffset</c>.
     /// </summary>
     private uint _dynamicSnapshotBaseOffset;
 
     /// <summary>
-    /// Represents the _dynamicSnapshotInitialized field.
+    /// Stores the value associated with <c>_dynamicSnapshotInitialized</c>.
     /// </summary>
     private bool _dynamicSnapshotInitialized;
 
     /// <summary>
-    /// Represents the _dynamicSnapshotWriteHead field.
+    /// Stores the value associated with <c>_dynamicSnapshotWriteHead</c>.
     /// </summary>
     private uint _dynamicSnapshotWriteHead;
 
     /// <summary>
-    /// Represents the _stagingReadBufferDirtyFromWriteBuffer field.
+    /// Stores the value associated with <c>_stagingReadBufferDirtyFromWriteBuffer</c>.
     /// </summary>
     private bool _stagingReadBufferDirtyFromWriteBuffer;
 
     /// <summary>
-    /// Represents the _stagingWriteBufferDirtyFromReadBuffer field.
+    /// Stores the value associated with <c>_stagingWriteBufferDirtyFromReadBuffer</c>.
     /// </summary>
     private bool _stagingWriteBufferDirtyFromReadBuffer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="D3D12DeviceBuffer" /> type.
     /// </summary>
-    /// <param name="gd">The value of gd.</param>
-    /// <param name="description">The value of description.</param>
+    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
     public D3D12DeviceBuffer(D3D12GraphicsDevice gd, ref BufferDescription description) {
         this.gd = gd;
         this.SizeInBytes = description.SizeInBytes;
@@ -166,15 +166,15 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     internal ID3D12Resource NativeBuffer { get; }
 
     /// <summary>
-    /// Represents the GpuVirtualAddress field.
+    /// Stores the value associated with <c>GpuVirtualAddress</c>.
     /// </summary>
     internal ulong GpuVirtualAddress => this.NativeBuffer.GPUVirtualAddress;
 
     /// <summary>
-    /// Performs the Min operation.
+    /// Executes the Min operation.
     /// </summary>
-    /// <param name="uint">The value of uint.</param>
-    /// <returns>The result of the Min operation.</returns>
+    /// <param name="uint">Specifies the value of <paramref name="uint" />.</param>
+    /// <returns>Returns the result produced by the Min operation.</returns>
     internal uint CurrentNativeSizeInBytes => (uint)Math.Min(uint.MaxValue, this.NativeBuffer.Description.Width);
 
     /// <summary>
@@ -188,7 +188,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     internal bool CanTransitionState { get; }
 
     /// <summary>
-    /// Represents the BindVersion field.
+    /// Stores the value associated with <c>BindVersion</c>.
     /// </summary>
     internal ulong BindVersion => this._dynamicSnapshotEnabled ? this._dynamicBindVersion : 0UL;
 
@@ -203,34 +203,34 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     public override string Name { get; set; }
 
     /// <summary>
-    /// Performs the GetGpuVirtualAddress operation.
+    /// Executes the GetGpuVirtualAddress operation.
     /// </summary>
-    /// <param name="offset">The value of offset.</param>
-    /// <returns>The result of the GetGpuVirtualAddress operation.</returns>
+    /// <param name="offset">Specifies the value of <paramref name="offset" />.</param>
+    /// <returns>Returns the result produced by the GetGpuVirtualAddress operation.</returns>
     internal ulong GetGpuVirtualAddress(uint offset) {
         return this.NativeBuffer.GPUVirtualAddress + this.ResolveNativeOffset(offset);
     }
 
     /// <summary>
-    /// Performs the GetBindableSize operation.
+    /// Executes the GetBindableSize operation.
     /// </summary>
-    /// <param name="offset">The value of offset.</param>
-    /// <returns>The result of the GetBindableSize operation.</returns>
+    /// <param name="offset">Specifies the value of <paramref name="offset" />.</param>
+    /// <returns>Returns the result produced by the GetBindableSize operation.</returns>
     internal uint GetBindableSize(uint offset) {
         return offset < this.SizeInBytes ? this.SizeInBytes - offset : 0;
     }
 
     /// <summary>
-    /// Performs the ResolveNativeOffset operation.
+    /// Executes the ResolveNativeOffset operation.
     /// </summary>
-    /// <param name="offset">The value of offset.</param>
-    /// <returns>The result of the ResolveNativeOffset operation.</returns>
+    /// <param name="offset">Specifies the value of <paramref name="offset" />.</param>
+    /// <returns>Returns the result produced by the ResolveNativeOffset operation.</returns>
     internal uint ResolveNativeOffset(uint offset) {
         return this._dynamicSnapshotEnabled ? this._dynamicSnapshotBaseOffset + offset : offset;
     }
 
     /// <summary>
-    /// Performs the Dispose operation.
+    /// Executes the Dispose operation.
     /// </summary>
     public override void Dispose() {
         if (this._disposed) {
@@ -255,13 +255,13 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     }
 
     /// <summary>
-    /// Performs the Update operation.
+    /// Executes the Update operation.
     /// </summary>
-    /// <param name="commandList">The value of commandList.</param>
-    /// <param name="source">The value of source.</param>
-    /// <param name="destinationOffset">The value of destinationOffset.</param>
-    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
-    /// <returns>The result of the Update operation.</returns>
+    /// <param name="commandList">Specifies the value of <paramref name="commandList" />.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
+    /// <param name="destinationOffset">Specifies the value of <paramref name="destinationOffset" />.</param>
+    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
+    /// <returns>Returns the result produced by the Update operation.</returns>
     internal ID3D12Resource Update(ID3D12GraphicsCommandList commandList, IntPtr source, uint destinationOffset, uint sizeInBytes) {
         if (destinationOffset + sizeInBytes > this.SizeInBytes) {
             throw new VeldridException("Buffer update range exceeds the destination buffer size.");
@@ -287,11 +287,11 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     }
 
     /// <summary>
-    /// Performs the UpdateDynamicSnapshot operation.
+    /// Executes the UpdateDynamicSnapshot operation.
     /// </summary>
-    /// <param name="source">The value of source.</param>
-    /// <param name="destinationOffset">The value of destinationOffset.</param>
-    /// <param name="copySize">The value of copySize.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
+    /// <param name="destinationOffset">Specifies the value of <paramref name="destinationOffset" />.</param>
+    /// <param name="copySize">Specifies the value of <paramref name="copySize" />.</param>
     private unsafe void UpdateDynamicSnapshot(IntPtr source, uint destinationOffset, uint copySize) {
         if (copySize == 0) {
             return;
@@ -337,13 +337,13 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     }
 
     /// <summary>
-    /// Performs the CopyTo operation.
+    /// Executes the CopyTo operation.
     /// </summary>
-    /// <param name="commandList">The value of commandList.</param>
-    /// <param name="destination">The value of destination.</param>
-    /// <param name="sourceOffset">The value of sourceOffset.</param>
-    /// <param name="destinationOffset">The value of destinationOffset.</param>
-    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
+    /// <param name="commandList">Specifies the value of <paramref name="commandList" />.</param>
+    /// <param name="destination">Specifies the value of <paramref name="destination" />.</param>
+    /// <param name="sourceOffset">Specifies the value of <paramref name="sourceOffset" />.</param>
+    /// <param name="destinationOffset">Specifies the value of <paramref name="destinationOffset" />.</param>
+    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
     internal void CopyTo(ID3D12GraphicsCommandList commandList, D3D12DeviceBuffer destination, uint sourceOffset, uint destinationOffset, uint sizeInBytes) {
         if (sourceOffset + sizeInBytes > this.SizeInBytes || destinationOffset + sizeInBytes > destination.SizeInBytes) {
             throw new VeldridException("Buffer copy range exceeds buffer bounds.");
@@ -387,10 +387,10 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     }
 
     /// <summary>
-    /// Performs the Map operation.
+    /// Executes the Map operation.
     /// </summary>
-    /// <param name="mode">The value of mode.</param>
-    /// <returns>The result of the Map operation.</returns>
+    /// <param name="mode">Specifies the value of <paramref name="mode" />.</param>
+    /// <returns>Returns the result produced by the Map operation.</returns>
     internal MappedResource Map(MapMode mode) {
         IntPtr pointer = this.GetMapPointer(mode);
         this._activeMapMode = mode;
@@ -398,10 +398,10 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     }
 
     /// <summary>
-    /// Performs the TryGetCpuReadPointer operation.
+    /// Executes the TryGetCpuReadPointer operation.
     /// </summary>
-    /// <param name="pointer">The value of pointer.</param>
-    /// <returns>The result of the TryGetCpuReadPointer operation.</returns>
+    /// <param name="pointer">Specifies the value of <paramref name="pointer" />.</param>
+    /// <returns>Returns the result produced by the TryGetCpuReadPointer operation.</returns>
     internal bool TryGetCpuReadPointer(out IntPtr pointer) {
         if (this._isStaging) {
             this.EnsureReadBufferIsCurrent();
@@ -419,7 +419,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     }
 
     /// <summary>
-    /// Performs the Unmap operation.
+    /// Executes the Unmap operation.
     /// </summary>
     internal void Unmap() {
         if (!this._activeMapMode.HasValue) {
@@ -442,10 +442,10 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     }
 
     /// <summary>
-    /// Performs the GetMapPointer operation.
+    /// Executes the GetMapPointer operation.
     /// </summary>
-    /// <param name="mode">The value of mode.</param>
-    /// <returns>The result of the GetMapPointer operation.</returns>
+    /// <param name="mode">Specifies the value of <paramref name="mode" />.</param>
+    /// <returns>Returns the result produced by the GetMapPointer operation.</returns>
     private IntPtr GetMapPointer(MapMode mode) {
         if (this._isDynamic) {
             if (mode != MapMode.Write) {
@@ -468,11 +468,11 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     }
 
     /// <summary>
-    /// Performs the WriteCpuData operation.
+    /// Executes the WriteCpuData operation.
     /// </summary>
-    /// <param name="source">The value of source.</param>
-    /// <param name="destinationOffset">The value of destinationOffset.</param>
-    /// <param name="copySize">The value of copySize.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
+    /// <param name="destinationOffset">Specifies the value of <paramref name="destinationOffset" />.</param>
+    /// <param name="copySize">Specifies the value of <paramref name="copySize" />.</param>
     private unsafe void WriteCpuData(IntPtr source, uint destinationOffset, uint copySize) {
         if (this._isDynamic) {
             byte* dst = (byte*)this._dynamicMappedPointer + destinationOffset;
@@ -492,11 +492,11 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     }
 
     /// <summary>
-    /// Performs the CreateUploadBuffer operation.
+    /// Executes the CreateUploadBuffer operation.
     /// </summary>
-    /// <param name="source">The value of source.</param>
-    /// <param name="copySize">The value of copySize.</param>
-    /// <returns>The result of the CreateUploadBuffer operation.</returns>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
+    /// <param name="copySize">Specifies the value of <paramref name="copySize" />.</param>
+    /// <returns>Returns the result produced by the CreateUploadBuffer operation.</returns>
     private ID3D12Resource CreateUploadBuffer(IntPtr source, uint copySize) {
         ID3D12Resource uploadBuffer = this.gd.Device.CreateCommittedResource(HeapType.Upload, HeapFlags.None, ResourceDescription.Buffer(copySize), ResourceStates.GenericRead);
 
@@ -515,12 +515,12 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     }
 
     /// <summary>
-    /// Performs the CopyOnCpu operation.
+    /// Executes the CopyOnCpu operation.
     /// </summary>
-    /// <param name="destination">The value of destination.</param>
-    /// <param name="sourceOffset">The value of sourceOffset.</param>
-    /// <param name="destinationOffset">The value of destinationOffset.</param>
-    /// <param name="copySize">The value of copySize.</param>
+    /// <param name="destination">Specifies the value of <paramref name="destination" />.</param>
+    /// <param name="sourceOffset">Specifies the value of <paramref name="sourceOffset" />.</param>
+    /// <param name="destinationOffset">Specifies the value of <paramref name="destinationOffset" />.</param>
+    /// <param name="copySize">Specifies the value of <paramref name="copySize" />.</param>
     private unsafe void CopyOnCpu(D3D12DeviceBuffer destination, uint sourceOffset, uint destinationOffset, uint copySize) {
         if (!this.TryGetCpuReadPointer(out IntPtr sourcePtr)) {
             if (this.CanTransitionState) {
@@ -552,12 +552,12 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     }
 
     /// <summary>
-    /// Performs the CopyDefaultSourceToCpuWritableDestination operation.
+    /// Executes the CopyDefaultSourceToCpuWritableDestination operation.
     /// </summary>
-    /// <param name="destination">The value of destination.</param>
-    /// <param name="sourceOffset">The value of sourceOffset.</param>
-    /// <param name="destinationOffset">The value of destinationOffset.</param>
-    /// <param name="copySize">The value of copySize.</param>
+    /// <param name="destination">Specifies the value of <paramref name="destination" />.</param>
+    /// <param name="sourceOffset">Specifies the value of <paramref name="sourceOffset" />.</param>
+    /// <param name="destinationOffset">Specifies the value of <paramref name="destinationOffset" />.</param>
+    /// <param name="copySize">Specifies the value of <paramref name="copySize" />.</param>
     private unsafe void CopyDefaultSourceToCpuWritableDestination(D3D12DeviceBuffer destination, uint sourceOffset, uint destinationOffset, uint copySize) {
         IntPtr destinationPtr;
         if (destination._isDynamic) {
@@ -615,9 +615,9 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     }
 
     /// <summary>
-    /// Performs the GetCopySourceResource operation.
+    /// Executes the GetCopySourceResource operation.
     /// </summary>
-    /// <returns>The result of the GetCopySourceResource operation.</returns>
+    /// <returns>Returns the result produced by the GetCopySourceResource operation.</returns>
     private ID3D12Resource GetCopySourceResource() {
         if (this.CanTransitionState || this._isDynamic) {
             return this.NativeBuffer;
@@ -632,9 +632,9 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     }
 
     /// <summary>
-    /// Performs the GetCopyDestinationResource operation.
+    /// Executes the GetCopyDestinationResource operation.
     /// </summary>
-    /// <returns>The result of the GetCopyDestinationResource operation.</returns>
+    /// <returns>Returns the result produced by the GetCopyDestinationResource operation.</returns>
     private ID3D12Resource GetCopyDestinationResource() {
         if (this.CanTransitionState) {
             return this.NativeBuffer;
@@ -648,7 +648,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     }
 
     /// <summary>
-    /// Performs the EnsureReadBufferIsCurrent operation.
+    /// Executes the EnsureReadBufferIsCurrent operation.
     /// </summary>
     private void EnsureReadBufferIsCurrent() {
         if (!this._isStaging || !this._stagingReadBufferDirtyFromWriteBuffer) {
@@ -664,7 +664,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     }
 
     /// <summary>
-    /// Performs the EnsureWriteBufferIsCurrent operation.
+    /// Executes the EnsureWriteBufferIsCurrent operation.
     /// </summary>
     private void EnsureWriteBufferIsCurrent() {
         if (!this._isStaging || !this._stagingWriteBufferDirtyFromReadBuffer) {
@@ -675,7 +675,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     }
 
     /// <summary>
-    /// Performs the SyncReadBufferToWriteBuffer operation.
+    /// Executes the SyncReadBufferToWriteBuffer operation.
     /// </summary>
     private void SyncReadBufferToWriteBuffer() {
         unsafe {
@@ -687,11 +687,11 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     }
 
     /// <summary>
-    /// Performs the Transition operation.
+    /// Executes the Transition operation.
     /// </summary>
-    /// <param name="commandList">The value of commandList.</param>
-    /// <param name="from">The value of from.</param>
-    /// <param name="to">The value of to.</param>
+    /// <param name="commandList">Specifies the value of <paramref name="commandList" />.</param>
+    /// <param name="from">Specifies the value of <paramref name="from" />.</param>
+    /// <param name="to">Specifies the value of <paramref name="to" />.</param>
     private void Transition(ID3D12GraphicsCommandList commandList, ResourceStates from, ResourceStates to) {
         if (from == to || !this.CanTransitionState) {
             return;
@@ -702,10 +702,10 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     }
 
     /// <summary>
-    /// Performs the CalculateDynamicSnapshotCapacity operation.
+    /// Executes the CalculateDynamicSnapshotCapacity operation.
     /// </summary>
-    /// <param name="logicalSize">The value of logicalSize.</param>
-    /// <returns>The result of the CalculateDynamicSnapshotCapacity operation.</returns>
+    /// <param name="logicalSize">Specifies the value of <paramref name="logicalSize" />.</param>
+    /// <returns>Returns the result produced by the CalculateDynamicSnapshotCapacity operation.</returns>
     private static uint CalculateDynamicSnapshotCapacity(uint logicalSize) {
         const ulong maxSnapshotBytes = 256UL * 1024UL * 1024UL;
         ulong doubled = logicalSize * 2UL;
@@ -721,11 +721,11 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     }
 
     /// <summary>
-    /// Performs the AlignUp operation.
+    /// Executes the AlignUp operation.
     /// </summary>
-    /// <param name="value">The value of value.</param>
-    /// <param name="alignment">The value of alignment.</param>
-    /// <returns>The result of the AlignUp operation.</returns>
+    /// <param name="value">Specifies the value of <paramref name="value" />.</param>
+    /// <param name="alignment">Specifies the value of <paramref name="alignment" />.</param>
+    /// <returns>Returns the result produced by the AlignUp operation.</returns>
     private static uint AlignUp(uint value, uint alignment) {
         if (alignment == 0) {
             return value;
@@ -736,10 +736,10 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     }
 
     /// <summary>
-    /// Performs the GetResourceFlags operation.
+    /// Executes the GetResourceFlags operation.
     /// </summary>
-    /// <param name="usage">The value of usage.</param>
-    /// <returns>The result of the GetResourceFlags operation.</returns>
+    /// <param name="usage">Specifies the value of <paramref name="usage" />.</param>
+    /// <returns>Returns the result produced by the GetResourceFlags operation.</returns>
     private static ResourceFlags GetResourceFlags(BufferUsage usage) {
         if ((usage & BufferUsage.StructuredBufferReadWrite) == BufferUsage.StructuredBufferReadWrite) {
             return ResourceFlags.AllowUnorderedAccess;

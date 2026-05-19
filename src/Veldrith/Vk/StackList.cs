@@ -11,12 +11,12 @@ namespace Veldrith.Vk;
 internal unsafe struct StackList<T> where T : struct {
 
     /// <summary>
-    /// Represents the CAPACITY_IN_BYTES field.
+    /// Stores the value associated with <c>CAPACITY_IN_BYTES</c>.
     /// </summary>
     public const int CAPACITY_IN_BYTES = 256;
 
     /// <summary>
-    /// Represents the _s_sizeof_t field.
+    /// Stores the value associated with <c>_s_sizeof_t</c>.
     /// </summary>
     private static readonly int _s_sizeof_t = Unsafe.SizeOf<T>();
 
@@ -28,16 +28,16 @@ internal unsafe struct StackList<T> where T : struct {
     public uint Count { get; private set; }
 
     /// <summary>
-    /// Performs the AsPointer operation.
+    /// Executes the AsPointer operation.
     /// </summary>
-    /// <param name="this">The value of this.</param>
-    /// <returns>The result of the AsPointer operation.</returns>
+    /// <param name="this">Specifies the value of <paramref name="this" />.</param>
+    /// <returns>Returns the result produced by the AsPointer operation.</returns>
     public void* Data => Unsafe.AsPointer(ref this);
 
     /// <summary>
-    /// Performs the Add operation.
+    /// Executes the Add operation.
     /// </summary>
-    /// <param name="item">The value of item.</param>
+    /// <param name="item">Specifies the value of <paramref name="item" />.</param>
     public void Add(T item) {
         byte* basePtr = (byte*)this.Data;
         int offset = (int)(this.Count * _s_sizeof_t);
@@ -80,14 +80,14 @@ internal unsafe struct StackList<T> where T : struct {
 internal unsafe struct StackList<T, TSize> where T : struct where TSize : struct {
 
     /// <summary>
-    /// Represents the _s_sizeof_t field.
+    /// Stores the value associated with <c>_s_sizeof_t</c>.
     /// </summary>
     private static readonly int _s_sizeof_t = Unsafe.SizeOf<T>();
 
 #pragma warning disable 0169 // Unused field. This is used implicity because it controls the size of the structure on the stack.
 
     /// <summary>
-    /// Represents the _storage field.
+    /// Stores the value associated with <c>_storage</c>.
     /// </summary>
     private TSize _storage;
 #pragma warning restore 0169
@@ -98,16 +98,16 @@ internal unsafe struct StackList<T, TSize> where T : struct where TSize : struct
     public uint Count { get; private set; }
 
     /// <summary>
-    /// Performs the AsPointer operation.
+    /// Executes the AsPointer operation.
     /// </summary>
-    /// <param name="this">The value of this.</param>
-    /// <returns>The result of the AsPointer operation.</returns>
+    /// <param name="this">Specifies the value of <paramref name="this" />.</param>
+    /// <returns>Returns the result produced by the AsPointer operation.</returns>
     public void* Data => Unsafe.AsPointer(ref this);
 
     /// <summary>
-    /// Performs the Add operation.
+    /// Executes the Add operation.
     /// </summary>
-    /// <param name="item">The value of item.</param>
+    /// <param name="item">Specifies the value of <paramref name="item" />.</param>
     public void Add(T item) {
         ref T dest = ref Unsafe.Add(ref Unsafe.As<TSize, T>(ref this._storage), (int)this.Count);
 #if DEBUG
@@ -120,24 +120,24 @@ internal unsafe struct StackList<T, TSize> where T : struct where TSize : struct
     }
 
     /// <summary>
-    /// Performs the Add operation.
+    /// Executes the Add operation.
     /// </summary>
-    /// <param name="Data">The value of Data.</param>
-    /// <param name="index">The value of index.</param>
-    /// <returns>The result of the Add operation.</returns>
+    /// <param name="Data">Specifies the value of <paramref name="Data" />.</param>
+    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
+    /// <returns>Returns the result produced by the Add operation.</returns>
     public ref T this[int index] => ref Unsafe.Add(ref Unsafe.AsRef<T>(this.Data), index);
 
     /// <summary>
-    /// Performs the Add operation.
+    /// Executes the Add operation.
     /// </summary>
-    /// <param name="Data">The value of Data.</param>
-    /// <param name="int">The value of int.</param>
-    /// <returns>The result of the Add operation.</returns>
+    /// <param name="Data">Specifies the value of <paramref name="Data" />.</param>
+    /// <param name="int">Specifies the value of <paramref name="int" />.</param>
+    /// <returns>Returns the result produced by the Add operation.</returns>
     public ref T this[uint index] => ref Unsafe.Add(ref Unsafe.AsRef<T>(this.Data), (int)index);
 }
 
 /// <summary>
-/// Represents the Size16Bytes struct.
+/// Defines the data layout and behavior of the Size16Bytes struct.
 /// </summary>
 internal unsafe struct Size16Bytes {
 
@@ -145,7 +145,7 @@ internal unsafe struct Size16Bytes {
 }
 
 /// <summary>
-/// Represents the Size64Bytes struct.
+/// Defines the data layout and behavior of the Size64Bytes struct.
 /// </summary>
 internal unsafe struct Size64Bytes {
 
@@ -153,7 +153,7 @@ internal unsafe struct Size64Bytes {
 }
 
 /// <summary>
-/// Represents the Size128Bytes struct.
+/// Defines the data layout and behavior of the Size128Bytes struct.
 /// </summary>
 internal unsafe struct Size128Bytes {
 
@@ -161,7 +161,7 @@ internal unsafe struct Size128Bytes {
 }
 
 /// <summary>
-/// Represents the Size512Bytes struct.
+/// Defines the data layout and behavior of the Size512Bytes struct.
 /// </summary>
 internal unsafe struct Size512Bytes {
 
@@ -169,7 +169,7 @@ internal unsafe struct Size512Bytes {
 }
 
 /// <summary>
-/// Represents the Size1024Bytes struct.
+/// Defines the data layout and behavior of the Size1024Bytes struct.
 /// </summary>
 internal unsafe struct Size1024Bytes {
 
@@ -177,7 +177,7 @@ internal unsafe struct Size1024Bytes {
 }
 
 /// <summary>
-/// Represents the Size2048Bytes struct.
+/// Defines the data layout and behavior of the Size2048Bytes struct.
 /// </summary>
 internal unsafe struct Size2048Bytes {
 
@@ -186,53 +186,53 @@ internal unsafe struct Size2048Bytes {
 #pragma warning disable 0649 // Fields are not assigned directly -- expected.
 
 /// <summary>
-/// Represents the Size2IntPtr struct.
+/// Defines the data layout and behavior of the Size2IntPtr struct.
 /// </summary>
 internal struct Size2IntPtr {
 
     /// <summary>
-    /// Represents the First field.
+    /// Stores the value associated with <c>First</c>.
     /// </summary>
     public IntPtr First;
 
     /// <summary>
-    /// Represents the Second field.
+    /// Stores the value associated with <c>Second</c>.
     /// </summary>
     public IntPtr Second;
 }
 
 /// <summary>
-/// Represents the Size6IntPtr struct.
+/// Defines the data layout and behavior of the Size6IntPtr struct.
 /// </summary>
 internal struct Size6IntPtr {
 
     /// <summary>
-    /// Represents the First field.
+    /// Stores the value associated with <c>First</c>.
     /// </summary>
     public IntPtr First;
 
     /// <summary>
-    /// Represents the Second field.
+    /// Stores the value associated with <c>Second</c>.
     /// </summary>
     public IntPtr Second;
 
     /// <summary>
-    /// Represents the Third field.
+    /// Stores the value associated with <c>Third</c>.
     /// </summary>
     public IntPtr Third;
 
     /// <summary>
-    /// Represents the Fourth field.
+    /// Stores the value associated with <c>Fourth</c>.
     /// </summary>
     public IntPtr Fourth;
 
     /// <summary>
-    /// Represents the Fifth field.
+    /// Stores the value associated with <c>Fifth</c>.
     /// </summary>
     public IntPtr Fifth;
 
     /// <summary>
-    /// Represents the Sixth field.
+    /// Stores the value associated with <c>Sixth</c>.
     /// </summary>
     public IntPtr Sixth;
 }

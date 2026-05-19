@@ -58,7 +58,7 @@ public struct GraphicsDeviceOptions {
     /// <summary>
     /// Initializes a new instance of the <see cref="GraphicsDeviceOptions" /> type.
     /// </summary>
-    /// <param name="debug">The value of debug.</param>
+    /// <param name="debug">Specifies the value of <paramref name="debug" />.</param>
     public GraphicsDeviceOptions(bool debug) {
         this.Debug = debug;
         this.HasMainSwapchain = false;
@@ -73,9 +73,9 @@ public struct GraphicsDeviceOptions {
     /// <summary>
     /// Initializes a new instance of the <see cref="GraphicsDeviceOptions" /> type.
     /// </summary>
-    /// <param name="debug">The value of debug.</param>
-    /// <param name="swapchainDepthFormat">The value of swapchainDepthFormat.</param>
-    /// <param name="syncToVerticalBlank">The value of syncToVerticalBlank.</param>
+    /// <param name="debug">Specifies the value of <paramref name="debug" />.</param>
+    /// <param name="swapchainDepthFormat">Specifies the value of <paramref name="swapchainDepthFormat" />.</param>
+    /// <param name="syncToVerticalBlank">Specifies the value of <paramref name="syncToVerticalBlank" />.</param>
     public GraphicsDeviceOptions(bool debug, PixelFormat? swapchainDepthFormat, bool syncToVerticalBlank) {
         this.Debug = debug;
         this.HasMainSwapchain = true;
@@ -90,10 +90,10 @@ public struct GraphicsDeviceOptions {
     /// <summary>
     /// Initializes a new instance of the <see cref="GraphicsDeviceOptions" /> type.
     /// </summary>
-    /// <param name="debug">The value of debug.</param>
-    /// <param name="swapchainDepthFormat">The value of swapchainDepthFormat.</param>
-    /// <param name="syncToVerticalBlank">The value of syncToVerticalBlank.</param>
-    /// <param name="resourceBindingModel">The value of resourceBindingModel.</param>
+    /// <param name="debug">Specifies the value of <paramref name="debug" />.</param>
+    /// <param name="swapchainDepthFormat">Specifies the value of <paramref name="swapchainDepthFormat" />.</param>
+    /// <param name="syncToVerticalBlank">Specifies the value of <paramref name="syncToVerticalBlank" />.</param>
+    /// <param name="resourceBindingModel">Specifies the value of <paramref name="resourceBindingModel" />.</param>
     public GraphicsDeviceOptions(bool debug, PixelFormat? swapchainDepthFormat, bool syncToVerticalBlank, ResourceBindingModel resourceBindingModel) {
         this.Debug = debug;
         this.HasMainSwapchain = true;
@@ -108,11 +108,11 @@ public struct GraphicsDeviceOptions {
     /// <summary>
     /// Initializes a new instance of the <see cref="GraphicsDeviceOptions" /> type.
     /// </summary>
-    /// <param name="debug">The value of debug.</param>
-    /// <param name="swapchainDepthFormat">The value of swapchainDepthFormat.</param>
-    /// <param name="syncToVerticalBlank">The value of syncToVerticalBlank.</param>
-    /// <param name="resourceBindingModel">The value of resourceBindingModel.</param>
-    /// <param name="preferDepthRangeZeroToOne">The value of preferDepthRangeZeroToOne.</param>
+    /// <param name="debug">Specifies the value of <paramref name="debug" />.</param>
+    /// <param name="swapchainDepthFormat">Specifies the value of <paramref name="swapchainDepthFormat" />.</param>
+    /// <param name="syncToVerticalBlank">Specifies the value of <paramref name="syncToVerticalBlank" />.</param>
+    /// <param name="resourceBindingModel">Specifies the value of <paramref name="resourceBindingModel" />.</param>
+    /// <param name="preferDepthRangeZeroToOne">Specifies the value of <paramref name="preferDepthRangeZeroToOne" />.</param>
     public GraphicsDeviceOptions(bool debug, PixelFormat? swapchainDepthFormat, bool syncToVerticalBlank, ResourceBindingModel resourceBindingModel, bool preferDepthRangeZeroToOne) {
         this.Debug = debug;
         this.HasMainSwapchain = true;
@@ -127,12 +127,12 @@ public struct GraphicsDeviceOptions {
     /// <summary>
     /// Initializes a new instance of the <see cref="GraphicsDeviceOptions" /> type.
     /// </summary>
-    /// <param name="debug">The value of debug.</param>
-    /// <param name="swapchainDepthFormat">The value of swapchainDepthFormat.</param>
-    /// <param name="syncToVerticalBlank">The value of syncToVerticalBlank.</param>
-    /// <param name="resourceBindingModel">The value of resourceBindingModel.</param>
-    /// <param name="preferDepthRangeZeroToOne">The value of preferDepthRangeZeroToOne.</param>
-    /// <param name="preferStandardClipSpaceYDirection">The value of preferStandardClipSpaceYDirection.</param>
+    /// <param name="debug">Specifies the value of <paramref name="debug" />.</param>
+    /// <param name="swapchainDepthFormat">Specifies the value of <paramref name="swapchainDepthFormat" />.</param>
+    /// <param name="syncToVerticalBlank">Specifies the value of <paramref name="syncToVerticalBlank" />.</param>
+    /// <param name="resourceBindingModel">Specifies the value of <paramref name="resourceBindingModel" />.</param>
+    /// <param name="preferDepthRangeZeroToOne">Specifies the value of <paramref name="preferDepthRangeZeroToOne" />.</param>
+    /// <param name="preferStandardClipSpaceYDirection">Specifies the value of <paramref name="preferStandardClipSpaceYDirection" />.</param>
     public GraphicsDeviceOptions(bool debug, PixelFormat? swapchainDepthFormat, bool syncToVerticalBlank, ResourceBindingModel resourceBindingModel, bool preferDepthRangeZeroToOne, bool preferStandardClipSpaceYDirection) {
         this.Debug = debug;
         this.HasMainSwapchain = true;
@@ -148,13 +148,13 @@ public struct GraphicsDeviceOptions {
     /// <summary>
     /// Initializes a new instance of the <see cref="GraphicsDeviceOptions" /> type.
     /// </summary>
-    /// <param name="debug">The value of debug.</param>
-    /// <param name="swapchainDepthFormat">The value of swapchainDepthFormat.</param>
-    /// <param name="syncToVerticalBlank">The value of syncToVerticalBlank.</param>
-    /// <param name="resourceBindingModel">The value of resourceBindingModel.</param>
-    /// <param name="preferDepthRangeZeroToOne">The value of preferDepthRangeZeroToOne.</param>
-    /// <param name="preferStandardClipSpaceYDirection">The value of preferStandardClipSpaceYDirection.</param>
-    /// <param name="swapchainSrgbFormat">The value of swapchainSrgbFormat.</param>
+    /// <param name="debug">Specifies the value of <paramref name="debug" />.</param>
+    /// <param name="swapchainDepthFormat">Specifies the value of <paramref name="swapchainDepthFormat" />.</param>
+    /// <param name="syncToVerticalBlank">Specifies the value of <paramref name="syncToVerticalBlank" />.</param>
+    /// <param name="resourceBindingModel">Specifies the value of <paramref name="resourceBindingModel" />.</param>
+    /// <param name="preferDepthRangeZeroToOne">Specifies the value of <paramref name="preferDepthRangeZeroToOne" />.</param>
+    /// <param name="preferStandardClipSpaceYDirection">Specifies the value of <paramref name="preferStandardClipSpaceYDirection" />.</param>
+    /// <param name="swapchainSrgbFormat">Specifies the value of <paramref name="swapchainSrgbFormat" />.</param>
     public GraphicsDeviceOptions(bool debug, PixelFormat? swapchainDepthFormat, bool syncToVerticalBlank, ResourceBindingModel resourceBindingModel, bool preferDepthRangeZeroToOne, bool preferStandardClipSpaceYDirection, bool swapchainSrgbFormat) {
         this.Debug = debug;
         this.HasMainSwapchain = true;

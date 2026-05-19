@@ -9,24 +9,22 @@ using Veldrith.Vk;
 namespace Veldrith;
 
 /// <summary>
-/// Represents the GraphicsDevice class.
+/// Defines the behavior and responsibilities of the GraphicsDevice class.
 /// </summary>
 public abstract class GraphicsDevice : IDisposable {
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>_deferredDisposalLock</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     private readonly object _deferredDisposalLock = new();
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>_disposables</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     private readonly List<IDisposable> _disposables = new();
 
     /// <summary>
-    /// Represents the _aniso4XSampler field.
+    /// Stores the value associated with <c>_aniso4XSampler</c>.
     /// </summary>
     private Sampler _aniso4XSampler;
 
@@ -91,15 +89,15 @@ public abstract class GraphicsDevice : IDisposable {
     public abstract GraphicsDeviceFeatures Features { get; }
 
     /// <summary>
-    /// Performs the GetUniformBufferMinOffsetAlignmentCore operation.
+    /// Executes the GetUniformBufferMinOffsetAlignmentCore operation.
     /// </summary>
-    /// <returns>The result of the GetUniformBufferMinOffsetAlignmentCore operation.</returns>
+    /// <returns>Returns the result produced by the GetUniformBufferMinOffsetAlignmentCore operation.</returns>
     public uint UniformBufferMinOffsetAlignment => this.GetUniformBufferMinOffsetAlignmentCore();
 
     /// <summary>
-    /// Performs the GetStructuredBufferMinOffsetAlignmentCore operation.
+    /// Executes the GetStructuredBufferMinOffsetAlignmentCore operation.
     /// </summary>
-    /// <returns>The result of the GetStructuredBufferMinOffsetAlignmentCore operation.</returns>
+    /// <returns>Returns the result produced by the GetStructuredBufferMinOffsetAlignmentCore operation.</returns>
     public uint StructuredBufferMinOffsetAlignment => this.GetStructuredBufferMinOffsetAlignmentCore();
 
     /// <summary>
@@ -165,7 +163,7 @@ public abstract class GraphicsDevice : IDisposable {
     #region Disposal
 
     /// <summary>
-    /// Performs the Dispose operation.
+    /// Executes the Dispose operation.
     /// </summary>
     public void Dispose() {
         this.WaitForIdle();
@@ -178,10 +176,10 @@ public abstract class GraphicsDevice : IDisposable {
     #endregion
 
     /// <summary>
-    /// Performs the IsBackendSupported operation.
+    /// Executes the IsBackendSupported operation.
     /// </summary>
-    /// <param name="backend">The value of backend.</param>
-    /// <returns>The result of the IsBackendSupported operation.</returns>
+    /// <param name="backend">Specifies the value of <paramref name="backend" />.</param>
+    /// <returns>Returns the result produced by the IsBackendSupported operation.</returns>
     public static bool IsBackendSupported(GraphicsBackend backend) {
         switch (backend) {
             case GraphicsBackend.Direct3D12: return D3D12GraphicsDevice.IsSupported();
@@ -202,26 +200,26 @@ public abstract class GraphicsDevice : IDisposable {
     }
 
     /// <summary>
-    /// Performs the SubmitCommands operation.
+    /// Executes the SubmitCommands operation.
     /// </summary>
-    /// <param name="commandList">The value of commandList.</param>
+    /// <param name="commandList">Specifies the value of <paramref name="commandList" />.</param>
     public void SubmitCommands(CommandList commandList) {
         this.SubmitCommandsCore(commandList, null);
     }
 
     /// <summary>
-    /// Performs the SubmitCommands operation.
+    /// Executes the SubmitCommands operation.
     /// </summary>
-    /// <param name="commandList">The value of commandList.</param>
-    /// <param name="fence">The value of fence.</param>
+    /// <param name="commandList">Specifies the value of <paramref name="commandList" />.</param>
+    /// <param name="fence">Specifies the value of <paramref name="fence" />.</param>
     public void SubmitCommands(CommandList commandList, Fence fence) {
         this.SubmitCommandsCore(commandList, fence);
     }
 
     /// <summary>
-    /// Performs the WaitForFence operation.
+    /// Executes the WaitForFence operation.
     /// </summary>
-    /// <param name="fence">The value of fence.</param>
+    /// <param name="fence">Specifies the value of <paramref name="fence" />.</param>
     public void WaitForFence(Fence fence) {
         if (!this.WaitForFence(fence, ulong.MaxValue)) {
             throw new VeldridException("The operation timed out before the Fence was signaled.");
@@ -229,28 +227,28 @@ public abstract class GraphicsDevice : IDisposable {
     }
 
     /// <summary>
-    /// Performs the WaitForFence operation.
+    /// Executes the WaitForFence operation.
     /// </summary>
-    /// <param name="fence">The value of fence.</param>
-    /// <param name="timeout">The value of timeout.</param>
-    /// <returns>The result of the WaitForFence operation.</returns>
+    /// <param name="fence">Specifies the value of <paramref name="fence" />.</param>
+    /// <param name="timeout">Specifies the value of <paramref name="timeout" />.</param>
+    /// <returns>Returns the result produced by the WaitForFence operation.</returns>
     public bool WaitForFence(Fence fence, TimeSpan timeout) {
         return this.WaitForFence(fence, (ulong)timeout.TotalMilliseconds * 1_000_000);
     }
 
     /// <summary>
-    /// Performs the WaitForFence operation.
+    /// Executes the WaitForFence operation.
     /// </summary>
-    /// <param name="fence">The value of fence.</param>
-    /// <param name="nanosecondTimeout">The value of nanosecondTimeout.</param>
-    /// <returns>The result of the WaitForFence operation.</returns>
+    /// <param name="fence">Specifies the value of <paramref name="fence" />.</param>
+    /// <param name="nanosecondTimeout">Specifies the value of <paramref name="nanosecondTimeout" />.</param>
+    /// <returns>Returns the result produced by the WaitForFence operation.</returns>
     public abstract bool WaitForFence(Fence fence, ulong nanosecondTimeout);
 
     /// <summary>
-    /// Performs the WaitForFences operation.
+    /// Executes the WaitForFences operation.
     /// </summary>
-    /// <param name="fences">The value of fences.</param>
-    /// <param name="waitAll">The value of waitAll.</param>
+    /// <param name="fences">Specifies the value of <paramref name="fences" />.</param>
+    /// <param name="waitAll">Specifies the value of <paramref name="waitAll" />.</param>
     public void WaitForFences(Fence[] fences, bool waitAll) {
         if (!this.WaitForFences(fences, waitAll, ulong.MaxValue)) {
             throw new VeldridException("The operation timed out before the Fence(s) were signaled.");
@@ -258,33 +256,33 @@ public abstract class GraphicsDevice : IDisposable {
     }
 
     /// <summary>
-    /// Performs the WaitForFences operation.
+    /// Executes the WaitForFences operation.
     /// </summary>
-    /// <param name="fences">The value of fences.</param>
-    /// <param name="waitAll">The value of waitAll.</param>
-    /// <param name="timeout">The value of timeout.</param>
-    /// <returns>The result of the WaitForFences operation.</returns>
+    /// <param name="fences">Specifies the value of <paramref name="fences" />.</param>
+    /// <param name="waitAll">Specifies the value of <paramref name="waitAll" />.</param>
+    /// <param name="timeout">Specifies the value of <paramref name="timeout" />.</param>
+    /// <returns>Returns the result produced by the WaitForFences operation.</returns>
     public bool WaitForFences(Fence[] fences, bool waitAll, TimeSpan timeout) {
         return this.WaitForFences(fences, waitAll, (ulong)timeout.TotalMilliseconds * 1_000_000);
     }
 
     /// <summary>
-    /// Performs the WaitForFences operation.
+    /// Executes the WaitForFences operation.
     /// </summary>
-    /// <param name="fences">The value of fences.</param>
-    /// <param name="waitAll">The value of waitAll.</param>
-    /// <param name="nanosecondTimeout">The value of nanosecondTimeout.</param>
-    /// <returns>The result of the WaitForFences operation.</returns>
+    /// <param name="fences">Specifies the value of <paramref name="fences" />.</param>
+    /// <param name="waitAll">Specifies the value of <paramref name="waitAll" />.</param>
+    /// <param name="nanosecondTimeout">Specifies the value of <paramref name="nanosecondTimeout" />.</param>
+    /// <returns>Returns the result produced by the WaitForFences operation.</returns>
     public abstract bool WaitForFences(Fence[] fences, bool waitAll, ulong nanosecondTimeout);
 
     /// <summary>
-    /// Performs the ResetFence operation.
+    /// Executes the ResetFence operation.
     /// </summary>
-    /// <param name="fence">The value of fence.</param>
+    /// <param name="fence">Specifies the value of <paramref name="fence" />.</param>
     public abstract void ResetFence(Fence fence);
 
     /// <summary>
-    /// Performs the SwapBuffers operation.
+    /// Executes the SwapBuffers operation.
     /// </summary>
     public void SwapBuffers() {
         if (this.MainSwapchain == null) {
@@ -295,18 +293,18 @@ public abstract class GraphicsDevice : IDisposable {
     }
 
     /// <summary>
-    /// Performs the SwapBuffers operation.
+    /// Executes the SwapBuffers operation.
     /// </summary>
-    /// <param name="swapchain">The value of swapchain.</param>
+    /// <param name="swapchain">Specifies the value of <paramref name="swapchain" />.</param>
     public void SwapBuffers(Swapchain swapchain) {
         this.SwapBuffersCore(swapchain);
     }
 
     /// <summary>
-    /// Performs the ResizeMainWindow operation.
+    /// Executes the ResizeMainWindow operation.
     /// </summary>
-    /// <param name="width">The value of width.</param>
-    /// <param name="height">The value of height.</param>
+    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
+    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
     public void ResizeMainWindow(uint width, uint height) {
         if (this.MainSwapchain == null) {
             throw new VeldridException("This GraphicsDevice was created without a main Swapchain, so the requested operation cannot be performed.");
@@ -316,7 +314,7 @@ public abstract class GraphicsDevice : IDisposable {
     }
 
     /// <summary>
-    /// Performs the WaitForIdle operation.
+    /// Executes the WaitForIdle operation.
     /// </summary>
     public void WaitForIdle() {
         this.WaitForIdleCore();
@@ -324,37 +322,37 @@ public abstract class GraphicsDevice : IDisposable {
     }
 
     /// <summary>
-    /// Performs the WaitForNextFrameReady operation.
+    /// Executes the WaitForNextFrameReady operation.
     /// </summary>
     public void WaitForNextFrameReady() {
         this.WaitForNextFrameReadyCore();
     }
 
     /// <summary>
-    /// Performs the GetSampleCountLimit operation.
+    /// Executes the GetSampleCountLimit operation.
     /// </summary>
-    /// <param name="format">The value of format.</param>
-    /// <param name="depthFormat">The value of depthFormat.</param>
-    /// <returns>The result of the GetSampleCountLimit operation.</returns>
+    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
+    /// <param name="depthFormat">Specifies the value of <paramref name="depthFormat" />.</param>
+    /// <returns>Returns the result produced by the GetSampleCountLimit operation.</returns>
     public abstract TextureSampleCount GetSampleCountLimit(PixelFormat format, bool depthFormat);
 
     /// <summary>
-    /// Performs the Map operation.
+    /// Executes the Map operation.
     /// </summary>
-    /// <param name="resource">The value of resource.</param>
-    /// <param name="mode">The value of mode.</param>
-    /// <returns>The result of the Map operation.</returns>
+    /// <param name="resource">Specifies the value of <paramref name="resource" />.</param>
+    /// <param name="mode">Specifies the value of <paramref name="mode" />.</param>
+    /// <returns>Returns the result produced by the Map operation.</returns>
     public MappedResource Map(IMappableResource resource, MapMode mode) {
         return this.Map(resource, mode, 0);
     }
 
     /// <summary>
-    /// Performs the Map operation.
+    /// Executes the Map operation.
     /// </summary>
-    /// <param name="resource">The value of resource.</param>
-    /// <param name="mode">The value of mode.</param>
-    /// <param name="subresource">The value of subresource.</param>
-    /// <returns>The result of the Map operation.</returns>
+    /// <param name="resource">Specifies the value of <paramref name="resource" />.</param>
+    /// <param name="mode">Specifies the value of <paramref name="mode" />.</param>
+    /// <param name="subresource">Specifies the value of <paramref name="subresource" />.</param>
+    /// <returns>Returns the result produced by the Map operation.</returns>
     public MappedResource Map(IMappableResource resource, MapMode mode, uint subresource) {
 #if VALIDATE_USAGE
         if (resource is DeviceBuffer buffer) {
@@ -390,8 +388,8 @@ public abstract class GraphicsDevice : IDisposable {
     /// structured
     /// view over that region. For Texture resources, this overload maps the first subresource.
     /// </summary>
-    /// <param name="resource">The <see cref="DeviceBuffer" /> or <see cref="Texture" /> resource to map.</param>
-    /// <param name="mode">The <see cref="MapMode" /> to use.</param>
+    /// <param name="resource">Specifies the value of <paramref name="resource" />.</param>
+    /// <param name="mode">Specifies the value of <paramref name="mode" />.</param>
     /// <typeparam name="T">The blittable value type which mapped data is viewed as.</typeparam>
     /// <returns>A <see cref="MappedResource" /> structure describing the mapped data region.</returns>
     public MappedResourceView<T> Map<T>(IMappableResource resource, MapMode mode) where T : unmanaged {
@@ -403,9 +401,9 @@ public abstract class GraphicsDevice : IDisposable {
     /// structured
     /// view over that region.
     /// </summary>
-    /// <param name="resource">The <see cref="DeviceBuffer" /> or <see cref="Texture" /> resource to map.</param>
-    /// <param name="mode">The <see cref="MapMode" /> to use.</param>
-    /// <param name="subresource">The subresource to map. Subresources are indexed first by mip slice, then by array layer.</param>
+    /// <param name="resource">Specifies the value of <paramref name="resource" />.</param>
+    /// <param name="mode">Specifies the value of <paramref name="mode" />.</param>
+    /// <param name="subresource">Specifies the value of <paramref name="subresource" />.</param>
     /// <typeparam name="T">The blittable value type which mapped data is viewed as.</typeparam>
     /// <returns>A <see cref="MappedResource" /> structure describing the mapped data region.</returns>
     public MappedResourceView<T> Map<T>(IMappableResource resource, MapMode mode, uint subresource)
@@ -415,37 +413,37 @@ public abstract class GraphicsDevice : IDisposable {
     }
 
     /// <summary>
-    /// Performs the Unmap operation.
+    /// Executes the Unmap operation.
     /// </summary>
-    /// <param name="resource">The value of resource.</param>
+    /// <param name="resource">Specifies the value of <paramref name="resource" />.</param>
     public void Unmap(IMappableResource resource) {
         this.Unmap(resource, 0);
     }
 
     /// <summary>
-    /// Performs the Unmap operation.
+    /// Executes the Unmap operation.
     /// </summary>
-    /// <param name="resource">The value of resource.</param>
-    /// <param name="subresource">The value of subresource.</param>
+    /// <param name="resource">Specifies the value of <paramref name="resource" />.</param>
+    /// <param name="subresource">Specifies the value of <paramref name="subresource" />.</param>
     public void Unmap(IMappableResource resource, uint subresource) {
         this.UnmapCore(resource, subresource);
     }
 
 
     /// <summary>
-    /// Performs the UpdateTexture operation.
+    /// Executes the UpdateTexture operation.
     /// </summary>
-    /// <param name="texture">The value of texture.</param>
-    /// <param name="source">The value of source.</param>
-    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
-    /// <param name="x">The value of x.</param>
-    /// <param name="y">The value of y.</param>
-    /// <param name="z">The value of z.</param>
-    /// <param name="width">The value of width.</param>
-    /// <param name="height">The value of height.</param>
-    /// <param name="depth">The value of depth.</param>
-    /// <param name="mipLevel">The value of mipLevel.</param>
-    /// <param name="arrayLayer">The value of arrayLayer.</param>
+    /// <param name="texture">Specifies the value of <paramref name="texture" />.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
+    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
+    /// <param name="x">Specifies the value of <paramref name="x" />.</param>
+    /// <param name="y">Specifies the value of <paramref name="y" />.</param>
+    /// <param name="z">Specifies the value of <paramref name="z" />.</param>
+    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
+    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
+    /// <param name="depth">Specifies the value of <paramref name="depth" />.</param>
+    /// <param name="mipLevel">Specifies the value of <paramref name="mipLevel" />.</param>
+    /// <param name="arrayLayer">Specifies the value of <paramref name="arrayLayer" />.</param>
     public void UpdateTexture(Texture texture, IntPtr source, uint sizeInBytes, uint x, uint y, uint z, uint width, uint height, uint depth, uint mipLevel, uint arrayLayer) {
 #if VALIDATE_USAGE
         ValidateUpdateTextureParameters(texture, sizeInBytes, x, y, z, width, height, depth, mipLevel, arrayLayer);
@@ -456,22 +454,22 @@ public abstract class GraphicsDevice : IDisposable {
     /// <summary>
     /// Updates a portion of a <see cref="Texture" /> resource with new data contained in an array
     /// </summary>
-    /// <param name="texture">The resource to update.</param>
-    /// <param name="source">
+    /// <param name="texture">Specifies the value of <paramref name="texture" />.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
     /// An array containing the data to upload. This must contain tightly-packed pixel data for the
     /// region specified.
     /// </param>
-    /// <param name="x">The minimum X value of the updated region.</param>
-    /// <param name="y">The minimum Y value of the updated region.</param>
-    /// <param name="z">The minimum Z value of the updated region.</param>
-    /// <param name="width">The width of the updated region, in texels.</param>
-    /// <param name="height">The height of the updated region, in texels.</param>
-    /// <param name="depth">The depth of the updated region, in texels.</param>
-    /// <param name="mipLevel">
+    /// <param name="x">Specifies the value of <paramref name="x" />.</param>
+    /// <param name="y">Specifies the value of <paramref name="y" />.</param>
+    /// <param name="z">Specifies the value of <paramref name="z" />.</param>
+    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
+    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
+    /// <param name="depth">Specifies the value of <paramref name="depth" />.</param>
+    /// <param name="mipLevel">Specifies the value of <paramref name="mipLevel" />.</param>
     /// The mipmap level to update. Must be less than the total number of mipmaps contained in the
     /// <see cref="Texture" />.
     /// </param>
-    /// <param name="arrayLayer">
+    /// <param name="arrayLayer">Specifies the value of <paramref name="arrayLayer" />.</param>
     /// The array layer to update. Must be less than the total array layer count contained in the
     /// <see cref="Texture" />.
     /// </param>
@@ -482,22 +480,22 @@ public abstract class GraphicsDevice : IDisposable {
     /// <summary>
     /// Updates a portion of a <see cref="Texture" /> resource with new data contained in an array
     /// </summary>
-    /// <param name="texture">The resource to update.</param>
-    /// <param name="source">
+    /// <param name="texture">Specifies the value of <paramref name="texture" />.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
     /// A readonly span containing the data to upload. This must contain tightly-packed pixel data for the
     /// region specified.
     /// </param>
-    /// <param name="x">The minimum X value of the updated region.</param>
-    /// <param name="y">The minimum Y value of the updated region.</param>
-    /// <param name="z">The minimum Z value of the updated region.</param>
-    /// <param name="width">The width of the updated region, in texels.</param>
-    /// <param name="height">The height of the updated region, in texels.</param>
-    /// <param name="depth">The depth of the updated region, in texels.</param>
-    /// <param name="mipLevel">
+    /// <param name="x">Specifies the value of <paramref name="x" />.</param>
+    /// <param name="y">Specifies the value of <paramref name="y" />.</param>
+    /// <param name="z">Specifies the value of <paramref name="z" />.</param>
+    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
+    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
+    /// <param name="depth">Specifies the value of <paramref name="depth" />.</param>
+    /// <param name="mipLevel">Specifies the value of <paramref name="mipLevel" />.</param>
     /// The mipmap level to update. Must be less than the total number of mipmaps contained in the
     /// <see cref="Texture" />.
     /// </param>
-    /// <param name="arrayLayer">
+    /// <param name="arrayLayer">Specifies the value of <paramref name="arrayLayer" />.</param>
     /// The array layer to update. Must be less than the total array layer count contained in the
     /// <see cref="Texture" />.
     /// </param>
@@ -515,22 +513,22 @@ public abstract class GraphicsDevice : IDisposable {
     /// <summary>
     /// Updates a portion of a <see cref="Texture" /> resource with new data contained in an array
     /// </summary>
-    /// <param name="texture">The resource to update.</param>
-    /// <param name="source">
+    /// <param name="texture">Specifies the value of <paramref name="texture" />.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
     /// A readonly span containing the data to upload. This must contain tightly-packed pixel data for the
     /// region specified.
     /// </param>
-    /// <param name="x">The minimum X value of the updated region.</param>
-    /// <param name="y">The minimum Y value of the updated region.</param>
-    /// <param name="z">The minimum Z value of the updated region.</param>
-    /// <param name="width">The width of the updated region, in texels.</param>
-    /// <param name="height">The height of the updated region, in texels.</param>
-    /// <param name="depth">The depth of the updated region, in texels.</param>
-    /// <param name="mipLevel">
+    /// <param name="x">Specifies the value of <paramref name="x" />.</param>
+    /// <param name="y">Specifies the value of <paramref name="y" />.</param>
+    /// <param name="z">Specifies the value of <paramref name="z" />.</param>
+    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
+    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
+    /// <param name="depth">Specifies the value of <paramref name="depth" />.</param>
+    /// <param name="mipLevel">Specifies the value of <paramref name="mipLevel" />.</param>
     /// The mipmap level to update. Must be less than the total number of mipmaps contained in the
     /// <see cref="Texture" />.
     /// </param>
-    /// <param name="arrayLayer">
+    /// <param name="arrayLayer">Specifies the value of <paramref name="arrayLayer" />.</param>
     /// The array layer to update. Must be less than the total array layer count contained in the
     /// <see cref="Texture" />.
     /// </param>
@@ -543,12 +541,12 @@ public abstract class GraphicsDevice : IDisposable {
     /// This function must be used with a blittable value type <typeparamref name="T" />.
     /// </summary>
     /// <typeparam name="T">The type of data to upload.</typeparam>
-    /// <param name="buffer">The resource to update.</param>
-    /// <param name="bufferOffsetInBytes">
+    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
+    /// <param name="bufferOffsetInBytes">Specifies the value of <paramref name="bufferOffsetInBytes" />.</param>
     /// An offset, in bytes, from the beginning of the <see cref="DeviceBuffer" /> storage, at
     /// which new data will be uploaded.
     /// </param>
-    /// <param name="source">The value to upload.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
     public unsafe void UpdateBuffer<T>(DeviceBuffer buffer, uint bufferOffsetInBytes, T source) where T : unmanaged {
         this.UpdateBuffer(buffer, bufferOffsetInBytes, (IntPtr)(&source), (uint)sizeof(T));
     }
@@ -558,12 +556,12 @@ public abstract class GraphicsDevice : IDisposable {
     /// This function must be used with a blittable value type <typeparamref name="T" />.
     /// </summary>
     /// <typeparam name="T">The type of data to upload.</typeparam>
-    /// <param name="buffer">The resource to update.</param>
-    /// <param name="bufferOffsetInBytes">
+    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
+    /// <param name="bufferOffsetInBytes">Specifies the value of <paramref name="bufferOffsetInBytes" />.</param>
     /// An offset, in bytes, from the beginning of the <see cref="DeviceBuffer" />'s storage, at
     /// which new data will be uploaded.
     /// </param>
-    /// <param name="source">A reference to the single value to upload.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
     public unsafe void UpdateBuffer<T>(DeviceBuffer buffer, uint bufferOffsetInBytes, ref T source) where T : unmanaged {
         fixed (T* ptr = &source) {
             this.UpdateBuffer(buffer, bufferOffsetInBytes, (IntPtr)ptr, (uint)sizeof(T));
@@ -575,13 +573,13 @@ public abstract class GraphicsDevice : IDisposable {
     /// This function must be used with a blittable value type <typeparamref name="T" />.
     /// </summary>
     /// <typeparam name="T">The type of data to upload.</typeparam>
-    /// <param name="buffer">The resource to update.</param>
-    /// <param name="bufferOffsetInBytes">
+    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
+    /// <param name="bufferOffsetInBytes">Specifies the value of <paramref name="bufferOffsetInBytes" />.</param>
     /// An offset, in bytes, from the beginning of the <see cref="DeviceBuffer" />'s storage, at
     /// which new data will be uploaded.
     /// </param>
-    /// <param name="source">A reference to the first of a series of values to upload.</param>
-    /// <param name="sizeInBytes">The total size of the uploaded data, in bytes.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
+    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
     public unsafe void UpdateBuffer<T>(DeviceBuffer buffer, uint bufferOffsetInBytes, ref T source, uint sizeInBytes) where T : unmanaged {
         fixed (T* ptr = &source) {
             this.UpdateBuffer(buffer, bufferOffsetInBytes, (IntPtr)ptr, sizeInBytes);
@@ -593,12 +591,12 @@ public abstract class GraphicsDevice : IDisposable {
     /// This function must be used with a blittable value type <typeparamref name="T" />.
     /// </summary>
     /// <typeparam name="T">The type of data to upload.</typeparam>
-    /// <param name="buffer">The resource to update.</param>
-    /// <param name="bufferOffsetInBytes">
+    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
+    /// <param name="bufferOffsetInBytes">Specifies the value of <paramref name="bufferOffsetInBytes" />.</param>
     /// An offset, in bytes, from the beginning of the <see cref="DeviceBuffer" />'s storage, at
     /// which new data will be uploaded.
     /// </param>
-    /// <param name="source">An array containing the data to upload.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
     public void UpdateBuffer<T>(DeviceBuffer buffer, uint bufferOffsetInBytes, T[] source) where T : unmanaged {
         this.UpdateBuffer(buffer, bufferOffsetInBytes, (ReadOnlySpan<T>)source);
     }
@@ -608,12 +606,12 @@ public abstract class GraphicsDevice : IDisposable {
     /// This function must be used with a blittable value type <typeparamref name="T" />.
     /// </summary>
     /// <typeparam name="T">The type of data to upload.</typeparam>
-    /// <param name="buffer">The resource to update.</param>
-    /// <param name="bufferOffsetInBytes">
+    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
+    /// <param name="bufferOffsetInBytes">Specifies the value of <paramref name="bufferOffsetInBytes" />.</param>
     /// An offset, in bytes, from the beginning of the <see cref="DeviceBuffer" />'s storage, at
     /// which new data will be uploaded.
     /// </param>
-    /// <param name="source">A readonly span containing the data to upload.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
     public unsafe void UpdateBuffer<T>(DeviceBuffer buffer, uint bufferOffsetInBytes, ReadOnlySpan<T> source) where T : unmanaged {
         fixed (void* pin = &MemoryMarshal.GetReference(source)) {
             this.UpdateBuffer(buffer, bufferOffsetInBytes, (IntPtr)pin, (uint)(sizeof(T) * source.Length));
@@ -625,23 +623,23 @@ public abstract class GraphicsDevice : IDisposable {
     /// This function must be used with a blittable value type <typeparamref name="T" />.
     /// </summary>
     /// <typeparam name="T">The type of data to upload.</typeparam>
-    /// <param name="buffer">The resource to update.</param>
-    /// <param name="bufferOffsetInBytes">
+    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
+    /// <param name="bufferOffsetInBytes">Specifies the value of <paramref name="bufferOffsetInBytes" />.</param>
     /// An offset, in bytes, from the beginning of the <see cref="DeviceBuffer" />'s storage, at
     /// which new data will be uploaded.
     /// </param>
-    /// <param name="source">A span containing the data to upload.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
     public void UpdateBuffer<T>(DeviceBuffer buffer, uint bufferOffsetInBytes, Span<T> source) where T : unmanaged {
         this.UpdateBuffer(buffer, bufferOffsetInBytes, (ReadOnlySpan<T>)source);
     }
 
     /// <summary>
-    /// Performs the UpdateBuffer operation.
+    /// Executes the UpdateBuffer operation.
     /// </summary>
-    /// <param name="buffer">The value of buffer.</param>
-    /// <param name="bufferOffsetInBytes">The value of bufferOffsetInBytes.</param>
-    /// <param name="source">The value of source.</param>
-    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
+    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
+    /// <param name="bufferOffsetInBytes">Specifies the value of <paramref name="bufferOffsetInBytes" />.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
+    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
     public void UpdateBuffer(DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes) {
         if (bufferOffsetInBytes + sizeInBytes > buffer.SizeInBytes) {
             throw new VeldridException($"The data size given to UpdateBuffer is too large. The given buffer can only hold {buffer.SizeInBytes} total bytes. The requested update would require {bufferOffsetInBytes + sizeInBytes} bytes.");
@@ -655,32 +653,32 @@ public abstract class GraphicsDevice : IDisposable {
     }
 
     /// <summary>
-    /// Performs the GetPixelFormatSupport operation.
+    /// Executes the GetPixelFormatSupport operation.
     /// </summary>
-    /// <param name="format">The value of format.</param>
-    /// <param name="type">The value of type.</param>
-    /// <param name="usage">The value of usage.</param>
-    /// <returns>The result of the GetPixelFormatSupport operation.</returns>
+    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
+    /// <param name="type">Specifies the value of <paramref name="type" />.</param>
+    /// <param name="usage">Specifies the value of <paramref name="usage" />.</param>
+    /// <returns>Returns the result produced by the GetPixelFormatSupport operation.</returns>
     public bool GetPixelFormatSupport(PixelFormat format, TextureType type, TextureUsage usage) {
         return this.GetPixelFormatSupportCore(format, type, usage, out _);
     }
 
     /// <summary>
-    /// Performs the GetPixelFormatSupport operation.
+    /// Executes the GetPixelFormatSupport operation.
     /// </summary>
-    /// <param name="format">The value of format.</param>
-    /// <param name="type">The value of type.</param>
-    /// <param name="usage">The value of usage.</param>
-    /// <param name="properties">The value of properties.</param>
-    /// <returns>The result of the GetPixelFormatSupport operation.</returns>
+    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
+    /// <param name="type">Specifies the value of <paramref name="type" />.</param>
+    /// <param name="usage">Specifies the value of <paramref name="usage" />.</param>
+    /// <param name="properties">Specifies the value of <paramref name="properties" />.</param>
+    /// <returns>Returns the result produced by the GetPixelFormatSupport operation.</returns>
     public bool GetPixelFormatSupport(PixelFormat format, TextureType type, TextureUsage usage, out PixelFormatProperties properties) {
         return this.GetPixelFormatSupportCore(format, type, usage, out properties);
     }
 
     /// <summary>
-    /// Performs the DisposeWhenIdle operation.
+    /// Executes the DisposeWhenIdle operation.
     /// </summary>
-    /// <param name="disposable">The value of disposable.</param>
+    /// <param name="disposable">Specifies the value of <paramref name="disposable" />.</param>
     public void DisposeWhenIdle(IDisposable disposable) {
         lock (this._deferredDisposalLock) {
             this._disposables.Add(disposable);
@@ -688,40 +686,40 @@ public abstract class GraphicsDevice : IDisposable {
     }
 
     /// <summary>
-    /// Performs the GetUniformBufferMinOffsetAlignmentCore operation.
+    /// Executes the GetUniformBufferMinOffsetAlignmentCore operation.
     /// </summary>
-    /// <returns>The result of the GetUniformBufferMinOffsetAlignmentCore operation.</returns>
+    /// <returns>Returns the result produced by the GetUniformBufferMinOffsetAlignmentCore operation.</returns>
     internal abstract uint GetUniformBufferMinOffsetAlignmentCore();
 
     /// <summary>
-    /// Performs the GetStructuredBufferMinOffsetAlignmentCore operation.
+    /// Executes the GetStructuredBufferMinOffsetAlignmentCore operation.
     /// </summary>
-    /// <returns>The result of the GetStructuredBufferMinOffsetAlignmentCore operation.</returns>
+    /// <returns>Returns the result produced by the GetStructuredBufferMinOffsetAlignmentCore operation.</returns>
     internal abstract uint GetStructuredBufferMinOffsetAlignmentCore();
 
     /// <summary>
-    /// Performs the MapCore operation.
+    /// Executes the MapCore operation.
     /// </summary>
-    /// <param name="resource">The value of resource.</param>
-    /// <param name="mode">The value of mode.</param>
-    /// <param name="subresource">The value of subresource.</param>
-    /// <returns>The result of the MapCore operation.</returns>
+    /// <param name="resource">Specifies the value of <paramref name="resource" />.</param>
+    /// <param name="mode">Specifies the value of <paramref name="mode" />.</param>
+    /// <param name="subresource">Specifies the value of <paramref name="subresource" />.</param>
+    /// <returns>Returns the result produced by the MapCore operation.</returns>
     protected abstract MappedResource MapCore(IMappableResource resource, MapMode mode, uint subresource);
 
     /// <summary>
-    /// Performs the UnmapCore operation.
+    /// Executes the UnmapCore operation.
     /// </summary>
-    /// <param name="resource">The value of resource.</param>
-    /// <param name="subresource">The value of subresource.</param>
+    /// <param name="resource">Specifies the value of <paramref name="resource" />.</param>
+    /// <param name="subresource">Specifies the value of <paramref name="subresource" />.</param>
     protected abstract void UnmapCore(IMappableResource resource, uint subresource);
 
     /// <summary>
-    /// Performs the PlatformDispose operation.
+    /// Executes the PlatformDispose operation.
     /// </summary>
     protected abstract void PlatformDispose();
 
     /// <summary>
-    /// Performs the PostDeviceCreated operation.
+    /// Executes the PostDeviceCreated operation.
     /// </summary>
     protected void PostDeviceCreated() {
         this.PointSampler = this.ResourceFactory.CreateSampler(SamplerDescription.POINT);
@@ -734,18 +732,18 @@ public abstract class GraphicsDevice : IDisposable {
     [Conditional("VALIDATE_USAGE")]
 
     /// <summary>
-    /// Performs the ValidateUpdateTextureParameters operation.
+    /// Executes the ValidateUpdateTextureParameters operation.
     /// </summary>
-    /// <param name="texture">The value of texture.</param>
-    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
-    /// <param name="x">The value of x.</param>
-    /// <param name="y">The value of y.</param>
-    /// <param name="z">The value of z.</param>
-    /// <param name="width">The value of width.</param>
-    /// <param name="height">The value of height.</param>
-    /// <param name="depth">The value of depth.</param>
-    /// <param name="mipLevel">The value of mipLevel.</param>
-    /// <param name="arrayLayer">The value of arrayLayer.</param>
+    /// <param name="texture">Specifies the value of <paramref name="texture" />.</param>
+    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
+    /// <param name="x">Specifies the value of <paramref name="x" />.</param>
+    /// <param name="y">Specifies the value of <paramref name="y" />.</param>
+    /// <param name="z">Specifies the value of <paramref name="z" />.</param>
+    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
+    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
+    /// <param name="depth">Specifies the value of <paramref name="depth" />.</param>
+    /// <param name="mipLevel">Specifies the value of <paramref name="mipLevel" />.</param>
+    /// <param name="arrayLayer">Specifies the value of <paramref name="arrayLayer" />.</param>
     private static void ValidateUpdateTextureParameters(Texture texture, uint sizeInBytes, uint x, uint y, uint z, uint width, uint height, uint depth, uint mipLevel, uint arrayLayer) {
         if (FormatHelpers.IsCompressedFormat(texture.Format)) {
             if (x % 4 != 0 || y % 4 != 0 || height % 4 != 0 || width % 4 != 0) {
@@ -794,7 +792,7 @@ public abstract class GraphicsDevice : IDisposable {
     }
 
     /// <summary>
-    /// Performs the FlushDeferredDisposals operation.
+    /// Executes the FlushDeferredDisposals operation.
     /// </summary>
     private void FlushDeferredDisposals() {
         lock (this._deferredDisposalLock) {
@@ -807,77 +805,77 @@ public abstract class GraphicsDevice : IDisposable {
     }
 
     /// <summary>
-    /// Performs the SubmitCommandsCore operation.
+    /// Executes the SubmitCommandsCore operation.
     /// </summary>
-    /// <param name="commandList">The value of commandList.</param>
-    /// <param name="fence">The value of fence.</param>
+    /// <param name="commandList">Specifies the value of <paramref name="commandList" />.</param>
+    /// <param name="fence">Specifies the value of <paramref name="fence" />.</param>
     private protected abstract void SubmitCommandsCore(CommandList commandList, Fence fence);
 
     /// <summary>
-    /// Performs the SwapBuffersCore operation.
+    /// Executes the SwapBuffersCore operation.
     /// </summary>
-    /// <param name="swapchain">The value of swapchain.</param>
+    /// <param name="swapchain">Specifies the value of <paramref name="swapchain" />.</param>
     private protected abstract void SwapBuffersCore(Swapchain swapchain);
 
     /// <summary>
-    /// Performs the WaitForIdleCore operation.
+    /// Executes the WaitForIdleCore operation.
     /// </summary>
     private protected abstract void WaitForIdleCore();
 
     /// <summary>
-    /// Performs the WaitForNextFrameReadyCore operation.
+    /// Executes the WaitForNextFrameReadyCore operation.
     /// </summary>
     private protected abstract void WaitForNextFrameReadyCore();
 
     /// <summary>
-    /// Performs the UpdateTextureCore operation.
+    /// Executes the UpdateTextureCore operation.
     /// </summary>
-    /// <param name="texture">The value of texture.</param>
-    /// <param name="source">The value of source.</param>
-    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
-    /// <param name="x">The value of x.</param>
-    /// <param name="y">The value of y.</param>
-    /// <param name="z">The value of z.</param>
-    /// <param name="width">The value of width.</param>
-    /// <param name="height">The value of height.</param>
-    /// <param name="depth">The value of depth.</param>
-    /// <param name="mipLevel">The value of mipLevel.</param>
-    /// <param name="arrayLayer">The value of arrayLayer.</param>
+    /// <param name="texture">Specifies the value of <paramref name="texture" />.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
+    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
+    /// <param name="x">Specifies the value of <paramref name="x" />.</param>
+    /// <param name="y">Specifies the value of <paramref name="y" />.</param>
+    /// <param name="z">Specifies the value of <paramref name="z" />.</param>
+    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
+    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
+    /// <param name="depth">Specifies the value of <paramref name="depth" />.</param>
+    /// <param name="mipLevel">Specifies the value of <paramref name="mipLevel" />.</param>
+    /// <param name="arrayLayer">Specifies the value of <paramref name="arrayLayer" />.</param>
     private protected abstract void UpdateTextureCore(Texture texture, IntPtr source, uint sizeInBytes, uint x, uint y, uint z, uint width, uint height, uint depth, uint mipLevel, uint arrayLayer);
 
     /// <summary>
-    /// Performs the UpdateBufferCore operation.
+    /// Executes the UpdateBufferCore operation.
     /// </summary>
-    /// <param name="buffer">The value of buffer.</param>
-    /// <param name="bufferOffsetInBytes">The value of bufferOffsetInBytes.</param>
-    /// <param name="source">The value of source.</param>
-    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
+    /// <param name="buffer">Specifies the value of <paramref name="buffer" />.</param>
+    /// <param name="bufferOffsetInBytes">Specifies the value of <paramref name="bufferOffsetInBytes" />.</param>
+    /// <param name="source">Specifies the value of <paramref name="source" />.</param>
+    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
     private protected abstract void UpdateBufferCore(DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes);
 
     /// <summary>
-    /// Performs the GetPixelFormatSupportCore operation.
+    /// Executes the GetPixelFormatSupportCore operation.
     /// </summary>
-    /// <param name="format">The value of format.</param>
-    /// <param name="type">The value of type.</param>
-    /// <param name="usage">The value of usage.</param>
-    /// <param name="properties">The value of properties.</param>
-    /// <returns>The result of the GetPixelFormatSupportCore operation.</returns>
+    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
+    /// <param name="type">Specifies the value of <paramref name="type" />.</param>
+    /// <param name="usage">Specifies the value of <paramref name="usage" />.</param>
+    /// <param name="properties">Specifies the value of <paramref name="properties" />.</param>
+    /// <returns>Returns the result produced by the GetPixelFormatSupportCore operation.</returns>
     private protected abstract bool GetPixelFormatSupportCore(PixelFormat format, TextureType type, TextureUsage usage, out PixelFormatProperties properties);
 
     /// <summary>
-    /// Performs the GetD3D12Info operation.
+    /// Executes the GetD3D12Info operation.
     /// </summary>
-    /// <param name="info">The value of info.</param>
-    /// <returns>The result of the GetD3D12Info operation.</returns>
+    /// <param name="info">Specifies the value of <paramref name="info" />.</param>
+    /// <returns>Returns the result produced by the GetD3D12Info operation.</returns>
     public virtual bool GetD3D12Info(out BackendInfoD3D12 info) {
         info = null;
         return false;
     }
 
     /// <summary>
-    /// Performs the GetD3D12Info operation.
+    /// Executes the GetD3D12Info operation.
     /// </summary>
-    /// <returns>The result of the GetD3D12Info operation.</returns>
+    /// <returns>Returns the result produced by the GetD3D12Info operation.</returns>
     public BackendInfoD3D12 GetD3D12Info() {
         if (!this.GetD3D12Info(out BackendInfoD3D12 info)) {
             throw new VeldridException($"{nameof(GetD3D12Info)} can only be used on a D3D12 GraphicsDevice.");
@@ -887,32 +885,32 @@ public abstract class GraphicsDevice : IDisposable {
     }
 
     /// <summary>
-    /// Performs the CreateD3D12 operation.
+    /// Executes the CreateD3D12 operation.
     /// </summary>
-    /// <param name="options">The value of options.</param>
-    /// <returns>The result of the CreateD3D12 operation.</returns>
+    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
+    /// <returns>Returns the result produced by the CreateD3D12 operation.</returns>
     public static GraphicsDevice CreateD3D12(GraphicsDeviceOptions options) {
         return new D3D12GraphicsDevice(options, null);
     }
 
     /// <summary>
-    /// Performs the CreateD3D12 operation.
+    /// Executes the CreateD3D12 operation.
     /// </summary>
-    /// <param name="options">The value of options.</param>
-    /// <param name="swapchainDescription">The value of swapchainDescription.</param>
-    /// <returns>The result of the CreateD3D12 operation.</returns>
+    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
+    /// <param name="swapchainDescription">Specifies the value of <paramref name="swapchainDescription" />.</param>
+    /// <returns>Returns the result produced by the CreateD3D12 operation.</returns>
     public static GraphicsDevice CreateD3D12(GraphicsDeviceOptions options, SwapchainDescription swapchainDescription) {
         return new D3D12GraphicsDevice(options, swapchainDescription);
     }
 
     /// <summary>
-    /// Performs the CreateD3D12 operation.
+    /// Executes the CreateD3D12 operation.
     /// </summary>
-    /// <param name="options">The value of options.</param>
-    /// <param name="hwnd">The value of hwnd.</param>
-    /// <param name="width">The value of width.</param>
-    /// <param name="height">The value of height.</param>
-    /// <returns>The result of the CreateD3D12 operation.</returns>
+    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
+    /// <param name="hwnd">Specifies the value of <paramref name="hwnd" />.</param>
+    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
+    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
+    /// <returns>Returns the result produced by the CreateD3D12 operation.</returns>
     public static GraphicsDevice CreateD3D12(GraphicsDeviceOptions options, IntPtr hwnd, uint width, uint height) {
         SwapchainDescription swapchainDescription = new(SwapchainSource.CreateWin32(hwnd, IntPtr.Zero), width, height, options.SwapchainDepthFormat, options.SyncToVerticalBlank, options.SwapchainSrgbFormat);
 
@@ -922,19 +920,19 @@ public abstract class GraphicsDevice : IDisposable {
 #if !EXCLUDE_VULKAN_BACKEND
 
     /// <summary>
-    /// Performs the GetVulkanInfo operation.
+    /// Executes the GetVulkanInfo operation.
     /// </summary>
-    /// <param name="info">The value of info.</param>
-    /// <returns>The result of the GetVulkanInfo operation.</returns>
+    /// <param name="info">Specifies the value of <paramref name="info" />.</param>
+    /// <returns>Returns the result produced by the GetVulkanInfo operation.</returns>
     public virtual bool GetVulkanInfo(out BackendInfoVulkan info) {
         info = null;
         return false;
     }
 
     /// <summary>
-    /// Performs the GetVulkanInfo operation.
+    /// Executes the GetVulkanInfo operation.
     /// </summary>
-    /// <returns>The result of the GetVulkanInfo operation.</returns>
+    /// <returns>Returns the result produced by the GetVulkanInfo operation.</returns>
     public BackendInfoVulkan GetVulkanInfo() {
         if (!this.GetVulkanInfo(out BackendInfoVulkan info)) {
             throw new VeldridException($"{nameof(GetVulkanInfo)} can only be used on a Vulkan GraphicsDevice.");
@@ -947,19 +945,19 @@ public abstract class GraphicsDevice : IDisposable {
 #if !EXCLUDE_METAL_BACKEND
 
     /// <summary>
-    /// Performs the GetMetalInfo operation.
+    /// Executes the GetMetalInfo operation.
     /// </summary>
-    /// <param name="info">The value of info.</param>
-    /// <returns>The result of the GetMetalInfo operation.</returns>
+    /// <param name="info">Specifies the value of <paramref name="info" />.</param>
+    /// <returns>Returns the result produced by the GetMetalInfo operation.</returns>
     public virtual bool GetMetalInfo(out BackendInfoMetal info) {
         info = null;
         return false;
     }
 
     /// <summary>
-    /// Performs the GetMetalInfo operation.
+    /// Executes the GetMetalInfo operation.
     /// </summary>
-    /// <returns>The result of the GetMetalInfo operation.</returns>
+    /// <returns>Returns the result produced by the GetMetalInfo operation.</returns>
     public BackendInfoMetal GetMetalInfo() {
         if (!this.GetMetalInfo(out BackendInfoMetal info)) {
             throw new VeldridException($"{nameof(GetMetalInfo)} can only be used on a Metal GraphicsDevice.");
@@ -969,18 +967,18 @@ public abstract class GraphicsDevice : IDisposable {
     }
 
     /// <summary>
-    /// Performs the UpdateActiveDisplay operation.
+    /// Executes the UpdateActiveDisplay operation.
     /// </summary>
-    /// <param name="x">The value of x.</param>
-    /// <param name="y">The value of y.</param>
-    /// <param name="w">The value of w.</param>
-    /// <param name="h">The value of h.</param>
+    /// <param name="x">Specifies the value of <paramref name="x" />.</param>
+    /// <param name="y">Specifies the value of <paramref name="y" />.</param>
+    /// <param name="w">Specifies the value of <paramref name="w" />.</param>
+    /// <param name="h">Specifies the value of <paramref name="h" />.</param>
     public virtual void UpdateActiveDisplay(int x, int y, int w, int h) { }
 
     /// <summary>
-    /// Performs the GetActualRefreshPeriod operation.
+    /// Executes the GetActualRefreshPeriod operation.
     /// </summary>
-    /// <returns>The result of the GetActualRefreshPeriod operation.</returns>
+    /// <returns>Returns the result produced by the GetActualRefreshPeriod operation.</returns>
     public virtual double GetActualRefreshPeriod() {
         return -1.0f;
     }
@@ -989,20 +987,20 @@ public abstract class GraphicsDevice : IDisposable {
 #if !EXCLUDE_VULKAN_BACKEND
 
     /// <summary>
-    /// Performs the CreateVulkan operation.
+    /// Executes the CreateVulkan operation.
     /// </summary>
-    /// <param name="options">The value of options.</param>
-    /// <returns>The result of the CreateVulkan operation.</returns>
+    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
+    /// <returns>Returns the result produced by the CreateVulkan operation.</returns>
     public static GraphicsDevice CreateVulkan(GraphicsDeviceOptions options) {
         return new VkGraphicsDevice(options, null);
     }
 
     /// <summary>
-    /// Performs the CreateVulkan operation.
+    /// Executes the CreateVulkan operation.
     /// </summary>
-    /// <param name="options">The value of options.</param>
-    /// <param name="vkOptions">The value of vkOptions.</param>
-    /// <returns>The result of the CreateVulkan operation.</returns>
+    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
+    /// <param name="vkOptions">Specifies the value of <paramref name="vkOptions" />.</param>
+    /// <returns>Returns the result produced by the CreateVulkan operation.</returns>
     public static GraphicsDevice CreateVulkan(GraphicsDeviceOptions options, VulkanDeviceOptions vkOptions) {
         return new VkGraphicsDevice(options, null, vkOptions);
     }
@@ -1010,32 +1008,32 @@ public abstract class GraphicsDevice : IDisposable {
     /// <summary>
     /// Creates a Vulkan graphics device using the provided options and swapchain description.
     /// </summary>
-    /// <param name="options">General graphics device creation options.</param>
-    /// <param name="swapchainDescription">The swapchain description to initialize with.</param>
+    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
+    /// <param name="swapchainDescription">Specifies the value of <paramref name="swapchainDescription" />.</param>
     /// <returns>A newly created Vulkan graphics device.</returns>
     public static GraphicsDevice CreateVulkan(GraphicsDeviceOptions options, SwapchainDescription swapchainDescription) {
         return new VkGraphicsDevice(options, swapchainDescription);
     }
 
     /// <summary>
-    /// Performs the CreateVulkan operation.
+    /// Executes the CreateVulkan operation.
     /// </summary>
-    /// <param name="options">The value of options.</param>
-    /// <param name="swapchainDescription">The value of swapchainDescription.</param>
-    /// <param name="vkOptions">The value of vkOptions.</param>
-    /// <returns>The result of the CreateVulkan operation.</returns>
+    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
+    /// <param name="swapchainDescription">Specifies the value of <paramref name="swapchainDescription" />.</param>
+    /// <param name="vkOptions">Specifies the value of <paramref name="vkOptions" />.</param>
+    /// <returns>Returns the result produced by the CreateVulkan operation.</returns>
     public static GraphicsDevice CreateVulkan(GraphicsDeviceOptions options, SwapchainDescription swapchainDescription, VulkanDeviceOptions vkOptions) {
         return new VkGraphicsDevice(options, swapchainDescription, vkOptions);
     }
 
     /// <summary>
-    /// Performs the CreateVulkan operation.
+    /// Executes the CreateVulkan operation.
     /// </summary>
-    /// <param name="options">The value of options.</param>
-    /// <param name="surfaceSource">The value of surfaceSource.</param>
-    /// <param name="width">The value of width.</param>
-    /// <param name="height">The value of height.</param>
-    /// <returns>The result of the CreateVulkan operation.</returns>
+    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
+    /// <param name="surfaceSource">Specifies the value of <paramref name="surfaceSource" />.</param>
+    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
+    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
+    /// <returns>Returns the result produced by the CreateVulkan operation.</returns>
     public static GraphicsDevice CreateVulkan(GraphicsDeviceOptions options, VkSurfaceSource surfaceSource, uint width, uint height) {
         SwapchainDescription scDesc = new(surfaceSource.GetSurfaceSource(), width, height, options.SwapchainDepthFormat, options.SyncToVerticalBlank, options.SwapchainSrgbFormat);
 
@@ -1046,51 +1044,51 @@ public abstract class GraphicsDevice : IDisposable {
 #if !EXCLUDE_METAL_BACKEND
 
     /// <summary>
-    /// Performs the CreateMetal operation.
+    /// Executes the CreateMetal operation.
     /// </summary>
-    /// <param name="options">The value of options.</param>
-    /// <returns>The result of the CreateMetal operation.</returns>
+    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
+    /// <returns>Returns the result produced by the CreateMetal operation.</returns>
     public static GraphicsDevice CreateMetal(GraphicsDeviceOptions options) {
         return new MtlGraphicsDevice(options, null);
     }
 
     /// <summary>
-    /// Performs the CreateMetal operation.
+    /// Executes the CreateMetal operation.
     /// </summary>
-    /// <param name="options">The value of options.</param>
-    /// <param name="metalOptions">The value of metalOptions.</param>
-    /// <returns>The result of the CreateMetal operation.</returns>
+    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
+    /// <param name="metalOptions">Specifies the value of <paramref name="metalOptions" />.</param>
+    /// <returns>Returns the result produced by the CreateMetal operation.</returns>
     public static GraphicsDevice CreateMetal(GraphicsDeviceOptions options, MetalDeviceOptions metalOptions) {
         return new MtlGraphicsDevice(options, null, metalOptions);
     }
 
     /// <summary>
-    /// Performs the CreateMetal operation.
+    /// Executes the CreateMetal operation.
     /// </summary>
-    /// <param name="options">The value of options.</param>
-    /// <param name="swapchainDescription">The value of swapchainDescription.</param>
-    /// <returns>The result of the CreateMetal operation.</returns>
+    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
+    /// <param name="swapchainDescription">Specifies the value of <paramref name="swapchainDescription" />.</param>
+    /// <returns>Returns the result produced by the CreateMetal operation.</returns>
     public static GraphicsDevice CreateMetal(GraphicsDeviceOptions options, SwapchainDescription swapchainDescription) {
         return new MtlGraphicsDevice(options, swapchainDescription);
     }
 
     /// <summary>
-    /// Performs the CreateMetal operation.
+    /// Executes the CreateMetal operation.
     /// </summary>
-    /// <param name="options">The value of options.</param>
-    /// <param name="swapchainDescription">The value of swapchainDescription.</param>
-    /// <param name="metalOptions">The value of metalOptions.</param>
-    /// <returns>The result of the CreateMetal operation.</returns>
+    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
+    /// <param name="swapchainDescription">Specifies the value of <paramref name="swapchainDescription" />.</param>
+    /// <param name="metalOptions">Specifies the value of <paramref name="metalOptions" />.</param>
+    /// <returns>Returns the result produced by the CreateMetal operation.</returns>
     public static GraphicsDevice CreateMetal(GraphicsDeviceOptions options, SwapchainDescription swapchainDescription, MetalDeviceOptions metalOptions) {
         return new MtlGraphicsDevice(options, swapchainDescription, metalOptions);
     }
 
     /// <summary>
-    /// Performs the CreateMetal operation.
+    /// Executes the CreateMetal operation.
     /// </summary>
-    /// <param name="options">The value of options.</param>
-    /// <param name="nsWindow">The value of nsWindow.</param>
-    /// <returns>The result of the CreateMetal operation.</returns>
+    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
+    /// <param name="nsWindow">Specifies the value of <paramref name="nsWindow" />.</param>
+    /// <returns>Returns the result produced by the CreateMetal operation.</returns>
     public static GraphicsDevice CreateMetal(GraphicsDeviceOptions options, IntPtr nsWindow) {
         SwapchainDescription swapchainDesc = new(new NSWindowSwapchainSource(nsWindow), 0, 0, options.SwapchainDepthFormat, options.SyncToVerticalBlank, options.SwapchainSrgbFormat);
 
@@ -1098,12 +1096,12 @@ public abstract class GraphicsDevice : IDisposable {
     }
 
     /// <summary>
-    /// Performs the CreateMetal operation.
+    /// Executes the CreateMetal operation.
     /// </summary>
-    /// <param name="options">The value of options.</param>
-    /// <param name="nsWindow">The value of nsWindow.</param>
-    /// <param name="metalOptions">The value of metalOptions.</param>
-    /// <returns>The result of the CreateMetal operation.</returns>
+    /// <param name="options">Specifies the value of <paramref name="options" />.</param>
+    /// <param name="nsWindow">Specifies the value of <paramref name="nsWindow" />.</param>
+    /// <param name="metalOptions">Specifies the value of <paramref name="metalOptions" />.</param>
+    /// <returns>Returns the result produced by the CreateMetal operation.</returns>
     public static GraphicsDevice CreateMetal(GraphicsDeviceOptions options, IntPtr nsWindow, MetalDeviceOptions metalOptions) {
         SwapchainDescription swapchainDesc = new(new NSWindowSwapchainSource(nsWindow), 0, 0, options.SwapchainDepthFormat, options.SyncToVerticalBlank, options.SwapchainSrgbFormat);
 

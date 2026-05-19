@@ -1,12 +1,12 @@
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the MTLStoreAction enum.
+/// Defines the available values of the MTLStoreAction enumeration.
 /// </summary>
 public enum MTLStoreAction {
 
     /// <summary>
-    /// Represents the DontCare field.
+    /// Stores the value associated with <c>DontCare</c>.
     /// </summary>
     DontCare = 0, Store = 1, MultisampleResolve = 2, StoreAndMultisampleResolve = 3, Unknown = 4, CustomSampleDepthStore = 5
 }

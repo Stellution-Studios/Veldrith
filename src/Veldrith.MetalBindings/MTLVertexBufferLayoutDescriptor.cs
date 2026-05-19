@@ -4,19 +4,19 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the MTLVertexBufferLayoutDescriptor struct.
+/// Defines the data layout and behavior of the MTLVertexBufferLayoutDescriptor struct.
 /// </summary>
 public struct MTLVertexBufferLayoutDescriptor {
 
     /// <summary>
-    /// Represents the NativePtr field.
+    /// Stores the value associated with <c>NativePtr</c>.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MTLVertexBufferLayoutDescriptor" /> type.
     /// </summary>
-    /// <param name="ptr">The value of ptr.</param>
+    /// <param name="ptr">Specifies the value of <paramref name="ptr" />.</param>
     public MTLVertexBufferLayoutDescriptor(IntPtr ptr) {
         this.NativePtr = ptr;
     }
@@ -46,32 +46,32 @@ public struct MTLVertexBufferLayoutDescriptor {
     }
 
     /// <summary>
-    /// Represents the sel_stepFunction field.
+    /// Stores the value associated with <c>sel_stepFunction</c>.
     /// </summary>
     private static readonly Selector sel_stepFunction = "stepFunction";
 
     /// <summary>
-    /// Represents the sel_setStepFunction field.
+    /// Stores the value associated with <c>sel_setStepFunction</c>.
     /// </summary>
     private static readonly Selector sel_setStepFunction = "setStepFunction:";
 
     /// <summary>
-    /// Represents the sel_stride field.
+    /// Stores the value associated with <c>sel_stride</c>.
     /// </summary>
     private static readonly Selector sel_stride = "stride";
 
     /// <summary>
-    /// Represents the sel_setStride field.
+    /// Stores the value associated with <c>sel_setStride</c>.
     /// </summary>
     private static readonly Selector sel_setStride = "setStride:";
 
     /// <summary>
-    /// Represents the sel_stepRate field.
+    /// Stores the value associated with <c>sel_stepRate</c>.
     /// </summary>
     private static readonly Selector sel_stepRate = "stepRate";
 
     /// <summary>
-    /// Represents the sel_setStepRate field.
+    /// Stores the value associated with <c>sel_setStepRate</c>.
     /// </summary>
     private static readonly Selector sel_setStepRate = "setStepRate:";
 }

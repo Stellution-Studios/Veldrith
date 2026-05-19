@@ -6,24 +6,24 @@ using System.Text;
 namespace Veldrith.Vk;
 
 /// <summary>
-/// Represents the FixedUtf8String class.
+/// Defines the behavior and responsibilities of the FixedUtf8String class.
 /// </summary>
 internal unsafe class FixedUtf8String : IDisposable {
 
     /// <summary>
-    /// Represents the _numBytes field.
+    /// Stores the value associated with <c>_numBytes</c>.
     /// </summary>
     private readonly uint _numBytes;
 
     /// <summary>
-    /// Represents the _handle field.
+    /// Stores the value associated with <c>_handle</c>.
     /// </summary>
     private GCHandle _handle;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FixedUtf8String" /> type.
     /// </summary>
-    /// <param name="s">The value of s.</param>
+    /// <param name="s">Specifies the value of <paramref name="s" />.</param>
     public FixedUtf8String(string s) {
         if (s == null) {
             throw new ArgumentNullException(nameof(s));
@@ -38,15 +38,15 @@ internal unsafe class FixedUtf8String : IDisposable {
     }
 
     /// <summary>
-    /// Performs the AddrOfPinnedObject operation.
+    /// Executes the AddrOfPinnedObject operation.
     /// </summary>
-    /// <returns>The result of the AddrOfPinnedObject operation.</returns>
+    /// <returns>Returns the result produced by the AddrOfPinnedObject operation.</returns>
     public byte* StringPtr => (byte*)this._handle.AddrOfPinnedObject().ToPointer();
 
     #region Disposal
 
     /// <summary>
-    /// Performs the Dispose operation.
+    /// Executes the Dispose operation.
     /// </summary>
     public void Dispose() {
         this._handle.Free();
@@ -55,53 +55,53 @@ internal unsafe class FixedUtf8String : IDisposable {
     #endregion
 
     /// <summary>
-    /// Performs the operator byte* operation.
+    /// Executes the operator byte* operation.
     /// </summary>
-    /// <param name="utf8String">The value of utf8String.</param>
-    /// <returns>The result of the operator byte* operation.</returns>
+    /// <param name="utf8String">Specifies the value of <paramref name="utf8String" />.</param>
+    /// <returns>Returns the result produced by the operator byte* operation.</returns>
     public static implicit operator byte*(FixedUtf8String utf8String) {
         return utf8String.StringPtr;
     }
 
     /// <summary>
-    /// Performs the operator IntPtr operation.
+    /// Executes the operator IntPtr operation.
     /// </summary>
-    /// <param name="utf8String">The value of utf8String.</param>
-    /// <returns>The result of the operator IntPtr operation.</returns>
+    /// <param name="utf8String">Specifies the value of <paramref name="utf8String" />.</param>
+    /// <returns>Returns the result produced by the operator IntPtr operation.</returns>
     public static implicit operator IntPtr(FixedUtf8String utf8String) {
         return new IntPtr(utf8String.StringPtr);
     }
 
     /// <summary>
-    /// Performs the operator FixedUtf8String operation.
+    /// Executes the operator FixedUtf8String operation.
     /// </summary>
-    /// <param name="s">The value of s.</param>
-    /// <returns>The result of the operator FixedUtf8String operation.</returns>
+    /// <param name="s">Specifies the value of <paramref name="s" />.</param>
+    /// <returns>Returns the result produced by the operator FixedUtf8String operation.</returns>
     public static implicit operator FixedUtf8String(string s) {
         return new FixedUtf8String(s);
     }
 
     /// <summary>
-    /// Performs the operator string operation.
+    /// Executes the operator string operation.
     /// </summary>
-    /// <param name="utf8String">The value of utf8String.</param>
-    /// <returns>The result of the operator string operation.</returns>
+    /// <param name="utf8String">Specifies the value of <paramref name="utf8String" />.</param>
+    /// <returns>Returns the result produced by the operator string operation.</returns>
     public static implicit operator string(FixedUtf8String utf8String) {
         return utf8String.GetString();
     }
 
     /// <summary>
-    /// Performs the ToString operation.
+    /// Executes the ToString operation.
     /// </summary>
-    /// <returns>The result of the ToString operation.</returns>
+    /// <returns>Returns the result produced by the ToString operation.</returns>
     public override string ToString() {
         return this.GetString();
     }
 
     /// <summary>
-    /// Performs the GetString operation.
+    /// Executes the GetString operation.
     /// </summary>
-    /// <returns>The result of the GetString operation.</returns>
+    /// <returns>Returns the result produced by the GetString operation.</returns>
     private string GetString() {
         return Encoding.UTF8.GetString(this.StringPtr, (int)this._numBytes);
     }

@@ -4,35 +4,35 @@ using static Vulkan.VulkanNative;
 namespace Veldrith.Vk;
 
 /// <summary>
-/// Represents the VkSampler class.
+/// Defines the behavior and responsibilities of the VkSampler class.
 /// </summary>
 internal unsafe class VkSampler : Sampler {
 
     /// <summary>
-    /// Represents the _sampler field.
+    /// Stores the value associated with <c>_sampler</c>.
     /// </summary>
     private readonly Vulkan.VkSampler _sampler;
 
     /// <summary>
-    /// Represents the gd field.
+    /// Stores the value associated with <c>gd</c>.
     /// </summary>
     private readonly VkGraphicsDevice gd;
 
     /// <summary>
-    /// Represents the _disposed field.
+    /// Stores the value associated with <c>_disposed</c>.
     /// </summary>
     private bool _disposed;
 
     /// <summary>
-    /// Represents the _name field.
+    /// Stores the value associated with <c>_name</c>.
     /// </summary>
     private string _name;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VkSampler" /> type.
     /// </summary>
-    /// <param name="gd">The value of gd.</param>
-    /// <param name="description">The value of description.</param>
+    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
     public VkSampler(VkGraphicsDevice gd, ref SamplerDescription description) {
         this.gd = gd;
         VkFormats.GetFilterParams(description.Filter, out VkFilter minFilter, out VkFilter magFilter, out VkSamplerMipmapMode mipmapMode);
@@ -62,7 +62,7 @@ internal unsafe class VkSampler : Sampler {
     }
 
     /// <summary>
-    /// Represents the DeviceSampler field.
+    /// Stores the value associated with <c>DeviceSampler</c>.
     /// </summary>
     public Vulkan.VkSampler DeviceSampler => this._sampler;
 
@@ -90,7 +90,7 @@ internal unsafe class VkSampler : Sampler {
     #region Disposal
 
     /// <summary>
-    /// Performs the Dispose operation.
+    /// Executes the Dispose operation.
     /// </summary>
     public override void Dispose() {
         this.RefCount.Decrement();
@@ -99,7 +99,7 @@ internal unsafe class VkSampler : Sampler {
     #endregion
 
     /// <summary>
-    /// Performs the DisposeCore operation.
+    /// Executes the DisposeCore operation.
     /// </summary>
     private void DisposeCore() {
         if (!this._disposed) {

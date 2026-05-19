@@ -15,24 +15,24 @@ public struct OutputAttachmentDescription : IEquatable<OutputAttachmentDescripti
     /// <summary>
     /// Initializes a new instance of the <see cref="OutputAttachmentDescription" /> type.
     /// </summary>
-    /// <param name="format">The value of format.</param>
+    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
     public OutputAttachmentDescription(PixelFormat format) {
         this.Format = format;
     }
 
     /// <summary>
-    /// Performs the Equals operation.
+    /// Executes the Equals operation.
     /// </summary>
-    /// <param name="other">The value of other.</param>
-    /// <returns>The result of the Equals operation.</returns>
+    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
+    /// <returns>Returns the result produced by the Equals operation.</returns>
     public bool Equals(OutputAttachmentDescription other) {
         return this.Format == other.Format;
     }
 
     /// <summary>
-    /// Performs the GetHashCode operation.
+    /// Executes the GetHashCode operation.
     /// </summary>
-    /// <returns>The result of the GetHashCode operation.</returns>
+    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return (int)this.Format;
     }

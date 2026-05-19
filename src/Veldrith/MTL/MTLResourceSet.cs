@@ -1,21 +1,21 @@
 namespace Veldrith.MTL;
 
 /// <summary>
-/// Represents the MtlResourceSet class.
+/// Defines the behavior and responsibilities of the MtlResourceSet class.
 /// </summary>
 internal class MtlResourceSet : ResourceSet {
 
     /// <summary>
-    /// Represents the _disposed field.
+    /// Stores the value associated with <c>_disposed</c>.
     /// </summary>
     private bool _disposed;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MtlResourceSet" /> class.
     /// </summary>
-    /// <param name="description">The value of description.</param>
-    /// <param name="gd">The value of gd.</param>
-    /// <returns>The result of the base operation.</returns>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
+    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
+    /// <returns>Returns the result produced by the base operation.</returns>
     public MtlResourceSet(ref ResourceSetDescription description, MtlGraphicsDevice gd) : base(ref description) {
         this.Resources = Util.ShallowClone(description.BoundResources);
         this.Layout = Util.AssertSubtype<ResourceLayout, MtlResourceLayout>(description.Layout);
@@ -44,7 +44,7 @@ internal class MtlResourceSet : ResourceSet {
     #region Disposal
 
     /// <summary>
-    /// Performs the Dispose operation.
+    /// Executes the Dispose operation.
     /// </summary>
     public override void Dispose() {
         this._disposed = true;

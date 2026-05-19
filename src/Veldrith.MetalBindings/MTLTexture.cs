@@ -7,19 +7,19 @@ namespace Veldrith.MetalBindings;
 [StructLayout(LayoutKind.Sequential)]
 
 /// <summary>
-/// Represents the MTLTexture struct.
+/// Defines the data layout and behavior of the MTLTexture struct.
 /// </summary>
 public unsafe struct MTLTexture {
 
     /// <summary>
-    /// Represents the NativePtr field.
+    /// Stores the value associated with <c>NativePtr</c>.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MTLTexture" /> type.
     /// </summary>
-    /// <param name="ptr">The value of ptr.</param>
+    /// <param name="ptr">Specifies the value of <paramref name="ptr" />.</param>
     public MTLTexture(IntPtr ptr) {
         this.NativePtr = ptr;
     }
@@ -30,38 +30,38 @@ public unsafe struct MTLTexture {
     public bool IsNull => this.NativePtr == IntPtr.Zero;
 
     /// <summary>
-    /// Performs the replaceRegion operation.
+    /// Executes the replaceRegion operation.
     /// </summary>
-    /// <param name="region">The value of region.</param>
-    /// <param name="mipmapLevel">The value of mipmapLevel.</param>
-    /// <param name="slice">The value of slice.</param>
-    /// <param name="pixelBytes">The value of pixelBytes.</param>
-    /// <param name="bytesPerRow">The value of bytesPerRow.</param>
-    /// <param name="bytesPerImage">The value of bytesPerImage.</param>
+    /// <param name="region">Specifies the value of <paramref name="region" />.</param>
+    /// <param name="mipmapLevel">Specifies the value of <paramref name="mipmapLevel" />.</param>
+    /// <param name="slice">Specifies the value of <paramref name="slice" />.</param>
+    /// <param name="pixelBytes">Specifies the value of <paramref name="pixelBytes" />.</param>
+    /// <param name="bytesPerRow">Specifies the value of <paramref name="bytesPerRow" />.</param>
+    /// <param name="bytesPerImage">Specifies the value of <paramref name="bytesPerImage" />.</param>
     public void replaceRegion(MTLRegion region, UIntPtr mipmapLevel, UIntPtr slice, void* pixelBytes, UIntPtr bytesPerRow, UIntPtr bytesPerImage) {
         objc_msgSend(this.NativePtr, sel_replaceRegion, region, mipmapLevel, slice, (IntPtr)pixelBytes, bytesPerRow, bytesPerImage);
     }
 
     /// <summary>
-    /// Performs the newTextureView operation.
+    /// Executes the newTextureView operation.
     /// </summary>
-    /// <param name="pixelFormat">The value of pixelFormat.</param>
-    /// <param name="textureType">The value of textureType.</param>
-    /// <param name="levelRange">The value of levelRange.</param>
-    /// <param name="sliceRange">The value of sliceRange.</param>
-    /// <returns>The result of the newTextureView operation.</returns>
+    /// <param name="pixelFormat">Specifies the value of <paramref name="pixelFormat" />.</param>
+    /// <param name="textureType">Specifies the value of <paramref name="textureType" />.</param>
+    /// <param name="levelRange">Specifies the value of <paramref name="levelRange" />.</param>
+    /// <param name="sliceRange">Specifies the value of <paramref name="sliceRange" />.</param>
+    /// <returns>Returns the result produced by the newTextureView operation.</returns>
     public MTLTexture newTextureView(MTLPixelFormat pixelFormat, MTLTextureType textureType, NSRange levelRange, NSRange sliceRange) {
         IntPtr ret = IntPtr_objc_msgSend(this.NativePtr, sel_newTextureView, (uint)pixelFormat, (uint)textureType, levelRange, sliceRange);
         return new MTLTexture(ret);
     }
 
     /// <summary>
-    /// Represents the sel_replaceRegion field.
+    /// Stores the value associated with <c>sel_replaceRegion</c>.
     /// </summary>
     private static readonly Selector sel_replaceRegion = "replaceRegion:mipmapLevel:slice:withBytes:bytesPerRow:bytesPerImage:";
 
     /// <summary>
-    /// Represents the sel_newTextureView field.
+    /// Stores the value associated with <c>sel_newTextureView</c>.
     /// </summary>
     private static readonly Selector sel_newTextureView = "newTextureViewWithPixelFormat:textureType:levels:slices:";
 }

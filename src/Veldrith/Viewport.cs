@@ -40,12 +40,12 @@ public struct Viewport : IEquatable<Viewport> {
     /// <summary>
     /// Initializes a new instance of the <see cref="Viewport" /> type.
     /// </summary>
-    /// <param name="x">The value of x.</param>
-    /// <param name="y">The value of y.</param>
-    /// <param name="width">The value of width.</param>
-    /// <param name="height">The value of height.</param>
-    /// <param name="minDepth">The value of minDepth.</param>
-    /// <param name="maxDepth">The value of maxDepth.</param>
+    /// <param name="x">Specifies the value of <paramref name="x" />.</param>
+    /// <param name="y">Specifies the value of <paramref name="y" />.</param>
+    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
+    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
+    /// <param name="minDepth">Specifies the value of <paramref name="minDepth" />.</param>
+    /// <param name="maxDepth">Specifies the value of <paramref name="maxDepth" />.</param>
     public Viewport(float x, float y, float width, float height, float minDepth, float maxDepth) {
         this.X = x;
         this.Y = y;
@@ -56,10 +56,10 @@ public struct Viewport : IEquatable<Viewport> {
     }
 
     /// <summary>
-    /// Performs the Equals operation.
+    /// Executes the Equals operation.
     /// </summary>
-    /// <param name="other">The value of other.</param>
-    /// <returns>The result of the Equals operation.</returns>
+    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
+    /// <returns>Returns the result produced by the Equals operation.</returns>
     public bool Equals(Viewport other) {
         return this.X.Equals(other.X) && this.Y.Equals(other.Y)
                                       && this.Width.Equals(other.Width) && this.Height.Equals(other.Height)
@@ -67,9 +67,9 @@ public struct Viewport : IEquatable<Viewport> {
     }
 
     /// <summary>
-    /// Performs the GetHashCode operation.
+    /// Executes the GetHashCode operation.
     /// </summary>
-    /// <returns>The result of the GetHashCode operation.</returns>
+    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(this.X.GetHashCode(), this.Y.GetHashCode(), this.Width.GetHashCode(), this.Height.GetHashCode(), this.MinDepth.GetHashCode(), this.MaxDepth.GetHashCode());
     }

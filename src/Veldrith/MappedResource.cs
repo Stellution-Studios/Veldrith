@@ -49,13 +49,13 @@ public struct MappedResource {
     /// <summary>
     /// Initializes a new instance of the <see cref="MappedResource" /> type.
     /// </summary>
-    /// <param name="resource">The value of resource.</param>
-    /// <param name="mode">The value of mode.</param>
-    /// <param name="data">The value of data.</param>
-    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
-    /// <param name="subresource">The value of subresource.</param>
-    /// <param name="rowPitch">The value of rowPitch.</param>
-    /// <param name="depthPitch">The value of depthPitch.</param>
+    /// <param name="resource">Specifies the value of <paramref name="resource" />.</param>
+    /// <param name="mode">Specifies the value of <paramref name="mode" />.</param>
+    /// <param name="data">Specifies the value of <paramref name="data" />.</param>
+    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
+    /// <param name="subresource">Specifies the value of <paramref name="subresource" />.</param>
+    /// <param name="rowPitch">Specifies the value of <paramref name="rowPitch" />.</param>
+    /// <param name="depthPitch">Specifies the value of <paramref name="depthPitch" />.</param>
     internal MappedResource(IMappableResource resource, MapMode mode, IntPtr data, uint sizeInBytes, uint subresource, uint rowPitch, uint depthPitch) {
         this.Resource = resource;
         this.Mode = mode;
@@ -69,10 +69,10 @@ public struct MappedResource {
     /// <summary>
     /// Initializes a new instance of the <see cref="MappedResource" /> type.
     /// </summary>
-    /// <param name="resource">The value of resource.</param>
-    /// <param name="mode">The value of mode.</param>
-    /// <param name="data">The value of data.</param>
-    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
+    /// <param name="resource">Specifies the value of <paramref name="resource" />.</param>
+    /// <param name="mode">Specifies the value of <paramref name="mode" />.</param>
+    /// <param name="data">Specifies the value of <paramref name="data" />.</param>
+    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
     internal MappedResource(IMappableResource resource, MapMode mode, IntPtr data, uint sizeInBytes) {
         this.Resource = resource;
         this.Mode = mode;
@@ -94,7 +94,7 @@ public struct MappedResource {
 public unsafe struct MappedResourceView<T> where T : struct {
 
     /// <summary>
-    /// Represents the _s_sizeof_t field.
+    /// Stores the value associated with <c>_s_sizeof_t</c>.
     /// </summary>
     private static readonly int _s_sizeof_t = Unsafe.SizeOf<T>();
 
@@ -117,7 +117,7 @@ public unsafe struct MappedResourceView<T> where T : struct {
     /// <summary>
     /// Initializes a new instance of the <see cref="MappedResourceView" /> type.
     /// </summary>
-    /// <param name="rawResource">The value of rawResource.</param>
+    /// <param name="rawResource">Specifies the value of <paramref name="rawResource" />.</param>
     public MappedResourceView(MappedResource rawResource) {
         this.MappedResource = rawResource;
         this.SizeInBytes = rawResource.SizeInBytes;
@@ -127,7 +127,7 @@ public unsafe struct MappedResourceView<T> where T : struct {
     /// <summary>
     /// Gets a reference to the structure value at the given index.
     /// </summary>
-    /// <param name="index">The index of the value.</param>
+    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
     /// <returns>A reference to the value at the given index.</returns>
     public ref T this[int index] {
         get {
@@ -143,7 +143,7 @@ public unsafe struct MappedResourceView<T> where T : struct {
     /// <summary>
     /// Gets a reference to the structure value at the given index.
     /// </summary>
-    /// <param name="index">The index of the value.</param>
+    /// <param name="index">Specifies the value of <paramref name="index" />.</param>
     /// <returns>A reference to the value at the given index.</returns>
     public ref T this[uint index] {
         get {
@@ -159,8 +159,8 @@ public unsafe struct MappedResourceView<T> where T : struct {
     /// <summary>
     /// Gets a reference to the structure at the given 2-dimensional texture coordinates.
     /// </summary>
-    /// <param name="x">The X coordinate.</param>
-    /// <param name="y">The Y coordinate.</param>
+    /// <param name="x">Specifies the value of <paramref name="x" />.</param>
+    /// <param name="y">Specifies the value of <paramref name="y" />.</param>
     /// <returns>A reference to the value at the given coordinates.</returns>
     public ref T this[int x, int y] {
         get {
@@ -172,8 +172,8 @@ public unsafe struct MappedResourceView<T> where T : struct {
     /// <summary>
     /// Gets a reference to the structure at the given 2-dimensional texture coordinates.
     /// </summary>
-    /// <param name="x">The X coordinate.</param>
-    /// <param name="y">The Y coordinate.</param>
+    /// <param name="x">Specifies the value of <paramref name="x" />.</param>
+    /// <param name="y">Specifies the value of <paramref name="y" />.</param>
     /// <returns>A reference to the value at the given coordinates.</returns>
     public ref T this[uint x, uint y] {
         get {
@@ -185,9 +185,9 @@ public unsafe struct MappedResourceView<T> where T : struct {
     /// <summary>
     /// Gets a reference to the structure at the given 3-dimensional texture coordinates.
     /// </summary>
-    /// <param name="x">The X coordinate.</param>
-    /// <param name="y">The Y coordinate.</param>
-    /// <param name="z">The Z coordinate.</param>
+    /// <param name="x">Specifies the value of <paramref name="x" />.</param>
+    /// <param name="y">Specifies the value of <paramref name="y" />.</param>
+    /// <param name="z">Specifies the value of <paramref name="z" />.</param>
     /// <returns>A reference to the value at the given coordinates.</returns>
     public ref T this[int x, int y, int z] {
         get {
@@ -202,9 +202,9 @@ public unsafe struct MappedResourceView<T> where T : struct {
     /// <summary>
     /// Gets a reference to the structure at the given 3-dimensional texture coordinates.
     /// </summary>
-    /// <param name="x">The X coordinate.</param>
-    /// <param name="y">The Y coordinate.</param>
-    /// <param name="z">The Z coordinate.</param>
+    /// <param name="x">Specifies the value of <paramref name="x" />.</param>
+    /// <param name="y">Specifies the value of <paramref name="y" />.</param>
+    /// <param name="z">Specifies the value of <paramref name="z" />.</param>
     /// <returns>A reference to the value at the given coordinates.</returns>
     public ref T this[uint x, uint y, uint z] {
         get {

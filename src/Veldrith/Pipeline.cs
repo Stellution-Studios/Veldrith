@@ -3,7 +3,7 @@ using System;
 namespace Veldrith;
 
 /// <summary>
-/// Represents the Pipeline class.
+/// Defines the behavior and responsibilities of the Pipeline class.
 /// </summary>
 public abstract class Pipeline : IDeviceResource, IDisposable {
 
@@ -13,10 +13,10 @@ public abstract class Pipeline : IDeviceResource, IDisposable {
     internal Pipeline(ref GraphicsPipelineDescription graphicsDescription)
 
         /// <summary>
-        /// Performs the this operation.
+        /// Executes the this operation.
         /// </summary>
-        /// <param name="ResourceLayouts">The value of ResourceLayouts.</param>
-        /// <returns>The result of the this operation.</returns>
+        /// <param name="ResourceLayouts">Specifies the value of <paramref name="ResourceLayouts" />.</param>
+        /// <returns>Returns the result produced by the this operation.</returns>
         : this(graphicsDescription.ResourceLayouts) {
 #if VALIDATE_USAGE
         this.GraphicsOutputDescription = graphicsDescription.Outputs;
@@ -26,14 +26,14 @@ public abstract class Pipeline : IDeviceResource, IDisposable {
     /// <summary>
     /// Initializes a new instance of the <see cref="Pipeline" /> type.
     /// </summary>
-    /// <param name="computeDescription">The value of computeDescription.</param>
+    /// <param name="computeDescription">Specifies the value of <paramref name="computeDescription" />.</param>
     internal Pipeline(ref ComputePipelineDescription computeDescription)
         : this(computeDescription.ResourceLayouts) { }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Pipeline" /> type.
     /// </summary>
-    /// <param name="resourceLayouts">The value of resourceLayouts.</param>
+    /// <param name="resourceLayouts">Specifies the value of <paramref name="resourceLayouts" />.</param>
     internal Pipeline(ResourceLayout[] resourceLayouts) {
 #if VALIDATE_USAGE
         this.ResourceLayouts = Util.ShallowClone(resourceLayouts);
@@ -60,7 +60,7 @@ public abstract class Pipeline : IDeviceResource, IDisposable {
     #region Disposal
 
     /// <summary>
-    /// Performs the Dispose operation.
+    /// Executes the Dispose operation.
     /// </summary>
     public abstract void Dispose();
 

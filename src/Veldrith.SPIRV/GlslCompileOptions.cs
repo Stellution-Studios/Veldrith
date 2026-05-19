@@ -1,7 +1,7 @@
 namespace Veldrith.SPIRV;
 
 /// <summary>
-/// Represents the GlslCompileOptions class.
+/// Defines the behavior and responsibilities of the GlslCompileOptions class.
 /// </summary>
 public class GlslCompileOptions {
 
@@ -15,8 +15,8 @@ public class GlslCompileOptions {
     /// <summary>
     /// Initializes a new instance of the <see cref="GlslCompileOptions" /> type.
     /// </summary>
-    /// <param name="debug">The value of debug.</param>
-    /// <param name="macros">The value of macros.</param>
+    /// <param name="debug">Specifies the value of <paramref name="debug" />.</param>
+    /// <param name="macros">Specifies the value of <paramref name="macros" />.</param>
     public GlslCompileOptions(bool debug, params MacroDefinition[] macros) {
         this.Debug = debug;
         this.Macros = macros ?? Array.Empty<MacroDefinition>();
@@ -34,8 +34,7 @@ public class GlslCompileOptions {
     public MacroDefinition[] Macros { get; set; }
 
     /// <summary>
-    /// Performs the new operation.
+    /// Stores the value associated with <c>get</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static GlslCompileOptions Default { get; } = new();
 }

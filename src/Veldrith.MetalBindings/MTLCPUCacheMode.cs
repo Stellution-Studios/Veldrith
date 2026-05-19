@@ -1,12 +1,12 @@
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the MTLCPUCacheMode enum.
+/// Defines the available values of the MTLCPUCacheMode enumeration.
 /// </summary>
 public enum MTLCPUCacheMode {
 
     /// <summary>
-    /// Represents the DefaultCache field.
+    /// Stores the value associated with <c>DefaultCache</c>.
     /// </summary>
     DefaultCache = 0, WriteCombined = 1
 }

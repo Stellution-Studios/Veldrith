@@ -3,48 +3,48 @@ using System;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the BlockLiteral struct.
+/// Defines the data layout and behavior of the BlockLiteral struct.
 /// </summary>
 public unsafe struct BlockLiteral {
 
     /// <summary>
-    /// Represents the isa field.
+    /// Stores the value associated with <c>isa</c>.
     /// </summary>
     public IntPtr isa;
 
     /// <summary>
-    /// Represents the flags field.
+    /// Stores the value associated with <c>flags</c>.
     /// </summary>
     public int flags;
 
     /// <summary>
-    /// Represents the reserved field.
+    /// Stores the value associated with <c>reserved</c>.
     /// </summary>
     public int reserved;
 
     /// <summary>
-    /// Represents the invoke field.
+    /// Stores the value associated with <c>invoke</c>.
     /// </summary>
     public IntPtr invoke;
 
     /// <summary>
-    /// Represents the descriptor field.
+    /// Stores the value associated with <c>descriptor</c>.
     /// </summary>
     public BlockDescriptor* descriptor;
 }
 
 /// <summary>
-/// Represents the BlockDescriptor struct.
+/// Defines the data layout and behavior of the BlockDescriptor struct.
 /// </summary>
 public struct BlockDescriptor {
 
     /// <summary>
-    /// Represents the reserved field.
+    /// Stores the value associated with <c>reserved</c>.
     /// </summary>
     public ulong reserved;
 
     /// <summary>
-    /// Represents the Block_size field.
+    /// Stores the value associated with <c>Block_size</c>.
     /// </summary>
     public ulong Block_size;
 }

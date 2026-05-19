@@ -35,11 +35,11 @@ public struct RasterizerStateDescription : IEquatable<RasterizerStateDescription
     /// <summary>
     /// Initializes a new instance of the <see cref="RasterizerStateDescription" /> type.
     /// </summary>
-    /// <param name="cullMode">The value of cullMode.</param>
-    /// <param name="fillMode">The value of fillMode.</param>
-    /// <param name="frontFace">The value of frontFace.</param>
-    /// <param name="depthClipEnabled">The value of depthClipEnabled.</param>
-    /// <param name="scissorTestEnabled">The value of scissorTestEnabled.</param>
+    /// <param name="cullMode">Specifies the value of <paramref name="cullMode" />.</param>
+    /// <param name="fillMode">Specifies the value of <paramref name="fillMode" />.</param>
+    /// <param name="frontFace">Specifies the value of <paramref name="frontFace" />.</param>
+    /// <param name="depthClipEnabled">Specifies the value of <paramref name="depthClipEnabled" />.</param>
+    /// <param name="scissorTestEnabled">Specifies the value of <paramref name="scissorTestEnabled" />.</param>
     public RasterizerStateDescription(FaceCullMode cullMode, PolygonFillMode fillMode, FrontFace frontFace, bool depthClipEnabled, bool scissorTestEnabled) {
         this.CullMode = cullMode;
         this.FillMode = fillMode;
@@ -49,9 +49,8 @@ public struct RasterizerStateDescription : IEquatable<RasterizerStateDescription
     }
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>DEFAULT</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly RasterizerStateDescription DEFAULT = new() {
         CullMode = FaceCullMode.Back,
         FillMode = PolygonFillMode.Solid,
@@ -61,9 +60,8 @@ public struct RasterizerStateDescription : IEquatable<RasterizerStateDescription
     };
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>CULL_NONE</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly RasterizerStateDescription CULL_NONE = new() {
         CullMode = FaceCullMode.None,
         FillMode = PolygonFillMode.Solid,
@@ -73,10 +71,10 @@ public struct RasterizerStateDescription : IEquatable<RasterizerStateDescription
     };
 
     /// <summary>
-    /// Performs the Equals operation.
+    /// Executes the Equals operation.
     /// </summary>
-    /// <param name="other">The value of other.</param>
-    /// <returns>The result of the Equals operation.</returns>
+    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
+    /// <returns>Returns the result produced by the Equals operation.</returns>
     public bool Equals(RasterizerStateDescription other) {
         return this.CullMode == other.CullMode
                && this.FillMode == other.FillMode
@@ -86,9 +84,9 @@ public struct RasterizerStateDescription : IEquatable<RasterizerStateDescription
     }
 
     /// <summary>
-    /// Performs the GetHashCode operation.
+    /// Executes the GetHashCode operation.
     /// </summary>
-    /// <returns>The result of the GetHashCode operation.</returns>
+    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine((int)this.CullMode, (int)this.FillMode, (int)this.FrontFace, this.DepthClipEnabled.GetHashCode(), this.ScissorTestEnabled.GetHashCode());
     }

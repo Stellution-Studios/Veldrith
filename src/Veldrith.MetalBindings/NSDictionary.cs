@@ -3,25 +3,25 @@ using System;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the NSDictionary struct.
+/// Defines the data layout and behavior of the NSDictionary struct.
 /// </summary>
 public struct NSDictionary {
 
     /// <summary>
-    /// Represents the NativePtr field.
+    /// Stores the value associated with <c>NativePtr</c>.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
-    /// Performs the UIntPtr_objc_msgSend operation.
+    /// Executes the UIntPtr_objc_msgSend operation.
     /// </summary>
-    /// <param name="NativePtr">The value of NativePtr.</param>
-    /// <param name="sel_count">The value of sel_count.</param>
-    /// <returns>The result of the UIntPtr_objc_msgSend operation.</returns>
+    /// <param name="NativePtr">Specifies the value of <paramref name="NativePtr" />.</param>
+    /// <param name="sel_count">Specifies the value of <paramref name="sel_count" />.</param>
+    /// <returns>Returns the result produced by the UIntPtr_objc_msgSend operation.</returns>
     public UIntPtr count => ObjectiveCRuntime.UIntPtr_objc_msgSend(this.NativePtr, sel_count);
 
     /// <summary>
-    /// Represents the sel_count field.
+    /// Stores the value associated with <c>sel_count</c>.
     /// </summary>
     private static readonly Selector sel_count = "count";
 }

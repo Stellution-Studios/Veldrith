@@ -1,55 +1,55 @@
 namespace Veldrith.Vk;
 
 /// <summary>
-/// Represents the DescriptorResourceCounts struct.
+/// Defines the data layout and behavior of the DescriptorResourceCounts struct.
 /// </summary>
 internal struct DescriptorResourceCounts {
 
     /// <summary>
-    /// Represents the UniformBufferCount field.
+    /// Stores the value associated with <c>UniformBufferCount</c>.
     /// </summary>
     public readonly uint UniformBufferCount;
 
     /// <summary>
-    /// Represents the SampledImageCount field.
+    /// Stores the value associated with <c>SampledImageCount</c>.
     /// </summary>
     public readonly uint SampledImageCount;
 
     /// <summary>
-    /// Represents the SamplerCount field.
+    /// Stores the value associated with <c>SamplerCount</c>.
     /// </summary>
     public readonly uint SamplerCount;
 
     /// <summary>
-    /// Represents the StorageBufferCount field.
+    /// Stores the value associated with <c>StorageBufferCount</c>.
     /// </summary>
     public readonly uint StorageBufferCount;
 
     /// <summary>
-    /// Represents the StorageImageCount field.
+    /// Stores the value associated with <c>StorageImageCount</c>.
     /// </summary>
     public readonly uint StorageImageCount;
 
     /// <summary>
-    /// Represents the UniformBufferDynamicCount field.
+    /// Stores the value associated with <c>UniformBufferDynamicCount</c>.
     /// </summary>
     public readonly uint UniformBufferDynamicCount;
 
     /// <summary>
-    /// Represents the StorageBufferDynamicCount field.
+    /// Stores the value associated with <c>StorageBufferDynamicCount</c>.
     /// </summary>
     public readonly uint StorageBufferDynamicCount;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DescriptorResourceCounts" /> type.
     /// </summary>
-    /// <param name="uniformBufferCount">The value of uniformBufferCount.</param>
-    /// <param name="uniformBufferDynamicCount">The value of uniformBufferDynamicCount.</param>
-    /// <param name="sampledImageCount">The value of sampledImageCount.</param>
-    /// <param name="samplerCount">The value of samplerCount.</param>
-    /// <param name="storageBufferCount">The value of storageBufferCount.</param>
-    /// <param name="storageBufferDynamicCount">The value of storageBufferDynamicCount.</param>
-    /// <param name="storageImageCount">The value of storageImageCount.</param>
+    /// <param name="uniformBufferCount">Specifies the value of <paramref name="uniformBufferCount" />.</param>
+    /// <param name="uniformBufferDynamicCount">Specifies the value of <paramref name="uniformBufferDynamicCount" />.</param>
+    /// <param name="sampledImageCount">Specifies the value of <paramref name="sampledImageCount" />.</param>
+    /// <param name="samplerCount">Specifies the value of <paramref name="samplerCount" />.</param>
+    /// <param name="storageBufferCount">Specifies the value of <paramref name="storageBufferCount" />.</param>
+    /// <param name="storageBufferDynamicCount">Specifies the value of <paramref name="storageBufferDynamicCount" />.</param>
+    /// <param name="storageImageCount">Specifies the value of <paramref name="storageImageCount" />.</param>
     public DescriptorResourceCounts(uint uniformBufferCount, uint uniformBufferDynamicCount, uint sampledImageCount, uint samplerCount, uint storageBufferCount, uint storageBufferDynamicCount, uint storageImageCount) {
         this.UniformBufferCount = uniformBufferCount;
         this.UniformBufferDynamicCount = uniformBufferDynamicCount;

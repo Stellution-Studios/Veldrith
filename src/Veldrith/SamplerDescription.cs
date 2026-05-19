@@ -61,16 +61,16 @@ public struct SamplerDescription : IEquatable<SamplerDescription> {
     /// <summary>
     /// Initializes a new instance of the <see cref="SamplerDescription" /> type.
     /// </summary>
-    /// <param name="addressModeU">The value of addressModeU.</param>
-    /// <param name="addressModeV">The value of addressModeV.</param>
-    /// <param name="addressModeW">The value of addressModeW.</param>
-    /// <param name="filter">The value of filter.</param>
-    /// <param name="comparisonKind">The value of comparisonKind.</param>
-    /// <param name="maximumAnisotropy">The value of maximumAnisotropy.</param>
-    /// <param name="minimumLod">The value of minimumLod.</param>
-    /// <param name="maximumLod">The value of maximumLod.</param>
-    /// <param name="lodBias">The value of lodBias.</param>
-    /// <param name="borderColor">The value of borderColor.</param>
+    /// <param name="addressModeU">Specifies the value of <paramref name="addressModeU" />.</param>
+    /// <param name="addressModeV">Specifies the value of <paramref name="addressModeV" />.</param>
+    /// <param name="addressModeW">Specifies the value of <paramref name="addressModeW" />.</param>
+    /// <param name="filter">Specifies the value of <paramref name="filter" />.</param>
+    /// <param name="comparisonKind">Specifies the value of <paramref name="comparisonKind" />.</param>
+    /// <param name="maximumAnisotropy">Specifies the value of <paramref name="maximumAnisotropy" />.</param>
+    /// <param name="minimumLod">Specifies the value of <paramref name="minimumLod" />.</param>
+    /// <param name="maximumLod">Specifies the value of <paramref name="maximumLod" />.</param>
+    /// <param name="lodBias">Specifies the value of <paramref name="lodBias" />.</param>
+    /// <param name="borderColor">Specifies the value of <paramref name="borderColor" />.</param>
     public SamplerDescription(SamplerAddressMode addressModeU, SamplerAddressMode addressModeV, SamplerAddressMode addressModeW, SamplerFilter filter, ComparisonKind? comparisonKind, uint maximumAnisotropy, uint minimumLod, uint maximumLod, int lodBias, SamplerBorderColor borderColor) {
         this.AddressModeU = addressModeU;
         this.AddressModeV = addressModeV;
@@ -85,9 +85,8 @@ public struct SamplerDescription : IEquatable<SamplerDescription> {
     }
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>POINT</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly SamplerDescription POINT = new() {
         AddressModeU = SamplerAddressMode.Wrap,
         AddressModeV = SamplerAddressMode.Wrap,
@@ -100,9 +99,8 @@ public struct SamplerDescription : IEquatable<SamplerDescription> {
     };
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>LINEAR</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly SamplerDescription LINEAR = new() {
         AddressModeU = SamplerAddressMode.Wrap,
         AddressModeV = SamplerAddressMode.Wrap,
@@ -115,9 +113,8 @@ public struct SamplerDescription : IEquatable<SamplerDescription> {
     };
 
     /// <summary>
-    /// Performs the new operation.
+    /// Defines the predefined value exposed by <c>ANISO4_X</c>.
     /// </summary>
-    /// <returns>The result of the new operation.</returns>
     public static readonly SamplerDescription ANISO4_X = new() {
         AddressModeU = SamplerAddressMode.Wrap,
         AddressModeV = SamplerAddressMode.Wrap,
@@ -130,10 +127,10 @@ public struct SamplerDescription : IEquatable<SamplerDescription> {
     };
 
     /// <summary>
-    /// Performs the Equals operation.
+    /// Executes the Equals operation.
     /// </summary>
-    /// <param name="other">The value of other.</param>
-    /// <returns>The result of the Equals operation.</returns>
+    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
+    /// <returns>Returns the result produced by the Equals operation.</returns>
     public bool Equals(SamplerDescription other) {
         return this.AddressModeU == other.AddressModeU
                && this.AddressModeV == other.AddressModeV
@@ -148,9 +145,9 @@ public struct SamplerDescription : IEquatable<SamplerDescription> {
     }
 
     /// <summary>
-    /// Performs the GetHashCode operation.
+    /// Executes the GetHashCode operation.
     /// </summary>
-    /// <returns>The result of the GetHashCode operation.</returns>
+    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine((int)this.AddressModeU, (int)this.AddressModeV, (int)this.AddressModeW, (int)this.Filter, this.ComparisonKind.GetHashCode(), this.MaximumAnisotropy.GetHashCode(), this.MinimumLod.GetHashCode(), this.MaximumLod.GetHashCode(), this.LodBias.GetHashCode(), (int)this.BorderColor);
     }

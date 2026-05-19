@@ -7,27 +7,27 @@ namespace Veldrith.MetalBindings;
 [StructLayout(LayoutKind.Sequential)]
 
 /// <summary>
-/// Represents the MTLRenderPipelineDescriptor struct.
+/// Defines the data layout and behavior of the MTLRenderPipelineDescriptor struct.
 /// </summary>
 public struct MTLRenderPipelineDescriptor {
 
     /// <summary>
-    /// Represents the NativePtr field.
+    /// Stores the value associated with <c>NativePtr</c>.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MTLRenderPipelineDescriptor" /> type.
     /// </summary>
-    /// <param name="ptr">The value of ptr.</param>
+    /// <param name="ptr">Specifies the value of <paramref name="ptr" />.</param>
     public MTLRenderPipelineDescriptor(IntPtr ptr) {
         this.NativePtr = ptr;
     }
 
     /// <summary>
-    /// Performs the New operation.
+    /// Creates and returns a new instance.
     /// </summary>
-    /// <returns>The result of the New operation.</returns>
+    /// <returns>Returns the result produced by the New operation.</returns>
     public static MTLRenderPipelineDescriptor New() {
         ObjCClass cls = new("MTLRenderPipelineDescriptor");
         MTLRenderPipelineDescriptor ret = cls.AllocInit<MTLRenderPipelineDescriptor>();
@@ -91,72 +91,72 @@ public struct MTLRenderPipelineDescriptor {
     }
 
     /// <summary>
-    /// Represents the sel_vertexFunction field.
+    /// Stores the value associated with <c>sel_vertexFunction</c>.
     /// </summary>
     private static readonly Selector sel_vertexFunction = "vertexFunction";
 
     /// <summary>
-    /// Represents the sel_setVertexFunction field.
+    /// Stores the value associated with <c>sel_setVertexFunction</c>.
     /// </summary>
     private static readonly Selector sel_setVertexFunction = "setVertexFunction:";
 
     /// <summary>
-    /// Represents the sel_fragmentFunction field.
+    /// Stores the value associated with <c>sel_fragmentFunction</c>.
     /// </summary>
     private static readonly Selector sel_fragmentFunction = "fragmentFunction";
 
     /// <summary>
-    /// Represents the sel_setFragmentFunction field.
+    /// Stores the value associated with <c>sel_setFragmentFunction</c>.
     /// </summary>
     private static readonly Selector sel_setFragmentFunction = "setFragmentFunction:";
 
     /// <summary>
-    /// Represents the sel_colorAttachments field.
+    /// Stores the value associated with <c>sel_colorAttachments</c>.
     /// </summary>
     private static readonly Selector sel_colorAttachments = "colorAttachments";
 
     /// <summary>
-    /// Represents the sel_depthAttachmentPixelFormat field.
+    /// Stores the value associated with <c>sel_depthAttachmentPixelFormat</c>.
     /// </summary>
     private static readonly Selector sel_depthAttachmentPixelFormat = "depthAttachmentPixelFormat";
 
     /// <summary>
-    /// Represents the sel_setDepthAttachmentPixelFormat field.
+    /// Stores the value associated with <c>sel_setDepthAttachmentPixelFormat</c>.
     /// </summary>
     private static readonly Selector sel_setDepthAttachmentPixelFormat = "setDepthAttachmentPixelFormat:";
 
     /// <summary>
-    /// Represents the sel_stencilAttachmentPixelFormat field.
+    /// Stores the value associated with <c>sel_stencilAttachmentPixelFormat</c>.
     /// </summary>
     private static readonly Selector sel_stencilAttachmentPixelFormat = "stencilAttachmentPixelFormat";
 
     /// <summary>
-    /// Represents the sel_setStencilAttachmentPixelFormat field.
+    /// Stores the value associated with <c>sel_setStencilAttachmentPixelFormat</c>.
     /// </summary>
     private static readonly Selector sel_setStencilAttachmentPixelFormat = "setStencilAttachmentPixelFormat:";
 
     /// <summary>
-    /// Represents the sel_sampleCount field.
+    /// Stores the value associated with <c>sel_sampleCount</c>.
     /// </summary>
     private static readonly Selector sel_sampleCount = "sampleCount";
 
     /// <summary>
-    /// Represents the sel_setSampleCount field.
+    /// Stores the value associated with <c>sel_setSampleCount</c>.
     /// </summary>
     private static readonly Selector sel_setSampleCount = "setSampleCount:";
 
     /// <summary>
-    /// Represents the sel_vertexDescriptor field.
+    /// Stores the value associated with <c>sel_vertexDescriptor</c>.
     /// </summary>
     private static readonly Selector sel_vertexDescriptor = "vertexDescriptor";
 
     /// <summary>
-    /// Represents the sel_isAlphaToCoverageEnabled field.
+    /// Stores the value associated with <c>sel_isAlphaToCoverageEnabled</c>.
     /// </summary>
     private static readonly Selector sel_isAlphaToCoverageEnabled = "isAlphaToCoverageEnabled";
 
     /// <summary>
-    /// Represents the sel_setAlphaToCoverageEnabled field.
+    /// Stores the value associated with <c>sel_setAlphaToCoverageEnabled</c>.
     /// </summary>
     private static readonly Selector sel_setAlphaToCoverageEnabled = "setAlphaToCoverageEnabled:";
 }

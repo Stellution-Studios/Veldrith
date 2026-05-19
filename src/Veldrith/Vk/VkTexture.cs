@@ -6,72 +6,72 @@ using static Vulkan.VulkanNative;
 namespace Veldrith.Vk;
 
 /// <summary>
-/// Represents the VkTexture class.
+/// Defines the behavior and responsibilities of the VkTexture class.
 /// </summary>
 internal unsafe class VkTexture : Texture {
 
     /// <summary>
-    /// Represents the _imageLayouts field.
+    /// Stores the value associated with <c>_imageLayouts</c>.
     /// </summary>
     private readonly VkImageLayout[] _imageLayouts;
 
     /// <summary>
-    /// Represents the _memoryBlock field.
+    /// Stores the value associated with <c>_memoryBlock</c>.
     /// </summary>
     private readonly VkMemoryBlock _memoryBlock;
 
     /// <summary>
-    /// Represents the _optimalImage field.
+    /// Stores the value associated with <c>_optimalImage</c>.
     /// </summary>
     private readonly VkImage _optimalImage;
 
     /// <summary>
-    /// Represents the _stagingBuffer field.
+    /// Stores the value associated with <c>_stagingBuffer</c>.
     /// </summary>
     private readonly Vulkan.VkBuffer _stagingBuffer;
 
     /// <summary>
-    /// Represents the gd field.
+    /// Stores the value associated with <c>gd</c>.
     /// </summary>
     private readonly VkGraphicsDevice gd;
 
     /// <summary>
-    /// Represents the _destroyed field.
+    /// Stores the value associated with <c>_destroyed</c>.
     /// </summary>
     private bool _destroyed;
 
     /// <summary>
-    /// Represents the _name field.
+    /// Stores the value associated with <c>_name</c>.
     /// </summary>
     private string _name;
 
     /// <summary>
-    /// Represents the depth field.
+    /// Stores the value associated with <c>depth</c>.
     /// </summary>
     private uint depth;
 
     /// <summary>
-    /// Represents the format field.
+    /// Stores the value associated with <c>format</c>.
     /// </summary>
     private PixelFormat format; // Static for regular images -- may change for shared staging images
 
     /// <summary>
-    /// Represents the height field.
+    /// Stores the value associated with <c>height</c>.
     /// </summary>
     private uint height;
 
     // Immutable except for shared staging Textures.
 
     /// <summary>
-    /// Represents the width field.
+    /// Stores the value associated with <c>width</c>.
     /// </summary>
     private uint width;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VkTexture" /> type.
     /// </summary>
-    /// <param name="gd">The value of gd.</param>
-    /// <param name="description">The value of description.</param>
+    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
+    /// <param name="description">Specifies the value of <paramref name="description" />.</param>
     internal VkTexture(VkGraphicsDevice gd, ref TextureDescription description) {
         this.gd = gd;
         this.width = description.Width;
@@ -205,15 +205,15 @@ internal unsafe class VkTexture : Texture {
     /// <summary>
     /// Initializes a new instance of the <see cref="VkTexture" /> type.
     /// </summary>
-    /// <param name="gd">The value of gd.</param>
-    /// <param name="width">The value of width.</param>
-    /// <param name="height">The value of height.</param>
-    /// <param name="mipLevels">The value of mipLevels.</param>
-    /// <param name="arrayLayers">The value of arrayLayers.</param>
-    /// <param name="vkFormat">The value of vkFormat.</param>
-    /// <param name="usage">The value of usage.</param>
-    /// <param name="sampleCount">The value of sampleCount.</param>
-    /// <param name="existingImage">The value of existingImage.</param>
+    /// <param name="gd">Specifies the value of <paramref name="gd" />.</param>
+    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
+    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
+    /// <param name="mipLevels">Specifies the value of <paramref name="mipLevels" />.</param>
+    /// <param name="arrayLayers">Specifies the value of <paramref name="arrayLayers" />.</param>
+    /// <param name="vkFormat">Specifies the value of <paramref name="vkFormat" />.</param>
+    /// <param name="usage">Specifies the value of <paramref name="usage" />.</param>
+    /// <param name="sampleCount">Specifies the value of <paramref name="sampleCount" />.</param>
+    /// <param name="existingImage">Specifies the value of <paramref name="existingImage" />.</param>
     internal VkTexture(VkGraphicsDevice gd, uint width, uint height, uint mipLevels, uint arrayLayers, VkFormat vkFormat, TextureUsage usage, TextureSampleCount sampleCount, VkImage existingImage) {
         Debug.Assert(width > 0 && height > 0);
         this.gd = gd;
@@ -292,17 +292,17 @@ internal unsafe class VkTexture : Texture {
     public override bool IsDisposed => this._destroyed;
 
     /// <summary>
-    /// Represents the OptimalDeviceImage field.
+    /// Stores the value associated with <c>OptimalDeviceImage</c>.
     /// </summary>
     public VkImage OptimalDeviceImage => this._optimalImage;
 
     /// <summary>
-    /// Represents the StagingBuffer field.
+    /// Stores the value associated with <c>StagingBuffer</c>.
     /// </summary>
     public Vulkan.VkBuffer StagingBuffer => this._stagingBuffer;
 
     /// <summary>
-    /// Represents the Memory field.
+    /// Stores the value associated with <c>Memory</c>.
     /// </summary>
     public VkMemoryBlock Memory => this._memoryBlock;
 
@@ -338,10 +338,10 @@ internal unsafe class VkTexture : Texture {
     }
 
     /// <summary>
-    /// Performs the GetSubresourceLayout operation.
+    /// Executes the GetSubresourceLayout operation.
     /// </summary>
-    /// <param name="subresource">The value of subresource.</param>
-    /// <returns>The result of the GetSubresourceLayout operation.</returns>
+    /// <param name="subresource">Specifies the value of <paramref name="subresource" />.</param>
+    /// <returns>Returns the result produced by the GetSubresourceLayout operation.</returns>
     internal VkSubresourceLayout GetSubresourceLayout(uint subresource) {
         bool staging = this._stagingBuffer.Handle != 0;
         Util.GetMipLevelAndArrayLayer(this, subresource, out uint mipLevel, out uint arrayLayer);
@@ -377,14 +377,14 @@ internal unsafe class VkTexture : Texture {
     }
 
     /// <summary>
-    /// Performs the TransitionImageLayout operation.
+    /// Executes the TransitionImageLayout operation.
     /// </summary>
-    /// <param name="cb">The value of cb.</param>
-    /// <param name="baseMipLevel">The value of baseMipLevel.</param>
-    /// <param name="levelCount">The value of levelCount.</param>
-    /// <param name="baseArrayLayer">The value of baseArrayLayer.</param>
-    /// <param name="layerCount">The value of layerCount.</param>
-    /// <param name="newLayout">The value of newLayout.</param>
+    /// <param name="cb">Specifies the value of <paramref name="cb" />.</param>
+    /// <param name="baseMipLevel">Specifies the value of <paramref name="baseMipLevel" />.</param>
+    /// <param name="levelCount">Specifies the value of <paramref name="levelCount" />.</param>
+    /// <param name="baseArrayLayer">Specifies the value of <paramref name="baseArrayLayer" />.</param>
+    /// <param name="layerCount">Specifies the value of <paramref name="layerCount" />.</param>
+    /// <param name="newLayout">Specifies the value of <paramref name="newLayout" />.</param>
     internal void TransitionImageLayout(VkCommandBuffer cb, uint baseMipLevel, uint levelCount, uint baseArrayLayer, uint layerCount, VkImageLayout newLayout) {
         if (this._stagingBuffer != Vulkan.VkBuffer.Null) {
             return;
@@ -422,14 +422,14 @@ internal unsafe class VkTexture : Texture {
     }
 
     /// <summary>
-    /// Performs the TransitionImageLayoutNonmatching operation.
+    /// Executes the TransitionImageLayoutNonmatching operation.
     /// </summary>
-    /// <param name="cb">The value of cb.</param>
-    /// <param name="baseMipLevel">The value of baseMipLevel.</param>
-    /// <param name="levelCount">The value of levelCount.</param>
-    /// <param name="baseArrayLayer">The value of baseArrayLayer.</param>
-    /// <param name="layerCount">The value of layerCount.</param>
-    /// <param name="newLayout">The value of newLayout.</param>
+    /// <param name="cb">Specifies the value of <paramref name="cb" />.</param>
+    /// <param name="baseMipLevel">Specifies the value of <paramref name="baseMipLevel" />.</param>
+    /// <param name="levelCount">Specifies the value of <paramref name="levelCount" />.</param>
+    /// <param name="baseArrayLayer">Specifies the value of <paramref name="baseArrayLayer" />.</param>
+    /// <param name="layerCount">Specifies the value of <paramref name="layerCount" />.</param>
+    /// <param name="newLayout">Specifies the value of <paramref name="newLayout" />.</param>
     internal void TransitionImageLayoutNonmatching(VkCommandBuffer cb, uint baseMipLevel, uint levelCount, uint baseArrayLayer, uint layerCount, VkImageLayout newLayout) {
         if (this._stagingBuffer != Vulkan.VkBuffer.Null) {
             return;
@@ -461,22 +461,22 @@ internal unsafe class VkTexture : Texture {
     }
 
     /// <summary>
-    /// Performs the GetImageLayout operation.
+    /// Executes the GetImageLayout operation.
     /// </summary>
-    /// <param name="mipLevel">The value of mipLevel.</param>
-    /// <param name="arrayLayer">The value of arrayLayer.</param>
-    /// <returns>The result of the GetImageLayout operation.</returns>
+    /// <param name="mipLevel">Specifies the value of <paramref name="mipLevel" />.</param>
+    /// <param name="arrayLayer">Specifies the value of <paramref name="arrayLayer" />.</param>
+    /// <returns>Returns the result produced by the GetImageLayout operation.</returns>
     internal VkImageLayout GetImageLayout(uint mipLevel, uint arrayLayer) {
         return this._imageLayouts[this.CalculateSubresource(mipLevel, arrayLayer)];
     }
 
     /// <summary>
-    /// Performs the SetStagingDimensions operation.
+    /// Executes the SetStagingDimensions operation.
     /// </summary>
-    /// <param name="width">The value of width.</param>
-    /// <param name="height">The value of height.</param>
-    /// <param name="depth">The value of depth.</param>
-    /// <param name="format">The value of format.</param>
+    /// <param name="width">Specifies the value of <paramref name="width" />.</param>
+    /// <param name="height">Specifies the value of <paramref name="height" />.</param>
+    /// <param name="depth">Specifies the value of <paramref name="depth" />.</param>
+    /// <param name="format">Specifies the value of <paramref name="format" />.</param>
     internal void SetStagingDimensions(uint width, uint height, uint depth, PixelFormat format) {
         Debug.Assert(this._stagingBuffer != Vulkan.VkBuffer.Null);
         Debug.Assert(this.Usage == TextureUsage.Staging);
@@ -487,17 +487,17 @@ internal unsafe class VkTexture : Texture {
     }
 
     /// <summary>
-    /// Performs the SetImageLayout operation.
+    /// Executes the SetImageLayout operation.
     /// </summary>
-    /// <param name="mipLevel">The value of mipLevel.</param>
-    /// <param name="arrayLayer">The value of arrayLayer.</param>
-    /// <param name="layout">The value of layout.</param>
+    /// <param name="mipLevel">Specifies the value of <paramref name="mipLevel" />.</param>
+    /// <param name="arrayLayer">Specifies the value of <paramref name="arrayLayer" />.</param>
+    /// <param name="layout">Specifies the value of <paramref name="layout" />.</param>
     internal void SetImageLayout(uint mipLevel, uint arrayLayer, VkImageLayout layout) {
         this._imageLayouts[this.CalculateSubresource(mipLevel, arrayLayer)] = layout;
     }
 
     /// <summary>
-    /// Performs the ClearIfRenderTarget operation.
+    /// Executes the ClearIfRenderTarget operation.
     /// </summary>
     private void ClearIfRenderTarget() {
         // If the image is going to be used as a render target, we need to clear the data before its first use.
@@ -510,7 +510,7 @@ internal unsafe class VkTexture : Texture {
     }
 
     /// <summary>
-    /// Performs the TransitionIfSampled operation.
+    /// Executes the TransitionIfSampled operation.
     /// </summary>
     private void TransitionIfSampled() {
         if ((this.Usage & TextureUsage.Sampled) != 0) {
@@ -519,7 +519,7 @@ internal unsafe class VkTexture : Texture {
     }
 
     /// <summary>
-    /// Performs the RefCountedDispose operation.
+    /// Executes the RefCountedDispose operation.
     /// </summary>
     private void RefCountedDispose() {
         if (!this._destroyed) {
@@ -542,7 +542,7 @@ internal unsafe class VkTexture : Texture {
     }
 
     /// <summary>
-    /// Performs the DisposeCore operation.
+    /// Executes the DisposeCore operation.
     /// </summary>
     private protected override void DisposeCore() {
         this.RefCount.Decrement();

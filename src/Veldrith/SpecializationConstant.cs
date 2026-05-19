@@ -28,9 +28,9 @@ public struct SpecializationConstant : IEquatable<SpecializationConstant> {
     /// <summary>
     /// Initializes a new instance of the <see cref="SpecializationConstant" /> type.
     /// </summary>
-    /// <param name="id">The value of id.</param>
-    /// <param name="type">The value of type.</param>
-    /// <param name="data">The value of data.</param>
+    /// <param name="id">Specifies the value of <paramref name="id" />.</param>
+    /// <param name="type">Specifies the value of <paramref name="type" />.</param>
+    /// <param name="data">Specifies the value of <paramref name="data" />.</param>
     public SpecializationConstant(uint id, ShaderConstantType type, ulong data) {
         this.ID = id;
         this.Type = type;
@@ -40,79 +40,79 @@ public struct SpecializationConstant : IEquatable<SpecializationConstant> {
     /// <summary>
     /// Initializes a new instance of the <see cref="SpecializationConstant" /> type.
     /// </summary>
-    /// <param name="id">The value of id.</param>
-    /// <param name="value">The value of value.</param>
+    /// <param name="id">Specifies the value of <paramref name="id" />.</param>
+    /// <param name="value">Specifies the value of <paramref name="value" />.</param>
     public SpecializationConstant(uint id, bool value)
         : this(id, ShaderConstantType.Bool, Store(value ? (byte)1u : (byte)0u)) { }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SpecializationConstant" /> type.
     /// </summary>
-    /// <param name="id">The value of id.</param>
-    /// <param name="value">The value of value.</param>
+    /// <param name="id">Specifies the value of <paramref name="id" />.</param>
+    /// <param name="value">Specifies the value of <paramref name="value" />.</param>
     public SpecializationConstant(uint id, ushort value)
         : this(id, ShaderConstantType.UInt16, Store(value)) { }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SpecializationConstant" /> type.
     /// </summary>
-    /// <param name="id">The value of id.</param>
-    /// <param name="value">The value of value.</param>
+    /// <param name="id">Specifies the value of <paramref name="id" />.</param>
+    /// <param name="value">Specifies the value of <paramref name="value" />.</param>
     public SpecializationConstant(uint id, short value)
         : this(id, ShaderConstantType.Int16, Store(value)) { }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SpecializationConstant" /> type.
     /// </summary>
-    /// <param name="id">The value of id.</param>
-    /// <param name="value">The value of value.</param>
+    /// <param name="id">Specifies the value of <paramref name="id" />.</param>
+    /// <param name="value">Specifies the value of <paramref name="value" />.</param>
     public SpecializationConstant(uint id, uint value)
         : this(id, ShaderConstantType.UInt32, Store(value)) { }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SpecializationConstant" /> type.
     /// </summary>
-    /// <param name="id">The value of id.</param>
-    /// <param name="value">The value of value.</param>
+    /// <param name="id">Specifies the value of <paramref name="id" />.</param>
+    /// <param name="value">Specifies the value of <paramref name="value" />.</param>
     public SpecializationConstant(uint id, int value)
         : this(id, ShaderConstantType.Int32, Store(value)) { }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SpecializationConstant" /> type.
     /// </summary>
-    /// <param name="id">The value of id.</param>
-    /// <param name="value">The value of value.</param>
+    /// <param name="id">Specifies the value of <paramref name="id" />.</param>
+    /// <param name="value">Specifies the value of <paramref name="value" />.</param>
     public SpecializationConstant(uint id, ulong value)
         : this(id, ShaderConstantType.UInt64, Store(value)) { }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SpecializationConstant" /> type.
     /// </summary>
-    /// <param name="id">The value of id.</param>
-    /// <param name="value">The value of value.</param>
+    /// <param name="id">Specifies the value of <paramref name="id" />.</param>
+    /// <param name="value">Specifies the value of <paramref name="value" />.</param>
     public SpecializationConstant(uint id, long value)
         : this(id, ShaderConstantType.Int64, Store(value)) { }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SpecializationConstant" /> type.
     /// </summary>
-    /// <param name="id">The value of id.</param>
-    /// <param name="value">The value of value.</param>
+    /// <param name="id">Specifies the value of <paramref name="id" />.</param>
+    /// <param name="value">Specifies the value of <paramref name="value" />.</param>
     public SpecializationConstant(uint id, float value)
         : this(id, ShaderConstantType.Float, Store(value)) { }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SpecializationConstant" /> type.
     /// </summary>
-    /// <param name="id">The value of id.</param>
-    /// <param name="value">The value of value.</param>
+    /// <param name="id">Specifies the value of <paramref name="id" />.</param>
+    /// <param name="value">Specifies the value of <paramref name="value" />.</param>
     public SpecializationConstant(uint id, double value)
         : this(id, ShaderConstantType.Double, Store(value)) { }
 
     /// <summary>
     /// Packs a specialization constant value into a 64-bit storage slot.
     /// </summary>
-    /// <param name="value">The value to pack.</param>
+    /// <param name="value">Specifies the value of <paramref name="value" />.</param>
     /// <typeparam name="T">The value type to pack.</typeparam>
     /// <returns>The packed 64-bit representation.</returns>
     internal static unsafe ulong Store<T>(T value) {
@@ -122,18 +122,18 @@ public struct SpecializationConstant : IEquatable<SpecializationConstant> {
     }
 
     /// <summary>
-    /// Performs the Equals operation.
+    /// Executes the Equals operation.
     /// </summary>
-    /// <param name="other">The value of other.</param>
-    /// <returns>The result of the Equals operation.</returns>
+    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
+    /// <returns>Returns the result produced by the Equals operation.</returns>
     public bool Equals(SpecializationConstant other) {
         return this.ID.Equals(other.ID) && this.Type == other.Type && this.Data.Equals(other.Data);
     }
 
     /// <summary>
-    /// Performs the GetHashCode operation.
+    /// Executes the GetHashCode operation.
     /// </summary>
-    /// <returns>The result of the GetHashCode operation.</returns>
+    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(this.ID.GetHashCode(), (int)this.Type, this.Data.GetHashCode());
     }

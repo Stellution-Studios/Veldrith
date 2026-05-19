@@ -33,8 +33,8 @@ public struct BufferDescription : IEquatable<BufferDescription> {
     /// <summary>
     /// Initializes a new instance of the <see cref="BufferDescription" /> type.
     /// </summary>
-    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
-    /// <param name="usage">The value of usage.</param>
+    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
+    /// <param name="usage">Specifies the value of <paramref name="usage" />.</param>
     public BufferDescription(uint sizeInBytes, BufferUsage usage) {
         this.SizeInBytes = sizeInBytes;
         this.Usage = usage;
@@ -45,9 +45,9 @@ public struct BufferDescription : IEquatable<BufferDescription> {
     /// <summary>
     /// Initializes a new instance of the <see cref="BufferDescription" /> type.
     /// </summary>
-    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
-    /// <param name="usage">The value of usage.</param>
-    /// <param name="structureByteStride">The value of structureByteStride.</param>
+    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
+    /// <param name="usage">Specifies the value of <paramref name="usage" />.</param>
+    /// <param name="structureByteStride">Specifies the value of <paramref name="structureByteStride" />.</param>
     public BufferDescription(uint sizeInBytes, BufferUsage usage, uint structureByteStride) {
         this.SizeInBytes = sizeInBytes;
         this.Usage = usage;
@@ -58,10 +58,10 @@ public struct BufferDescription : IEquatable<BufferDescription> {
     /// <summary>
     /// Initializes a new instance of the <see cref="BufferDescription" /> type.
     /// </summary>
-    /// <param name="sizeInBytes">The value of sizeInBytes.</param>
-    /// <param name="usage">The value of usage.</param>
-    /// <param name="structureByteStride">The value of structureByteStride.</param>
-    /// <param name="rawBuffer">The value of rawBuffer.</param>
+    /// <param name="sizeInBytes">Specifies the value of <paramref name="sizeInBytes" />.</param>
+    /// <param name="usage">Specifies the value of <paramref name="usage" />.</param>
+    /// <param name="structureByteStride">Specifies the value of <paramref name="structureByteStride" />.</param>
+    /// <param name="rawBuffer">Specifies the value of <paramref name="rawBuffer" />.</param>
     public BufferDescription(uint sizeInBytes, BufferUsage usage, uint structureByteStride, bool rawBuffer) {
         this.SizeInBytes = sizeInBytes;
         this.Usage = usage;
@@ -70,10 +70,10 @@ public struct BufferDescription : IEquatable<BufferDescription> {
     }
 
     /// <summary>
-    /// Performs the Equals operation.
+    /// Executes the Equals operation.
     /// </summary>
-    /// <param name="other">The value of other.</param>
-    /// <returns>The result of the Equals operation.</returns>
+    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
+    /// <returns>Returns the result produced by the Equals operation.</returns>
     public bool Equals(BufferDescription other) {
         return this.SizeInBytes.Equals(other.SizeInBytes)
                && this.Usage == other.Usage
@@ -82,9 +82,9 @@ public struct BufferDescription : IEquatable<BufferDescription> {
     }
 
     /// <summary>
-    /// Performs the GetHashCode operation.
+    /// Executes the GetHashCode operation.
     /// </summary>
-    /// <returns>The result of the GetHashCode operation.</returns>
+    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(this.SizeInBytes.GetHashCode(), (int)this.Usage, this.StructureByteStride.GetHashCode(), this.RawBuffer.GetHashCode());
     }

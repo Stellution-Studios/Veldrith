@@ -1,12 +1,12 @@
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the MTLWinding enum.
+/// Defines the available values of the MTLWinding enumeration.
 /// </summary>
 public enum MTLWinding {
 
     /// <summary>
-    /// Represents the Clockwise field.
+    /// Stores the value associated with <c>Clockwise</c>.
     /// </summary>
     Clockwise = 0, CounterClockwise = 1
 }

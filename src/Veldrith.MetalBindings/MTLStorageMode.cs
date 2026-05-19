@@ -1,12 +1,12 @@
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the MTLStorageMode enum.
+/// Defines the available values of the MTLStorageMode enumeration.
 /// </summary>
 public enum MTLStorageMode : ulong {
 
     /// <summary>
-    /// Represents the Shared field.
+    /// Stores the value associated with <c>Shared</c>.
     /// </summary>
     Shared = 0, Managed = 1, Private = 2, Memoryless = 3
 }

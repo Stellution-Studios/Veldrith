@@ -16,24 +16,24 @@ public struct ResourceLayoutDescription : IEquatable<ResourceLayoutDescription> 
     /// <summary>
     /// Initializes a new instance of the <see cref="ResourceLayoutDescription" /> type.
     /// </summary>
-    /// <param name="elements">The value of elements.</param>
+    /// <param name="elements">Specifies the value of <paramref name="elements" />.</param>
     public ResourceLayoutDescription(params ResourceLayoutElementDescription[] elements) {
         this.Elements = elements;
     }
 
     /// <summary>
-    /// Performs the Equals operation.
+    /// Executes the Equals operation.
     /// </summary>
-    /// <param name="other">The value of other.</param>
-    /// <returns>The result of the Equals operation.</returns>
+    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
+    /// <returns>Returns the result produced by the Equals operation.</returns>
     public bool Equals(ResourceLayoutDescription other) {
         return Util.ArrayEqualsEquatable(this.Elements, other.Elements);
     }
 
     /// <summary>
-    /// Performs the GetHashCode operation.
+    /// Executes the GetHashCode operation.
     /// </summary>
-    /// <returns>The result of the GetHashCode operation.</returns>
+    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Array(this.Elements);
     }

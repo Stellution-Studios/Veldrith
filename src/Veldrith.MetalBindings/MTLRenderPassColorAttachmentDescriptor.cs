@@ -4,19 +4,19 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the MTLRenderPassColorAttachmentDescriptor struct.
+/// Defines the data layout and behavior of the MTLRenderPassColorAttachmentDescriptor struct.
 /// </summary>
 public struct MTLRenderPassColorAttachmentDescriptor {
 
     /// <summary>
-    /// Represents the NativePtr field.
+    /// Stores the value associated with <c>NativePtr</c>.
     /// </summary>
     public readonly IntPtr NativePtr;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MTLRenderPassColorAttachmentDescriptor" /> type.
     /// </summary>
-    /// <param name="ptr">The value of ptr.</param>
+    /// <param name="ptr">Specifies the value of <paramref name="ptr" />.</param>
     public MTLRenderPassColorAttachmentDescriptor(IntPtr ptr) {
         this.NativePtr = ptr;
     }
@@ -84,12 +84,12 @@ public struct MTLRenderPassColorAttachmentDescriptor {
     }
 
     /// <summary>
-    /// Represents the sel_clearColor field.
+    /// Stores the value associated with <c>sel_clearColor</c>.
     /// </summary>
     private static readonly Selector sel_clearColor = "clearColor";
 
     /// <summary>
-    /// Represents the sel_setClearColor field.
+    /// Stores the value associated with <c>sel_setClearColor</c>.
     /// </summary>
     private static readonly Selector sel_setClearColor = "setClearColor:";
 }

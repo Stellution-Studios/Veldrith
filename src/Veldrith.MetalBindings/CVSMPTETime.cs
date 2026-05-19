@@ -1,47 +1,47 @@
 namespace Veldrith.MetalBindings;
 
 /// <summary>
-/// Represents the CVSMPTETime struct.
+/// Defines the data layout and behavior of the CVSMPTETime struct.
 /// </summary>
 public struct CVSMPTETime {
 
     /// <summary>
-    /// Represents the flags field.
+    /// Stores the value associated with <c>flags</c>.
     /// </summary>
     public ulong flags;
 
     /// <summary>
-    /// Represents the hostTime field.
+    /// Stores the value associated with <c>hostTime</c>.
     /// </summary>
     public ulong hostTime;
 
     /// <summary>
-    /// Represents the rateScalar field.
+    /// Stores the value associated with <c>rateScalar</c>.
     /// </summary>
     public double rateScalar;
 
     /// <summary>
-    /// Represents the reserved field.
+    /// Stores the value associated with <c>reserved</c>.
     /// </summary>
     public ulong reserved;
 
     /// <summary>
-    /// Represents the version field.
+    /// Stores the value associated with <c>version</c>.
     /// </summary>
     public uint version;
 
     /// <summary>
-    /// Represents the videoRefreshPeriod field.
+    /// Stores the value associated with <c>videoRefreshPeriod</c>.
     /// </summary>
     public long videoRefreshPeriod;
 
     /// <summary>
-    /// Represents the videoTime field.
+    /// Stores the value associated with <c>videoTime</c>.
     /// </summary>
     public long videoTime;
 
     /// <summary>
-    /// Represents the videoTimeScale field.
+    /// Stores the value associated with <c>videoTimeScale</c>.
     /// </summary>
     public int videoTimeScale;
 }

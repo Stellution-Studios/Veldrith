@@ -3,7 +3,7 @@ using System;
 namespace Veldrith;
 
 /// <summary>
-/// Represents the Sampler class.
+/// Defines the behavior and responsibilities of the Sampler class.
 /// </summary>
 public abstract class Sampler : IDeviceResource, IBindableResource, IDisposable {
 
@@ -21,7 +21,7 @@ public abstract class Sampler : IDeviceResource, IBindableResource, IDisposable 
     #region Disposal
 
     /// <summary>
-    /// Performs the Dispose operation.
+    /// Executes the Dispose operation.
     /// </summary>
     public abstract void Dispose();
 

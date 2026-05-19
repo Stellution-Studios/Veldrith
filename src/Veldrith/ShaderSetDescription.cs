@@ -33,8 +33,8 @@ public struct ShaderSetDescription : IEquatable<ShaderSetDescription> {
     /// <summary>
     /// Initializes a new instance of the <see cref="ShaderSetDescription" /> type.
     /// </summary>
-    /// <param name="vertexLayouts">The value of vertexLayouts.</param>
-    /// <param name="shaders">The value of shaders.</param>
+    /// <param name="vertexLayouts">Specifies the value of <paramref name="vertexLayouts" />.</param>
+    /// <param name="shaders">Specifies the value of <paramref name="shaders" />.</param>
     public ShaderSetDescription(VertexLayoutDescription[] vertexLayouts, Shader[] shaders) {
         this.VertexLayouts = vertexLayouts;
         this.Shaders = shaders;
@@ -44,9 +44,9 @@ public struct ShaderSetDescription : IEquatable<ShaderSetDescription> {
     /// <summary>
     /// Initializes a new instance of the <see cref="ShaderSetDescription" /> type.
     /// </summary>
-    /// <param name="vertexLayouts">The value of vertexLayouts.</param>
-    /// <param name="shaders">The value of shaders.</param>
-    /// <param name="specializations">The value of specializations.</param>
+    /// <param name="vertexLayouts">Specifies the value of <paramref name="vertexLayouts" />.</param>
+    /// <param name="shaders">Specifies the value of <paramref name="shaders" />.</param>
+    /// <param name="specializations">Specifies the value of <paramref name="specializations" />.</param>
     public ShaderSetDescription(VertexLayoutDescription[] vertexLayouts, Shader[] shaders, SpecializationConstant[] specializations) {
         this.VertexLayouts = vertexLayouts;
         this.Shaders = shaders;
@@ -54,10 +54,10 @@ public struct ShaderSetDescription : IEquatable<ShaderSetDescription> {
     }
 
     /// <summary>
-    /// Performs the Equals operation.
+    /// Executes the Equals operation.
     /// </summary>
-    /// <param name="other">The value of other.</param>
-    /// <returns>The result of the Equals operation.</returns>
+    /// <param name="other">Specifies the value of <paramref name="other" />.</param>
+    /// <returns>Returns the result produced by the Equals operation.</returns>
     public bool Equals(ShaderSetDescription other) {
         return Util.ArrayEqualsEquatable(this.VertexLayouts, other.VertexLayouts)
                && Util.ArrayEquals(this.Shaders, other.Shaders)
@@ -65,9 +65,9 @@ public struct ShaderSetDescription : IEquatable<ShaderSetDescription> {
     }
 
     /// <summary>
-    /// Performs the GetHashCode operation.
+    /// Executes the GetHashCode operation.
     /// </summary>
-    /// <returns>The result of the GetHashCode operation.</returns>
+    /// <returns>Returns the result produced by the GetHashCode operation.</returns>
     public override int GetHashCode() {
         return HashHelper.Combine(HashHelper.Array(this.VertexLayouts), HashHelper.Array(this.Shaders), HashHelper.Array(this.Specializations));
     }

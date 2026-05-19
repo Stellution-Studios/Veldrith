@@ -7,12 +7,12 @@ namespace Veldrith.MetalBindings;
 [StructLayout(LayoutKind.Sequential)]
 
 /// <summary>
-/// Represents the MTLRenderPipelineColorAttachmentDescriptorArray struct.
+/// Defines the data layout and behavior of the MTLRenderPipelineColorAttachmentDescriptorArray struct.
 /// </summary>
 public struct MTLRenderPipelineColorAttachmentDescriptorArray {
 
     /// <summary>
-    /// Represents the NativePtr field.
+    /// Stores the value associated with <c>NativePtr</c>.
     /// </summary>
     public readonly IntPtr NativePtr;
 

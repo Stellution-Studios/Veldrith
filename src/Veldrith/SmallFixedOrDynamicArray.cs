@@ -5,32 +5,32 @@ using System.Runtime.CompilerServices;
 namespace Veldrith;
 
 /// <summary>
-/// Represents the SmallFixedOrDynamicArray struct.
+/// Defines the data layout and behavior of the SmallFixedOrDynamicArray struct.
 /// </summary>
 internal unsafe struct SmallFixedOrDynamicArray : IDisposable {
 
     /// <summary>
-    /// Represents the _max_fixed_values field.
+    /// Stores the value associated with <c>_max_fixed_values</c>.
     /// </summary>
     private const int _max_fixed_values = 5;
 
     /// <summary>
-    /// Represents the Count field.
+    /// Stores the value associated with <c>Count</c>.
     /// </summary>
     public readonly uint Count;
 
     private fixed uint _fixedData[_max_fixed_values];
 
     /// <summary>
-    /// Represents the Data field.
+    /// Stores the value associated with <c>Data</c>.
     /// </summary>
     public readonly uint[] Data;
 
     /// <summary>
-    /// Performs the Get operation.
+    /// Executes the Get operation.
     /// </summary>
-    /// <param name="i">The value of i.</param>
-    /// <returns>The result of the Get operation.</returns>
+    /// <param name="i">Specifies the value of <paramref name="i" />.</param>
+    /// <returns>Returns the result produced by the Get operation.</returns>
     public uint Get(uint i) {
         return this.Count > _max_fixed_values ? this.Data[i] : this._fixedData[i];
     }
@@ -38,8 +38,8 @@ internal unsafe struct SmallFixedOrDynamicArray : IDisposable {
     /// <summary>
     /// Initializes a new instance of the <see cref="SmallFixedOrDynamicArray" /> type.
     /// </summary>
-    /// <param name="count">The value of count.</param>
-    /// <param name="data">The value of data.</param>
+    /// <param name="count">Specifies the value of <paramref name="count" />.</param>
+    /// <param name="data">Specifies the value of <paramref name="data" />.</param>
     public SmallFixedOrDynamicArray(uint count, ref uint data) {
         if (count > _max_fixed_values) {
             this.Data = ArrayPool<uint>.Shared.Rent((int)count);
@@ -59,7 +59,7 @@ internal unsafe struct SmallFixedOrDynamicArray : IDisposable {
     }
 
     /// <summary>
-    /// Performs the Dispose operation.
+    /// Executes the Dispose operation.
     /// </summary>
     public void Dispose() {
         if (this.Data != null) {

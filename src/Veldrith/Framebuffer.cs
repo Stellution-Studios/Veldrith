@@ -5,7 +5,7 @@ using System.Diagnostics;
 namespace Veldrith;
 
 /// <summary>
-/// Represents the Framebuffer class.
+/// Defines the behavior and responsibilities of the Framebuffer class.
 /// </summary>
 public abstract class Framebuffer : IDeviceResource, IDisposable {
 
@@ -17,8 +17,8 @@ public abstract class Framebuffer : IDeviceResource, IDisposable {
     /// <summary>
     /// Initializes a new instance of the <see cref="Framebuffer" /> type.
     /// </summary>
-    /// <param name="depthTargetDesc">The value of depthTargetDesc.</param>
-    /// <param name="colorTargetDescs">The value of colorTargetDescs.</param>
+    /// <param name="depthTargetDesc">Specifies the value of <paramref name="depthTargetDesc" />.</param>
+    /// <param name="colorTargetDescs">Specifies the value of <paramref name="colorTargetDescs" />.</param>
     internal Framebuffer(FramebufferAttachmentDescription? depthTargetDesc, IReadOnlyList<FramebufferAttachmentDescription> colorTargetDescs) {
 
         if (depthTargetDesc != null) {
@@ -95,7 +95,7 @@ public abstract class Framebuffer : IDeviceResource, IDisposable {
     #region Disposal
 
     /// <summary>
-    /// Performs the Dispose operation.
+    /// Executes the Dispose operation.
     /// </summary>
     public abstract void Dispose();
 
