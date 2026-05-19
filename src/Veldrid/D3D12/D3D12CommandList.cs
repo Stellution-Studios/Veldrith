@@ -18,10 +18,7 @@ namespace Veldrid.D3D12
     {
         private const int FramesInFlight = 8;
         private const int PerfReportIntervalFrames = 240;
-        private static readonly bool perfLogEnabled = string.Equals(
-            Environment.GetEnvironmentVariable("VELDRID_D3D12_PERF"),
-            "1",
-            StringComparison.Ordinal);
+        private static readonly bool perfLogEnabled = string.Equals(Environment.GetEnvironmentVariable("VELDRID_D3D12_PERF"), "1", StringComparison.Ordinal);
         private readonly D3D12GraphicsDevice gd;
         private readonly ID3D12CommandAllocator[] commandAllocators = new ID3D12CommandAllocator[FramesInFlight];
         private readonly ID3D12GraphicsCommandList nativeCommandList;
@@ -72,10 +69,8 @@ namespace Veldrid.D3D12
         private BoundResourceSetInfo[] boundGraphicsResourceSets = Array.Empty<BoundResourceSetInfo>();
         private BoundResourceSetInfo[] boundComputeResourceSets = Array.Empty<BoundResourceSetInfo>();
         private readonly Dictionary<DescriptorCacheKey, GpuDescriptorHandle>[] descriptorTableCaches = new Dictionary<DescriptorCacheKey, GpuDescriptorHandle>[FramesInFlight];
-        private readonly Dictionary<ResourceSetBindingPlanKey, ResourceSetBindingPlanEntry[]> graphicsResourceSetBindingPlans
-            = new Dictionary<ResourceSetBindingPlanKey, ResourceSetBindingPlanEntry[]>(ResourceSetBindingPlanKeyComparer.Instance);
-        private readonly Dictionary<ResourceSetBindingPlanKey, ResourceSetBindingPlanEntry[]> computeResourceSetBindingPlans
-            = new Dictionary<ResourceSetBindingPlanKey, ResourceSetBindingPlanEntry[]>(ResourceSetBindingPlanKeyComparer.Instance);
+        private readonly Dictionary<ResourceSetBindingPlanKey, ResourceSetBindingPlanEntry[]> graphicsResourceSetBindingPlans = new Dictionary<ResourceSetBindingPlanKey, ResourceSetBindingPlanEntry[]>(ResourceSetBindingPlanKeyComparer.Instance);
+        private readonly Dictionary<ResourceSetBindingPlanKey, ResourceSetBindingPlanEntry[]> computeResourceSetBindingPlans = new Dictionary<ResourceSetBindingPlanKey, ResourceSetBindingPlanEntry[]>(ResourceSetBindingPlanKeyComparer.Instance);
         private readonly uint[] nextSrvUavDescriptorsPerFrameSlot = new uint[FramesInFlight];
         private readonly uint[] nextSamplerDescriptorsPerFrameSlot = new uint[FramesInFlight];
         private uint maxBoundVertexBufferSlot;
@@ -121,26 +116,23 @@ namespace Veldrid.D3D12
 
         public ID3D12GraphicsCommandList NativeCommandList => nativeCommandList;
 
-        public D3D12CommandList(
-            D3D12GraphicsDevice gd,
-            ref CommandListDescription description,
-            GraphicsDeviceFeatures features,
-            uint uniformAlignment,
-            uint structuredAlignment)
-            : base(ref description, features, uniformAlignment, structuredAlignment)
-        {
+        public D3D12CommandList(D3D12GraphicsDevice gd, ref CommandListDescription description, GraphicsDeviceFeatures features, uint uniformAlignment, uint structuredAlignment) : base(ref description, features, uniformAlignment, structuredAlignment) {
             this.gd = gd;
+
             for (int i = 0; i < FramesInFlight; i++)
             {
                 commandAllocators[i] = gd.Device.CreateCommandAllocator(CommandListType.Direct);
+
                 shaderVisibleSrvUavHeaps[i] = gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(
                     DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView,
                     maxSrvUavDescriptors,
                     DescriptorHeapFlags.ShaderVisible));
+
                 shaderVisibleSamplerHeaps[i] = gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(
                     DescriptorHeapType.Sampler,
                     maxSamplerDescriptors,
                     DescriptorHeapFlags.ShaderVisible));
+
                 descriptorTableCaches[i] = new Dictionary<DescriptorCacheKey, GpuDescriptorHandle>(DescriptorCacheKeyComparer.Instance);
             }
 
