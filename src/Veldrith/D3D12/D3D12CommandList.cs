@@ -31,7 +31,6 @@ internal sealed class D3D12CommandList : CommandList {
     /// <summary>
     /// Executes the register logic for this backend.
     /// </summary>
-
     private const string _mipmapComputeShaderCode = @"Texture2D<float4> SourceTexture : register(t0);
 
                                                       RWTexture2D<float4> DestinationTexture : register(u0);
