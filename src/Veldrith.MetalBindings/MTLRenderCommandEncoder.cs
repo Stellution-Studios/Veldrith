@@ -385,32 +385,32 @@ public struct MTLRenderCommandEncoder {
     /// <summary>
     /// Stores the sel draw primitives0 state used by this instance.
     /// </summary>
-    private static readonly Selector sel_drawPrimitives0 = "DrawPrimitives:vertexStart:vertexCount:instanceCount:baseInstance:";
+    private static readonly Selector sel_drawPrimitives0 = "drawPrimitives:vertexStart:vertexCount:instanceCount:baseInstance:";
 
     /// <summary>
     /// Stores the sel draw primitives1 state used by this instance.
     /// </summary>
-    private static readonly Selector sel_drawPrimitives1 = "DrawPrimitives:indirectBuffer:indirectBufferOffset:";
+    private static readonly Selector sel_drawPrimitives1 = "drawPrimitives:indirectBuffer:indirectBufferOffset:";
 
     /// <summary>
     /// Stores the sel draw primitives2 state used by this instance.
     /// </summary>
-    private static readonly Selector sel_drawPrimitives2 = "DrawPrimitives:vertexStart:vertexCount:instanceCount:";
+    private static readonly Selector sel_drawPrimitives2 = "drawPrimitives:vertexStart:vertexCount:instanceCount:";
 
     /// <summary>
     /// Stores the sel draw indexed primitives0 value used during command execution.
     /// </summary>
-    private static readonly Selector sel_drawIndexedPrimitives0 = "DrawIndexedPrimitives:indexCount:indexType:indexBuffer:indexBufferOffset:instanceCount:";
+    private static readonly Selector sel_drawIndexedPrimitives0 = "drawIndexedPrimitives:indexCount:indexType:indexBuffer:indexBufferOffset:instanceCount:";
 
     /// <summary>
     /// Stores the sel draw indexed primitives1 value used during command execution.
     /// </summary>
-    private static readonly Selector sel_drawIndexedPrimitives1 = "DrawIndexedPrimitives:indexCount:indexType:indexBuffer:indexBufferOffset:instanceCount:baseVertex:baseInstance:";
+    private static readonly Selector sel_drawIndexedPrimitives1 = "drawIndexedPrimitives:indexCount:indexType:indexBuffer:indexBufferOffset:instanceCount:baseVertex:baseInstance:";
 
     /// <summary>
     /// Stores the sel draw indexed primitives2 value used during command execution.
     /// </summary>
-    private static readonly Selector sel_drawIndexedPrimitives2 = "DrawIndexedPrimitives:indexType:indexBuffer:indexBufferOffset:indirectBuffer:indirectBufferOffset:";
+    private static readonly Selector sel_drawIndexedPrimitives2 = "drawIndexedPrimitives:indexType:indexBuffer:indexBufferOffset:indirectBuffer:indirectBufferOffset:";
 
     /// <summary>
     /// Stores the sel set viewport state used by this instance.
@@ -465,7 +465,7 @@ public struct MTLRenderCommandEncoder {
     /// <summary>
     /// Stores the sel set blend color state used by this instance.
     /// </summary>
-    private static readonly Selector sel_setBlendColor = "setBlendColorRed:Green:Blue:Alpha:";
+    private static readonly Selector sel_setBlendColor = "setBlendColorRed:green:blue:alpha:";
 
     /// <summary>
     /// Stores the sel set triangle fill mode state used by this instance.

@@ -116,7 +116,7 @@ public struct MTLCommandBuffer : IEquatable<MTLCommandBuffer> {
     /// <summary>
     /// Stores the sel add completed handler state used by this instance.
     /// </summary>
-    private static readonly Selector sel_addCompletedHandler = "AddCompletedHandler:";
+    private static readonly Selector sel_addCompletedHandler = "addCompletedHandler:";
 
     /// <summary>
     /// Stores the sel status state used by this instance.
