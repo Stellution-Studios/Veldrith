@@ -55,13 +55,13 @@ internal static partial class VkFormats {
 
             case PixelFormat.R16G16SInt: return VkFormat.R16g16Sint;
 
-            case PixelFormat.R16G16Float: return VkFormat.R16g16b16a16Sfloat;
+            case PixelFormat.R16G16Float: return VkFormat.R16g16Sfloat;
 
             case PixelFormat.R32G32UInt: return VkFormat.R32g32Uint;
 
             case PixelFormat.R32G32SInt: return VkFormat.R32g32Sint;
 
-            case PixelFormat.R32G32Float: return VkFormat.R32g32b32a32Sfloat;
+            case PixelFormat.R32G32Float: return VkFormat.R32g32Sfloat;
 
             case PixelFormat.R8G8B8A8UNorm: return VkFormat.R8g8b8a8Unorm;
 

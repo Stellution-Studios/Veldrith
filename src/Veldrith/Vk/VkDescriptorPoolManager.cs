@@ -244,9 +244,11 @@ internal class VkDescriptorPoolManager {
             this.RemainingSets += 1;
 
             this.UniformBufferCount += counts.UniformBufferCount;
+            this.UniformBufferDynamicCount += counts.UniformBufferDynamicCount;
             this.SampledImageCount += counts.SampledImageCount;
             this.SamplerCount += counts.SamplerCount;
             this.StorageBufferCount += counts.StorageBufferCount;
+            this.StorageBufferDynamicCount += counts.StorageBufferDynamicCount;
             this.StorageImageCount += counts.StorageImageCount;
         }
     }

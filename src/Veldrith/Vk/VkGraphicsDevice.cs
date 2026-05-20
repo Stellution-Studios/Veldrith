@@ -1343,10 +1343,6 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
 
         string fullMessage = $"[{debugReportFlags}] ({objectType}) {message}";
 
-        if (debugReportFlags == VkDebugReportFlagsEXT.ErrorEXT) {
-            throw new VeldridException("A Vulkan validation error was encountered: " + fullMessage);
-        }
-
         Console.WriteLine(fullMessage);
         return 0;
     }
@@ -1395,9 +1391,9 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
 
         int i = 0;
 
-        foreach (uint _ in familyIndices) {
+        foreach (uint familyIndex in familyIndices) {
             VkDeviceQueueCreateInfo queueCreateInfo = VkDeviceQueueCreateInfo.New();
-            queueCreateInfo.queueFamilyIndex = this.GraphicsQueueIndex;
+            queueCreateInfo.queueFamilyIndex = familyIndex;
             queueCreateInfo.queueCount = 1;
             float priority = 1f;
             queueCreateInfo.pQueuePriorities = &priority;
