@@ -459,14 +459,17 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
 
         this.DxgiFactory = VorticeDXGI.CreateDXGIFactory2<IDXGIFactory4>(false);
         IDXGIAdapter1 adapter = SelectAdapter(this.DxgiFactory);
+        FeatureLevel maxFeatureLevel = FeatureLevel.Level_11_0;
         try {
             if (adapter != null) {
+                maxFeatureLevel = GetMaxSupportedFeatureLevel(adapter);
                 VorticeD3D12.D3D12CreateDevice(adapter, FeatureLevel.Level_11_0, out this._device).CheckError();
                 AdapterDescription1 description = adapter.Description1;
                 this.DeviceName = description.Description?.TrimEnd('\0');
                 this.VendorName = $"0x{description.VendorId:X4}";
             }
             else {
+                maxFeatureLevel = GetMaxSupportedFeatureLevel(null);
                 VorticeD3D12.D3D12CreateDevice(null, FeatureLevel.Level_11_0, out this._device).CheckError();
                 this.DeviceName = "Direct3D 12 Device";
                 this.VendorName = "Unknown";
@@ -476,6 +479,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
             adapter?.Dispose();
         }
 
+        this.ApiVersion = ToGraphicsApiVersion(maxFeatureLevel);
         this.CommandQueue = this._device.CreateCommandQueue(new CommandQueueDescription(CommandListType.Direct));
         this._submissionFence = this._device.CreateFence();
         this._submissionFenceEvent = new AutoResetEvent(false);
@@ -514,7 +518,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// <summary>
     /// Gets or sets ApiVersion.
     /// </summary>
-    public override GraphicsApiVersion ApiVersion => GraphicsApiVersion.Unknown;
+    public override GraphicsApiVersion ApiVersion { get; }
 
     /// <summary>
     /// Gets or sets BackendType.
@@ -671,6 +675,38 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         }
 
         return VorticeD3D12.D3D12CreateDevice(null, FeatureLevel.Level_11_0, out ID3D12Device _).Success;
+    }
+
+    /// <summary>
+    /// Gets the highest Direct3D feature level supported by the adapter.
+    /// </summary>
+    /// <param name="adapter">The adapter to query, or null for the default adapter.</param>
+    /// <returns>The value produced by this operation.</returns>
+    private static FeatureLevel GetMaxSupportedFeatureLevel(IDXGIAdapter adapter) {
+        try {
+            return adapter != null
+                ? VorticeD3D12.GetMaxSupportedFeatureLevel(adapter, FeatureLevel.Level_11_0)
+                : VorticeD3D12.GetMaxSupportedFeatureLevel(FeatureLevel.Level_11_0);
+        }
+        catch (SharpGenException) {
+            return FeatureLevel.Level_11_0;
+        }
+    }
+
+    /// <summary>
+    /// Converts a Direct3D feature level into the generic graphics API version value.
+    /// </summary>
+    /// <param name="featureLevel">The feature level to convert.</param>
+    /// <returns>The value produced by this operation.</returns>
+    private static GraphicsApiVersion ToGraphicsApiVersion(FeatureLevel featureLevel) {
+        switch (featureLevel) {
+            case FeatureLevel.Level_12_2: return new GraphicsApiVersion(12, 2, 0, 0);
+            case FeatureLevel.Level_12_1: return new GraphicsApiVersion(12, 1, 0, 0);
+            case FeatureLevel.Level_12_0: return new GraphicsApiVersion(12, 0, 0, 0);
+            case FeatureLevel.Level_11_1: return new GraphicsApiVersion(11, 1, 0, 0);
+            case FeatureLevel.Level_11_0: return new GraphicsApiVersion(11, 0, 0, 0);
+            default: return GraphicsApiVersion.Unknown;
+        }
     }
 
     /// <summary>

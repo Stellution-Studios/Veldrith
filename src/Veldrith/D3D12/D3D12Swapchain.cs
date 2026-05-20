@@ -36,6 +36,11 @@ internal sealed class D3D12Swapchain : Swapchain {
     private readonly Format _nativeColorFormat;
 
     /// <summary>
+    /// Stores the native render-target view format state used by this instance.
+    /// </summary>
+    private readonly Format _nativeRtvFormat;
+
+    /// <summary>
     /// Stores the gd state used by this instance.
     /// </summary>
     private readonly D3D12GraphicsDevice gd;
@@ -108,7 +113,8 @@ internal sealed class D3D12Swapchain : Swapchain {
     public D3D12Swapchain(D3D12GraphicsDevice gd, ref SwapchainDescription description) {
         this.gd = gd;
         this.SyncToVerticalBlank = description.SyncToVerticalBlank;
-        this._nativeColorFormat = description.ColorSrgb ? Format.B8G8R8A8_UNorm_SRgb : Format.B8G8R8A8_UNorm;
+        this._nativeColorFormat = Format.B8G8R8A8_UNorm;
+        this._nativeRtvFormat = description.ColorSrgb ? Format.B8G8R8A8_UNorm_SRgb : Format.B8G8R8A8_UNorm;
         using (IDXGIFactory5 factory5 = gd.DxgiFactory.QueryInterfaceOrNull<IDXGIFactory5>()) {
             this._canTear = factory5?.PresentAllowTearing == true;
         }
@@ -150,13 +156,6 @@ internal sealed class D3D12Swapchain : Swapchain {
             }
 
             this._allowTearing = value;
-            if (!this._hasNativeSwapchain || this._dxgiSwapChain == null) {
-                return;
-            }
-
-            uint width = this._framebuffer?.Width ?? 1u;
-            uint height = this._framebuffer?.Height ?? 1u;
-            this.RecreateNativeSwapchain(width, height);
         }
     }
 
@@ -411,8 +410,23 @@ internal sealed class D3D12Swapchain : Swapchain {
             this._backBufferResources[i] = buffer;
             this._backBufferRtvs[i] = handle + i * this._rtvDescriptorSize;
             this._backBufferStates[i] = ResourceStates.Present;
-            this.gd.Device.CreateRenderTargetView(buffer, null, this._backBufferRtvs[i]);
+            this.gd.Device.CreateRenderTargetView(buffer, this.CreateBackBufferRenderTargetViewDescription(), this._backBufferRtvs[i]);
         }
+    }
+
+    /// <summary>
+    /// Creates the render-target view description used by native back buffers.
+    /// </summary>
+    /// <returns>The value produced by this operation.</returns>
+    private RenderTargetViewDescription CreateBackBufferRenderTargetViewDescription() {
+        return new RenderTargetViewDescription {
+            Format = this._nativeRtvFormat,
+            ViewDimension = RenderTargetViewDimension.Texture2D,
+            Texture2D = new Texture2DRenderTargetView {
+                MipSlice = 0,
+                PlaneSlice = 0
+            }
+        };
     }
 
     /// <summary>
@@ -427,10 +441,22 @@ internal sealed class D3D12Swapchain : Swapchain {
 
         lock (this.gd.CommandQueueLock) {
             this.gd.WaitForIdle();
+
+            bool useDepth = this._depthTexture != null;
+            PixelFormat? depthFormat = useDepth ? this._depthTexture.Format : null;
+            bool srgb = this._framebuffer.OutputDescription.ColorAttachments[0].Format == PixelFormat.B8G8R8A8UNormSRgb
+                || this._framebuffer.OutputDescription.ColorAttachments[0].Format == PixelFormat.R8G8B8A8UNormSRgb;
+
+            this._depthTexture?.Dispose();
+            this._depthTexture = null;
+
             this.DisposeNativeResources(disposeDescriptorHeap: false);
             this._dxgiSwapChain.ResizeBuffers((uint)this._bufferCount, width, height, this._nativeColorFormat, this.GetSwapChainFlags());
             this.ConfigureFrameLatencyWaitableObject();
             this.CreateNativeRenderTargets();
+
+            this.TryResolveAttachmentSize(ref width, ref height);
+            this.CreateOrUpdateAttachments(width, height, depthFormat, srgb);
         }
     }
 
@@ -487,7 +513,7 @@ internal sealed class D3D12Swapchain : Swapchain {
     /// <returns>The value produced by this operation.</returns>
     private SwapChainFlags GetSwapChainFlags() {
         SwapChainFlags flags = SwapChainFlags.None;
-        if (this._allowTearing && this._canTear) {
+        if (this._canTear) {
             flags |= SwapChainFlags.AllowTearing;
         }
 
@@ -549,7 +575,7 @@ internal sealed class D3D12Swapchain : Swapchain {
         /// </summary>
         /// <param name="handle">The native handle value.</param>
         public FrameLatencyWaitHandle(nint handle) {
-            this.SafeWaitHandle = new SafeWaitHandle(handle, true);
+            this.SafeWaitHandle = new SafeWaitHandle(handle, false);
         }
     }
 }

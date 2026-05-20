@@ -750,7 +750,7 @@ internal sealed class D3D12Pipeline : Pipeline {
             HullShader = hullShader,
             DomainShader = domainShader,
             BlendState = BuildBlendState(ref description.BlendState),
-            RasterizerState = BuildRasterizerState(ref description.RasterizerState),
+            RasterizerState = BuildRasterizerState(ref description.RasterizerState, description.Outputs.SampleCount),
             DepthStencilState = BuildDepthStencilState(ref description.DepthStencilState),
             SampleMask = uint.MaxValue,
             PrimitiveTopologyType = this.PrimitiveTopologyType,
@@ -792,7 +792,7 @@ internal sealed class D3D12Pipeline : Pipeline {
 
         int count = Math.Min(description.AttachmentStates?.Length ?? 0, 8);
         for (int i = 0; i < count; i++) {
-            BlendAttachmentDescription attachment = description.AttachmentStates[i];
+            BlendAttachmentDescription attachment = description.AttachmentStates![i];
             blendDescription.RenderTarget[i] = new RenderTargetBlendDescription {
                 BlendEnable = attachment.BlendEnabled,
                 LogicOpEnable = false,
@@ -814,14 +814,15 @@ internal sealed class D3D12Pipeline : Pipeline {
     /// Executes the build rasterizer state logic for this backend.
     /// </summary>
     /// <param name="description">The description used to configure this operation.</param>
+    /// <param name="sampleCount">The sample count used by the output attachments.</param>
     /// <returns>The value produced by this operation.</returns>
-    private static RasterizerDescription BuildRasterizerState(ref RasterizerStateDescription description) {
+    private static RasterizerDescription BuildRasterizerState(ref RasterizerStateDescription description, TextureSampleCount sampleCount) {
         return new RasterizerDescription {
             FillMode = D3D12Formats.ToFillMode(description.FillMode),
             CullMode = D3D12Formats.ToCullMode(description.CullMode),
             FrontCounterClockwise = description.FrontFace == FrontFace.CounterClockwise,
             DepthClipEnable = description.DepthClipEnabled,
-            MultisampleEnable = false,
+            MultisampleEnable = sampleCount != TextureSampleCount.Count1,
             AntialiasedLineEnable = false,
             ForcedSampleCount = 0,
             ConservativeRaster = ConservativeRasterizationMode.Off

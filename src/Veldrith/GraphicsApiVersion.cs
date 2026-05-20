@@ -33,7 +33,7 @@ public readonly struct GraphicsApiVersion {
     /// <summary>
     /// Gets or sets IsKnown.
     /// </summary>
-    public bool IsKnown => this.Major != 0 && this.Minor != 0 && this.Subminor != 0 && this.Patch != 0;
+    public bool IsKnown => this.Major != 0;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GraphicsApiVersion" /> type.
