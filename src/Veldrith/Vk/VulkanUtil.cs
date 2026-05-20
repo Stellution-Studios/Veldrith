@@ -1,7 +1,8 @@
 using System;
 using System.Diagnostics;
-using Vulkan;
-using static Vulkan.VulkanNative;
+using Vortice.Vulkan;
+using static Veldrith.Vk.VulkanDispatch;
+using static Vortice.Vulkan.Vulkan;
 
 namespace Veldrith.Vk;
 
@@ -62,14 +63,16 @@ internal static unsafe class VulkanUtil {
     /// <returns>The value produced by this operation.</returns>
     public static string[] EnumerateInstanceLayers() {
         uint propCount = 0;
-        VkResult result = vkEnumerateInstanceLayerProperties(ref propCount, null);
+        VkResult result = vkEnumerateInstanceLayerProperties(&propCount, null);
         CheckResult(result);
         if (propCount == 0) {
             return Array.Empty<string>();
         }
 
         VkLayerProperties[] props = new VkLayerProperties[propCount];
-        vkEnumerateInstanceLayerProperties(ref propCount, ref props[0]);
+        fixed (VkLayerProperties* propsPtr = props) {
+            vkEnumerateInstanceLayerProperties(&propCount, propsPtr);
+        }
 
         string[] ret = new string[propCount];
 
@@ -112,7 +115,7 @@ internal static unsafe class VulkanUtil {
     /// <param name="newLayout">The new layout value used by this operation.</param>
     public static void TransitionImageLayout(VkCommandBuffer cb, VkImage image, uint baseMipLevel, uint levelCount, uint baseArrayLayer, uint layerCount, VkImageAspectFlags aspectMask, VkImageLayout oldLayout, VkImageLayout newLayout) {
         Debug.Assert(oldLayout != newLayout);
-        VkImageMemoryBarrier barrier = VkImageMemoryBarrier.New();
+        VkImageMemoryBarrier barrier = new VkImageMemoryBarrier();
         barrier.oldLayout = oldLayout;
         barrier.newLayout = newLayout;
         barrier.srcQueueFamilyIndex = QueueFamilyIgnored;
@@ -270,7 +273,7 @@ internal static unsafe class VulkanUtil {
             Debug.Fail("Invalid image layout transition.");
         }
 
-        vkCmdPipelineBarrier(cb, srcStageFlags, dstStageFlags, VkDependencyFlags.None, 0, null, 0, null, 1, &barrier);
+        VulkanDispatch.GetApi(cb).vkCmdPipelineBarrier(cb, srcStageFlags, dstStageFlags, VkDependencyFlags.None, 0, null, 0, null, 1, &barrier);
     }
 
     /// <summary>
@@ -283,7 +286,7 @@ internal static unsafe class VulkanUtil {
         }
 
         uint propCount = 0;
-        VkResult result = vkEnumerateInstanceExtensionProperties((byte*)null, ref propCount, null);
+        VkResult result = vkEnumerateInstanceExtensionProperties(&propCount, null);
         if (result != VkResult.Success) {
             return Array.Empty<string>();
         }
@@ -293,7 +296,9 @@ internal static unsafe class VulkanUtil {
         }
 
         VkExtensionProperties[] props = new VkExtensionProperties[propCount];
-        vkEnumerateInstanceExtensionProperties((byte*)null, ref propCount, ref props[0]);
+        fixed (VkExtensionProperties* propsPtr = props) {
+            vkEnumerateInstanceExtensionProperties(&propCount, propsPtr);
+        }
 
         string[] ret = new string[propCount];
 
@@ -312,8 +317,12 @@ internal static unsafe class VulkanUtil {
     /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     private static bool TryLoadVulkan() {
         try {
+            if (vkInitialize(null) != VkResult.Success) {
+                return false;
+            }
+
             uint propCount;
-            vkEnumerateInstanceExtensionProperties((byte*)null, &propCount, null);
+            vkEnumerateInstanceExtensionProperties(&propCount, null);
             return true;
         }
         catch {
@@ -334,6 +343,6 @@ internal static unsafe class VkPhysicalDeviceMemoryPropertiesEx {
     /// <param name="index">The zero-based index of the target item.</param>
     /// <returns>The value produced by this operation.</returns>
     public static VkMemoryType GetMemoryType(this VkPhysicalDeviceMemoryProperties memoryProperties, uint index) {
-        return (&memoryProperties.memoryTypes_0)[index];
+        return (&memoryProperties.memoryTypes.e0)[index];
     }
 }

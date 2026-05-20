@@ -22,25 +22,25 @@ internal class MtlSampler : Sampler {
         MtlFormats.GetMinMagMipFilter(description.Filter, out MTLSamplerMinMagFilter min, out MTLSamplerMinMagFilter mag, out MTLSamplerMipFilter mip);
 
         MTLSamplerDescriptor mtlDesc = MTLSamplerDescriptor.New();
-        mtlDesc.sAddressMode = MtlFormats.VdToMtlAddressMode(description.AddressModeU);
-        mtlDesc.tAddressMode = MtlFormats.VdToMtlAddressMode(description.AddressModeV);
-        mtlDesc.rAddressMode = MtlFormats.VdToMtlAddressMode(description.AddressModeW);
-        mtlDesc.minFilter = min;
-        mtlDesc.magFilter = mag;
-        mtlDesc.mipFilter = mip;
+        mtlDesc.SAddressMode = MtlFormats.VdToMtlAddressMode(description.AddressModeU);
+        mtlDesc.TAddressMode = MtlFormats.VdToMtlAddressMode(description.AddressModeV);
+        mtlDesc.RAddressMode = MtlFormats.VdToMtlAddressMode(description.AddressModeW);
+        mtlDesc.MinFilter = min;
+        mtlDesc.MagFilter = mag;
+        mtlDesc.MipFilter = mip;
         if (gd.MetalFeatures.IsMacOS) {
-            mtlDesc.borderColor = MtlFormats.VdToMtlBorderColor(description.BorderColor);
+            mtlDesc.BorderColor = MtlFormats.VdToMtlBorderColor(description.BorderColor);
         }
 
         if (description.ComparisonKind != null) {
-            mtlDesc.compareFunction = MtlFormats.VdToMtlCompareFunction(description.ComparisonKind.Value);
+            mtlDesc.CompareFunction = MtlFormats.VdToMtlCompareFunction(description.ComparisonKind.Value);
         }
 
-        mtlDesc.lodMinClamp = description.MinimumLod;
-        mtlDesc.lodMaxClamp = description.MaximumLod;
-        mtlDesc.maxAnisotropy = Math.Max(1, description.MaximumAnisotropy);
-        this.DeviceSampler = gd.Device.newSamplerStateWithDescriptor(mtlDesc);
-        ObjectiveCRuntime.release(mtlDesc.NativePtr);
+        mtlDesc.LodMinClamp = description.MinimumLod;
+        mtlDesc.LodMaxClamp = description.MaximumLod;
+        mtlDesc.MaxAnisotropy = Math.Max(1, description.MaximumAnisotropy);
+        this.DeviceSampler = gd.Device.NewSamplerStateWithDescriptor(mtlDesc);
+        ObjectiveCRuntime.Release(mtlDesc.NativePtr);
     }
 
     /// <summary>
@@ -66,7 +66,7 @@ internal class MtlSampler : Sampler {
     public override void Dispose() {
         if (!this._disposed) {
             this._disposed = true;
-            ObjectiveCRuntime.release(this.DeviceSampler.NativePtr);
+            ObjectiveCRuntime.Release(this.DeviceSampler.NativePtr);
         }
     }
 

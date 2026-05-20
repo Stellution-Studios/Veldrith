@@ -24,54 +24,54 @@ public struct MTLVertexAttributeDescriptor {
     /// <summary>
     /// Gets or sets format.
     /// </summary>
-    public MTLVertexFormat format {
-        get => (MTLVertexFormat)uint_objc_msgSend(this.NativePtr, sel_format);
-        set => objc_msgSend(this.NativePtr, sel_setFormat, (uint)value);
+    public MTLVertexFormat Format {
+        get => (MTLVertexFormat)uint_objc_msgSend(this.NativePtr, _selFormat);
+        set => objc_msgSend(this.NativePtr, _selSetFormat, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets offset.
     /// </summary>
-    public UIntPtr offset {
-        get => UIntPtr_objc_msgSend(this.NativePtr, sel_offset);
-        set => objc_msgSend(this.NativePtr, sel_setOffset, value);
+    public UIntPtr Offset {
+        get => UIntPtr_objc_msgSend(this.NativePtr, _selOffset);
+        set => objc_msgSend(this.NativePtr, _selSetOffset, value);
     }
 
     /// <summary>
     /// Gets or sets bufferIndex.
     /// </summary>
-    public UIntPtr bufferIndex {
-        get => UIntPtr_objc_msgSend(this.NativePtr, sel_bufferIndex);
-        set => objc_msgSend(this.NativePtr, sel_setBufferIndex, value);
+    public UIntPtr BufferIndex {
+        get => UIntPtr_objc_msgSend(this.NativePtr, _selBufferIndex);
+        set => objc_msgSend(this.NativePtr, _selSetBufferIndex, value);
     }
 
     /// <summary>
     /// Stores the sel format state used by this instance.
     /// </summary>
-    private static readonly Selector sel_format = "format";
+    private static readonly Selector _selFormat = "format";
 
     /// <summary>
     /// Stores the sel set format state used by this instance.
     /// </summary>
-    private static readonly Selector sel_setFormat = "setFormat:";
+    private static readonly Selector _selSetFormat = "setFormat:";
 
     /// <summary>
     /// Stores the sel offset value used during command execution.
     /// </summary>
-    private static readonly Selector sel_offset = "offset";
+    private static readonly Selector _selOffset = "offset";
 
     /// <summary>
     /// Stores the sel set offset value used during command execution.
     /// </summary>
-    private static readonly Selector sel_setOffset = "setOffset:";
+    private static readonly Selector _selSetOffset = "setOffset:";
 
     /// <summary>
     /// Stores the sel buffer index value used during command execution.
     /// </summary>
-    private static readonly Selector sel_bufferIndex = "bufferIndex";
+    private static readonly Selector _selBufferIndex = "bufferIndex";
 
     /// <summary>
     /// Stores the sel set buffer index value used during command execution.
     /// </summary>
-    private static readonly Selector sel_setBufferIndex = "setBufferIndex:";
+    private static readonly Selector _selSetBufferIndex = "setBufferIndex:";
 }

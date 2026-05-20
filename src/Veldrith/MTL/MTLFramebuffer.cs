@@ -55,28 +55,28 @@ internal class MtlFramebuffer : Framebuffer {
         for (int i = 0; i < this.ColorTargets.Count; i++) {
             FramebufferAttachment colorTarget = this.ColorTargets[i];
             MtlTexture mtlTarget = Util.AssertSubtype<Texture, MtlTexture>(colorTarget.Target);
-            MTLRenderPassColorAttachmentDescriptor colorDescriptor = ret.colorAttachments[(uint)i];
+            MTLRenderPassColorAttachmentDescriptor colorDescriptor = ret.ColorAttachments[(uint)i];
             colorDescriptor.texture = mtlTarget.DeviceTexture;
-            colorDescriptor.loadAction = MTLLoadAction.Load;
-            colorDescriptor.slice = colorTarget.ArrayLayer;
+            colorDescriptor.LoadAction = MTLLoadAction.Load;
+            colorDescriptor.Slice = colorTarget.ArrayLayer;
             colorDescriptor.level = colorTarget.MipLevel;
         }
 
         if (this.DepthTarget != null) {
             MtlTexture mtlDepthTarget = Util.AssertSubtype<Texture, MtlTexture>(this.DepthTarget.Value.Target);
-            MTLRenderPassDepthAttachmentDescriptor depthDescriptor = ret.depthAttachment;
-            depthDescriptor.loadAction = mtlDepthTarget.MtlStorageMode == MTLStorageMode.Memoryless ? MTLLoadAction.DontCare : MTLLoadAction.Load;
-            depthDescriptor.storeAction = mtlDepthTarget.MtlStorageMode == MTLStorageMode.Memoryless ? MTLStoreAction.DontCare : MTLStoreAction.Store;
-            depthDescriptor.texture = mtlDepthTarget.DeviceTexture;
-            depthDescriptor.slice = this.DepthTarget.Value.ArrayLayer;
-            depthDescriptor.level = this.DepthTarget.Value.MipLevel;
+            MTLRenderPassDepthAttachmentDescriptor depthDescriptor = ret.DepthAttachment;
+            depthDescriptor.LoadAction = mtlDepthTarget.MtlStorageMode == MTLStorageMode.Memoryless ? MTLLoadAction.DontCare : MTLLoadAction.Load;
+            depthDescriptor.StoreAction = mtlDepthTarget.MtlStorageMode == MTLStorageMode.Memoryless ? MTLStoreAction.DontCare : MTLStoreAction.Store;
+            depthDescriptor.Texture = mtlDepthTarget.DeviceTexture;
+            depthDescriptor.Slice = this.DepthTarget.Value.ArrayLayer;
+            depthDescriptor.Level = this.DepthTarget.Value.MipLevel;
 
             if (FormatHelpers.IsStencilFormat(mtlDepthTarget.Format)) {
-                MTLRenderPassStencilAttachmentDescriptor stencilDescriptor = ret.stencilAttachment;
-                stencilDescriptor.loadAction = mtlDepthTarget.MtlStorageMode == MTLStorageMode.Memoryless ? MTLLoadAction.DontCare : MTLLoadAction.Load;
-                stencilDescriptor.storeAction = mtlDepthTarget.MtlStorageMode == MTLStorageMode.Memoryless ? MTLStoreAction.DontCare : MTLStoreAction.Store;
-                stencilDescriptor.texture = mtlDepthTarget.DeviceTexture;
-                stencilDescriptor.slice = this.DepthTarget.Value.ArrayLayer;
+                MTLRenderPassStencilAttachmentDescriptor stencilDescriptor = ret.StencilAttachment;
+                stencilDescriptor.LoadAction = mtlDepthTarget.MtlStorageMode == MTLStorageMode.Memoryless ? MTLLoadAction.DontCare : MTLLoadAction.Load;
+                stencilDescriptor.StoreAction = mtlDepthTarget.MtlStorageMode == MTLStorageMode.Memoryless ? MTLStoreAction.DontCare : MTLStoreAction.Store;
+                stencilDescriptor.Texture = mtlDepthTarget.DeviceTexture;
+                stencilDescriptor.Slice = this.DepthTarget.Value.ArrayLayer;
             }
         }
 

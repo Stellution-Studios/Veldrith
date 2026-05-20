@@ -17,21 +17,21 @@ public struct NSError {
     /// Executes the string objc msg send logic for this backend.
     /// </summary>
 
-    public string domain => string_objc_msgSend(this.NativePtr, sel_domain);
+    public string Domain => string_objc_msgSend(this.NativePtr, _selDomain);
 
     /// <summary>
     /// Executes the string objc msg send logic for this backend.
     /// </summary>
 
-    public string localizedDescription => string_objc_msgSend(this.NativePtr, sel_localizedDescription);
+    public string LocalizedDescription => string_objc_msgSend(this.NativePtr, _selLocalizedDescription);
 
     /// <summary>
     /// Stores the sel domain state used by this instance.
     /// </summary>
-    private static readonly Selector sel_domain = "domain";
+    private static readonly Selector _selDomain = "domain";
 
     /// <summary>
     /// Stores the sel localized description state used by this instance.
     /// </summary>
-    private static readonly Selector sel_localizedDescription = "localizedDescription";
+    private static readonly Selector _selLocalizedDescription = "localizedDescription";
 }

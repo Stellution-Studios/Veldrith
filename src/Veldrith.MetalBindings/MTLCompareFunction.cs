@@ -4,9 +4,12 @@ namespace Veldrith.MetalBindings;
 /// Defines the available values of the MTLCompareFunction enumeration.
 /// </summary>
 public enum MTLCompareFunction {
-
-    /// <summary>
-    /// Stores the never state used by this instance.
-    /// </summary>
-    Never = 0, Less = 1, Equal = 2, LessEqual = 3, Greater = 4, NotEqual = 5, GreaterEqual = 6, Always = 7
+    Never = 0,
+    Less = 1,
+    Equal = 2,
+    LessEqual = 3,
+    Greater = 4,
+    NotEqual = 5,
+    GreaterEqual = 6,
+    Always = 7
 }

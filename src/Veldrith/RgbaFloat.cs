@@ -15,22 +15,22 @@ public struct RgbaFloat : IEquatable<RgbaFloat> {
     private readonly Vector4 channels;
 
     /// <summary>
-    /// The red component.
+    /// The Red component.
     /// </summary>
     public float R => this.channels.X;
 
     /// <summary>
-    /// The green component.
+    /// The Green component.
     /// </summary>
     public float G => this.channels.Y;
 
     /// <summary>
-    /// The blue component.
+    /// The Blue component.
     /// </summary>
     public float B => this.channels.Z;
 
     /// <summary>
-    /// The alpha component.
+    /// The Alpha component.
     /// </summary>
     public float A => this.channels.W;
 
@@ -64,7 +64,7 @@ public struct RgbaFloat : IEquatable<RgbaFloat> {
     public static readonly RgbaFloat RED = new(1, 0, 0, 1);
 
     /// <summary>
-    /// Defines the predefined value for dark red.
+    /// Defines the predefined value for dark Red.
     /// </summary>
     public static readonly RgbaFloat DARK_RED = new(0.6f, 0, 0, 1);
 
@@ -104,7 +104,7 @@ public struct RgbaFloat : IEquatable<RgbaFloat> {
     public static readonly RgbaFloat WHITE = new(1, 1, 1, 1);
 
     /// <summary>
-    /// Defines the predefined value for cornflower blue.
+    /// Defines the predefined value for cornflower Blue.
     /// </summary>
     public static readonly RgbaFloat CORNFLOWER_BLUE = new(0.3921f, 0.5843f, 0.9294f, 1);
 

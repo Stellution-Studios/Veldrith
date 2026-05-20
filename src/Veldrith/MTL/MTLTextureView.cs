@@ -32,7 +32,7 @@ internal class MtlTextureView : TextureView {
             uint effectiveArrayLayers = this.Target.Usage.HasFlag(TextureUsage.Cubemap)
                 ? this.ArrayLayers * 6
                 : this.ArrayLayers;
-            this.TargetDeviceTexture = targetMtlTexture.DeviceTexture.newTextureView(MtlFormats.VdToMtlPixelFormat(this.Format, (description.Target.Usage & TextureUsage.DepthStencil) != 0), targetMtlTexture.MtlTextureType, new NSRange(this.BaseMipLevel, this.MipLevels), new NSRange(this.BaseArrayLayer, effectiveArrayLayers));
+            this.TargetDeviceTexture = targetMtlTexture.DeviceTexture.NewTextureView(MtlFormats.VdToMtlPixelFormat(this.Format, (description.Target.Usage & TextureUsage.DepthStencil) != 0), targetMtlTexture.MtlTextureType, new NSRange(this.BaseMipLevel, this.MipLevels), new NSRange(this.BaseArrayLayer, effectiveArrayLayers));
         }
         else {
             this.TargetDeviceTexture = targetMtlTexture.DeviceTexture;
@@ -62,7 +62,7 @@ internal class MtlTextureView : TextureView {
     public override void Dispose() {
         if (this._hasTextureView && !this._disposed) {
             this._disposed = true;
-            ObjectiveCRuntime.release(this.TargetDeviceTexture.NativePtr);
+            ObjectiveCRuntime.Release(this.TargetDeviceTexture.NativePtr);
         }
     }
 

@@ -1,5 +1,4 @@
-using Vulkan;
-using static Vulkan.VulkanNative;
+using Vortice.Vulkan;
 
 namespace Veldrith.Vk;
 
@@ -11,12 +10,12 @@ internal unsafe class VkSampler : Sampler {
     /// <summary>
     /// Stores the sampler state used by this instance.
     /// </summary>
-    private readonly Vulkan.VkSampler _sampler;
+    private readonly global::Vortice.Vulkan.VkSampler _sampler;
 
     /// <summary>
-    /// Stores the gd state used by this instance.
+    /// Stores the graphics device used by this instance.
     /// </summary>
-    private readonly VkGraphicsDevice gd;
+    private readonly VkGraphicsDevice _gd;
 
     /// <summary>
     /// Stores the disposed state used by this instance.
@@ -34,7 +33,7 @@ internal unsafe class VkSampler : Sampler {
     /// <param name="gd">The graphics device that owns this operation.</param>
     /// <param name="description">The description used to configure this operation.</param>
     public VkSampler(VkGraphicsDevice gd, ref SamplerDescription description) {
-        this.gd = gd;
+        this._gd = gd;
         VkFormats.GetFilterParams(description.Filter, out VkFilter minFilter, out VkFilter magFilter, out VkSamplerMipmapMode mipmapMode);
 
         VkSamplerCreateInfo samplerCi = new() {
@@ -57,14 +56,14 @@ internal unsafe class VkSampler : Sampler {
             borderColor = VkFormats.VdToVkSamplerBorderColor(description.BorderColor)
         };
 
-        vkCreateSampler(this.gd.Device, ref samplerCi, null, out this._sampler);
+        this._gd.DeviceApi.vkCreateSampler(ref samplerCi, null, out this._sampler);
         this.RefCount = new ResourceRefCount(this.DisposeCore);
     }
 
     /// <summary>
     /// Stores the device sampler state used by this instance.
     /// </summary>
-    public Vulkan.VkSampler DeviceSampler => this._sampler;
+    public global::Vortice.Vulkan.VkSampler DeviceSampler => this._sampler;
 
     /// <summary>
     /// Gets or sets RefCount.
@@ -83,7 +82,7 @@ internal unsafe class VkSampler : Sampler {
         get => this._name;
         set {
             this._name = value;
-            this.gd.SetResourceName(this, value);
+            this._gd.SetResourceName(this, value);
         }
     }
 
@@ -103,7 +102,7 @@ internal unsafe class VkSampler : Sampler {
     /// </summary>
     private void DisposeCore() {
         if (!this._disposed) {
-            vkDestroySampler(this.gd.Device, this._sampler, null);
+            this._gd.DeviceApi.vkDestroySampler(this._sampler, null);
             this._disposed = true;
         }
     }

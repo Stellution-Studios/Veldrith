@@ -36,11 +36,11 @@ public unsafe struct NSString {
     /// <param name="s">The s value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     public static NSString New(string s) {
-        NSString nss = s_class.Alloc<NSString>();
+        NSString nss = _sClass.Alloc<NSString>();
 
         fixed (char* utf16Ptr = s) {
             UIntPtr length = (UIntPtr)s.Length;
-            IntPtr newString = IntPtr_objc_msgSend(nss, sel_initWithCharacters, (IntPtr)utf16Ptr, length);
+            IntPtr newString = IntPtr_objc_msgSend(nss, _selInitWithCharacters, (IntPtr)utf16Ptr, length);
             return new NSString(newString);
         }
     }
@@ -50,22 +50,22 @@ public unsafe struct NSString {
     /// </summary>
     /// <returns>The value produced by this operation.</returns>
     public string GetValue() {
-        byte* utf8Ptr = bytePtr_objc_msgSend(this.NativePtr, sel_utf8String);
+        byte* utf8Ptr = bytePtr_objc_msgSend(this.NativePtr, _selUtf8String);
         return MTLUtil.GetUtf8String(utf8Ptr);
     }
 
     /// <summary>
     /// Stores the s class state used by this instance.
     /// </summary>
-    private static readonly ObjCClass s_class = new(nameof(NSString));
+    private static readonly ObjCClass _sClass = new(nameof(NSString));
 
     /// <summary>
     /// Stores the sel init with characters state used by this instance.
     /// </summary>
-    private static readonly Selector sel_initWithCharacters = "initWithCharacters:length:";
+    private static readonly Selector _selInitWithCharacters = "initWithCharacters:length:";
 
     /// <summary>
     /// Stores the sel utf8 string state used by this instance.
     /// </summary>
-    private static readonly Selector sel_utf8String = "UTF8String";
+    private static readonly Selector _selUtf8String = "UTF8String";
 }

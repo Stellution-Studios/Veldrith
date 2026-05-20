@@ -217,7 +217,7 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
         }
 
         this.ResourceFactory = new MtlResourceFactory(this);
-        this._commandQueue = this._device.newCommandQueue();
+        this._commandQueue = this._device.NewCommandQueue();
 
         TextureSampleCount[] allSampleCounts = (TextureSampleCount[])Enum.GetValues(typeof(TextureSampleCount));
         this._supportedSampleCounts = new bool[allSampleCounts.Length];
@@ -225,7 +225,7 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
         for (int i = 0; i < allSampleCounts.Length; i++) {
             TextureSampleCount count = allSampleCounts[i];
             uint uintValue = FormatHelpers.GetSampleCountUInt32(count);
-            if (this._device.supportsTextureSampleCount(uintValue)) {
+            if (this._device.SupportsTextureSampleCount(uintValue)) {
                 this._supportedSampleCounts[i] = true;
             }
         }
@@ -434,9 +434,9 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
         lock (this._unalignedBufferCopyPipelineLock) {
             if (this._unalignedBufferCopyPipeline.IsNull) {
                 MTLComputePipelineDescriptor descriptor = MTLUtil.AllocInit<MTLComputePipelineDescriptor>(nameof(MTLComputePipelineDescriptor));
-                MTLPipelineBufferDescriptor buffer0 = descriptor.buffers[0];
+                MTLPipelineBufferDescriptor buffer0 = descriptor.Buffers[0];
                 buffer0.mutability = MTLMutability.Mutable;
-                MTLPipelineBufferDescriptor buffer1 = descriptor.buffers[1];
+                MTLPipelineBufferDescriptor buffer1 = descriptor.Buffers[1];
                 buffer1.mutability = MTLMutability.Mutable;
 
                 Debug.Assert(this._unalignedBufferCopyShader == null);
@@ -454,9 +454,9 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
                     }
                 }
 
-                descriptor.computeFunction = this._unalignedBufferCopyShader.Function;
-                this._unalignedBufferCopyPipeline = this._device.newComputePipelineStateWithDescriptor(descriptor);
-                ObjectiveCRuntime.release(descriptor.NativePtr);
+                descriptor.ComputeFunction = this._unalignedBufferCopyShader.Function;
+                this._unalignedBufferCopyPipeline = this._device.NewComputePipelineStateWithDescriptor(descriptor);
+                ObjectiveCRuntime.Release(descriptor.NativePtr);
             }
 
             return this._unalignedBufferCopyPipeline;
@@ -503,12 +503,12 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
 
         if (!this._unalignedBufferCopyPipeline.IsNull) {
             this._unalignedBufferCopyShader.Dispose();
-            ObjectiveCRuntime.release(this._unalignedBufferCopyPipeline.NativePtr);
+            ObjectiveCRuntime.Release(this._unalignedBufferCopyPipeline.NativePtr);
         }
 
         this._mainSwapchain?.Dispose();
-        ObjectiveCRuntime.release(this._commandQueue.NativePtr);
-        ObjectiveCRuntime.release(this._device.NativePtr);
+        ObjectiveCRuntime.Release(this._commandQueue.NativePtr);
+        ObjectiveCRuntime.Release(this._device.NativePtr);
 
         lock (_s_aot_registered_blocks) {
             _s_aot_registered_blocks.Remove(this._completionBlockLiteral);
@@ -556,15 +556,15 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
                 if (RuntimeInformation.OSDescription.Contains("Darwin")) {
                     NSArray allDevices = MTLDevice.MTLCopyAllDevices();
-                    result |= (ulong)allDevices.count > 0;
-                    ObjectiveCRuntime.release(allDevices.NativePtr);
+                    result |= (ulong)allDevices.Count > 0;
+                    ObjectiveCRuntime.Release(allDevices.NativePtr);
                 }
                 else {
                     MTLDevice defaultDevice = MTLDevice.MTLCreateSystemDefaultDevice();
 
                     if (defaultDevice.NativePtr != IntPtr.Zero) {
                         result = true;
-                        ObjectiveCRuntime.release(defaultDevice.NativePtr);
+                        ObjectiveCRuntime.Release(defaultDevice.NativePtr);
                     }
                 }
             }
@@ -592,7 +592,7 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
             }
         }
 
-        ObjectiveCRuntime.release(cb.NativePtr);
+        ObjectiveCRuntime.Release(cb.NativePtr);
     }
 
     /// <summary>
@@ -671,7 +671,7 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
     private protected override void SubmitCommandsCore(CommandList commandList, Fence fence) {
         MtlCommandList mtlCl = Util.AssertSubtype<CommandList, MtlCommandList>(commandList);
 
-        mtlCl.CommandBuffer.addCompletedHandler(this._completionBlockLiteral);
+        mtlCl.CommandBuffer.AddCompletedHandler(this._completionBlockLiteral);
 
         lock (this._submittedCommandsLock) {
             if (fence != null) {
@@ -764,9 +764,9 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
 
         if (currentDrawablePtr != IntPtr.Zero) {
             using (NSAutoreleasePool.Begin()) {
-                MTLCommandBuffer submitCb = this._commandQueue.commandBuffer();
-                submitCb.presentDrawable(currentDrawablePtr);
-                submitCb.commit();
+                MTLCommandBuffer submitCb = this._commandQueue.CommandBuffer();
+                submitCb.PresentDrawable(currentDrawablePtr);
+                submitCb.Commit();
             }
 
             mtlSc.InvalidateDrawable();
@@ -840,14 +840,14 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
 
         lock (this._submittedCommandsLock) {
             lastCb = this._latestSubmittedCb;
-            ObjectiveCRuntime.retain(lastCb.NativePtr);
+            ObjectiveCRuntime.Retain(lastCb.NativePtr);
         }
 
-        if (lastCb.NativePtr != IntPtr.Zero && lastCb.status != MTLCommandBufferStatus.Completed) {
-            lastCb.waitUntilCompleted();
+        if (lastCb.NativePtr != IntPtr.Zero && lastCb.Status != MTLCommandBufferStatus.Completed) {
+            lastCb.WaitUntilCompleted();
         }
 
-        ObjectiveCRuntime.release(lastCb.NativePtr);
+        ObjectiveCRuntime.Release(lastCb.NativePtr);
     }
 }
 

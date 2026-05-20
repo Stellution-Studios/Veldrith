@@ -4,11 +4,10 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrith.MetalBindings;
 
-[StructLayout(LayoutKind.Sequential)]
-
 /// <summary>
 /// Represents the MTLRenderPipelineDescriptor data structure used by the graphics runtime.
 /// </summary>
+[StructLayout(LayoutKind.Sequential)]
 public struct MTLRenderPipelineDescriptor {
 
     /// <summary>
@@ -37,7 +36,7 @@ public struct MTLRenderPipelineDescriptor {
     /// <summary>
     /// Gets or sets vertexFunction.
     /// </summary>
-    public MTLFunction vertexFunction {
+    public MTLFunction VertexFunction {
         get => objc_msgSend<MTLFunction>(this.NativePtr, sel_vertexFunction);
         set => objc_msgSend(this.NativePtr, sel_setVertexFunction, value.NativePtr);
     }
@@ -45,18 +44,17 @@ public struct MTLRenderPipelineDescriptor {
     /// <summary>
     /// Gets or sets fragmentFunction.
     /// </summary>
-    public MTLFunction fragmentFunction {
+    public MTLFunction FragmentFunction {
         get => objc_msgSend<MTLFunction>(this.NativePtr, sel_fragmentFunction);
         set => objc_msgSend(this.NativePtr, sel_setFragmentFunction, value.NativePtr);
     }
 
-    public MTLRenderPipelineColorAttachmentDescriptorArray colorAttachments
-        => objc_msgSend<MTLRenderPipelineColorAttachmentDescriptorArray>(this.NativePtr, sel_colorAttachments);
+    public MTLRenderPipelineColorAttachmentDescriptorArray ColorAttachments => objc_msgSend<MTLRenderPipelineColorAttachmentDescriptorArray>(this.NativePtr, sel_colorAttachments);
 
     /// <summary>
     /// Gets or sets depthAttachmentPixelFormat.
     /// </summary>
-    public MTLPixelFormat depthAttachmentPixelFormat {
+    public MTLPixelFormat DepthAttachmentPixelFormat {
         get => (MTLPixelFormat)uint_objc_msgSend(this.NativePtr, sel_depthAttachmentPixelFormat);
         set => objc_msgSend(this.NativePtr, sel_setDepthAttachmentPixelFormat, (uint)value);
     }
@@ -64,7 +62,7 @@ public struct MTLRenderPipelineDescriptor {
     /// <summary>
     /// Gets or sets stencilAttachmentPixelFormat.
     /// </summary>
-    public MTLPixelFormat stencilAttachmentPixelFormat {
+    public MTLPixelFormat StencilAttachmentPixelFormat {
         get => (MTLPixelFormat)uint_objc_msgSend(this.NativePtr, sel_stencilAttachmentPixelFormat);
         set => objc_msgSend(this.NativePtr, sel_setStencilAttachmentPixelFormat, (uint)value);
     }
@@ -72,7 +70,7 @@ public struct MTLRenderPipelineDescriptor {
     /// <summary>
     /// Gets or sets sampleCount.
     /// </summary>
-    public UIntPtr sampleCount {
+    public UIntPtr SampleCount {
         get => UIntPtr_objc_msgSend(this.NativePtr, sel_sampleCount);
         set => objc_msgSend(this.NativePtr, sel_setSampleCount, value);
     }
@@ -81,12 +79,12 @@ public struct MTLRenderPipelineDescriptor {
     /// Gets or sets vertexDescriptor.
     /// </summary>
 
-    public MTLVertexDescriptor vertexDescriptor => objc_msgSend<MTLVertexDescriptor>(this.NativePtr, sel_vertexDescriptor);
+    public MTLVertexDescriptor VertexDescriptor => objc_msgSend<MTLVertexDescriptor>(this.NativePtr, sel_vertexDescriptor);
 
     /// <summary>
     /// Gets or sets alphaToCoverageEnabled.
     /// </summary>
-    public Bool8 alphaToCoverageEnabled {
+    public Bool8 AlphaToCoverageEnabled {
         get => bool8_objc_msgSend(this.NativePtr, sel_isAlphaToCoverageEnabled);
         set => objc_msgSend(this.NativePtr, sel_setAlphaToCoverageEnabled, value);
     }
@@ -152,12 +150,12 @@ public struct MTLRenderPipelineDescriptor {
     private static readonly Selector sel_vertexDescriptor = "vertexDescriptor";
 
     /// <summary>
-    /// Stores the sel is alpha to coverage enabled state used by this instance.
+    /// Stores the sel is Alpha to coverage enabled state used by this instance.
     /// </summary>
     private static readonly Selector sel_isAlphaToCoverageEnabled = "isAlphaToCoverageEnabled";
 
     /// <summary>
-    /// Stores the sel set alpha to coverage enabled state used by this instance.
+    /// Stores the sel set Alpha to coverage enabled state used by this instance.
     /// </summary>
     private static readonly Selector sel_setAlphaToCoverageEnabled = "setAlphaToCoverageEnabled:";
 }

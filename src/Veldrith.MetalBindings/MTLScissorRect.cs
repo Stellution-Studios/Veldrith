@@ -10,22 +10,22 @@ public struct MTLScissorRect : IEquatable<MTLScissorRect> {
     /// <summary>
     /// Stores the x state used by this instance.
     /// </summary>
-    public UIntPtr x;
+    public UIntPtr X;
 
     /// <summary>
     /// Stores the y state used by this instance.
     /// </summary>
-    public UIntPtr y;
+    public UIntPtr Y;
 
     /// <summary>
     /// Stores the width value used during command execution.
     /// </summary>
-    public UIntPtr width;
+    public UIntPtr Width;
 
     /// <summary>
     /// Stores the height value used during command execution.
     /// </summary>
-    public UIntPtr height;
+    public UIntPtr Height;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MTLScissorRect" /> type.
@@ -35,10 +35,10 @@ public struct MTLScissorRect : IEquatable<MTLScissorRect> {
     /// <param name="width">The width value.</param>
     /// <param name="height">The height value.</param>
     public MTLScissorRect(uint x, uint y, uint width, uint height) {
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
+        this.X = x;
+        this.Y = y;
+        this.Width = width;
+        this.Height = height;
     }
 
     /// <summary>
@@ -47,9 +47,9 @@ public struct MTLScissorRect : IEquatable<MTLScissorRect> {
     /// <param name="other">The value to compare against.</param>
     /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public bool Equals(MTLScissorRect other) {
-        return this.x == other.x
-               && this.y == other.y
-               && this.width == other.width
-               && this.height == other.height;
+        return this.X == other.X
+               && this.Y == other.Y
+               && this.Width == other.Width
+               && this.Height == other.Height;
     }
 }

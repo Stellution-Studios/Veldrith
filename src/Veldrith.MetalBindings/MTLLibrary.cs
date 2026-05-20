@@ -4,11 +4,10 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrith.MetalBindings;
 
-[StructLayout(LayoutKind.Sequential)]
-
 /// <summary>
 /// Represents the MTLLibrary data structure used by the graphics runtime.
 /// </summary>
+[StructLayout(LayoutKind.Sequential)]
 public struct MTLLibrary {
 
     /// <summary>
@@ -29,10 +28,10 @@ public struct MTLLibrary {
     /// </summary>
     /// <param name="name">The name used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    public MTLFunction newFunctionWithName(string name) {
+    public MTLFunction NewFunctionWithName(string name) {
         NSString nameNSS = NSString.New(name);
         IntPtr function = IntPtr_objc_msgSend(this.NativePtr, sel_newFunctionWithName, nameNSS);
-        release(nameNSS.NativePtr);
+        Release(nameNSS.NativePtr);
         return new MTLFunction(function);
     }
 
@@ -42,13 +41,13 @@ public struct MTLLibrary {
     /// <param name="name">The name used by this operation.</param>
     /// <param name="constantValues">The constant values value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    public MTLFunction newFunctionWithNameConstantValues(string name, MTLFunctionConstantValues constantValues) {
-        NSString nameNSS = NSString.New(name);
-        IntPtr function = IntPtr_objc_msgSend(this.NativePtr, sel_newFunctionWithNameConstantValues, nameNSS.NativePtr, constantValues.NativePtr, out NSError error);
-        release(nameNSS.NativePtr);
+    public MTLFunction NewFunctionWithNameConstantValues(string name, MTLFunctionConstantValues constantValues) {
+        NSString nameNss = NSString.New(name);
+        IntPtr function = IntPtr_objc_msgSend(this.NativePtr, sel_newFunctionWithNameConstantValues, nameNss.NativePtr, constantValues.NativePtr, out NSError error);
+        Release(nameNss.NativePtr);
 
         if (function == IntPtr.Zero) {
-            throw new Exception($"Failed to create MTLFunction: {error.localizedDescription}");
+            throw new Exception($"Failed to create MTLFunction: {error.LocalizedDescription}");
         }
 
         return new MTLFunction(function);

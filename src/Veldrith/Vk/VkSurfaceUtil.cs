@@ -1,12 +1,8 @@
 using System;
 using Veldrith.Android;
 using Veldrith.MetalBindings;
-using Vulkan;
-using Vulkan.Android;
-using Vulkan.Wayland;
-using Vulkan.Xlib;
+using Vortice.Vulkan;
 using static Veldrith.Vk.VulkanUtil;
-using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
@@ -107,10 +103,10 @@ internal static unsafe class VkSurfaceUtil {
     /// <param name="win32Source">The win32 source value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     private static VkSurfaceKHR CreateWin32(VkInstance instance, Win32SwapchainSource win32Source) {
-        VkWin32SurfaceCreateInfoKHR surfaceCi = VkWin32SurfaceCreateInfoKHR.New();
+        VkWin32SurfaceCreateInfoKHR surfaceCi = new VkWin32SurfaceCreateInfoKHR();
         surfaceCi.hwnd = win32Source.Hwnd;
         surfaceCi.hinstance = win32Source.Hinstance;
-        VkResult result = vkCreateWin32SurfaceKHR(instance, ref surfaceCi, null, out VkSurfaceKHR surface);
+        VkResult result = VulkanDispatch.GetApi(instance).vkCreateWin32SurfaceKHR(ref surfaceCi, null, out VkSurfaceKHR surface);
         CheckResult(result);
         return surface;
     }
@@ -122,10 +118,10 @@ internal static unsafe class VkSurfaceUtil {
     /// <param name="xlibSource">The xlib source value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     private static VkSurfaceKHR CreateXlib(VkInstance instance, XlibSwapchainSource xlibSource) {
-        VkXlibSurfaceCreateInfoKHR xsci = VkXlibSurfaceCreateInfoKHR.New();
-        xsci.dpy = (Display*)xlibSource.Display;
-        xsci.window = new Window { Value = xlibSource.Window };
-        VkResult result = vkCreateXlibSurfaceKHR(instance, ref xsci, null, out VkSurfaceKHR surface);
+        VkXlibSurfaceCreateInfoKHR xsci = new VkXlibSurfaceCreateInfoKHR();
+        xsci.dpy = xlibSource.Display;
+        xsci.window = unchecked((ulong)xlibSource.Window.ToInt64());
+        VkResult result = VulkanDispatch.GetApi(instance).vkCreateXlibSurfaceKHR(ref xsci, null, out VkSurfaceKHR surface);
         CheckResult(result);
         return surface;
     }
@@ -137,10 +133,10 @@ internal static unsafe class VkSurfaceUtil {
     /// <param name="waylandSource">The wayland source value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     private static VkSurfaceKHR CreateWayland(VkInstance instance, WaylandSwapchainSource waylandSource) {
-        VkWaylandSurfaceCreateInfoKHR wsci = VkWaylandSurfaceCreateInfoKHR.New();
-        wsci.display = (wl_display*)waylandSource.Display;
-        wsci.surface = (wl_surface*)waylandSource.Surface;
-        VkResult result = vkCreateWaylandSurfaceKHR(instance, ref wsci, null, out VkSurfaceKHR surface);
+        VkWaylandSurfaceCreateInfoKHR wsci = new VkWaylandSurfaceCreateInfoKHR();
+        wsci.display = waylandSource.Display;
+        wsci.surface = waylandSource.Surface;
+        VkResult result = VulkanDispatch.GetApi(instance).vkCreateWaylandSurfaceKHR(ref wsci, null, out VkSurfaceKHR surface);
         CheckResult(result);
         return surface;
     }
@@ -154,9 +150,9 @@ internal static unsafe class VkSurfaceUtil {
     private static VkSurfaceKHR CreateAndroidSurface(VkInstance instance, AndroidSurfaceSwapchainSource androidSource) {
         IntPtr aNativeWindow = AndroidRuntime.ANativeWindow_fromSurface(androidSource.JniEnv, androidSource.Surface);
 
-        VkAndroidSurfaceCreateInfoKHR androidSurfaceCi = VkAndroidSurfaceCreateInfoKHR.New();
-        androidSurfaceCi.window = (ANativeWindow*)aNativeWindow;
-        VkResult result = vkCreateAndroidSurfaceKHR(instance, ref androidSurfaceCi, null, out VkSurfaceKHR surface);
+        VkAndroidSurfaceCreateInfoKHR androidSurfaceCi = new VkAndroidSurfaceCreateInfoKHR();
+        androidSurfaceCi.window = aNativeWindow;
+        VkResult result = VulkanDispatch.GetApi(instance).vkCreateAndroidSurfaceKHR(ref androidSurfaceCi, null, out VkSurfaceKHR surface);
         CheckResult(result);
         return surface;
     }
@@ -171,7 +167,7 @@ internal static unsafe class VkSurfaceUtil {
     /// <returns>The value produced by this operation.</returns>
     private static VkSurfaceKHR CreateNSWindowSurface(VkGraphicsDevice gd, VkInstance instance, NSWindowSwapchainSource nsWindowSource, bool hasExtMetalSurface) {
         NSWindow nswindow = new(nsWindowSource.NSWindow);
-        return CreateNSViewSurface(gd, instance, new NSViewSwapchainSource(nswindow.contentView), hasExtMetalSurface);
+        return CreateNSViewSurface(gd, instance, new NSViewSwapchainSource(nswindow.ContentView), hasExtMetalSurface);
     }
 
     /// <summary>
@@ -185,10 +181,10 @@ internal static unsafe class VkSurfaceUtil {
     private static VkSurfaceKHR CreateNSViewSurface(VkGraphicsDevice gd, VkInstance instance, NSViewSwapchainSource nsViewSource, bool hasExtMetalSurface) {
         NSView contentView = new(nsViewSource.NSView);
 
-        if (!CAMetalLayer.TryCast(contentView.layer, out CAMetalLayer metalLayer)) {
+        if (!CAMetalLayer.TryCast(contentView.Layer, out CAMetalLayer metalLayer)) {
             metalLayer = CAMetalLayer.New();
-            contentView.wantsLayer = true;
-            contentView.layer = metalLayer.NativePtr;
+            contentView.WantsLayer = true;
+            contentView.Layer = metalLayer.NativePtr;
         }
 
         if (hasExtMetalSurface) {
@@ -202,9 +198,9 @@ internal static unsafe class VkSurfaceUtil {
             return surface;
         }
         else {
-            VkMacOSSurfaceCreateInfoMVK surfaceCi = VkMacOSSurfaceCreateInfoMVK.New();
-            surfaceCi.pView = contentView.NativePtr.ToPointer();
-            VkResult result = vkCreateMacOSSurfaceMVK(instance, ref surfaceCi, null, out VkSurfaceKHR surface);
+            VkMacOSSurfaceCreateInfoMVK surfaceCi = new VkMacOSSurfaceCreateInfoMVK();
+            surfaceCi.PView = contentView.NativePtr.ToPointer();
+            VkResult result = VkMoltenVkSurfaceCompat.CreateMacOSSurfaceMVK(instance, ref surfaceCi, null, out VkSurfaceKHR surface);
             CheckResult(result);
             return surface;
         }
@@ -221,11 +217,11 @@ internal static unsafe class VkSurfaceUtil {
     private static VkSurfaceKHR CreateUIViewSurface(VkGraphicsDevice gd, VkInstance instance, UIViewSwapchainSource uiViewSource, bool hasExtMetalSurface) {
         UIView uiView = new(uiViewSource.UIView);
 
-        if (!CAMetalLayer.TryCast(uiView.layer, out CAMetalLayer metalLayer)) {
+        if (!CAMetalLayer.TryCast(uiView.Layer, out CAMetalLayer metalLayer)) {
             metalLayer = CAMetalLayer.New();
-            metalLayer.frame = uiView.frame;
+            metalLayer.frame = uiView.Frame;
             metalLayer.opaque = true;
-            uiView.layer.addSublayer(metalLayer.NativePtr);
+            uiView.Layer.addSublayer(metalLayer.NativePtr);
         }
 
         if (hasExtMetalSurface) {
@@ -239,9 +235,9 @@ internal static unsafe class VkSurfaceUtil {
             return surface;
         }
         else {
-            VkIOSSurfaceCreateInfoMVK surfaceCi = VkIOSSurfaceCreateInfoMVK.New();
-            surfaceCi.pView = uiView.NativePtr.ToPointer();
-            vkCreateIOSSurfaceMVK(instance, ref surfaceCi, null, out VkSurfaceKHR surface);
+            VkIOSSurfaceCreateInfoMVK surfaceCi = new VkIOSSurfaceCreateInfoMVK();
+            surfaceCi.PView = uiView.NativePtr.ToPointer();
+            VkMoltenVkSurfaceCompat.CreateIOSSurfaceMVK(instance, ref surfaceCi, null, out VkSurfaceKHR surface);
             return surface;
         }
     }

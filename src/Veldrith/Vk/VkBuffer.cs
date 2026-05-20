@@ -1,6 +1,5 @@
-using Vulkan;
+using Vortice.Vulkan;
 using static Veldrith.Vk.VulkanUtil;
-using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
@@ -17,7 +16,7 @@ internal unsafe class VkBuffer : DeviceBuffer {
     /// <summary>
     /// Stores the device buffer state used by this instance.
     /// </summary>
-    private readonly Vulkan.VkBuffer _deviceBuffer;
+    private readonly global::Vortice.Vulkan.VkBuffer _deviceBuffer;
 
     /// <summary>
     /// Stores the memory state used by this instance.
@@ -25,9 +24,9 @@ internal unsafe class VkBuffer : DeviceBuffer {
     private readonly VkMemoryBlock _memory;
 
     /// <summary>
-    /// Stores the gd state used by this instance.
+    /// Stores the graphics device used by this instance.
     /// </summary>
-    private readonly VkGraphicsDevice gd;
+    private readonly VkGraphicsDevice _gd;
 
     /// <summary>
     /// Stores the destroyed state used by this instance.
@@ -47,7 +46,7 @@ internal unsafe class VkBuffer : DeviceBuffer {
     /// <param name="usage">The usage value used by this operation.</param>
     /// <param name="callerMember">The caller member value used by this operation.</param>
     public VkBuffer(VkGraphicsDevice gd, uint sizeInBytes, BufferUsage usage, string callerMember = null) {
-        this.gd = gd;
+        this._gd = gd;
         this.SizeInBytes = sizeInBytes;
         this.Usage = usage;
 
@@ -73,26 +72,26 @@ internal unsafe class VkBuffer : DeviceBuffer {
             vkUsage |= VkBufferUsageFlags.IndirectBuffer;
         }
 
-        VkBufferCreateInfo bufferCi = VkBufferCreateInfo.New();
+        VkBufferCreateInfo bufferCi = new VkBufferCreateInfo();
         bufferCi.size = sizeInBytes;
         bufferCi.usage = vkUsage;
-        VkResult result = vkCreateBuffer(gd.Device, ref bufferCi, null, out this._deviceBuffer);
+        VkResult result = gd.DeviceApi.vkCreateBuffer(ref bufferCi, null, out this._deviceBuffer);
         CheckResult(result);
 
         bool prefersDedicatedAllocation;
 
-        if (this.gd.GetBufferMemoryRequirements2 != null) {
-            VkBufferMemoryRequirementsInfo2KHR memReqInfo2 = VkBufferMemoryRequirementsInfo2KHR.New();
+        if (this._gd.GetBufferMemoryRequirements2 != null) {
+            VkBufferMemoryRequirementsInfo2 memReqInfo2 = new VkBufferMemoryRequirementsInfo2();
             memReqInfo2.buffer = this._deviceBuffer;
-            VkMemoryRequirements2KHR memReqs2 = VkMemoryRequirements2KHR.New();
-            VkMemoryDedicatedRequirementsKHR dedicatedReqs = VkMemoryDedicatedRequirementsKHR.New();
+            VkMemoryRequirements2 memReqs2 = new VkMemoryRequirements2();
+            VkMemoryDedicatedRequirements dedicatedReqs = new VkMemoryDedicatedRequirements();
             memReqs2.pNext = &dedicatedReqs;
-            this.gd.GetBufferMemoryRequirements2(this.gd.Device, &memReqInfo2, &memReqs2);
+            this._gd.GetBufferMemoryRequirements2(this._gd.Device, &memReqInfo2, &memReqs2);
             this._bufferMemoryRequirements = memReqs2.memoryRequirements;
             prefersDedicatedAllocation = dedicatedReqs.prefersDedicatedAllocation || dedicatedReqs.requiresDedicatedAllocation;
         }
         else {
-            vkGetBufferMemoryRequirements(gd.Device, this._deviceBuffer, out this._bufferMemoryRequirements);
+            gd.DeviceApi.vkGetBufferMemoryRequirements(this._deviceBuffer, out this._bufferMemoryRequirements);
             prefersDedicatedAllocation = false;
         }
 
@@ -111,9 +110,9 @@ internal unsafe class VkBuffer : DeviceBuffer {
             }
         }
 
-        VkMemoryBlock memoryToken = gd.MemoryManager.Allocate(gd.PhysicalDeviceMemProperties, this._bufferMemoryRequirements.memoryTypeBits, memoryPropertyFlags, hostVisible, this._bufferMemoryRequirements.size, this._bufferMemoryRequirements.alignment, prefersDedicatedAllocation, VkImage.Null, this._deviceBuffer);
+        VkMemoryBlock memoryToken = gd.MemoryManager.Allocate(gd.PhysicalDeviceMemProperties, this._bufferMemoryRequirements.memoryTypeBits, memoryPropertyFlags, hostVisible, this._bufferMemoryRequirements.size, this._bufferMemoryRequirements.alignment, prefersDedicatedAllocation, default, this._deviceBuffer);
         this._memory = memoryToken;
-        result = vkBindBufferMemory(gd.Device, this._deviceBuffer, this._memory.DeviceMemory, this._memory.Offset);
+        result = gd.DeviceApi.vkBindBufferMemory(this._deviceBuffer, this._memory.DeviceMemory, this._memory.Offset);
         CheckResult(result);
 
         this.RefCount = new ResourceRefCount(this.DisposeCore);
@@ -142,7 +141,7 @@ internal unsafe class VkBuffer : DeviceBuffer {
     /// <summary>
     /// Stores the device buffer state used by this instance.
     /// </summary>
-    public Vulkan.VkBuffer DeviceBuffer => this._deviceBuffer;
+    public global::Vortice.Vulkan.VkBuffer DeviceBuffer => this._deviceBuffer;
 
     /// <summary>
     /// Stores the memory state used by this instance.
@@ -161,7 +160,7 @@ internal unsafe class VkBuffer : DeviceBuffer {
         get => this._name;
         set {
             this._name = value;
-            this.gd.SetResourceName(this, value);
+            this._gd.SetResourceName(this, value);
         }
     }
 
@@ -182,8 +181,8 @@ internal unsafe class VkBuffer : DeviceBuffer {
     private void DisposeCore() {
         if (!this._destroyed) {
             this._destroyed = true;
-            vkDestroyBuffer(this.gd.Device, this._deviceBuffer, null);
-            this.gd.MemoryManager.Free(this.Memory);
+            this._gd.DeviceApi.vkDestroyBuffer(this._deviceBuffer, null);
+            this._gd.MemoryManager.Free(this.Memory);
         }
     }
 }

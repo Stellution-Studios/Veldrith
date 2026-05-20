@@ -61,12 +61,12 @@ public enum PixelFormat : byte {
     R8G8SNorm,
 
     /// <summary>
-    /// BC1 block compressed format with no alpha.
+    /// BC1 block compressed format with no Alpha.
     /// </summary>
     Bc1RgbUNorm,
 
     /// <summary>
-    /// BC1 block compressed format with a single-bit alpha channel.
+    /// BC1 block compressed format with a single-bit Alpha channel.
     /// </summary>
     Bc1RgbaUNorm,
 
@@ -241,12 +241,12 @@ public enum PixelFormat : byte {
     Etc2R8G8B8UNorm,
 
     /// <summary>
-    /// A 64-bit, 4x4 block-compressed format storing unsigned normalized RGB data, as well as 1 bit of alpha data.
+    /// A 64-bit, 4x4 block-compressed format storing unsigned normalized RGB data, as well as 1 bit of Alpha data.
     /// </summary>
     Etc2R8G8B8A1UNorm,
 
     /// <summary>
-    /// A 128-bit, 4x4 block-compressed format storing 64 bits of unsigned normalized RGB data, as well as 64 bits of alpha
+    /// A 128-bit, 4x4 block-compressed format storing 64 bits of unsigned normalized RGB data, as well as 64 bits of Alpha
     /// </summary>
     Etc2R8G8B8A8UNorm,
 
@@ -286,12 +286,12 @@ public enum PixelFormat : byte {
     B8G8R8A8UNormSRgb,
 
     /// <summary>
-    /// BC1 block compressed format with no alpha.
+    /// BC1 block compressed format with no Alpha.
     /// </summary>
     Bc1RgbUNormSRgb,
 
     /// <summary>
-    /// BC1 block compressed format with a single-bit alpha channel.
+    /// BC1 block compressed format with a single-bit Alpha channel.
     /// </summary>
     Bc1RgbaUNormSRgb,
 

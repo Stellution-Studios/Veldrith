@@ -1,4 +1,4 @@
-using Vulkan;
+using Vortice.Vulkan;
 
 namespace Veldrith.Vk;
 
@@ -39,59 +39,59 @@ internal static partial class VkFormats {
 
             case PixelFormat.R32Float: return toDepthFormat ? VkFormat.D32Sfloat : VkFormat.R32Sfloat;
 
-            case PixelFormat.R8G8UNorm: return VkFormat.R8g8Unorm;
+            case PixelFormat.R8G8UNorm: return VkFormat.R8G8Unorm;
 
-            case PixelFormat.R8G8SNorm: return VkFormat.R8g8Snorm;
+            case PixelFormat.R8G8SNorm: return VkFormat.R8G8Snorm;
 
-            case PixelFormat.R8G8UInt: return VkFormat.R8g8Uint;
+            case PixelFormat.R8G8UInt: return VkFormat.R8G8Uint;
 
-            case PixelFormat.R8G8SInt: return VkFormat.R8g8Sint;
+            case PixelFormat.R8G8SInt: return VkFormat.R8G8Sint;
 
-            case PixelFormat.R16G16UNorm: return VkFormat.R16g16Unorm;
+            case PixelFormat.R16G16UNorm: return VkFormat.R16G16Unorm;
 
-            case PixelFormat.R16G16SNorm: return VkFormat.R16g16Snorm;
+            case PixelFormat.R16G16SNorm: return VkFormat.R16G16Snorm;
 
-            case PixelFormat.R16G16UInt: return VkFormat.R16g16Uint;
+            case PixelFormat.R16G16UInt: return VkFormat.R16G16Uint;
 
-            case PixelFormat.R16G16SInt: return VkFormat.R16g16Sint;
+            case PixelFormat.R16G16SInt: return VkFormat.R16G16Sint;
 
-            case PixelFormat.R16G16Float: return VkFormat.R16g16Sfloat;
+            case PixelFormat.R16G16Float: return VkFormat.R16G16Sfloat;
 
-            case PixelFormat.R32G32UInt: return VkFormat.R32g32Uint;
+            case PixelFormat.R32G32UInt: return VkFormat.R32G32Uint;
 
-            case PixelFormat.R32G32SInt: return VkFormat.R32g32Sint;
+            case PixelFormat.R32G32SInt: return VkFormat.R32G32Sint;
 
-            case PixelFormat.R32G32Float: return VkFormat.R32g32Sfloat;
+            case PixelFormat.R32G32Float: return VkFormat.R32G32Sfloat;
 
-            case PixelFormat.R8G8B8A8UNorm: return VkFormat.R8g8b8a8Unorm;
+            case PixelFormat.R8G8B8A8UNorm: return VkFormat.R8G8B8A8Unorm;
 
-            case PixelFormat.R8G8B8A8UNormSRgb: return VkFormat.R8g8b8a8Srgb;
+            case PixelFormat.R8G8B8A8UNormSRgb: return VkFormat.R8G8B8A8Srgb;
 
-            case PixelFormat.B8G8R8A8UNorm: return VkFormat.B8g8r8a8Unorm;
+            case PixelFormat.B8G8R8A8UNorm: return VkFormat.B8G8R8A8Unorm;
 
-            case PixelFormat.B8G8R8A8UNormSRgb: return VkFormat.B8g8r8a8Srgb;
+            case PixelFormat.B8G8R8A8UNormSRgb: return VkFormat.B8G8R8A8Srgb;
 
-            case PixelFormat.R8G8B8A8SNorm: return VkFormat.R8g8b8a8Snorm;
+            case PixelFormat.R8G8B8A8SNorm: return VkFormat.R8G8B8A8Snorm;
 
-            case PixelFormat.R8G8B8A8UInt: return VkFormat.R8g8b8a8Uint;
+            case PixelFormat.R8G8B8A8UInt: return VkFormat.R8G8B8A8Uint;
 
-            case PixelFormat.R8G8B8A8SInt: return VkFormat.R8g8b8a8Sint;
+            case PixelFormat.R8G8B8A8SInt: return VkFormat.R8G8B8A8Sint;
 
-            case PixelFormat.R16G16B16A16UNorm: return VkFormat.R16g16b16a16Unorm;
+            case PixelFormat.R16G16B16A16UNorm: return VkFormat.R16G16B16A16Unorm;
 
-            case PixelFormat.R16G16B16A16SNorm: return VkFormat.R16g16b16a16Snorm;
+            case PixelFormat.R16G16B16A16SNorm: return VkFormat.R16G16B16A16Snorm;
 
-            case PixelFormat.R16G16B16A16UInt: return VkFormat.R16g16b16a16Uint;
+            case PixelFormat.R16G16B16A16UInt: return VkFormat.R16G16B16A16Uint;
 
-            case PixelFormat.R16G16B16A16SInt: return VkFormat.R16g16b16a16Sint;
+            case PixelFormat.R16G16B16A16SInt: return VkFormat.R16G16B16A16Sint;
 
-            case PixelFormat.R16G16B16A16Float: return VkFormat.R16g16b16a16Sfloat;
+            case PixelFormat.R16G16B16A16Float: return VkFormat.R16G16B16A16Sfloat;
 
-            case PixelFormat.R32G32B32A32UInt: return VkFormat.R32g32b32a32Uint;
+            case PixelFormat.R32G32B32A32UInt: return VkFormat.R32G32B32A32Uint;
 
-            case PixelFormat.R32G32B32A32SInt: return VkFormat.R32g32b32a32Sint;
+            case PixelFormat.R32G32B32A32SInt: return VkFormat.R32G32B32A32Sint;
 
-            case PixelFormat.R32G32B32A32Float: return VkFormat.R32g32b32a32Sfloat;
+            case PixelFormat.R32G32B32A32Float: return VkFormat.R32G32B32A32Sfloat;
 
             case PixelFormat.Bc1RgbUNorm: return VkFormat.Bc1RgbUnormBlock;
 
@@ -121,21 +121,21 @@ internal static partial class VkFormats {
 
             case PixelFormat.Bc7UNormSRgb: return VkFormat.Bc7SrgbBlock;
 
-            case PixelFormat.Etc2R8G8B8UNorm: return VkFormat.Etc2R8g8b8UnormBlock;
+            case PixelFormat.Etc2R8G8B8UNorm: return VkFormat.Etc2R8G8B8UnormBlock;
 
-            case PixelFormat.Etc2R8G8B8A1UNorm: return VkFormat.Etc2R8g8b8a1UnormBlock;
+            case PixelFormat.Etc2R8G8B8A1UNorm: return VkFormat.Etc2R8G8B8A1UnormBlock;
 
-            case PixelFormat.Etc2R8G8B8A8UNorm: return VkFormat.Etc2R8g8b8a8UnormBlock;
+            case PixelFormat.Etc2R8G8B8A8UNorm: return VkFormat.Etc2R8G8B8A8UnormBlock;
 
             case PixelFormat.D32FloatS8UInt: return VkFormat.D32SfloatS8Uint;
 
             case PixelFormat.D24UNormS8UInt: return VkFormat.D24UnormS8Uint;
 
-            case PixelFormat.R10G10B10A2UNorm: return VkFormat.A2b10g10r10UnormPack32;
+            case PixelFormat.R10G10B10A2UNorm: return VkFormat.A2B10G10R10UnormPack32;
 
-            case PixelFormat.R10G10B10A2UInt: return VkFormat.A2b10g10r10UintPack32;
+            case PixelFormat.R10G10B10A2UInt: return VkFormat.A2B10G10R10UintPack32;
 
-            case PixelFormat.R11G11B10Float: return VkFormat.B10g11r11UfloatPack32;
+            case PixelFormat.R11G11B10Float: return VkFormat.B10G11R11UfloatPack32;
 
             default: throw new VeldridException($"Invalid {nameof(PixelFormat)}: {format}");
         }

@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
-using Vulkan;
+using Vortice.Vulkan;
+using static Veldrith.Vk.VulkanDispatch;
 using static Veldrith.Vk.VulkanUtil;
-using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
@@ -13,7 +13,7 @@ internal unsafe class VkPipeline : Pipeline {
     /// <summary>
     /// Stores the device pipeline state used by this instance.
     /// </summary>
-    private readonly Vulkan.VkPipeline _devicePipeline;
+    private readonly global::Vortice.Vulkan.VkPipeline _devicePipeline;
 
     /// <summary>
     /// Stores the pipeline layout state used by this instance.
@@ -31,9 +31,9 @@ internal unsafe class VkPipeline : Pipeline {
     private readonly VkShaderStageFlags _pushConstantStages;
 
     /// <summary>
-    /// Stores the gd state used by this instance.
+    /// Stores the graphics device used by this instance.
     /// </summary>
-    private readonly VkGraphicsDevice gd;
+    private readonly VkGraphicsDevice _gd;
 
     /// <summary>
     /// Stores the destroyed state used by this instance.
@@ -51,17 +51,16 @@ internal unsafe class VkPipeline : Pipeline {
     /// <param name="gd">The graphics device that owns this operation.</param>
     /// <param name="description">The description used to configure this operation.</param>
     public VkPipeline(VkGraphicsDevice gd, ref GraphicsPipelineDescription description) : base(ref description) {
-        this.gd = gd;
+        this._gd = gd;
         this.IsComputePipeline = false;
         this.RefCount = new ResourceRefCount(this.DisposeCore);
 
-        VkGraphicsPipelineCreateInfo pipelineCi = VkGraphicsPipelineCreateInfo.New();
+        VkGraphicsPipelineCreateInfo pipelineCi = new VkGraphicsPipelineCreateInfo();
 
         // Blend State
-        VkPipelineColorBlendStateCreateInfo blendStateCi = VkPipelineColorBlendStateCreateInfo.New();
+        VkPipelineColorBlendStateCreateInfo blendStateCi = new VkPipelineColorBlendStateCreateInfo();
         int attachmentsCount = description.BlendState.AttachmentStates.Length;
-        VkPipelineColorBlendAttachmentState* attachmentsPtr
-            = stackalloc VkPipelineColorBlendAttachmentState[attachmentsCount];
+        VkPipelineColorBlendAttachmentState* attachmentsPtr = stackalloc VkPipelineColorBlendAttachmentState[attachmentsCount];
 
         for (int i = 0; i < attachmentsCount; i++) {
             BlendAttachmentDescription vdDesc = description.BlendState.AttachmentStates[i];
@@ -81,16 +80,16 @@ internal unsafe class VkPipeline : Pipeline {
         blendStateCi.attachmentCount = (uint)attachmentsCount;
         blendStateCi.pAttachments = attachmentsPtr;
         RgbaFloat blendFactor = description.BlendState.BlendFactor;
-        blendStateCi.blendConstants_0 = blendFactor.R;
-        blendStateCi.blendConstants_1 = blendFactor.G;
-        blendStateCi.blendConstants_2 = blendFactor.B;
-        blendStateCi.blendConstants_3 = blendFactor.A;
+        blendStateCi.blendConstants[0] = blendFactor.R;
+        blendStateCi.blendConstants[1] = blendFactor.G;
+        blendStateCi.blendConstants[2] = blendFactor.B;
+        blendStateCi.blendConstants[3] = blendFactor.A;
 
         pipelineCi.pColorBlendState = &blendStateCi;
 
         // Rasterizer State
         RasterizerStateDescription rsDesc = description.RasterizerState;
-        VkPipelineRasterizationStateCreateInfo rsCi = VkPipelineRasterizationStateCreateInfo.New();
+        VkPipelineRasterizationStateCreateInfo rsCi = new VkPipelineRasterizationStateCreateInfo();
         rsCi.cullMode = VkFormats.VdToVkCullMode(rsDesc.CullMode);
         rsCi.polygonMode = VkFormats.VdToVkPolygonMode(rsDesc.FillMode);
         rsCi.depthClampEnable = !rsDesc.DepthClipEnabled;
@@ -102,7 +101,7 @@ internal unsafe class VkPipeline : Pipeline {
         this.ScissorTestEnabled = rsDesc.ScissorTestEnabled;
 
         // Dynamic State
-        VkPipelineDynamicStateCreateInfo dynamicStateCi = VkPipelineDynamicStateCreateInfo.New();
+        VkPipelineDynamicStateCreateInfo dynamicStateCi = new VkPipelineDynamicStateCreateInfo();
         VkDynamicState* dynamicStates = stackalloc VkDynamicState[2];
         dynamicStates[0] = VkDynamicState.Viewport;
         dynamicStates[1] = VkDynamicState.Scissor;
@@ -113,7 +112,7 @@ internal unsafe class VkPipeline : Pipeline {
 
         // Depth Stencil State
         DepthStencilStateDescription vdDssDesc = description.DepthStencilState;
-        VkPipelineDepthStencilStateCreateInfo dssCi = VkPipelineDepthStencilStateCreateInfo.New();
+        VkPipelineDepthStencilStateCreateInfo dssCi = new VkPipelineDepthStencilStateCreateInfo();
         dssCi.depthWriteEnable = vdDssDesc.DepthWriteEnabled;
         dssCi.depthTestEnable = vdDssDesc.DepthTestEnabled;
         dssCi.depthCompareOp = VkFormats.VdToVkCompareOp(vdDssDesc.DepthComparison);
@@ -138,7 +137,7 @@ internal unsafe class VkPipeline : Pipeline {
         pipelineCi.pDepthStencilState = &dssCi;
 
         // Multisample
-        VkPipelineMultisampleStateCreateInfo multisampleCi = VkPipelineMultisampleStateCreateInfo.New();
+        VkPipelineMultisampleStateCreateInfo multisampleCi = new VkPipelineMultisampleStateCreateInfo();
         VkSampleCountFlags vkSampleCount = VkFormats.VdToVkSampleCount(description.Outputs.SampleCount);
         multisampleCi.rasterizationSamples = vkSampleCount;
         multisampleCi.alphaToCoverageEnable = description.BlendState.AlphaToCoverageEnabled;
@@ -146,13 +145,13 @@ internal unsafe class VkPipeline : Pipeline {
         pipelineCi.pMultisampleState = &multisampleCi;
 
         // Input Assembly
-        VkPipelineInputAssemblyStateCreateInfo inputAssemblyCi = VkPipelineInputAssemblyStateCreateInfo.New();
+        VkPipelineInputAssemblyStateCreateInfo inputAssemblyCi = new VkPipelineInputAssemblyStateCreateInfo();
         inputAssemblyCi.topology = VkFormats.VdToVkPrimitiveTopology(description.PrimitiveTopology);
 
         pipelineCi.pInputAssemblyState = &inputAssemblyCi;
 
         // Vertex Input State
-        VkPipelineVertexInputStateCreateInfo vertexInputCi = VkPipelineVertexInputStateCreateInfo.New();
+        VkPipelineVertexInputStateCreateInfo vertexInputCi = new VkPipelineVertexInputStateCreateInfo();
 
         VertexLayoutDescription[] inputDescriptions = description.ShaderSet.VertexLayouts;
         uint bindingCount = (uint)inputDescriptions.Length;
@@ -240,7 +239,7 @@ internal unsafe class VkPipeline : Pipeline {
 
         foreach (Shader shader in shaders) {
             VkShader vkShader = Util.AssertSubtype<Shader, VkShader>(shader);
-            VkPipelineShaderStageCreateInfo stageCi = VkPipelineShaderStageCreateInfo.New();
+            VkPipelineShaderStageCreateInfo stageCi = new VkPipelineShaderStageCreateInfo();
             stageCi.module = vkShader.ShaderModule;
             stageCi.stage = VkFormats.VdToVkShaderStages(shader.Stage);
             pushConstantStages |= stageCi.stage;
@@ -255,7 +254,7 @@ internal unsafe class VkPipeline : Pipeline {
         pipelineCi.pStages = (VkPipelineShaderStageCreateInfo*)stages.Data;
 
         // ViewportState
-        VkPipelineViewportStateCreateInfo viewportStateCi = VkPipelineViewportStateCreateInfo.New();
+        VkPipelineViewportStateCreateInfo viewportStateCi = new VkPipelineViewportStateCreateInfo();
         viewportStateCi.viewportCount = 1;
         viewportStateCi.scissorCount = 1;
 
@@ -263,7 +262,7 @@ internal unsafe class VkPipeline : Pipeline {
 
         // Pipeline Layout
         ResourceLayout[] resourceLayouts = description.ResourceLayouts;
-        VkPipelineLayoutCreateInfo pipelineLayoutCi = VkPipelineLayoutCreateInfo.New();
+        VkPipelineLayoutCreateInfo pipelineLayoutCi = new VkPipelineLayoutCreateInfo();
         pipelineLayoutCi.setLayoutCount = (uint)resourceLayouts.Length;
         VkDescriptorSetLayout* dsls = stackalloc VkDescriptorSetLayout[resourceLayouts.Length];
         for (int i = 0; i < resourceLayouts.Length; i++) {
@@ -274,17 +273,17 @@ internal unsafe class VkPipeline : Pipeline {
         VkPushConstantRange pushConstantRange = new() {
             stageFlags = this._pushConstantStages,
             offset = 0,
-            size = this.gd.MaxPushConstantsSize
+            size = this._gd.MaxPushConstantsSize
         };
         pipelineLayoutCi.pushConstantRangeCount = 1;
         pipelineLayoutCi.pPushConstantRanges = &pushConstantRange;
 
-        vkCreatePipelineLayout(this.gd.Device, ref pipelineLayoutCi, null, out this._pipelineLayout);
+        this._gd.DeviceApi.vkCreatePipelineLayout(ref pipelineLayoutCi, null, out this._pipelineLayout);
         pipelineCi.layout = this._pipelineLayout;
 
         // Create fake RenderPass for compatibility.
 
-        VkRenderPassCreateInfo renderPassCi = VkRenderPassCreateInfo.New();
+        VkRenderPassCreateInfo renderPassCi = new VkRenderPassCreateInfo();
         OutputDescription outputDesc = description.Outputs;
         StackList<VkAttachmentDescription, Size512Bytes> attachments = new();
 
@@ -355,12 +354,15 @@ internal unsafe class VkPipeline : Pipeline {
         renderPassCi.dependencyCount = 1;
         renderPassCi.pDependencies = &subpassDependency;
 
-        VkResult creationResult = vkCreateRenderPass(this.gd.Device, ref renderPassCi, null, out this._renderPass);
+        VkResult creationResult = this._gd.DeviceApi.vkCreateRenderPass(ref renderPassCi, null, out this._renderPass);
         CheckResult(creationResult);
 
         pipelineCi.renderPass = this._renderPass;
 
-        VkResult result = vkCreateGraphicsPipelines(this.gd.Device, this.gd.PipelineCache, 1, ref pipelineCi, null, out this._devicePipeline);
+        VkResult result;
+        fixed (global::Vortice.Vulkan.VkPipeline* pipelinePtr = &this._devicePipeline) {
+            result = this._gd.DeviceApi.vkCreateGraphicsPipelines(this._gd.PipelineCache, 1, &pipelineCi, null, pipelinePtr);
+        }
         CheckResult(result);
 
         this.ResourceSetCount = (uint)description.ResourceLayouts.Length;
@@ -376,15 +378,15 @@ internal unsafe class VkPipeline : Pipeline {
     /// <param name="gd">The graphics device that owns this operation.</param>
     /// <param name="description">The description used to configure this operation.</param>
     public VkPipeline(VkGraphicsDevice gd, ref ComputePipelineDescription description) : base(ref description) {
-        this.gd = gd;
+        this._gd = gd;
         this.IsComputePipeline = true;
         this.RefCount = new ResourceRefCount(this.DisposeCore);
 
-        VkComputePipelineCreateInfo pipelineCi = VkComputePipelineCreateInfo.New();
+        VkComputePipelineCreateInfo pipelineCi = new VkComputePipelineCreateInfo();
 
         // Pipeline Layout
         ResourceLayout[] resourceLayouts = description.ResourceLayouts;
-        VkPipelineLayoutCreateInfo pipelineLayoutCi = VkPipelineLayoutCreateInfo.New();
+        VkPipelineLayoutCreateInfo pipelineLayoutCi = new VkPipelineLayoutCreateInfo();
         pipelineLayoutCi.setLayoutCount = (uint)resourceLayouts.Length;
         VkDescriptorSetLayout* dsls = stackalloc VkDescriptorSetLayout[resourceLayouts.Length];
         for (int i = 0; i < resourceLayouts.Length; i++) {
@@ -395,12 +397,12 @@ internal unsafe class VkPipeline : Pipeline {
         VkPushConstantRange pushConstantRange = new() {
             stageFlags = VkShaderStageFlags.Compute,
             offset = 0,
-            size = this.gd.MaxPushConstantsSize
+            size = this._gd.MaxPushConstantsSize
         };
         pipelineLayoutCi.pushConstantRangeCount = 1;
         pipelineLayoutCi.pPushConstantRanges = &pushConstantRange;
 
-        vkCreatePipelineLayout(this.gd.Device, ref pipelineLayoutCi, null, out this._pipelineLayout);
+        this._gd.DeviceApi.vkCreatePipelineLayout(ref pipelineLayoutCi, null, out this._pipelineLayout);
         pipelineCi.layout = this._pipelineLayout;
 
         // Shader Stage
@@ -438,7 +440,7 @@ internal unsafe class VkPipeline : Pipeline {
 
         Shader shader = description.ComputeShader;
         VkShader vkShader = Util.AssertSubtype<Shader, VkShader>(shader);
-        VkPipelineShaderStageCreateInfo stageCi = VkPipelineShaderStageCreateInfo.New();
+        VkPipelineShaderStageCreateInfo stageCi = new VkPipelineShaderStageCreateInfo();
         stageCi.module = vkShader.ShaderModule;
         stageCi.stage = VkFormats.VdToVkShaderStages(shader.Stage);
         this._pushConstantStages = stageCi.stage;
@@ -446,7 +448,10 @@ internal unsafe class VkPipeline : Pipeline {
         stageCi.pSpecializationInfo = &specializationInfo;
         pipelineCi.stage = stageCi;
 
-        VkResult result = vkCreateComputePipelines(this.gd.Device, this.gd.PipelineCache, 1, ref pipelineCi, null, out this._devicePipeline);
+        VkResult result;
+        fixed (global::Vortice.Vulkan.VkPipeline* pipelinePtr = &this._devicePipeline) {
+            result = this._gd.DeviceApi.vkCreateComputePipelines(this._gd.PipelineCache, 1, &pipelineCi, null, pipelinePtr);
+        }
         CheckResult(result);
 
         this.ResourceSetCount = (uint)description.ResourceLayouts.Length;
@@ -459,7 +464,7 @@ internal unsafe class VkPipeline : Pipeline {
     /// <summary>
     /// Stores the device pipeline state used by this instance.
     /// </summary>
-    public Vulkan.VkPipeline DevicePipeline => this._devicePipeline;
+    public global::Vortice.Vulkan.VkPipeline DevicePipeline => this._devicePipeline;
 
     /// <summary>
     /// Stores the pipeline layout state used by this instance.
@@ -508,7 +513,7 @@ internal unsafe class VkPipeline : Pipeline {
         get => this._name;
         set {
             this._name = value;
-            this.gd.SetResourceName(this, value);
+            this._gd.SetResourceName(this, value);
         }
     }
 
@@ -529,10 +534,10 @@ internal unsafe class VkPipeline : Pipeline {
     private void DisposeCore() {
         if (!this._destroyed) {
             this._destroyed = true;
-            vkDestroyPipelineLayout(this.gd.Device, this._pipelineLayout, null);
-            vkDestroyPipeline(this.gd.Device, this._devicePipeline, null);
+            this._gd.DeviceApi.vkDestroyPipelineLayout(this._pipelineLayout, null);
+            this._gd.DeviceApi.vkDestroyPipeline(this._devicePipeline, null);
             if (!this.IsComputePipeline) {
-                vkDestroyRenderPass(this.gd.Device, this._renderPass, null);
+                this._gd.DeviceApi.vkDestroyRenderPass(this._renderPass, null);
             }
         }
     }

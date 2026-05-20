@@ -25,71 +25,71 @@ public struct MTLRenderPassColorAttachmentDescriptor {
     /// Gets or sets texture.
     /// </summary>
     public MTLTexture texture {
-        get => objc_msgSend<MTLTexture>(this.NativePtr, Selectors.texture);
-        set => objc_msgSend(this.NativePtr, Selectors.setTexture, value.NativePtr);
+        get => objc_msgSend<MTLTexture>(this.NativePtr, Selectors.Texture);
+        set => objc_msgSend(this.NativePtr, Selectors.SetTexture, value.NativePtr);
     }
 
     /// <summary>
     /// Gets or sets loadAction.
     /// </summary>
-    public MTLLoadAction loadAction {
-        get => (MTLLoadAction)uint_objc_msgSend(this.NativePtr, Selectors.loadAction);
-        set => objc_msgSend(this.NativePtr, Selectors.setLoadAction, (uint)value);
+    public MTLLoadAction LoadAction {
+        get => (MTLLoadAction)uint_objc_msgSend(this.NativePtr, Selectors.LoadAction);
+        set => objc_msgSend(this.NativePtr, Selectors.SetLoadAction, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets storeAction.
     /// </summary>
-    public MTLStoreAction storeAction {
-        get => (MTLStoreAction)uint_objc_msgSend(this.NativePtr, Selectors.storeAction);
-        set => objc_msgSend(this.NativePtr, Selectors.setStoreAction, (uint)value);
+    public MTLStoreAction StoreAction {
+        get => (MTLStoreAction)uint_objc_msgSend(this.NativePtr, Selectors.StoreAction);
+        set => objc_msgSend(this.NativePtr, Selectors.SetStoreAction, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets resolveTexture.
     /// </summary>
-    public MTLTexture resolveTexture {
-        get => objc_msgSend<MTLTexture>(this.NativePtr, Selectors.resolveTexture);
-        set => objc_msgSend(this.NativePtr, Selectors.setResolveTexture, value.NativePtr);
+    public MTLTexture ResolveTexture {
+        get => objc_msgSend<MTLTexture>(this.NativePtr, Selectors.ResolveTexture);
+        set => objc_msgSend(this.NativePtr, Selectors.SetResolveTexture, value.NativePtr);
     }
 
     /// <summary>
     /// Gets or sets clearColor.
     /// </summary>
-    public MTLClearColor clearColor {
+    public MTLClearColor ClearColor {
         get {
             if (UseStret<MTLClearColor>()) {
-                return objc_msgSend_stret<MTLClearColor>(this.NativePtr, sel_clearColor);
+                return objc_msgSend_stret<MTLClearColor>(this.NativePtr, _selClearColor);
             }
 
-            return MTLClearColor_objc_msgSend(this.NativePtr, sel_clearColor);
+            return MTLClearColor_objc_msgSend(this.NativePtr, _selClearColor);
         }
-        set => objc_msgSend(this.NativePtr, sel_setClearColor, value);
+        set => objc_msgSend(this.NativePtr, _selSetClearColor, value);
     }
 
     /// <summary>
     /// Gets or sets slice.
     /// </summary>
-    public UIntPtr slice {
-        get => UIntPtr_objc_msgSend(this.NativePtr, Selectors.slice);
-        set => objc_msgSend(this.NativePtr, Selectors.setSlice, value);
+    public UIntPtr Slice {
+        get => UIntPtr_objc_msgSend(this.NativePtr, Selectors.Slice);
+        set => objc_msgSend(this.NativePtr, Selectors.SetSlice, value);
     }
 
     /// <summary>
     /// Gets or sets level.
     /// </summary>
     public UIntPtr level {
-        get => UIntPtr_objc_msgSend(this.NativePtr, Selectors.level);
-        set => objc_msgSend(this.NativePtr, Selectors.setLevel, value);
+        get => UIntPtr_objc_msgSend(this.NativePtr, Selectors.Level);
+        set => objc_msgSend(this.NativePtr, Selectors.SetLevel, value);
     }
 
     /// <summary>
     /// Stores the sel clear color state used by this instance.
     /// </summary>
-    private static readonly Selector sel_clearColor = "clearColor";
+    private static readonly Selector _selClearColor = "clearColor";
 
     /// <summary>
     /// Stores the sel set clear color state used by this instance.
     /// </summary>
-    private static readonly Selector sel_setClearColor = "setClearColor:";
+    private static readonly Selector _selSetClearColor = "setClearColor:";
 }

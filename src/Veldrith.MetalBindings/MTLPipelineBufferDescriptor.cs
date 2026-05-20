@@ -25,17 +25,17 @@ public struct MTLPipelineBufferDescriptor {
     /// Gets or sets mutability.
     /// </summary>
     public MTLMutability mutability {
-        get => (MTLMutability)uint_objc_msgSend(this.NativePtr, sel_mutability);
-        set => objc_msgSend(this.NativePtr, sel_setMutability, (uint)value);
+        get => (MTLMutability)uint_objc_msgSend(this.NativePtr, _selMutability);
+        set => objc_msgSend(this.NativePtr, _selSetMutability, (uint)value);
     }
 
     /// <summary>
     /// Stores the sel mutability state used by this instance.
     /// </summary>
-    private static readonly Selector sel_mutability = "mutability";
+    private static readonly Selector _selMutability = "mutability";
 
     /// <summary>
     /// Stores the sel set mutability state used by this instance.
     /// </summary>
-    private static readonly Selector sel_setMutability = "setMutability:";
+    private static readonly Selector _selSetMutability = "setMutability:";
 }

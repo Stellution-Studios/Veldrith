@@ -25,21 +25,21 @@ public struct UIScreen {
     /// Executes the cgfloat objc msg send logic for this backend.
     /// </summary>
 
-    public CGFloat nativeScale => CGFloat_objc_msgSend(this.NativePtr, sel_nativeScale);
+    public CGFloat NativeScale => CGFloat_objc_msgSend(this.NativePtr, _selNativeScale);
 
     /// <summary>
     /// Gets the primary screen object from UIKit.
     /// </summary>
 
-    public static UIScreen mainScreen => objc_msgSend<UIScreen>(new ObjCClass(nameof(UIScreen)), sel_mainScreen);
+    public static UIScreen MainScreen => objc_msgSend<UIScreen>(new ObjCClass(nameof(UIScreen)), _selMainScreen);
 
     /// <summary>
     /// Stores the sel native scale state used by this instance.
     /// </summary>
-    private static readonly Selector sel_nativeScale = "nativeScale";
+    private static readonly Selector _selNativeScale = "nativeScale";
 
     /// <summary>
     /// Stores the sel main screen state used by this instance.
     /// </summary>
-    private static readonly Selector sel_mainScreen = "mainScreen";
+    private static readonly Selector _selMainScreen = "mainScreen";
 }

@@ -18,9 +18,9 @@ public struct MTLPipelineBufferDescriptorArray {
     /// </summary>
     public MTLPipelineBufferDescriptor this[uint index] {
         get {
-            IntPtr value = IntPtr_objc_msgSend(this.NativePtr, Selectors.objectAtIndexedSubscript, (UIntPtr)index);
+            IntPtr value = IntPtr_objc_msgSend(this.NativePtr, Selectors.ObjectAtIndexedSubscript, (UIntPtr)index);
             return new MTLPipelineBufferDescriptor(value);
         }
-        set => objc_msgSend(this.NativePtr, Selectors.setObjectAtIndexedSubscript, value.NativePtr, (UIntPtr)index);
+        set => objc_msgSend(this.NativePtr, Selectors.SetObjectAtIndexedSubscript, value.NativePtr, (UIntPtr)index);
     }
 }

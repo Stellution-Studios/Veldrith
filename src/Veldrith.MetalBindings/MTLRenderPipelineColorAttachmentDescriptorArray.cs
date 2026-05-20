@@ -4,11 +4,10 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrith.MetalBindings;
 
-[StructLayout(LayoutKind.Sequential)]
-
 /// <summary>
 /// Represents the MTLRenderPipelineColorAttachmentDescriptorArray data structure used by the graphics runtime.
 /// </summary>
+[StructLayout(LayoutKind.Sequential)]
 public struct MTLRenderPipelineColorAttachmentDescriptorArray {
 
     /// <summary>
@@ -21,9 +20,9 @@ public struct MTLRenderPipelineColorAttachmentDescriptorArray {
     /// </summary>
     public MTLRenderPipelineColorAttachmentDescriptor this[uint index] {
         get {
-            IntPtr ptr = IntPtr_objc_msgSend(this.NativePtr, Selectors.objectAtIndexedSubscript, index);
+            IntPtr ptr = IntPtr_objc_msgSend(this.NativePtr, Selectors.ObjectAtIndexedSubscript, index);
             return new MTLRenderPipelineColorAttachmentDescriptor(ptr);
         }
-        set => objc_msgSend(this.NativePtr, Selectors.setObjectAtIndexedSubscript, value.NativePtr, index);
+        set => objc_msgSend(this.NativePtr, Selectors.SetObjectAtIndexedSubscript, value.NativePtr, index);
     }
 }

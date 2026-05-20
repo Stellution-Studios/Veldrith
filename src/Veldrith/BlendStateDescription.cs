@@ -18,7 +18,7 @@ public struct BlendStateDescription : IEquatable<BlendStateDescription> {
     public BlendAttachmentDescription[] AttachmentStates;
 
     /// <summary>
-    /// Enables alpha-to-coverage, which causes a fragment's alpha value to be used when determining multi-sample coverage.
+    /// Enables Alpha-to-coverage, which causes a fragment's Alpha value to be used when determining multi-sample coverage.
     /// </summary>
     public bool AlphaToCoverageEnabled;
 
@@ -37,7 +37,7 @@ public struct BlendStateDescription : IEquatable<BlendStateDescription> {
     /// Initializes a new instance of the <see cref="BlendStateDescription" /> type.
     /// </summary>
     /// <param name="blendFactor">The blend factor value used by this operation.</param>
-    /// <param name="alphaToCoverageEnabled">The alpha to coverage enabled value used by this operation.</param>
+    /// <param name="alphaToCoverageEnabled">The Alpha to coverage enabled value used by this operation.</param>
     /// <param name="attachmentStates">The attachment states value used by this operation.</param>
     public BlendStateDescription(RgbaFloat blendFactor, bool alphaToCoverageEnabled, params BlendAttachmentDescription[] attachmentStates) {
         this.BlendFactor = blendFactor;

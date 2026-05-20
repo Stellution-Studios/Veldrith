@@ -315,7 +315,7 @@ internal unsafe class MtlCommandList : CommandList {
             }
 
             if (this.cb.NativePtr != IntPtr.Zero) {
-                ObjectiveCRuntime.release(this.cb.NativePtr);
+                ObjectiveCRuntime.Release(this.cb.NativePtr);
             }
         }
     }
@@ -327,7 +327,7 @@ internal unsafe class MtlCommandList : CommandList {
     /// </summary>
     /// <returns>The value produced by this operation.</returns>
     public MTLCommandBuffer Commit() {
-        this.cb.commit();
+        this.cb.Commit();
         MTLCommandBuffer ret = this.cb;
         this.cb = default;
         return ret;
@@ -338,12 +338,12 @@ internal unsafe class MtlCommandList : CommandList {
     /// </summary>
     public override void Begin() {
         if (this.cb.NativePtr != IntPtr.Zero) {
-            ObjectiveCRuntime.release(this.cb.NativePtr);
+            ObjectiveCRuntime.Release(this.cb.NativePtr);
         }
 
         using (NSAutoreleasePool.Begin()) {
-            this.cb = this.gd.CommandQueue.commandBuffer();
-            ObjectiveCRuntime.retain(this.cb.NativePtr);
+            this.cb = this.gd.CommandQueue.CommandBuffer();
+            ObjectiveCRuntime.Retain(this.cb.NativePtr);
         }
 
         this.ClearCachedState();
@@ -357,7 +357,7 @@ internal unsafe class MtlCommandList : CommandList {
     /// <param name="groupCountZ">The group count z value used by this operation.</param>
     public override void Dispatch(uint groupCountX, uint groupCountY, uint groupCountZ) {
         this.PreComputeCommand();
-        this._cce.dispatchThreadGroups(new MTLSize(groupCountX, groupCountY, groupCountZ), this._computePipeline.ThreadsPerThreadgroup);
+        this._cce.DispatchThreadGroups(new MTLSize(groupCountX, groupCountY, groupCountZ), this._computePipeline.ThreadsPerThreadgroup);
     }
 
     /// <summary>
@@ -439,21 +439,21 @@ internal unsafe class MtlCommandList : CommandList {
         if (sourceOffset % 4 != 0 || destinationOffset % 4 != 0 || sizeInBytes % 4 != 0) {
             // Unaligned copy -- use special compute shader.
             this.EnsureComputeEncoder();
-            this._cce.setComputePipelineState(this.gd.GetUnalignedBufferCopyPipeline());
-            this._cce.setBuffer(mtlSrc.DeviceBuffer, UIntPtr.Zero, 0);
-            this._cce.setBuffer(mtlDst.DeviceBuffer, UIntPtr.Zero, 1);
+            this._cce.SetComputePipelineState(this.gd.GetUnalignedBufferCopyPipeline());
+            this._cce.SetBuffer(mtlSrc.DeviceBuffer, UIntPtr.Zero, 0);
+            this._cce.SetBuffer(mtlDst.DeviceBuffer, UIntPtr.Zero, 1);
 
             MtlUnalignedBufferCopyInfo copyInfo;
             copyInfo.SourceOffset = sourceOffset;
             copyInfo.DestinationOffset = destinationOffset;
             copyInfo.CopySize = sizeInBytes;
 
-            this._cce.setBytes(&copyInfo, (UIntPtr)sizeof(MtlUnalignedBufferCopyInfo), 2);
-            this._cce.dispatchThreadGroups(new MTLSize(1, 1, 1), new MTLSize(1, 1, 1));
+            this._cce.SetBytes(&copyInfo, (UIntPtr)sizeof(MtlUnalignedBufferCopyInfo), 2);
+            this._cce.DispatchThreadGroups(new MTLSize(1, 1, 1), new MTLSize(1, 1, 1));
         }
         else {
             this.EnsureBlitEncoder();
-            this._bce.copy(mtlSrc.DeviceBuffer, sourceOffset, mtlDst.DeviceBuffer, destinationOffset, sizeInBytes);
+            this._bce.Copy(mtlSrc.DeviceBuffer, sourceOffset, mtlDst.DeviceBuffer, destinationOffset, sizeInBytes);
         }
     }
 
@@ -519,7 +519,7 @@ internal unsafe class MtlCommandList : CommandList {
                     srcDepthPitch = 0;
                 }
 
-                this._bce.copyFromBuffer(srcBuffer, (UIntPtr)sourceOffset, srcRowPitch, srcDepthPitch, sourceSize, dstTexture, dstBaseArrayLayer + layer, dstMipLevel, new MTLOrigin(dstX, dstY, dstZ), this.gd.MetalFeatures.IsMacOS);
+                this._bce.CopyFromBuffer(srcBuffer, (UIntPtr)sourceOffset, srcRowPitch, srcDepthPitch, sourceSize, dstTexture, dstBaseArrayLayer + layer, dstMipLevel, new MTLOrigin(dstX, dstY, dstZ), this.gd.MetalFeatures.IsMacOS);
             }
         }
         else if (srcIsStaging) {
@@ -547,7 +547,7 @@ internal unsafe class MtlCommandList : CommandList {
                                                  + dstDepthPitch * (zz + dstZ)
                                                  + dstRowPitch * (yy + dstY)
                                                  + pixelSize * dstX;
-                            this._bce.copy(srcMtlTexture.StagingBuffer, (UIntPtr)srcRowOffset, dstMtlTexture.StagingBuffer, (UIntPtr)dstRowOffset, copySize);
+                            this._bce.Copy(srcMtlTexture.StagingBuffer, (UIntPtr)srcRowOffset, dstMtlTexture.StagingBuffer, (UIntPtr)dstRowOffset, copySize);
                         }
                     }
                 }
@@ -574,7 +574,7 @@ internal unsafe class MtlCommandList : CommandList {
                                                  + dstDepthPitch * (zz + dstZ)
                                                  + dstRowPitch * (row + compressedDstY)
                                                  + blockSizeInBytes * compressedDstX;
-                            this._bce.copy(srcMtlTexture.StagingBuffer, (UIntPtr)srcRowOffset, dstMtlTexture.StagingBuffer, (UIntPtr)dstRowOffset, rowPitch);
+                            this._bce.Copy(srcMtlTexture.StagingBuffer, (UIntPtr)srcRowOffset, dstMtlTexture.StagingBuffer, (UIntPtr)dstRowOffset, rowPitch);
                         }
                     }
                 }
@@ -605,13 +605,13 @@ internal unsafe class MtlCommandList : CommandList {
                                   + compressedDstY * rowPitch
                                   + compressedDstX * blockSizeInBytes;
 
-                this._bce.copyTextureToBuffer(srcMtlTexture.DeviceTexture, srcBaseArrayLayer + layer, srcMipLevel, srcOrigin, srcSize, dstMtlTexture.StagingBuffer, (UIntPtr)dstOffset, dstBytesPerRow, dstBytesPerImage);
+                this._bce.CopyTextureToBuffer(srcMtlTexture.DeviceTexture, srcBaseArrayLayer + layer, srcMipLevel, srcOrigin, srcSize, dstMtlTexture.StagingBuffer, (UIntPtr)dstOffset, dstBytesPerRow, dstBytesPerImage);
             }
         }
         else {
             // Normal -> Normal
             for (uint layer = 0; layer < layerCount; layer++) {
-                this._bce.copyFromTexture(srcMtlTexture.DeviceTexture, srcBaseArrayLayer + layer, srcMipLevel, new MTLOrigin(srcX, srcY, srcZ), new MTLSize(width, height, depth), dstMtlTexture.DeviceTexture, dstBaseArrayLayer + layer, dstMipLevel, new MTLOrigin(dstX, dstY, dstZ), this.gd.MetalFeatures.IsMacOS);
+                this._bce.CopyFromTexture(srcMtlTexture.DeviceTexture, srcBaseArrayLayer + layer, srcMipLevel, new MTLOrigin(srcX, srcY, srcZ), new MTLSize(width, height, depth), dstMtlTexture.DeviceTexture, dstBaseArrayLayer + layer, dstMipLevel, new MTLOrigin(dstX, dstY, dstZ), this.gd.MetalFeatures.IsMacOS);
             }
         }
     }
@@ -624,7 +624,7 @@ internal unsafe class MtlCommandList : CommandList {
     protected override void DispatchIndirectCore(DeviceBuffer indirectBuffer, uint offset) {
         MtlBuffer mtlBuffer = Util.AssertSubtype<DeviceBuffer, MtlBuffer>(indirectBuffer);
         this.PreComputeCommand();
-        this._cce.dispatchThreadgroupsWithIndirectBuffer(mtlBuffer.DeviceBuffer, offset, this._computePipeline.ThreadsPerThreadgroup);
+        this._cce.DispatchThreadgroupsWithIndirectBuffer(mtlBuffer.DeviceBuffer, offset, this._computePipeline.ThreadsPerThreadgroup);
     }
 
     /// <summary>
@@ -640,7 +640,7 @@ internal unsafe class MtlCommandList : CommandList {
 
             for (uint i = 0; i < drawCount; i++) {
                 uint currentOffset = i * stride + offset;
-                this._rce.drawIndexedPrimitives(this._graphicsPipeline.PrimitiveType, this._indexType, this._indexBuffer.DeviceBuffer, this._ibOffset, mtlBuffer.DeviceBuffer, currentOffset);
+                this._rce.DrawIndexedPrimitives(this._graphicsPipeline.PrimitiveType, this._indexType, this._indexBuffer.DeviceBuffer, this._ibOffset, mtlBuffer.DeviceBuffer, currentOffset);
             }
         }
     }
@@ -658,7 +658,7 @@ internal unsafe class MtlCommandList : CommandList {
 
             for (uint i = 0; i < drawCount; i++) {
                 uint currentOffset = i * stride + offset;
-                this._rce.drawPrimitives(this._graphicsPipeline.PrimitiveType, mtlBuffer.DeviceBuffer, currentOffset);
+                this._rce.DrawPrimitives(this._graphicsPipeline.PrimitiveType, mtlBuffer.DeviceBuffer, currentOffset);
             }
         }
     }
@@ -677,18 +677,18 @@ internal unsafe class MtlCommandList : CommandList {
         MtlTexture mtlDst = Util.AssertSubtype<Texture, MtlTexture>(destination);
 
         MTLRenderPassDescriptor rpDesc = MTLRenderPassDescriptor.New();
-        MTLRenderPassColorAttachmentDescriptor colorAttachment = rpDesc.colorAttachments[0];
+        MTLRenderPassColorAttachmentDescriptor colorAttachment = rpDesc.ColorAttachments[0];
         colorAttachment.texture = mtlSrc.DeviceTexture;
-        colorAttachment.loadAction = MTLLoadAction.Load;
-        colorAttachment.storeAction = MTLStoreAction.MultisampleResolve;
-        colorAttachment.resolveTexture = mtlDst.DeviceTexture;
+        colorAttachment.LoadAction = MTLLoadAction.Load;
+        colorAttachment.StoreAction = MTLStoreAction.MultisampleResolve;
+        colorAttachment.ResolveTexture = mtlDst.DeviceTexture;
 
         using (NSAutoreleasePool.Begin()) {
-            MTLRenderCommandEncoder encoder = this.cb.renderCommandEncoderWithDescriptor(rpDesc);
-            encoder.endEncoding();
+            MTLRenderCommandEncoder encoder = this.cb.RenderCommandEncoderWithDescriptor(rpDesc);
+            encoder.EndEncoding();
         }
 
-        ObjectiveCRuntime.release(rpDesc.NativePtr);
+        ObjectiveCRuntime.Release(rpDesc.NativePtr);
     }
 
     /// <summary>
@@ -765,37 +765,37 @@ internal unsafe class MtlCommandList : CommandList {
             Debug.Assert(this._graphicsPipeline != null);
 
             if (this._graphicsPipeline.RenderPipelineState.NativePtr != this._lastGraphicsPipeline?.RenderPipelineState.NativePtr) {
-                this._rce.setRenderPipelineState(this._graphicsPipeline.RenderPipelineState);
+                this._rce.SetRenderPipelineState(this._graphicsPipeline.RenderPipelineState);
             }
 
             if (this._graphicsPipeline.CullMode != this._lastGraphicsPipeline?.CullMode) {
-                this._rce.setCullMode(this._graphicsPipeline.CullMode);
+                this._rce.SetCullMode(this._graphicsPipeline.CullMode);
             }
 
             if (this._graphicsPipeline.FrontFace != this._lastGraphicsPipeline?.FrontFace) {
-                this._rce.setFrontFacing(this._graphicsPipeline.FrontFace);
+                this._rce.SetFrontFacing(this._graphicsPipeline.FrontFace);
             }
 
             if (this._graphicsPipeline.FillMode != this._lastGraphicsPipeline?.FillMode) {
-                this._rce.setTriangleFillMode(this._graphicsPipeline.FillMode);
+                this._rce.SetTriangleFillMode(this._graphicsPipeline.FillMode);
             }
 
             RgbaFloat blendColor = this._graphicsPipeline.BlendColor;
             if (blendColor != this._lastGraphicsPipeline?.BlendColor) {
-                this._rce.setBlendColor(blendColor.R, blendColor.G, blendColor.B, blendColor.A);
+                this._rce.SetBlendColor(blendColor.R, blendColor.G, blendColor.B, blendColor.A);
             }
 
             if (this.Framebuffer.DepthTarget != null) {
                 if (this._graphicsPipeline.DepthStencilState.NativePtr != this._lastGraphicsPipeline?.DepthStencilState.NativePtr) {
-                    this._rce.setDepthStencilState(this._graphicsPipeline.DepthStencilState);
+                    this._rce.SetDepthStencilState(this._graphicsPipeline.DepthStencilState);
                 }
 
                 if (this._graphicsPipeline.DepthClipMode != this._lastGraphicsPipeline?.DepthClipMode) {
-                    this._rce.setDepthClipMode(this._graphicsPipeline.DepthClipMode);
+                    this._rce.SetDepthClipMode(this._graphicsPipeline.DepthClipMode);
                 }
 
                 if (this._graphicsPipeline.StencilReference != this._lastGraphicsPipeline?.StencilReference) {
-                    this._rce.setStencilReferenceValue(this._graphicsPipeline.StencilReference);
+                    this._rce.SetStencilReferenceValue(this._graphicsPipeline.StencilReference);
                 }
             }
 
@@ -813,7 +813,7 @@ internal unsafe class MtlCommandList : CommandList {
                     UIntPtr index = this._graphicsPipeline.ResourceBindingModel == ResourceBindingModel.Improved
                         ? this._nonVertexBufferCount + i
                         : i;
-                    this._rce.setVertexBuffer(this._vertexBuffers[i].DeviceBuffer, this._vbOffsets[i], index);
+                    this._rce.SetVertexBuffer(this._vertexBuffers[i].DeviceBuffer, this._vbOffsets[i], index);
 
                     this._vertexBuffersActive[i] = true;
                     this._vbOffsetsActive[i] = true;
@@ -824,7 +824,7 @@ internal unsafe class MtlCommandList : CommandList {
                         ? this._nonVertexBufferCount + i
                         : i;
 
-                    this._rce.setVertexBufferOffset(this._vbOffsets[i], index);
+                    this._rce.SetVertexBufferOffset(this._vbOffsets[i], index);
 
                     this._vbOffsetsActive[i] = true;
                 }
@@ -842,11 +842,11 @@ internal unsafe class MtlCommandList : CommandList {
     private void FlushViewports() {
         if (this.gd.MetalFeatures.IsSupported(MTLFeatureSet.macOS_GPUFamily1_v3)) {
             fixed (MTLViewport* viewportsPtr = &this._viewports[0]) {
-                this._rce.setViewports(viewportsPtr, this._viewportCount);
+                this._rce.SetViewports(viewportsPtr, this._viewportCount);
             }
         }
         else {
-            this._rce.setViewport(this._viewports[0]);
+            this._rce.SetViewport(this._viewports[0]);
         }
     }
 
@@ -864,13 +864,13 @@ internal unsafe class MtlCommandList : CommandList {
 
             if (scissorRectsChanged) {
                 fixed (MTLScissorRect* scissorRectsPtr = this._scissorRects) {
-                    this._rce.setScissorRects(scissorRectsPtr, this._viewportCount);
+                    this._rce.SetScissorRects(scissorRectsPtr, this._viewportCount);
                 }
             }
         }
         else {
             if (!this._scissorRects[0].Equals(this._activeScissorRects[0])) {
-                this._rce.setScissorRect(this._scissorRects[0]);
+                this._rce.SetScissorRect(this._scissorRects[0]);
             }
 
             this._activeScissorRects[0] = this._scissorRects[0];
@@ -884,7 +884,7 @@ internal unsafe class MtlCommandList : CommandList {
         this.EnsureComputeEncoder();
 
         if (this._computePipeline.ComputePipelineState.NativePtr != this._lastComputePipeline?.ComputePipelineState.NativePtr) {
-            this._cce.setComputePipelineState(this._computePipeline.ComputePipelineState);
+            this._cce.SetComputePipelineState(this._computePipeline.ComputePipelineState);
         }
 
         this._lastComputePipeline = this._computePipeline;
@@ -1056,7 +1056,7 @@ internal unsafe class MtlCommandList : CommandList {
             UIntPtr index = slot + baseBuffer;
 
             if (!this._boundComputeBuffers.TryGetValue(index, out DeviceBufferRange boundBuffer) || !range.Equals(boundBuffer)) {
-                this._cce.setBuffer(mtlBuffer.DeviceBuffer, range.Offset, slot + baseBuffer);
+                this._cce.SetBuffer(mtlBuffer.DeviceBuffer, range.Offset, slot + baseBuffer);
                 this._boundComputeBuffers[index] = range;
             }
         }
@@ -1067,11 +1067,11 @@ internal unsafe class MtlCommandList : CommandList {
                     : slot + this._vertexBufferCount + baseBuffer;
 
                 if (!this._boundVertexBuffers.TryGetValue(index, out DeviceBufferRange boundBuffer) || boundBuffer.Buffer != range.Buffer) {
-                    this._rce.setVertexBuffer(mtlBuffer.DeviceBuffer, range.Offset, index);
+                    this._rce.SetVertexBuffer(mtlBuffer.DeviceBuffer, range.Offset, index);
                     this._boundVertexBuffers[index] = range;
                 }
                 else if (!range.Equals(boundBuffer)) {
-                    this._rce.setVertexBufferOffset(range.Offset, index);
+                    this._rce.SetVertexBufferOffset(range.Offset, index);
                     this._boundVertexBuffers[index] = range;
                 }
             }
@@ -1080,11 +1080,11 @@ internal unsafe class MtlCommandList : CommandList {
                 UIntPtr index = slot + baseBuffer;
 
                 if (!this._boundFragmentBuffers.TryGetValue(index, out DeviceBufferRange boundBuffer) || boundBuffer.Buffer != range.Buffer) {
-                    this._rce.setFragmentBuffer(mtlBuffer.DeviceBuffer, range.Offset, slot + baseBuffer);
+                    this._rce.SetFragmentBuffer(mtlBuffer.DeviceBuffer, range.Offset, slot + baseBuffer);
                     this._boundFragmentBuffers[index] = range;
                 }
                 else if (!range.Equals(boundBuffer)) {
-                    this._rce.setFragmentBufferOffset(range.Offset, slot + baseBuffer);
+                    this._rce.SetFragmentBufferOffset(range.Offset, slot + baseBuffer);
                     this._boundFragmentBuffers[index] = range;
                 }
             }
@@ -1103,19 +1103,19 @@ internal unsafe class MtlCommandList : CommandList {
         UIntPtr index = slot + baseTexture;
 
         if (stages == ShaderStages.Compute && (!this._boundComputeTextures.TryGetValue(index, out MTLTexture computeTexture) || computeTexture.NativePtr != mtlTexView.TargetDeviceTexture.NativePtr)) {
-            this._cce.setTexture(mtlTexView.TargetDeviceTexture, index);
+            this._cce.SetTexture(mtlTexView.TargetDeviceTexture, index);
             this._boundComputeTextures[index] = mtlTexView.TargetDeviceTexture;
         }
 
         if ((stages & ShaderStages.Vertex) == ShaderStages.Vertex
             && (!this._boundVertexTextures.TryGetValue(index, out MTLTexture vertexTexture) || vertexTexture.NativePtr != mtlTexView.TargetDeviceTexture.NativePtr)) {
-            this._rce.setVertexTexture(mtlTexView.TargetDeviceTexture, index);
+            this._rce.SetVertexTexture(mtlTexView.TargetDeviceTexture, index);
             this._boundVertexTextures[index] = mtlTexView.TargetDeviceTexture;
         }
 
         if ((stages & ShaderStages.Fragment) == ShaderStages.Fragment
             && (!this._boundFragmentTextures.TryGetValue(index, out MTLTexture fragmentTexture) || fragmentTexture.NativePtr != mtlTexView.TargetDeviceTexture.NativePtr)) {
-            this._rce.setFragmentTexture(mtlTexView.TargetDeviceTexture, index);
+            this._rce.SetFragmentTexture(mtlTexView.TargetDeviceTexture, index);
             this._boundFragmentTextures[index] = mtlTexView.TargetDeviceTexture;
         }
     }
@@ -1132,19 +1132,19 @@ internal unsafe class MtlCommandList : CommandList {
         UIntPtr index = slot + baseSampler;
 
         if (stages == ShaderStages.Compute && (!this._boundComputeSamplers.TryGetValue(index, out MTLSamplerState computeSampler) || computeSampler.NativePtr != mtlSampler.DeviceSampler.NativePtr)) {
-            this._cce.setSamplerState(mtlSampler.DeviceSampler, index);
+            this._cce.SetSamplerState(mtlSampler.DeviceSampler, index);
             this._boundComputeSamplers[index] = mtlSampler.DeviceSampler;
         }
 
         if ((stages & ShaderStages.Vertex) == ShaderStages.Vertex
             && (!this._boundVertexSamplers.TryGetValue(index, out MTLSamplerState vertexSampler) || vertexSampler.NativePtr != mtlSampler.DeviceSampler.NativePtr)) {
-            this._rce.setVertexSamplerState(mtlSampler.DeviceSampler, index);
+            this._rce.SetVertexSamplerState(mtlSampler.DeviceSampler, index);
             this._boundVertexSamplers[index] = mtlSampler.DeviceSampler;
         }
 
         if ((stages & ShaderStages.Fragment) == ShaderStages.Fragment
             && (!this._boundFragmentSamplers.TryGetValue(index, out MTLSamplerState fragmentSampler) || fragmentSampler.NativePtr != mtlSampler.DeviceSampler.NativePtr)) {
-            this._rce.setFragmentSamplerState(mtlSampler.DeviceSampler, index);
+            this._rce.SetFragmentSamplerState(mtlSampler.DeviceSampler, index);
             this._boundFragmentSamplers[index] = mtlSampler.DeviceSampler;
         }
     }
@@ -1227,34 +1227,34 @@ internal unsafe class MtlCommandList : CommandList {
 
         for (uint i = 0; i < this._clearColors.Length; i++) {
             if (this._clearColors[i] != null) {
-                MTLRenderPassColorAttachmentDescriptor attachment = rpDesc.colorAttachments[0];
-                attachment.loadAction = MTLLoadAction.Clear;
+                MTLRenderPassColorAttachmentDescriptor attachment = rpDesc.ColorAttachments[0];
+                attachment.LoadAction = MTLLoadAction.Clear;
                 RgbaFloat c = this._clearColors[i].Value;
-                attachment.clearColor = new MTLClearColor(c.R, c.G, c.B, c.A);
+                attachment.ClearColor = new MTLClearColor(c.R, c.G, c.B, c.A);
                 this._clearColors[i] = null;
             }
         }
 
         if (this._clearDepth != null) {
-            MTLRenderPassDepthAttachmentDescriptor depthAttachment = rpDesc.depthAttachment;
-            depthAttachment.loadAction = MTLLoadAction.Clear;
-            depthAttachment.clearDepth = this._clearDepth.Value.depth;
+            MTLRenderPassDepthAttachmentDescriptor depthAttachment = rpDesc.DepthAttachment;
+            depthAttachment.LoadAction = MTLLoadAction.Clear;
+            depthAttachment.ClearDepth = this._clearDepth.Value.depth;
 
             if (this._mtlFramebuffer.DepthTarget != null && FormatHelpers.IsStencilFormat(this._mtlFramebuffer.DepthTarget.Value.Target.Format)) {
-                MTLRenderPassStencilAttachmentDescriptor stencilAttachment = rpDesc.stencilAttachment;
-                stencilAttachment.loadAction = MTLLoadAction.Clear;
-                stencilAttachment.clearStencil = this._clearDepth.Value.stencil;
+                MTLRenderPassStencilAttachmentDescriptor stencilAttachment = rpDesc.StencilAttachment;
+                stencilAttachment.LoadAction = MTLLoadAction.Clear;
+                stencilAttachment.ClearStencil = this._clearDepth.Value.stencil;
             }
 
             this._clearDepth = null;
         }
 
         using (NSAutoreleasePool.Begin()) {
-            this._rce = this.cb.renderCommandEncoderWithDescriptor(rpDesc);
-            ObjectiveCRuntime.retain(this._rce.NativePtr);
+            this._rce = this.cb.RenderCommandEncoderWithDescriptor(rpDesc);
+            ObjectiveCRuntime.Retain(this._rce.NativePtr);
         }
 
-        ObjectiveCRuntime.release(rpDesc.NativePtr);
+        ObjectiveCRuntime.Release(rpDesc.NativePtr);
         this._currentFramebufferEverActive = true;
 
         return true;
@@ -1275,8 +1275,8 @@ internal unsafe class MtlCommandList : CommandList {
     /// Ends the current render pass operation.
     /// </summary>
     private void EndCurrentRenderPass() {
-        this._rce.endEncoding();
-        ObjectiveCRuntime.release(this._rce.NativePtr);
+        this._rce.EndEncoding();
+        ObjectiveCRuntime.Release(this._rce.NativePtr);
         this._rce = default;
 
         this._lastGraphicsPipeline = null;
@@ -1304,8 +1304,8 @@ internal unsafe class MtlCommandList : CommandList {
             this.EnsureNoComputeEncoder();
 
             using (NSAutoreleasePool.Begin()) {
-                this._bce = this.cb.blitCommandEncoder();
-                ObjectiveCRuntime.retain(this._bce.NativePtr);
+                this._bce = this.cb.BlitCommandEncoder();
+                ObjectiveCRuntime.Retain(this._bce.NativePtr);
             }
         }
 
@@ -1319,8 +1319,8 @@ internal unsafe class MtlCommandList : CommandList {
     /// </summary>
     private void EnsureNoBlitEncoder() {
         if (this.blitEncoderActive) {
-            this._bce.endEncoding();
-            ObjectiveCRuntime.release(this._bce.NativePtr);
+            this._bce.EndEncoding();
+            ObjectiveCRuntime.Release(this._bce.NativePtr);
             this._bce = default;
         }
 
@@ -1336,8 +1336,8 @@ internal unsafe class MtlCommandList : CommandList {
             this.EnsureNoRenderPass();
 
             using (NSAutoreleasePool.Begin()) {
-                this._cce = this.cb.computeCommandEncoder();
-                ObjectiveCRuntime.retain(this._cce.NativePtr);
+                this._cce = this.cb.ComputeCommandEncoder();
+                ObjectiveCRuntime.Retain(this._cce.NativePtr);
             }
         }
 
@@ -1351,8 +1351,8 @@ internal unsafe class MtlCommandList : CommandList {
     /// </summary>
     private void EnsureNoComputeEncoder() {
         if (this.computeEncoderActive) {
-            this._cce.endEncoding();
-            ObjectiveCRuntime.release(this._cce.NativePtr);
+            this._cce.EndEncoding();
+            ObjectiveCRuntime.Release(this._cce.NativePtr);
             this._cce = default;
 
             this._boundComputeBuffers.Clear();
@@ -1396,10 +1396,10 @@ internal unsafe class MtlCommandList : CommandList {
     private protected override void DrawCore(uint vertexCount, uint instanceCount, uint vertexStart, uint instanceStart) {
         if (this.PreDrawCommand()) {
             if (instanceStart == 0) {
-                this._rce.drawPrimitives(this._graphicsPipeline.PrimitiveType, vertexStart, vertexCount, instanceCount);
+                this._rce.DrawPrimitives(this._graphicsPipeline.PrimitiveType, vertexStart, vertexCount, instanceCount);
             }
             else {
-                this._rce.drawPrimitives(this._graphicsPipeline.PrimitiveType, vertexStart, vertexCount, instanceCount, instanceStart);
+                this._rce.DrawPrimitives(this._graphicsPipeline.PrimitiveType, vertexStart, vertexCount, instanceCount, instanceStart);
             }
         }
     }
@@ -1418,10 +1418,10 @@ internal unsafe class MtlCommandList : CommandList {
             uint indexBufferOffset = indexSize * indexStart + this._ibOffset;
 
             if (vertexOffset == 0 && instanceStart == 0) {
-                this._rce.drawIndexedPrimitives(this._graphicsPipeline.PrimitiveType, indexCount, this._indexType, this._indexBuffer.DeviceBuffer, indexBufferOffset, instanceCount);
+                this._rce.DrawIndexedPrimitives(this._graphicsPipeline.PrimitiveType, indexCount, this._indexType, this._indexBuffer.DeviceBuffer, indexBufferOffset, instanceCount);
             }
             else {
-                this._rce.drawIndexedPrimitives(this._graphicsPipeline.PrimitiveType, indexCount, this._indexType, this._indexBuffer.DeviceBuffer, indexBufferOffset, instanceCount, vertexOffset, instanceStart);
+                this._rce.DrawIndexedPrimitives(this._graphicsPipeline.PrimitiveType, indexCount, this._indexType, this._indexBuffer.DeviceBuffer, indexBufferOffset, instanceCount, vertexOffset, instanceStart);
             }
         }
     }
@@ -1482,7 +1482,7 @@ internal unsafe class MtlCommandList : CommandList {
             Debug.Assert(bufferOffsetInBytes % 4 == 0);
             uint sizeRoundFactor = (4 - sizeInBytes % 4) % 4;
             this.EnsureBlitEncoder();
-            this._bce.copy(staging.DeviceBuffer, UIntPtr.Zero, dstMtlBuffer.DeviceBuffer, bufferOffsetInBytes, sizeInBytes + sizeRoundFactor);
+            this._bce.Copy(staging.DeviceBuffer, UIntPtr.Zero, dstMtlBuffer.DeviceBuffer, bufferOffsetInBytes, sizeInBytes + sizeRoundFactor);
         }
 
         lock (this._submittedCommandsLock) {
@@ -1498,7 +1498,7 @@ internal unsafe class MtlCommandList : CommandList {
         Debug.Assert(texture.MipLevels > 1);
         this.EnsureBlitEncoder();
         MtlTexture mtlTex = Util.AssertSubtype<Texture, MtlTexture>(texture);
-        this._bce.generateMipmapsForTexture(mtlTex.DeviceTexture);
+        this._bce.GenerateMipmapsForTexture(mtlTex.DeviceTexture);
     }
 
     /// <summary>
@@ -1544,16 +1544,16 @@ internal unsafe class MtlCommandList : CommandList {
     private protected override void PushDebugGroupCore(string name) {
         NSString nsName = NSString.New(name);
         if (!this._bce.IsNull) {
-            this._bce.pushDebugGroup(nsName);
+            this._bce.PushDebugGroup(nsName);
         }
         else if (!this._cce.IsNull) {
-            this._cce.pushDebugGroup(nsName);
+            this._cce.PushDebugGroup(nsName);
         }
         else if (!this._rce.IsNull) {
-            this._rce.pushDebugGroup(nsName);
+            this._rce.PushDebugGroup(nsName);
         }
 
-        ObjectiveCRuntime.release(nsName);
+        ObjectiveCRuntime.Release(nsName);
     }
 
     /// <summary>
@@ -1561,13 +1561,13 @@ internal unsafe class MtlCommandList : CommandList {
     /// </summary>
     private protected override void PopDebugGroupCore() {
         if (!this._bce.IsNull) {
-            this._bce.popDebugGroup();
+            this._bce.PopDebugGroup();
         }
         else if (!this._cce.IsNull) {
-            this._cce.popDebugGroup();
+            this._cce.PopDebugGroup();
         }
         else if (!this._rce.IsNull) {
-            this._rce.popDebugGroup();
+            this._rce.PopDebugGroup();
         }
     }
 
@@ -1578,16 +1578,16 @@ internal unsafe class MtlCommandList : CommandList {
     private protected override void InsertDebugMarkerCore(string name) {
         NSString nsName = NSString.New(name);
         if (!this._bce.IsNull) {
-            this._bce.insertDebugSignpost(nsName);
+            this._bce.InsertDebugSignpost(nsName);
         }
         else if (!this._cce.IsNull) {
-            this._cce.insertDebugSignpost(nsName);
+            this._cce.InsertDebugSignpost(nsName);
         }
         else if (!this._rce.IsNull) {
-            this._rce.insertDebugSignpost(nsName);
+            this._rce.InsertDebugSignpost(nsName);
         }
 
-        ObjectiveCRuntime.release(nsName);
+        ObjectiveCRuntime.Release(nsName);
     }
 
     /// <summary>
@@ -1613,15 +1613,15 @@ internal unsafe class MtlCommandList : CommandList {
 
         if (this._pushConstantsUseComputePipeline) {
             this.EnsureComputeEncoder();
-            this._cce.setBytes(pushConstantData, (UIntPtr)totalSize, pipeline.ComputePushConstantSlot);
+            this._cce.SetBytes(pushConstantData, (UIntPtr)totalSize, pipeline.ComputePushConstantSlot);
         }
         else {
             if (!this.EnsureRenderPass()) {
                 throw new VeldridException("A render pass must be active before graphics push constants can be set on Metal.");
             }
 
-            this._rce.setVertexBytes(pushConstantData, (UIntPtr)totalSize, pipeline.VertexPushConstantSlot);
-            this._rce.setFragmentBytes(pushConstantData, (UIntPtr)totalSize, pipeline.FragmentPushConstantSlot);
+            this._rce.SetVertexBytes(pushConstantData, (UIntPtr)totalSize, pipeline.VertexPushConstantSlot);
+            this._rce.SetFragmentBytes(pushConstantData, (UIntPtr)totalSize, pipeline.FragmentPushConstantSlot);
         }
     }
 }

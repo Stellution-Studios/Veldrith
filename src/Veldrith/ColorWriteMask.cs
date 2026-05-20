@@ -14,22 +14,22 @@ public enum ColorWriteMask {
     None,
 
     /// <summary>
-    /// The red component will be written to.
+    /// The Red component will be written to.
     /// </summary>
     Red = 1 << 0,
 
     /// <summary>
-    /// The green component will be written to.
+    /// The Green component will be written to.
     /// </summary>
     Green = 1 << 1,
 
     /// <summary>
-    /// The blue component will be written to.
+    /// The Blue component will be written to.
     /// </summary>
     Blue = 1 << 2,
 
     /// <summary>
-    /// The alpha component will be written to.
+    /// The Alpha component will be written to.
     /// </summary>
     Alpha = 1 << 3,
 

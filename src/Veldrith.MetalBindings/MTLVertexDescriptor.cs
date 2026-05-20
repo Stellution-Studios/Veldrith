@@ -13,19 +13,17 @@ public struct MTLVertexDescriptor {
     /// </summary>
     public readonly IntPtr NativePtr;
 
-    public MTLVertexBufferLayoutDescriptorArray layouts
-        => objc_msgSend<MTLVertexBufferLayoutDescriptorArray>(this.NativePtr, sel_layouts);
+    public MTLVertexBufferLayoutDescriptorArray Layouts => objc_msgSend<MTLVertexBufferLayoutDescriptorArray>(this.NativePtr, _selLayouts);
 
-    public MTLVertexAttributeDescriptorArray attributes
-        => objc_msgSend<MTLVertexAttributeDescriptorArray>(this.NativePtr, sel_attributes);
+    public MTLVertexAttributeDescriptorArray Attributes => objc_msgSend<MTLVertexAttributeDescriptorArray>(this.NativePtr, _selAttributes);
 
     /// <summary>
     /// Stores the sel layouts state used by this instance.
     /// </summary>
-    private static readonly Selector sel_layouts = "layouts";
+    private static readonly Selector _selLayouts = "layouts";
 
     /// <summary>
     /// Stores the sel attributes state used by this instance.
     /// </summary>
-    private static readonly Selector sel_attributes = "attributes";
+    private static readonly Selector _selAttributes = "attributes";
 }

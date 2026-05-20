@@ -161,15 +161,11 @@ public enum MTLPixelFormat : uint {
     /// <summary>
     /// Executes the receive logic for this backend.
     /// </summary>
-
-
-
-
     ASTC_4x4_LDR = 204, ASTC_5x4_LDR = 205, ASTC_5x5_LDR = 206, ASTC_6x5_LDR = 207, ASTC_6x6_LDR = 208, ASTC_8x5_LDR = 210, ASTC_8x6_LDR = 211, ASTC_8x8_LDR = 212, ASTC_10x5_LDR = 213, ASTC_10x6_LDR = 214, ASTC_10x8_LDR = 215, ASTC_10x10_LDR = 216, ASTC_12x10_LDR = 217, ASTC_12x12_LDR = 218,
 
     /*!
      @constant GBGR422
-     @abstract A pixel format where the red and green channels are subsampled horizontally.  Two pixels are stored in 32 bits, with shared red and blue values, and unique green values. @discussion This format is equivelent to YUY2, YUYV, yuvs, or GL_RGB_422_APPLE/GL_UNSIGNED_SHORT_8_8_REV_APPLE.   The component order, from lowest addressed byte to highest, is Y0, Cb, Y1, Cr.  There is no implicit colorspace conversion from YUV to RGB, the shader will receive (Cr, Y, Cb, 1).  422 textures must have a width that is a multiple of 2, and can only be used for 2D non-mipmap textures.  When sampling, ClampToEdge is the only usable wrap mode. */
+     @abstract A pixel format where the Red and Green channels are subsampled horizontally.  Two pixels are stored in 32 bits, with shared Red and Blue values, and unique Green values. @discussion This format is equivelent to YUY2, YUYV, yuvs, or GL_RGB_422_APPLE/GL_UNSIGNED_SHORT_8_8_REV_APPLE.   The component order, from lowest addressed byte to highest, is Y0, Cb, Y1, Cr.  There is no implicit colorspace conversion from YUV to RGB, the shader will receive (Cr, Y, Cb, 1).  422 textures must have a width that is a multiple of 2, and can only be used for 2D non-mipmap textures.  When sampling, ClampToEdge is the only usable wrap mode. */
 
     /// <summary>
     /// Defines the predefined value for gbgr422.
@@ -182,7 +178,7 @@ public enum MTLPixelFormat : uint {
 
     /*!
      @constant BGRG422
-     @abstract A pixel format where the red and green channels are subsampled horizontally.  Two pixels are stored in 32 bits, with shared red and blue values, and unique green values. @discussion This format is equivelent to UYVY, 2vuy, or GL_RGB_422_APPLE/GL_UNSIGNED_SHORT_8_8_APPLE. The component order, from lowest addressed byte to highest, is Cb, Y0, Cr, Y1.  There is no implicit colorspace conversion from YUV to RGB, the shader will receive (Cr, Y, Cb, 1).  422 textures must have a width that is a multiple of 2, and can only be used for 2D non-mipmap textures.  When sampling, ClampToEdge is the only usable wrap mode. */
+     @abstract A pixel format where the Red and Green channels are subsampled horizontally.  Two pixels are stored in 32 bits, with shared Red and Blue values, and unique Green values. @discussion This format is equivelent to UYVY, 2vuy, or GL_RGB_422_APPLE/GL_UNSIGNED_SHORT_8_8_APPLE. The component order, from lowest addressed byte to highest, is Cb, Y0, Cr, Y1.  There is no implicit colorspace conversion from YUV to RGB, the shader will receive (Cr, Y, Cb, 1).  422 textures must have a width that is a multiple of 2, and can only be used for 2D non-mipmap textures.  When sampling, ClampToEdge is the only usable wrap mode. */
 
     /// <summary>
     /// Defines the predefined value for bgrg422.

@@ -39,19 +39,19 @@ internal class MtlTexture : Texture {
                 : MTLStorageMode.Private;
 
             MTLTextureDescriptor texDescriptor = MTLTextureDescriptor.New();
-            texDescriptor.width = this.Width;
-            texDescriptor.height = this.Height;
-            texDescriptor.depth = this.Depth;
-            texDescriptor.mipmapLevelCount = this.MipLevels;
-            texDescriptor.arrayLength = this.ArrayLayers;
-            texDescriptor.sampleCount = FormatHelpers.GetSampleCountUInt32(this.SampleCount);
-            texDescriptor.textureType = this.MtlTextureType;
-            texDescriptor.pixelFormat = this.MtlPixelFormat;
-            texDescriptor.textureUsage = MtlFormats.VdToMtlTextureUsage(this.Usage);
-            texDescriptor.storageMode = this.MtlStorageMode;
+            texDescriptor.Width = this.Width;
+            texDescriptor.Height = this.Height;
+            texDescriptor.Depth = this.Depth;
+            texDescriptor.MipmapLevelCount = this.MipLevels;
+            texDescriptor.ArrayLength = this.ArrayLayers;
+            texDescriptor.SampleCount = FormatHelpers.GetSampleCountUInt32(this.SampleCount);
+            texDescriptor.TextureType = this.MtlTextureType;
+            texDescriptor.PixelFormat = this.MtlPixelFormat;
+            texDescriptor.TextureUsage = MtlFormats.VdToMtlTextureUsage(this.Usage);
+            texDescriptor.StorageMode = this.MtlStorageMode;
 
-            this.DeviceTexture = gd.Device.newTextureWithDescriptor(texDescriptor);
-            ObjectiveCRuntime.release(texDescriptor.NativePtr);
+            this.DeviceTexture = gd.Device.NewTextureWithDescriptor(texDescriptor);
+            ObjectiveCRuntime.Release(texDescriptor.NativePtr);
         }
         else {
             uint totalStorageSize = 0;
@@ -63,10 +63,10 @@ internal class MtlTexture : Texture {
 
             totalStorageSize *= this.ArrayLayers;
 
-            this.StagingBuffer = gd.Device.newBufferWithLengthOptions(totalStorageSize, MTLResourceOptions.StorageModeShared);
+            this.StagingBuffer = gd.Device.NewBufferWithLengthOptions(totalStorageSize, MTLResourceOptions.StorageModeShared);
 
             unsafe {
-                this.StagingBufferPointer = this.StagingBuffer.contents();
+                this.StagingBufferPointer = this.StagingBuffer.Contents();
             }
         }
     }
@@ -222,10 +222,10 @@ internal class MtlTexture : Texture {
 
             // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
             if (this.StagingBuffer.IsNull) {
-                ObjectiveCRuntime.release(this.DeviceTexture.NativePtr);
+                ObjectiveCRuntime.Release(this.DeviceTexture.NativePtr);
             }
             else {
-                ObjectiveCRuntime.release(this.StagingBuffer.NativePtr);
+                ObjectiveCRuntime.Release(this.StagingBuffer.NativePtr);
             }
         }
     }

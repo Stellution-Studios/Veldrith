@@ -25,10 +25,10 @@ public struct NSWindow {
     /// Gets or sets contentView.
     /// </summary>
 
-    public NSView contentView => objc_msgSend<NSView>(this.NativePtr, sel_contentView);
+    public NSView ContentView => objc_msgSend<NSView>(this.NativePtr, _selContentView);
 
     /// <summary>
     /// Stores the sel content view state used by this instance.
     /// </summary>
-    private static readonly Selector sel_contentView = "contentView";
+    private static readonly Selector _selContentView = "contentView";
 }

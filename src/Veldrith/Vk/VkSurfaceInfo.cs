@@ -1,6 +1,5 @@
 using System;
-using Vulkan;
-using Vulkan.Xlib;
+using Vortice.Vulkan;
 
 namespace Veldrith.Vk;
 
@@ -30,7 +29,7 @@ public abstract class VkSurfaceSource {
     /// <param name="display">The display value used by this operation.</param>
     /// <param name="window">The window value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    public static unsafe VkSurfaceSource CreateXlib(Display* display, Window window) {
+    public static VkSurfaceSource CreateXlib(IntPtr display, IntPtr window) {
         return new XlibVkSurfaceInfo(display, window);
     }
 
@@ -54,14 +53,14 @@ public abstract class VkSurfaceSource {
 internal class Win32VkSurfaceInfo : VkSurfaceSource {
 
     /// <summary>
-    /// Stores the hinstance state used by this instance.
+    /// Stores the native HINSTANCE used by this instance.
     /// </summary>
-    private readonly IntPtr hinstance;
+    private readonly IntPtr _hinstance;
 
     /// <summary>
-    /// Stores the hwnd state used by this instance.
+    /// Stores the native HWND used by this instance.
     /// </summary>
-    private readonly IntPtr hwnd;
+    private readonly IntPtr _hwnd;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Win32VkSurfaceInfo" /> type.
@@ -69,8 +68,8 @@ internal class Win32VkSurfaceInfo : VkSurfaceSource {
     /// <param name="hinstance">The hinstance value used by this operation.</param>
     /// <param name="hwnd">The hwnd value used by this operation.</param>
     public Win32VkSurfaceInfo(IntPtr hinstance, IntPtr hwnd) {
-        this.hinstance = hinstance;
-        this.hwnd = hwnd;
+        this._hinstance = hinstance;
+        this._hwnd = hwnd;
     }
 
     /// <summary>
@@ -87,7 +86,7 @@ internal class Win32VkSurfaceInfo : VkSurfaceSource {
     /// </summary>
     /// <returns>The value produced by this operation.</returns>
     internal override SwapchainSource GetSurfaceSource() {
-        return new Win32SwapchainSource(this.hwnd, this.hinstance);
+        return new Win32SwapchainSource(this._hwnd, this._hinstance);
     }
 }
 
@@ -97,23 +96,23 @@ internal class Win32VkSurfaceInfo : VkSurfaceSource {
 internal class XlibVkSurfaceInfo : VkSurfaceSource {
 
     /// <summary>
-    /// Stores the display state used by this instance.
+    /// Stores the native display handle used by this instance.
     /// </summary>
-    private readonly unsafe Display* display;
+    private readonly IntPtr _display;
 
     /// <summary>
-    /// Stores the window state used by this instance.
+    /// Stores the native window handle used by this instance.
     /// </summary>
-    private readonly Window window;
+    private readonly IntPtr _window;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="XlibVkSurfaceInfo" /> type.
     /// </summary>
     /// <param name="display">The display value used by this operation.</param>
     /// <param name="window">The window value used by this operation.</param>
-    public unsafe XlibVkSurfaceInfo(Display* display, Window window) {
-        this.display = display;
-        this.window = window;
+    public XlibVkSurfaceInfo(IntPtr display, IntPtr window) {
+        this._display = display;
+        this._window = window;
     }
 
     /// <summary>
@@ -129,7 +128,7 @@ internal class XlibVkSurfaceInfo : VkSurfaceSource {
     /// Gets the surface source value.
     /// </summary>
     /// <returns>The value produced by this operation.</returns>
-    internal override unsafe SwapchainSource GetSurfaceSource() {
-        return new XlibSwapchainSource((IntPtr)this.display, this.window.Value);
+    internal override SwapchainSource GetSurfaceSource() {
+        return new XlibSwapchainSource(this._display, this._window);
     }
 }

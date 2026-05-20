@@ -16,108 +16,108 @@ public struct MTLStencilDescriptor {
     /// <summary>
     /// Gets or sets stencilFailureOperation.
     /// </summary>
-    public MTLStencilOperation stencilFailureOperation {
-        get => (MTLStencilOperation)uint_objc_msgSend(this.NativePtr, sel_stencilFailureOperation);
-        set => objc_msgSend(this.NativePtr, sel_setStencilFailureOperation, (uint)value);
+    public MTLStencilOperation StencilFailureOperation {
+        get => (MTLStencilOperation)uint_objc_msgSend(this.NativePtr, _selStencilFailureOperation);
+        set => objc_msgSend(this.NativePtr, _selSetStencilFailureOperation, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets depthFailureOperation.
     /// </summary>
-    public MTLStencilOperation depthFailureOperation {
-        get => (MTLStencilOperation)uint_objc_msgSend(this.NativePtr, sel_depthFailureOperation);
-        set => objc_msgSend(this.NativePtr, sel_setDepthFailureOperation, (uint)value);
+    public MTLStencilOperation DepthFailureOperation {
+        get => (MTLStencilOperation)uint_objc_msgSend(this.NativePtr, _selDepthFailureOperation);
+        set => objc_msgSend(this.NativePtr, _selSetDepthFailureOperation, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets depthStencilPassOperation.
     /// </summary>
-    public MTLStencilOperation depthStencilPassOperation {
-        get => (MTLStencilOperation)uint_objc_msgSend(this.NativePtr, sel_depthStencilPassOperation);
-        set => objc_msgSend(this.NativePtr, sel_setDepthStencilPassOperation, (uint)value);
+    public MTLStencilOperation DepthStencilPassOperation {
+        get => (MTLStencilOperation)uint_objc_msgSend(this.NativePtr, _selDepthStencilPassOperation);
+        set => objc_msgSend(this.NativePtr, _selSetDepthStencilPassOperation, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets stencilCompareFunction.
     /// </summary>
-    public MTLCompareFunction stencilCompareFunction {
-        get => (MTLCompareFunction)uint_objc_msgSend(this.NativePtr, sel_stencilCompareFunction);
-        set => objc_msgSend(this.NativePtr, sel_setStencilCompareFunction, (uint)value);
+    public MTLCompareFunction StencilCompareFunction {
+        get => (MTLCompareFunction)uint_objc_msgSend(this.NativePtr, _selStencilCompareFunction);
+        set => objc_msgSend(this.NativePtr, _selSetStencilCompareFunction, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets readMask.
     /// </summary>
-    public uint readMask {
-        get => uint_objc_msgSend(this.NativePtr, sel_readMask);
-        set => objc_msgSend(this.NativePtr, sel_setReadMask, value);
+    public uint ReadMask {
+        get => uint_objc_msgSend(this.NativePtr, _selReadMask);
+        set => objc_msgSend(this.NativePtr, _selSetReadMask, value);
     }
 
     /// <summary>
     /// Gets or sets writeMask.
     /// </summary>
-    public uint writeMask {
-        get => uint_objc_msgSend(this.NativePtr, sel_writeMask);
-        set => objc_msgSend(this.NativePtr, sel_setWriteMask, value);
+    public uint WriteMask {
+        get => uint_objc_msgSend(this.NativePtr, _selWriteMask);
+        set => objc_msgSend(this.NativePtr, _selSetWriteMask, value);
     }
 
     /// <summary>
     /// Stores the sel depth failure operation value used during command execution.
     /// </summary>
-    private static readonly Selector sel_depthFailureOperation = "depthFailureOperation";
+    private static readonly Selector _selDepthFailureOperation = "depthFailureOperation";
 
     /// <summary>
     /// Stores the sel stencil failure operation state used by this instance.
     /// </summary>
-    private static readonly Selector sel_stencilFailureOperation = "stencilFailureOperation";
+    private static readonly Selector _selStencilFailureOperation = "stencilFailureOperation";
 
     /// <summary>
     /// Stores the sel set stencil failure operation state used by this instance.
     /// </summary>
-    private static readonly Selector sel_setStencilFailureOperation = "setStencilFailureOperation:";
+    private static readonly Selector _selSetStencilFailureOperation = "setStencilFailureOperation:";
 
     /// <summary>
     /// Stores the sel set depth failure operation value used during command execution.
     /// </summary>
-    private static readonly Selector sel_setDepthFailureOperation = "setDepthFailureOperation:";
+    private static readonly Selector _selSetDepthFailureOperation = "setDepthFailureOperation:";
 
     /// <summary>
     /// Stores the sel depth stencil pass operation value used during command execution.
     /// </summary>
-    private static readonly Selector sel_depthStencilPassOperation = "depthStencilPassOperation";
+    private static readonly Selector _selDepthStencilPassOperation = "depthStencilPassOperation";
 
     /// <summary>
     /// Stores the sel set depth stencil pass operation value used during command execution.
     /// </summary>
-    private static readonly Selector sel_setDepthStencilPassOperation = "setDepthStencilPassOperation:";
+    private static readonly Selector _selSetDepthStencilPassOperation = "setDepthStencilPassOperation:";
 
     /// <summary>
     /// Stores the sel stencil compare function state used by this instance.
     /// </summary>
-    private static readonly Selector sel_stencilCompareFunction = "stencilCompareFunction";
+    private static readonly Selector _selStencilCompareFunction = "stencilCompareFunction";
 
     /// <summary>
     /// Stores the sel set stencil compare function state used by this instance.
     /// </summary>
-    private static readonly Selector sel_setStencilCompareFunction = "setStencilCompareFunction:";
+    private static readonly Selector _selSetStencilCompareFunction = "setStencilCompareFunction:";
 
     /// <summary>
     /// Stores the sel read mask state used by this instance.
     /// </summary>
-    private static readonly Selector sel_readMask = "readMask";
+    private static readonly Selector _selReadMask = "readMask";
 
     /// <summary>
     /// Stores the sel set read mask state used by this instance.
     /// </summary>
-    private static readonly Selector sel_setReadMask = "setReadMask:";
+    private static readonly Selector _selSetReadMask = "setReadMask:";
 
     /// <summary>
     /// Stores the sel write mask state used by this instance.
     /// </summary>
-    private static readonly Selector sel_writeMask = "writeMask";
+    private static readonly Selector _selWriteMask = "writeMask";
 
     /// <summary>
     /// Stores the sel set write mask state used by this instance.
     /// </summary>
-    private static readonly Selector sel_setWriteMask = "setWriteMask:";
+    private static readonly Selector _selSetWriteMask = "setWriteMask:";
 }

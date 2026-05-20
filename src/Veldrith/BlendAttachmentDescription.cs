@@ -33,17 +33,17 @@ public struct BlendAttachmentDescription : IEquatable<BlendAttachmentDescription
     public BlendFunction ColorFunction;
 
     /// <summary>
-    /// Controls the source alpha's influence on the blend result.
+    /// Controls the source Alpha's influence on the blend result.
     /// </summary>
     public BlendFactor SourceAlphaFactor;
 
     /// <summary>
-    /// Controls the destination alpha's influence on the blend result.
+    /// Controls the destination Alpha's influence on the blend result.
     /// </summary>
     public BlendFactor DestinationAlphaFactor;
 
     /// <summary>
-    /// Controls the function used to combine the source and destination alpha factors.
+    /// Controls the function used to combine the source and destination Alpha factors.
     /// </summary>
     public BlendFunction AlphaFunction;
 
@@ -54,9 +54,9 @@ public struct BlendAttachmentDescription : IEquatable<BlendAttachmentDescription
     /// <param name="sourceColorFactor">The source color factor value used by this operation.</param>
     /// <param name="destinationColorFactor">The destination color factor value used by this operation.</param>
     /// <param name="colorFunction">The color function value used by this operation.</param>
-    /// <param name="sourceAlphaFactor">The source alpha factor value used by this operation.</param>
-    /// <param name="destinationAlphaFactor">The destination alpha factor value used by this operation.</param>
-    /// <param name="alphaFunction">The alpha function value used by this operation.</param>
+    /// <param name="sourceAlphaFactor">The source Alpha factor value used by this operation.</param>
+    /// <param name="destinationAlphaFactor">The destination Alpha factor value used by this operation.</param>
+    /// <param name="alphaFunction">The Alpha function value used by this operation.</param>
     public BlendAttachmentDescription(bool blendEnabled, BlendFactor sourceColorFactor, BlendFactor destinationColorFactor, BlendFunction colorFunction, BlendFactor sourceAlphaFactor, BlendFactor destinationAlphaFactor, BlendFunction alphaFunction) {
         this.BlendEnabled = blendEnabled;
         this.SourceColorFactor = sourceColorFactor;
@@ -76,9 +76,9 @@ public struct BlendAttachmentDescription : IEquatable<BlendAttachmentDescription
     /// <param name="sourceColorFactor">The source color factor value used by this operation.</param>
     /// <param name="destinationColorFactor">The destination color factor value used by this operation.</param>
     /// <param name="colorFunction">The color function value used by this operation.</param>
-    /// <param name="sourceAlphaFactor">The source alpha factor value used by this operation.</param>
-    /// <param name="destinationAlphaFactor">The destination alpha factor value used by this operation.</param>
-    /// <param name="alphaFunction">The alpha function value used by this operation.</param>
+    /// <param name="sourceAlphaFactor">The source Alpha factor value used by this operation.</param>
+    /// <param name="destinationAlphaFactor">The destination Alpha factor value used by this operation.</param>
+    /// <param name="alphaFunction">The Alpha function value used by this operation.</param>
     public BlendAttachmentDescription(bool blendEnabled, ColorWriteMask colorWriteMask, BlendFactor sourceColorFactor, BlendFactor destinationColorFactor, BlendFunction colorFunction, BlendFactor sourceAlphaFactor, BlendFactor destinationAlphaFactor, BlendFunction alphaFunction) {
         this.BlendEnabled = blendEnabled;
         this.ColorWriteMask = colorWriteMask;

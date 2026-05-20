@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
-using Vulkan;
+using Vortice.Vulkan;
+using static Veldrith.Vk.VulkanDispatch;
 using static Veldrith.Vk.VulkanUtil;
-using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
@@ -19,7 +19,7 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
     /// <summary>
     /// Stores the device framebuffer state used by this instance.
     /// </summary>
-    private readonly Vulkan.VkFramebuffer _deviceFramebuffer;
+    private readonly global::Vortice.Vulkan.VkFramebuffer _deviceFramebuffer;
 
     /// <summary>
     /// Stores the render pass clear state used by this instance.
@@ -37,9 +37,9 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
     private readonly VkRenderPass _renderPassNoClearLoad;
 
     /// <summary>
-    /// Stores the gd state used by this instance.
+    /// Stores the graphics device used by this instance.
     /// </summary>
-    private readonly VkGraphicsDevice gd;
+    private readonly VkGraphicsDevice _gd;
 
     /// <summary>
     /// Stores the destroyed state used by this instance.
@@ -58,9 +58,9 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
     /// <param name="description">The description used to configure this operation.</param>
     /// <param name="isPresented">The is presented value used by this operation.</param>
     public VkFramebuffer(VkGraphicsDevice gd, ref FramebufferDescription description, bool isPresented) : base(description.DepthTarget, description.ColorTargets) {
-        this.gd = gd;
+        this._gd = gd;
 
-        VkRenderPassCreateInfo renderPassCi = VkRenderPassCreateInfo.New();
+        VkRenderPassCreateInfo renderPassCi = new VkRenderPassCreateInfo();
 
         StackList<VkAttachmentDescription> attachments = new();
 
@@ -143,7 +143,7 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
         renderPassCi.dependencyCount = 1;
         renderPassCi.pDependencies = &subpassDependency;
 
-        VkResult creationResult = vkCreateRenderPass(this.gd.Device, ref renderPassCi, null, out this._renderPassNoClear);
+        VkResult creationResult = this._gd.DeviceApi.vkCreateRenderPass(ref renderPassCi, null, out this._renderPassNoClear);
         CheckResult(creationResult);
 
         for (int i = 0; i < colorAttachmentCount; i++) {
@@ -160,7 +160,7 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
             }
         }
 
-        creationResult = vkCreateRenderPass(this.gd.Device, ref renderPassCi, null, out this._renderPassNoClearLoad);
+        creationResult = this._gd.DeviceApi.vkCreateRenderPass(ref renderPassCi, null, out this._renderPassNoClearLoad);
         CheckResult(creationResult);
 
         // Load version
@@ -179,10 +179,10 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
             attachments[i].initialLayout = VkImageLayout.Undefined;
         }
 
-        creationResult = vkCreateRenderPass(this.gd.Device, ref renderPassCi, null, out this._renderPassClear);
+        creationResult = this._gd.DeviceApi.vkCreateRenderPass(ref renderPassCi, null, out this._renderPassClear);
         CheckResult(creationResult);
 
-        VkFramebufferCreateInfo fbCi = VkFramebufferCreateInfo.New();
+        VkFramebufferCreateInfo fbCi = new VkFramebufferCreateInfo();
         uint fbAttachmentsCount = (uint)description.ColorTargets.Length;
         if (description.DepthTarget != null) {
             fbAttachmentsCount += 1;
@@ -192,13 +192,13 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
 
         for (int i = 0; i < colorAttachmentCount; i++) {
             VkTexture vkColorTarget = Util.AssertSubtype<Texture, VkTexture>(description.ColorTargets[i].Target);
-            VkImageViewCreateInfo imageViewCi = VkImageViewCreateInfo.New();
+            VkImageViewCreateInfo imageViewCi = new VkImageViewCreateInfo();
             imageViewCi.image = vkColorTarget.OptimalDeviceImage;
             imageViewCi.format = vkColorTarget.VkFormat;
             imageViewCi.viewType = VkImageViewType.Image2D;
             imageViewCi.subresourceRange = new VkImageSubresourceRange(VkImageAspectFlags.Color, description.ColorTargets[i].MipLevel, 1, description.ColorTargets[i].ArrayLayer);
             VkImageView* dest = fbAttachments + i;
-            VkResult result = vkCreateImageView(this.gd.Device, ref imageViewCi, null, dest);
+            VkResult result = this._gd.DeviceApi.vkCreateImageView(ref imageViewCi, null, dest);
             CheckResult(result);
             this._attachmentViews.Add(*dest);
         }
@@ -207,7 +207,7 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
         if (description.DepthTarget != null) {
             VkTexture vkDepthTarget = Util.AssertSubtype<Texture, VkTexture>(description.DepthTarget.Value.Target);
             bool hasStencil = FormatHelpers.IsStencilFormat(vkDepthTarget.Format);
-            VkImageViewCreateInfo depthViewCi = VkImageViewCreateInfo.New();
+            VkImageViewCreateInfo depthViewCi = new VkImageViewCreateInfo();
             depthViewCi.image = vkDepthTarget.OptimalDeviceImage;
             depthViewCi.format = vkDepthTarget.VkFormat;
             depthViewCi.viewType = description.DepthTarget.Value.Target.ArrayLayers == 1
@@ -215,7 +215,7 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
                 : VkImageViewType.Image2DArray;
             depthViewCi.subresourceRange = new VkImageSubresourceRange(hasStencil ? VkImageAspectFlags.Depth | VkImageAspectFlags.Stencil : VkImageAspectFlags.Depth, description.DepthTarget.Value.MipLevel, 1, description.DepthTarget.Value.ArrayLayer);
             VkImageView* dest = fbAttachments + (fbAttachmentsCount - 1);
-            VkResult result = vkCreateImageView(this.gd.Device, ref depthViewCi, null, dest);
+            VkResult result = this._gd.DeviceApi.vkCreateImageView(ref depthViewCi, null, dest);
             CheckResult(result);
             this._attachmentViews.Add(*dest);
         }
@@ -243,7 +243,7 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
         fbCi.layers = 1;
         fbCi.renderPass = this._renderPassNoClear;
 
-        creationResult = vkCreateFramebuffer(this.gd.Device, ref fbCi, null, out this._deviceFramebuffer);
+        creationResult = this._gd.DeviceApi.vkCreateFramebuffer(ref fbCi, null, out this._deviceFramebuffer);
         CheckResult(creationResult);
 
         if (this.DepthTarget != null) {
@@ -256,7 +256,7 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
     /// <summary>
     /// Gets or sets CurrentFramebuffer.
     /// </summary>
-    public override Vulkan.VkFramebuffer CurrentFramebuffer => this._deviceFramebuffer;
+    public override global::Vortice.Vulkan.VkFramebuffer CurrentFramebuffer => this._deviceFramebuffer;
 
     /// <summary>
     /// Gets or sets RenderPassNoClearInit.
@@ -300,7 +300,7 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
         get => this._name;
         set {
             this._name = value;
-            this.gd.SetResourceName(this, value);
+            this._gd.SetResourceName(this, value);
         }
     }
 
@@ -349,12 +349,12 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
     /// </summary>
     protected override void DisposeCore() {
         if (!this._destroyed) {
-            vkDestroyFramebuffer(this.gd.Device, this._deviceFramebuffer, null);
-            vkDestroyRenderPass(this.gd.Device, this._renderPassNoClear, null);
-            vkDestroyRenderPass(this.gd.Device, this._renderPassNoClearLoad, null);
-            vkDestroyRenderPass(this.gd.Device, this._renderPassClear, null);
+            this._gd.DeviceApi.vkDestroyFramebuffer(this._deviceFramebuffer, null);
+            this._gd.DeviceApi.vkDestroyRenderPass(this._renderPassNoClear, null);
+            this._gd.DeviceApi.vkDestroyRenderPass(this._renderPassNoClearLoad, null);
+            this._gd.DeviceApi.vkDestroyRenderPass(this._renderPassClear, null);
             foreach (VkImageView view in this._attachmentViews) {
-                vkDestroyImageView(this.gd.Device, view, null);
+                this._gd.DeviceApi.vkDestroyImageView(view, null);
             }
 
             this._destroyed = true;

@@ -8,32 +8,32 @@ public struct MTLViewport {
     /// <summary>
     /// Stores the origin x state used by this instance.
     /// </summary>
-    public double originX;
+    public double OriginX;
 
     /// <summary>
     /// Stores the origin y state used by this instance.
     /// </summary>
-    public double originY;
+    public double OriginY;
 
     /// <summary>
     /// Stores the width value used during command execution.
     /// </summary>
-    public double width;
+    public double Width;
 
     /// <summary>
     /// Stores the height value used during command execution.
     /// </summary>
-    public double height;
+    public double Height;
 
     /// <summary>
     /// Stores the znear state used by this instance.
     /// </summary>
-    public double znear;
+    public double ZNear;
 
     /// <summary>
     /// Stores the zfar state used by this instance.
     /// </summary>
-    public double zfar;
+    public double ZFar;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MTLViewport" /> type.
@@ -42,14 +42,14 @@ public struct MTLViewport {
     /// <param name="originY">The origin y value used by this operation.</param>
     /// <param name="width">The width value.</param>
     /// <param name="height">The height value.</param>
-    /// <param name="znear">The znear value used by this operation.</param>
-    /// <param name="zfar">The zfar value used by this operation.</param>
-    public MTLViewport(double originX, double originY, double width, double height, double znear, double zfar) {
-        this.originX = originX;
-        this.originY = originY;
-        this.width = width;
-        this.height = height;
-        this.znear = znear;
-        this.zfar = zfar;
+    /// <param name="zNear">The zNear value used by this operation.</param>
+    /// <param name="zFar">The zFar value used by this operation.</param>
+    public MTLViewport(double originX, double originY, double width, double height, double zNear, double zFar) {
+        this.OriginX = originX;
+        this.OriginY = originY;
+        this.Width = width;
+        this.Height = height;
+        this.ZNear = zNear;
+        this.ZFar = zFar;
     }
 }

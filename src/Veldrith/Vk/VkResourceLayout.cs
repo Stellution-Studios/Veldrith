@@ -1,6 +1,5 @@
-using Vulkan;
+using Vortice.Vulkan;
 using static Veldrith.Vk.VulkanUtil;
-using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
@@ -15,9 +14,9 @@ internal unsafe class VkResourceLayout : ResourceLayout {
     private readonly VkDescriptorSetLayout _dsl;
 
     /// <summary>
-    /// Stores the gd state used by this instance.
+    /// Stores the graphics device used by this instance.
     /// </summary>
-    private readonly VkGraphicsDevice gd;
+    private readonly VkGraphicsDevice _gd;
 
     /// <summary>
     /// Stores the disposed state used by this instance.
@@ -35,8 +34,8 @@ internal unsafe class VkResourceLayout : ResourceLayout {
     /// <param name="gd">The graphics device that owns this operation.</param>
     /// <param name="description">The description used to configure this operation.</param>
     public VkResourceLayout(VkGraphicsDevice gd, ref ResourceLayoutDescription description) : base(ref description) {
-        this.gd = gd;
-        VkDescriptorSetLayoutCreateInfo dslCi = VkDescriptorSetLayoutCreateInfo.New();
+        this._gd = gd;
+        VkDescriptorSetLayoutCreateInfo dslCi = new VkDescriptorSetLayoutCreateInfo();
         ResourceLayoutElementDescription[] elements = description.Elements;
         this.DescriptorTypes = new VkDescriptorType[elements.Length];
         VkDescriptorSetLayoutBinding* bindings = stackalloc VkDescriptorSetLayoutBinding[elements.Length];
@@ -97,7 +96,7 @@ internal unsafe class VkResourceLayout : ResourceLayout {
         dslCi.bindingCount = (uint)elements.Length;
         dslCi.pBindings = bindings;
 
-        VkResult result = vkCreateDescriptorSetLayout(this.gd.Device, ref dslCi, null, out this._dsl);
+        VkResult result = this._gd.DeviceApi.vkCreateDescriptorSetLayout(ref dslCi, null, out this._dsl);
         CheckResult(result);
     }
 
@@ -133,7 +132,7 @@ internal unsafe class VkResourceLayout : ResourceLayout {
         get => this._name;
         set {
             this._name = value;
-            this.gd.SetResourceName(this, value);
+            this._gd.SetResourceName(this, value);
         }
     }
 
@@ -145,7 +144,7 @@ internal unsafe class VkResourceLayout : ResourceLayout {
     public override void Dispose() {
         if (!this._disposed) {
             this._disposed = true;
-            vkDestroyDescriptorSetLayout(this.gd.Device, this._dsl, null);
+            this._gd.DeviceApi.vkDestroyDescriptorSetLayout(this._dsl, null);
         }
     }
 

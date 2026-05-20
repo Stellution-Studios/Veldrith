@@ -11,7 +11,7 @@ public struct MTLSamplerDescriptor {
     /// <summary>
     /// Stores the s class state used by this instance.
     /// </summary>
-    private static readonly ObjCClass s_class = new(nameof(MTLSamplerDescriptor));
+    private static readonly ObjCClass _sClass = new(nameof(MTLSamplerDescriptor));
 
     /// <summary>
     /// Stores the native ptr state used by this instance.
@@ -23,222 +23,222 @@ public struct MTLSamplerDescriptor {
     /// </summary>
     /// <returns>The value produced by this operation.</returns>
     public static MTLSamplerDescriptor New() {
-        return s_class.AllocInit<MTLSamplerDescriptor>();
+        return _sClass.AllocInit<MTLSamplerDescriptor>();
     }
 
     /// <summary>
     /// Gets or sets rAddressMode.
     /// </summary>
-    public MTLSamplerAddressMode rAddressMode {
-        get => (MTLSamplerAddressMode)uint_objc_msgSend(this.NativePtr, sel_rAddressMode);
-        set => objc_msgSend(this.NativePtr, sel_setRAddressMode, (uint)value);
+    public MTLSamplerAddressMode RAddressMode {
+        get => (MTLSamplerAddressMode)uint_objc_msgSend(this.NativePtr, _selRAddressMode);
+        set => objc_msgSend(this.NativePtr, _selSetRAddressMode, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets sAddressMode.
     /// </summary>
-    public MTLSamplerAddressMode sAddressMode {
-        get => (MTLSamplerAddressMode)uint_objc_msgSend(this.NativePtr, sel_sAddressMode);
-        set => objc_msgSend(this.NativePtr, sel_setSAddressMode, (uint)value);
+    public MTLSamplerAddressMode SAddressMode {
+        get => (MTLSamplerAddressMode)uint_objc_msgSend(this.NativePtr, _selSAddressMode);
+        set => objc_msgSend(this.NativePtr, _selSetSAddressMode, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets tAddressMode.
     /// </summary>
-    public MTLSamplerAddressMode tAddressMode {
-        get => (MTLSamplerAddressMode)uint_objc_msgSend(this.NativePtr, sel_tAddressMode);
-        set => objc_msgSend(this.NativePtr, sel_setTAddressMode, (uint)value);
+    public MTLSamplerAddressMode TAddressMode {
+        get => (MTLSamplerAddressMode)uint_objc_msgSend(this.NativePtr, _selTAddressMode);
+        set => objc_msgSend(this.NativePtr, _selSetTAddressMode, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets minFilter.
     /// </summary>
-    public MTLSamplerMinMagFilter minFilter {
-        get => (MTLSamplerMinMagFilter)uint_objc_msgSend(this.NativePtr, sel_minFilter);
-        set => objc_msgSend(this.NativePtr, sel_setMinFilter, (uint)value);
+    public MTLSamplerMinMagFilter MinFilter {
+        get => (MTLSamplerMinMagFilter)uint_objc_msgSend(this.NativePtr, _selMinFilter);
+        set => objc_msgSend(this.NativePtr, _selSetMinFilter, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets magFilter.
     /// </summary>
-    public MTLSamplerMinMagFilter magFilter {
-        get => (MTLSamplerMinMagFilter)uint_objc_msgSend(this.NativePtr, sel_magFilter);
-        set => objc_msgSend(this.NativePtr, sel_setMagFilter, (uint)value);
+    public MTLSamplerMinMagFilter MagFilter {
+        get => (MTLSamplerMinMagFilter)uint_objc_msgSend(this.NativePtr, _selMagFilter);
+        set => objc_msgSend(this.NativePtr, _selSetMagFilter, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets mipFilter.
     /// </summary>
-    public MTLSamplerMipFilter mipFilter {
-        get => (MTLSamplerMipFilter)uint_objc_msgSend(this.NativePtr, sel_mipFilter);
-        set => objc_msgSend(this.NativePtr, sel_setMipFilter, (uint)value);
+    public MTLSamplerMipFilter MipFilter {
+        get => (MTLSamplerMipFilter)uint_objc_msgSend(this.NativePtr, _selMipFilter);
+        set => objc_msgSend(this.NativePtr, _selSetMipFilter, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets lodMinClamp.
     /// </summary>
-    public float lodMinClamp {
-        get => float_objc_msgSend(this.NativePtr, sel_lodMinClamp);
-        set => objc_msgSend(this.NativePtr, sel_setLodMinClamp, value);
+    public float LodMinClamp {
+        get => float_objc_msgSend(this.NativePtr, _selLodMinClamp);
+        set => objc_msgSend(this.NativePtr, _selSetLodMinClamp, value);
     }
 
     /// <summary>
     /// Gets or sets lodMaxClamp.
     /// </summary>
-    public float lodMaxClamp {
-        get => float_objc_msgSend(this.NativePtr, sel_lodMaxClamp);
-        set => objc_msgSend(this.NativePtr, sel_setLodMaxClamp, value);
+    public float LodMaxClamp {
+        get => float_objc_msgSend(this.NativePtr, _selLodMaxClamp);
+        set => objc_msgSend(this.NativePtr, _selSetLodMaxClamp, value);
     }
 
     /// <summary>
     /// Gets or sets lodAverage.
     /// </summary>
-    public Bool8 lodAverage {
-        get => bool8_objc_msgSend(this.NativePtr, sel_lodAverage);
-        set => objc_msgSend(this.NativePtr, sel_setLodAverage, value);
+    public Bool8 LodAverage {
+        get => bool8_objc_msgSend(this.NativePtr, _selLodAverage);
+        set => objc_msgSend(this.NativePtr, _selSetLodAverage, value);
     }
 
     /// <summary>
     /// Gets or sets maxAnisotropy.
     /// </summary>
-    public UIntPtr maxAnisotropy {
-        get => UIntPtr_objc_msgSend(this.NativePtr, sel_maxAnisotropy);
-        set => objc_msgSend(this.NativePtr, sel_setMaAnisotropy, value);
+    public UIntPtr MaxAnisotropy {
+        get => UIntPtr_objc_msgSend(this.NativePtr, _selMaxAnisotropy);
+        set => objc_msgSend(this.NativePtr, _selSetMaAnisotropy, value);
     }
 
     /// <summary>
     /// Gets or sets compareFunction.
     /// </summary>
-    public MTLCompareFunction compareFunction {
-        get => (MTLCompareFunction)uint_objc_msgSend(this.NativePtr, sel_compareFunction);
-        set => objc_msgSend(this.NativePtr, sel_setCompareFunction, (uint)value);
+    public MTLCompareFunction CompareFunction {
+        get => (MTLCompareFunction)uint_objc_msgSend(this.NativePtr, _selCompareFunction);
+        set => objc_msgSend(this.NativePtr, _selSetCompareFunction, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets borderColor.
     /// </summary>
-    public MTLSamplerBorderColor borderColor {
-        get => (MTLSamplerBorderColor)uint_objc_msgSend(this.NativePtr, sel_borderColor);
-        set => objc_msgSend(this.NativePtr, sel_setBorderColor, (uint)value);
+    public MTLSamplerBorderColor BorderColor {
+        get => (MTLSamplerBorderColor)uint_objc_msgSend(this.NativePtr, _selBorderColor);
+        set => objc_msgSend(this.NativePtr, _selSetBorderColor, (uint)value);
     }
 
     /// <summary>
     /// Stores the sel r address mode state used by this instance.
     /// </summary>
-    private static readonly Selector sel_rAddressMode = "rAddressMode";
+    private static readonly Selector _selRAddressMode = "rAddressMode";
 
     /// <summary>
     /// Stores the sel set raddress mode state used by this instance.
     /// </summary>
-    private static readonly Selector sel_setRAddressMode = "setRAddressMode:";
+    private static readonly Selector _selSetRAddressMode = "setRAddressMode:";
 
     /// <summary>
     /// Stores the sel s address mode state used by this instance.
     /// </summary>
-    private static readonly Selector sel_sAddressMode = "sAddressMode";
+    private static readonly Selector _selSAddressMode = "sAddressMode";
 
     /// <summary>
     /// Stores the sel set saddress mode state used by this instance.
     /// </summary>
-    private static readonly Selector sel_setSAddressMode = "setSAddressMode:";
+    private static readonly Selector _selSetSAddressMode = "setSAddressMode:";
 
     /// <summary>
     /// Stores the sel t address mode state used by this instance.
     /// </summary>
-    private static readonly Selector sel_tAddressMode = "tAddressMode";
+    private static readonly Selector _selTAddressMode = "tAddressMode";
 
     /// <summary>
     /// Stores the sel set taddress mode state used by this instance.
     /// </summary>
-    private static readonly Selector sel_setTAddressMode = "setTAddressMode:";
+    private static readonly Selector _selSetTAddressMode = "setTAddressMode:";
 
     /// <summary>
     /// Stores the sel min filter state used by this instance.
     /// </summary>
-    private static readonly Selector sel_minFilter = "minFilter";
+    private static readonly Selector _selMinFilter = "minFilter";
 
     /// <summary>
     /// Stores the sel set min filter state used by this instance.
     /// </summary>
-    private static readonly Selector sel_setMinFilter = "setMinFilter:";
+    private static readonly Selector _selSetMinFilter = "setMinFilter:";
 
     /// <summary>
     /// Stores the sel mag filter state used by this instance.
     /// </summary>
-    private static readonly Selector sel_magFilter = "magFilter";
+    private static readonly Selector _selMagFilter = "magFilter";
 
     /// <summary>
     /// Stores the sel set mag filter state used by this instance.
     /// </summary>
-    private static readonly Selector sel_setMagFilter = "setMagFilter:";
+    private static readonly Selector _selSetMagFilter = "setMagFilter:";
 
     /// <summary>
     /// Stores the sel mip filter state used by this instance.
     /// </summary>
-    private static readonly Selector sel_mipFilter = "mipFilter";
+    private static readonly Selector _selMipFilter = "mipFilter";
 
     /// <summary>
     /// Stores the sel set mip filter state used by this instance.
     /// </summary>
-    private static readonly Selector sel_setMipFilter = "setMipFilter:";
+    private static readonly Selector _selSetMipFilter = "setMipFilter:";
 
     /// <summary>
     /// Stores the sel lod min clamp state used by this instance.
     /// </summary>
-    private static readonly Selector sel_lodMinClamp = "lodMinClamp";
+    private static readonly Selector _selLodMinClamp = "lodMinClamp";
 
     /// <summary>
     /// Stores the sel set lod min clamp state used by this instance.
     /// </summary>
-    private static readonly Selector sel_setLodMinClamp = "setLodMinClamp:";
+    private static readonly Selector _selSetLodMinClamp = "setLodMinClamp:";
 
     /// <summary>
     /// Stores the sel lod max clamp state used by this instance.
     /// </summary>
-    private static readonly Selector sel_lodMaxClamp = "lodMaxClamp";
+    private static readonly Selector _selLodMaxClamp = "lodMaxClamp";
 
     /// <summary>
     /// Stores the sel set lod max clamp state used by this instance.
     /// </summary>
-    private static readonly Selector sel_setLodMaxClamp = "setLodMaxClamp:";
+    private static readonly Selector _selSetLodMaxClamp = "setLodMaxClamp:";
 
     /// <summary>
     /// Stores the sel lod average state used by this instance.
     /// </summary>
-    private static readonly Selector sel_lodAverage = "lodAverage";
+    private static readonly Selector _selLodAverage = "lodAverage";
 
     /// <summary>
     /// Stores the sel set lod average state used by this instance.
     /// </summary>
-    private static readonly Selector sel_setLodAverage = "setLodAverage:";
+    private static readonly Selector _selSetLodAverage = "setLodAverage:";
 
     /// <summary>
     /// Stores the sel max anisotropy state used by this instance.
     /// </summary>
-    private static readonly Selector sel_maxAnisotropy = "maxAnisotropy";
+    private static readonly Selector _selMaxAnisotropy = "maxAnisotropy";
 
     /// <summary>
     /// Stores the sel set ma anisotropy state used by this instance.
     /// </summary>
-    private static readonly Selector sel_setMaAnisotropy = "setMaxAnisotropy:";
+    private static readonly Selector _selSetMaAnisotropy = "setMaxAnisotropy:";
 
     /// <summary>
     /// Stores the sel compare function state used by this instance.
     /// </summary>
-    private static readonly Selector sel_compareFunction = "compareFunction";
+    private static readonly Selector _selCompareFunction = "compareFunction";
 
     /// <summary>
     /// Stores the sel set compare function state used by this instance.
     /// </summary>
-    private static readonly Selector sel_setCompareFunction = "setCompareFunction:";
+    private static readonly Selector _selSetCompareFunction = "setCompareFunction:";
 
     /// <summary>
     /// Stores the sel border color state used by this instance.
     /// </summary>
-    private static readonly Selector sel_borderColor = "borderColor";
+    private static readonly Selector _selBorderColor = "borderColor";
 
     /// <summary>
     /// Stores the sel set border color state used by this instance.
     /// </summary>
-    private static readonly Selector sel_setBorderColor = "setBorderColor:";
+    private static readonly Selector _selSetBorderColor = "setBorderColor:";
 }

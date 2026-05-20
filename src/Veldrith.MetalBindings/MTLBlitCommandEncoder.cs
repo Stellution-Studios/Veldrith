@@ -27,7 +27,7 @@ public struct MTLBlitCommandEncoder {
     /// <param name="destinationBuffer">The destination buffer value used by this operation.</param>
     /// <param name="destinationOffset">The destination offset value used by this operation.</param>
     /// <param name="size">The size, in bytes, used by this operation.</param>
-    public void copy(MTLBuffer sourceBuffer, UIntPtr sourceOffset, MTLBuffer destinationBuffer, UIntPtr destinationOffset, UIntPtr size) {
+    public void Copy(MTLBuffer sourceBuffer, UIntPtr sourceOffset, MTLBuffer destinationBuffer, UIntPtr destinationOffset, UIntPtr size) {
         objc_msgSend(this.NativePtr, sel_copyFromBuffer0, sourceBuffer, sourceOffset, destinationBuffer, destinationOffset, size);
     }
 
@@ -44,16 +44,14 @@ public struct MTLBlitCommandEncoder {
     /// <param name="destinationLevel">The destination level value used by this operation.</param>
     /// <param name="destinationOrigin">The destination origin value used by this operation.</param>
     /// <param name="isMacOS">The is mac os value used by this operation.</param>
-    public void copyFromBuffer(MTLBuffer sourceBuffer, UIntPtr sourceOffset, UIntPtr sourceBytesPerRow, UIntPtr sourceBytesPerImage, MTLSize sourceSize, MTLTexture destinationTexture, UIntPtr destinationSlice, UIntPtr destinationLevel, MTLOrigin destinationOrigin, bool isMacOS) {
+    public void CopyFromBuffer(MTLBuffer sourceBuffer, UIntPtr sourceOffset, UIntPtr sourceBytesPerRow, UIntPtr sourceBytesPerImage, MTLSize sourceSize, MTLTexture destinationTexture, UIntPtr destinationSlice, UIntPtr destinationLevel, MTLOrigin destinationOrigin, bool isMacOS) {
         if (!isMacOS) {
-            copyFromBuffer_iOS(this.NativePtr, sourceBuffer.NativePtr, sourceOffset, sourceBytesPerRow, sourceBytesPerImage, sourceSize, destinationTexture.NativePtr, destinationSlice, destinationLevel, destinationOrigin.x, destinationOrigin.y, destinationOrigin.z);
+            copyFromBuffer_iOS(this.NativePtr, sourceBuffer.NativePtr, sourceOffset, sourceBytesPerRow, sourceBytesPerImage, sourceSize, destinationTexture.NativePtr, destinationSlice, destinationLevel, destinationOrigin.X, destinationOrigin.Y, destinationOrigin.Z);
         }
         else {
             objc_msgSend(this.NativePtr, sel_copyFromBuffer1, sourceBuffer.NativePtr, sourceOffset, sourceBytesPerRow, sourceBytesPerImage, sourceSize, destinationTexture.NativePtr, destinationSlice, destinationLevel, destinationOrigin);
         }
     }
-
-    [DllImport("@rpath/metal_mono_workaround.framework/metal_mono_workaround", EntryPoint = "copyFromBuffer")]
 
     /// <summary>
     /// Copies from buffer i os data between resources.
@@ -70,6 +68,7 @@ public struct MTLBlitCommandEncoder {
     /// <param name="destinationOriginX">The destination origin x value used by this operation.</param>
     /// <param name="destinationOriginY">The destination origin y value used by this operation.</param>
     /// <param name="destinationOriginZ">The destination origin z value used by this operation.</param>
+    [DllImport("@rpath/metal_mono_workaround.framework/metal_mono_workaround", EntryPoint = "copyFromBuffer")]
     private static extern void copyFromBuffer_iOS(IntPtr encoder, IntPtr sourceBuffer, UIntPtr sourceOffset, UIntPtr sourceBytesPerRow, UIntPtr sourceBytesPerImage, MTLSize sourceSize, IntPtr destinationTexture, UIntPtr destinationSlice, UIntPtr destinationLevel, UIntPtr destinationOriginX, UIntPtr destinationOriginY, UIntPtr destinationOriginZ);
 
     /// <summary>
@@ -84,7 +83,7 @@ public struct MTLBlitCommandEncoder {
     /// <param name="destinationOffset">The destination offset value used by this operation.</param>
     /// <param name="destinationBytesPerRow">The destination bytes per row value used by this operation.</param>
     /// <param name="destinationBytesPerImage">The destination bytes per image value used by this operation.</param>
-    public void copyTextureToBuffer(MTLTexture sourceTexture, UIntPtr sourceSlice, UIntPtr sourceLevel, MTLOrigin sourceOrigin, MTLSize sourceSize, MTLBuffer destinationBuffer, UIntPtr destinationOffset, UIntPtr destinationBytesPerRow, UIntPtr destinationBytesPerImage) {
+    public void CopyTextureToBuffer(MTLTexture sourceTexture, UIntPtr sourceSlice, UIntPtr sourceLevel, MTLOrigin sourceOrigin, MTLSize sourceSize, MTLBuffer destinationBuffer, UIntPtr destinationOffset, UIntPtr destinationBytesPerRow, UIntPtr destinationBytesPerImage) {
         objc_msgSend(this.NativePtr, sel_copyFromTexture0, sourceTexture, sourceSlice, sourceLevel, sourceOrigin, sourceSize, destinationBuffer, destinationOffset, destinationBytesPerRow, destinationBytesPerImage);
     }
 
@@ -92,7 +91,7 @@ public struct MTLBlitCommandEncoder {
     /// Executes the generate mipmaps for texture logic for this backend.
     /// </summary>
     /// <param name="texture">The texture resource involved in this operation.</param>
-    public void generateMipmapsForTexture(MTLTexture texture) {
+    public void GenerateMipmapsForTexture(MTLTexture texture) {
         objc_msgSend(this.NativePtr, sel_generateMipmapsForTexture, texture.NativePtr);
     }
 
@@ -100,14 +99,14 @@ public struct MTLBlitCommandEncoder {
     /// Executes the synchronize resource logic for this backend.
     /// </summary>
     /// <param name="resource">The resource involved in this operation.</param>
-    public void synchronizeResource(IntPtr resource) {
+    public void SynchronizeResource(IntPtr resource) {
         objc_msgSend(this.NativePtr, sel_synchronizeResource, resource);
     }
 
     /// <summary>
     /// Ends the encoding operation.
     /// </summary>
-    public void endEncoding() {
+    public void EndEncoding() {
         objc_msgSend(this.NativePtr, sel_endEncoding);
     }
 
@@ -115,23 +114,23 @@ public struct MTLBlitCommandEncoder {
     /// Executes the push debug group logic for this backend.
     /// </summary>
     /// <param name="string">The string value used by this operation.</param>
-    public void pushDebugGroup(NSString @string) {
-        objc_msgSend(this.NativePtr, Selectors.pushDebugGroup, @string.NativePtr);
+    public void PushDebugGroup(NSString @string) {
+        objc_msgSend(this.NativePtr, Selectors.PushDebugGroup, @string.NativePtr);
     }
 
     /// <summary>
     /// Executes the pop debug group logic for this backend.
     /// </summary>
-    public void popDebugGroup() {
-        objc_msgSend(this.NativePtr, Selectors.popDebugGroup);
+    public void PopDebugGroup() {
+        objc_msgSend(this.NativePtr, Selectors.PopDebugGroup);
     }
 
     /// <summary>
     /// Executes the insert debug signpost logic for this backend.
     /// </summary>
     /// <param name="string">The string value used by this operation.</param>
-    public void insertDebugSignpost(NSString @string) {
-        objc_msgSend(this.NativePtr, Selectors.insertDebugSignpost, @string.NativePtr);
+    public void InsertDebugSignpost(NSString @string) {
+        objc_msgSend(this.NativePtr, Selectors.InsertDebugSignpost, @string.NativePtr);
     }
 
     /// <summary>
@@ -147,16 +146,14 @@ public struct MTLBlitCommandEncoder {
     /// <param name="destinationLevel">The destination level value used by this operation.</param>
     /// <param name="destinationOrigin">The destination origin value used by this operation.</param>
     /// <param name="isMacOS">The is mac os value used by this operation.</param>
-    public void copyFromTexture(MTLTexture sourceTexture, UIntPtr sourceSlice, UIntPtr sourceLevel, MTLOrigin sourceOrigin, MTLSize sourceSize, MTLTexture destinationTexture, UIntPtr destinationSlice, UIntPtr destinationLevel, MTLOrigin destinationOrigin, bool isMacOS) {
+    public void CopyFromTexture(MTLTexture sourceTexture, UIntPtr sourceSlice, UIntPtr sourceLevel, MTLOrigin sourceOrigin, MTLSize sourceSize, MTLTexture destinationTexture, UIntPtr destinationSlice, UIntPtr destinationLevel, MTLOrigin destinationOrigin, bool isMacOS) {
         if (!isMacOS) {
-            copyFromTexture_iOS(this.NativePtr, sourceTexture.NativePtr, sourceSlice, sourceLevel, sourceOrigin, sourceSize, destinationTexture.NativePtr, destinationSlice, destinationLevel, destinationOrigin.x, destinationOrigin.y, destinationOrigin.z);
+            copyFromTexture_iOS(this.NativePtr, sourceTexture.NativePtr, sourceSlice, sourceLevel, sourceOrigin, sourceSize, destinationTexture.NativePtr, destinationSlice, destinationLevel, destinationOrigin.X, destinationOrigin.Y, destinationOrigin.Z);
         }
         else {
             objc_msgSend(this.NativePtr, sel_copyFromTexture1, sourceTexture, sourceSlice, sourceLevel, sourceOrigin, sourceSize, destinationTexture, destinationSlice, destinationLevel, destinationOrigin);
         }
     }
-
-    [DllImport("@rpath/metal_mono_workaround.framework/metal_mono_workaround", EntryPoint = "copyFromTexture")]
 
     /// <summary>
     /// Copies from texture i os data between resources.
@@ -173,6 +170,7 @@ public struct MTLBlitCommandEncoder {
     /// <param name="destinationOriginX">The destination origin x value used by this operation.</param>
     /// <param name="destinationOriginY">The destination origin y value used by this operation.</param>
     /// <param name="destinationOriginZ">The destination origin z value used by this operation.</param>
+    [DllImport("@rpath/metal_mono_workaround.framework/metal_mono_workaround", EntryPoint = "copyFromTexture")]
     private static extern void copyFromTexture_iOS(IntPtr encoder, IntPtr sourceTexture, UIntPtr sourceSlice, UIntPtr sourceLevel, MTLOrigin sourceOrigin, MTLSize sourceSize, IntPtr destinationTexture, UIntPtr destinationSlice, UIntPtr destinationLevel, UIntPtr destinationOriginX, UIntPtr destinationOriginY, UIntPtr destinationOriginZ);
 
     /// <summary>

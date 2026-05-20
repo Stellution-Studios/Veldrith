@@ -11,7 +11,7 @@ internal class ResourceRefCount {
     /// <summary>
     /// Stores the dispose action state used by this instance.
     /// </summary>
-    private readonly Action disposeAction;
+    private readonly Action _disposeAction;
 
     /// <summary>
     /// Stores the ref count value used during command execution.
@@ -23,7 +23,7 @@ internal class ResourceRefCount {
     /// </summary>
     /// <param name="disposeAction">The dispose action value used by this operation.</param>
     public ResourceRefCount(Action disposeAction) {
-        this.disposeAction = disposeAction;
+        this._disposeAction = disposeAction;
         this._refCount = 1;
     }
 
@@ -48,7 +48,7 @@ internal class ResourceRefCount {
     public int Decrement() {
         int ret = Interlocked.Decrement(ref this._refCount);
         if (ret == 0) {
-            this.disposeAction();
+            this._disposeAction();
         }
 
         return ret;

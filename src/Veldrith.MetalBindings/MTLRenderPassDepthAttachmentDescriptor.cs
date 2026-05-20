@@ -24,58 +24,58 @@ public struct MTLRenderPassDepthAttachmentDescriptor {
     /// <summary>
     /// Gets or sets texture.
     /// </summary>
-    public MTLTexture texture {
-        get => objc_msgSend<MTLTexture>(this.NativePtr, Selectors.texture);
-        set => objc_msgSend(this.NativePtr, Selectors.setTexture, value.NativePtr);
+    public MTLTexture Texture {
+        get => objc_msgSend<MTLTexture>(this.NativePtr, Selectors.Texture);
+        set => objc_msgSend(this.NativePtr, Selectors.SetTexture, value.NativePtr);
     }
 
     /// <summary>
     /// Gets or sets loadAction.
     /// </summary>
-    public MTLLoadAction loadAction {
-        get => (MTLLoadAction)uint_objc_msgSend(this.NativePtr, Selectors.loadAction);
-        set => objc_msgSend(this.NativePtr, Selectors.setLoadAction, (uint)value);
+    public MTLLoadAction LoadAction {
+        get => (MTLLoadAction)uint_objc_msgSend(this.NativePtr, Selectors.LoadAction);
+        set => objc_msgSend(this.NativePtr, Selectors.SetLoadAction, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets storeAction.
     /// </summary>
-    public MTLStoreAction storeAction {
-        get => (MTLStoreAction)uint_objc_msgSend(this.NativePtr, Selectors.storeAction);
-        set => objc_msgSend(this.NativePtr, Selectors.setStoreAction, (uint)value);
+    public MTLStoreAction StoreAction {
+        get => (MTLStoreAction)uint_objc_msgSend(this.NativePtr, Selectors.StoreAction);
+        set => objc_msgSend(this.NativePtr, Selectors.SetStoreAction, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets clearDepth.
     /// </summary>
-    public double clearDepth {
-        get => double_objc_msgSend(this.NativePtr, sel_clearDepth);
-        set => objc_msgSend(this.NativePtr, sel_setClearDepth, value);
+    public double ClearDepth {
+        get => double_objc_msgSend(this.NativePtr, _selClearDepth);
+        set => objc_msgSend(this.NativePtr, _selSetClearDepth, value);
     }
 
     /// <summary>
     /// Gets or sets slice.
     /// </summary>
-    public UIntPtr slice {
-        get => UIntPtr_objc_msgSend(this.NativePtr, Selectors.slice);
-        set => objc_msgSend(this.NativePtr, Selectors.setSlice, value);
+    public UIntPtr Slice {
+        get => UIntPtr_objc_msgSend(this.NativePtr, Selectors.Slice);
+        set => objc_msgSend(this.NativePtr, Selectors.SetSlice, value);
     }
 
     /// <summary>
     /// Gets or sets level.
     /// </summary>
-    public UIntPtr level {
-        get => UIntPtr_objc_msgSend(this.NativePtr, Selectors.level);
-        set => objc_msgSend(this.NativePtr, Selectors.setLevel, value);
+    public UIntPtr Level {
+        get => UIntPtr_objc_msgSend(this.NativePtr, Selectors.Level);
+        set => objc_msgSend(this.NativePtr, Selectors.SetLevel, value);
     }
 
     /// <summary>
     /// Stores the sel clear depth value used during command execution.
     /// </summary>
-    private static readonly Selector sel_clearDepth = "clearDepth";
+    private static readonly Selector _selClearDepth = "clearDepth";
 
     /// <summary>
     /// Stores the sel set clear depth value used during command execution.
     /// </summary>
-    private static readonly Selector sel_setClearDepth = "setClearDepth:";
+    private static readonly Selector _selSetClearDepth = "setClearDepth:";
 }

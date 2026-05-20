@@ -27,11 +27,11 @@ public struct NSObject {
     /// <param name="class">The class value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     public Bool8 IsKindOfClass(IntPtr @class) {
-        return bool8_objc_msgSend(this.NativePtr, sel_isKindOfClass, @class);
+        return bool8_objc_msgSend(this.NativePtr, _selIsKindOfClass, @class);
     }
 
     /// <summary>
     /// Stores the sel is kind of class state used by this instance.
     /// </summary>
-    private static readonly Selector sel_isKindOfClass = "isKindOfClass:";
+    private static readonly Selector _selIsKindOfClass = "isKindOfClass:";
 }

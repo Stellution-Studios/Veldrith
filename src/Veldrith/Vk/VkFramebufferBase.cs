@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Vulkan;
+using Vortice.Vulkan;
 
 namespace Veldrith.Vk;
 
@@ -42,7 +42,7 @@ internal abstract class VkFramebufferBase : Framebuffer {
     /// <summary>
     /// Gets or sets CurrentFramebuffer.
     /// </summary>
-    public abstract Vulkan.VkFramebuffer CurrentFramebuffer { get; }
+    public abstract global::Vortice.Vulkan.VkFramebuffer CurrentFramebuffer { get; }
 
     /// <summary>
     /// Gets or sets RenderPassNoClearInit.

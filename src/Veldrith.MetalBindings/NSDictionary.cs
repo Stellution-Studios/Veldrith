@@ -16,10 +16,10 @@ public struct NSDictionary {
     /// Executes the uint ptr objc msg send logic for this backend.
     /// </summary>
 
-    public UIntPtr count => ObjectiveCRuntime.UIntPtr_objc_msgSend(this.NativePtr, sel_count);
+    public UIntPtr Count => ObjectiveCRuntime.UIntPtr_objc_msgSend(this.NativePtr, _selCount);
 
     /// <summary>
     /// Stores the sel count value used during command execution.
     /// </summary>
-    private static readonly Selector sel_count = "count";
+    private static readonly Selector _selCount = "count";
 }

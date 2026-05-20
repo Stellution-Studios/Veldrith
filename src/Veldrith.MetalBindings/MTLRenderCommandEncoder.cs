@@ -4,11 +4,10 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrith.MetalBindings;
 
-[StructLayout(LayoutKind.Sequential)]
-
 /// <summary>
 /// Represents the MTLRenderCommandEncoder data structure used by the graphics runtime.
 /// </summary>
+[StructLayout(LayoutKind.Sequential)]
 public struct MTLRenderCommandEncoder {
 
     /// <summary>
@@ -33,7 +32,7 @@ public struct MTLRenderCommandEncoder {
     /// Sets the render pipeline state value.
     /// </summary>
     /// <param name="pipelineState">The pipeline state value used by this operation.</param>
-    public void setRenderPipelineState(MTLRenderPipelineState pipelineState) {
+    public void SetRenderPipelineState(MTLRenderPipelineState pipelineState) {
         objc_msgSend(this.NativePtr, sel_setRenderPipelineState, pipelineState.NativePtr);
     }
 
@@ -43,7 +42,7 @@ public struct MTLRenderCommandEncoder {
     /// <param name="buffer">The buffer resource involved in this operation.</param>
     /// <param name="offset">The byte offset used by this operation.</param>
     /// <param name="index">The zero-based index of the target item.</param>
-    public void setVertexBuffer(MTLBuffer buffer, UIntPtr offset, UIntPtr index) {
+    public void SetVertexBuffer(MTLBuffer buffer, UIntPtr offset, UIntPtr index) {
         objc_msgSend(this.NativePtr, sel_setVertexBuffer, buffer.NativePtr, offset, index);
     }
 
@@ -52,7 +51,7 @@ public struct MTLRenderCommandEncoder {
     /// </summary>
     /// <param name="offset">The byte offset used by this operation.</param>
     /// <param name="index">The zero-based index of the target item.</param>
-    public void setVertexBufferOffset(UIntPtr offset, UIntPtr index) {
+    public void SetVertexBufferOffset(UIntPtr offset, UIntPtr index) {
         objc_msgSend(this.NativePtr, sel_setVertexBufferOffset, offset, index);
     }
 
@@ -62,7 +61,7 @@ public struct MTLRenderCommandEncoder {
     /// <param name="buffer">The buffer resource involved in this operation.</param>
     /// <param name="offset">The byte offset used by this operation.</param>
     /// <param name="index">The zero-based index of the target item.</param>
-    public void setFragmentBuffer(MTLBuffer buffer, UIntPtr offset, UIntPtr index) {
+    public void SetFragmentBuffer(MTLBuffer buffer, UIntPtr offset, UIntPtr index) {
         objc_msgSend(this.NativePtr, sel_setFragmentBuffer, buffer.NativePtr, offset, index);
     }
 
@@ -71,7 +70,7 @@ public struct MTLRenderCommandEncoder {
     /// </summary>
     /// <param name="offset">The byte offset used by this operation.</param>
     /// <param name="index">The zero-based index of the target item.</param>
-    public void setFragmentBufferOffset(UIntPtr offset, UIntPtr index) {
+    public void SetFragmentBufferOffset(UIntPtr offset, UIntPtr index) {
         objc_msgSend(this.NativePtr, sel_setFragmentBufferOffset, offset, index);
     }
 
@@ -81,7 +80,7 @@ public struct MTLRenderCommandEncoder {
     /// <param name="bytes">The pointer to source bytes.</param>
     /// <param name="length">The number of bytes to bind.</param>
     /// <param name="index">The zero-based binding index.</param>
-    public unsafe void setVertexBytes(void* bytes, UIntPtr length, UIntPtr index) {
+    public unsafe void SetVertexBytes(void* bytes, UIntPtr length, UIntPtr index) {
         objc_msgSend(this.NativePtr, sel_setVertexBytes, bytes, length, index);
     }
 
@@ -91,7 +90,7 @@ public struct MTLRenderCommandEncoder {
     /// <param name="bytes">The pointer to source bytes.</param>
     /// <param name="length">The number of bytes to bind.</param>
     /// <param name="index">The zero-based binding index.</param>
-    public unsafe void setFragmentBytes(void* bytes, UIntPtr length, UIntPtr index) {
+    public unsafe void SetFragmentBytes(void* bytes, UIntPtr length, UIntPtr index) {
         objc_msgSend(this.NativePtr, sel_setFragmentBytes, bytes, length, index);
     }
 
@@ -100,7 +99,7 @@ public struct MTLRenderCommandEncoder {
     /// </summary>
     /// <param name="texture">The texture resource involved in this operation.</param>
     /// <param name="index">The zero-based index of the target item.</param>
-    public void setVertexTexture(MTLTexture texture, UIntPtr index) {
+    public void SetVertexTexture(MTLTexture texture, UIntPtr index) {
         objc_msgSend(this.NativePtr, sel_setVertexTexture, texture.NativePtr, index);
     }
 
@@ -109,7 +108,7 @@ public struct MTLRenderCommandEncoder {
     /// </summary>
     /// <param name="texture">The texture resource involved in this operation.</param>
     /// <param name="index">The zero-based index of the target item.</param>
-    public void setFragmentTexture(MTLTexture texture, UIntPtr index) {
+    public void SetFragmentTexture(MTLTexture texture, UIntPtr index) {
         objc_msgSend(this.NativePtr, sel_setFragmentTexture, texture.NativePtr, index);
     }
 
@@ -118,7 +117,7 @@ public struct MTLRenderCommandEncoder {
     /// </summary>
     /// <param name="sampler">The sampler resource involved in this operation.</param>
     /// <param name="index">The zero-based index of the target item.</param>
-    public void setVertexSamplerState(MTLSamplerState sampler, UIntPtr index) {
+    public void SetVertexSamplerState(MTLSamplerState sampler, UIntPtr index) {
         objc_msgSend(this.NativePtr, sel_setVertexSamplerState, sampler.NativePtr, index);
     }
 
@@ -127,7 +126,7 @@ public struct MTLRenderCommandEncoder {
     /// </summary>
     /// <param name="sampler">The sampler resource involved in this operation.</param>
     /// <param name="index">The zero-based index of the target item.</param>
-    public void setFragmentSamplerState(MTLSamplerState sampler, UIntPtr index) {
+    public void SetFragmentSamplerState(MTLSamplerState sampler, UIntPtr index) {
         objc_msgSend(this.NativePtr, sel_setFragmentSamplerState, sampler.NativePtr, index);
     }
 
@@ -139,7 +138,7 @@ public struct MTLRenderCommandEncoder {
     /// <param name="vertexCount">The vertex count value used by this operation.</param>
     /// <param name="instanceCount">The instance count value used by this operation.</param>
     /// <param name="baseInstance">The base instance value used by this operation.</param>
-    public void drawPrimitives(MTLPrimitiveType primitiveType, UIntPtr vertexStart, UIntPtr vertexCount, UIntPtr instanceCount, UIntPtr baseInstance) {
+    public void DrawPrimitives(MTLPrimitiveType primitiveType, UIntPtr vertexStart, UIntPtr vertexCount, UIntPtr instanceCount, UIntPtr baseInstance) {
         objc_msgSend(this.NativePtr, sel_drawPrimitives0, primitiveType, vertexStart, vertexCount, instanceCount, baseInstance);
     }
 
@@ -150,7 +149,7 @@ public struct MTLRenderCommandEncoder {
     /// <param name="vertexStart">The vertex start value used by this operation.</param>
     /// <param name="vertexCount">The vertex count value used by this operation.</param>
     /// <param name="instanceCount">The instance count value used by this operation.</param>
-    public void drawPrimitives(MTLPrimitiveType primitiveType, UIntPtr vertexStart, UIntPtr vertexCount, UIntPtr instanceCount) {
+    public void DrawPrimitives(MTLPrimitiveType primitiveType, UIntPtr vertexStart, UIntPtr vertexCount, UIntPtr instanceCount) {
         objc_msgSend(this.NativePtr, sel_drawPrimitives2, primitiveType, vertexStart, vertexCount, instanceCount);
     }
 
@@ -160,7 +159,7 @@ public struct MTLRenderCommandEncoder {
     /// <param name="primitiveType">The primitive type value used by this operation.</param>
     /// <param name="indirectBuffer">The indirect buffer value used by this operation.</param>
     /// <param name="indirectBufferOffset">The indirect buffer offset value used by this operation.</param>
-    public void drawPrimitives(MTLPrimitiveType primitiveType, MTLBuffer indirectBuffer, UIntPtr indirectBufferOffset) {
+    public void DrawPrimitives(MTLPrimitiveType primitiveType, MTLBuffer indirectBuffer, UIntPtr indirectBufferOffset) {
         objc_msgSend(this.NativePtr, sel_drawPrimitives1, primitiveType, indirectBuffer, indirectBufferOffset);
     }
 
@@ -173,7 +172,7 @@ public struct MTLRenderCommandEncoder {
     /// <param name="indexBuffer">The index buffer value used by this operation.</param>
     /// <param name="indexBufferOffset">The index buffer offset value used by this operation.</param>
     /// <param name="instanceCount">The instance count value used by this operation.</param>
-    public void drawIndexedPrimitives(MTLPrimitiveType primitiveType, UIntPtr indexCount, MTLIndexType indexType, MTLBuffer indexBuffer, UIntPtr indexBufferOffset, UIntPtr instanceCount) {
+    public void DrawIndexedPrimitives(MTLPrimitiveType primitiveType, UIntPtr indexCount, MTLIndexType indexType, MTLBuffer indexBuffer, UIntPtr indexBufferOffset, UIntPtr instanceCount) {
         objc_msgSend(this.NativePtr, sel_drawIndexedPrimitives0, primitiveType, indexCount, indexType, indexBuffer.NativePtr, indexBufferOffset, instanceCount);
     }
 
@@ -188,7 +187,7 @@ public struct MTLRenderCommandEncoder {
     /// <param name="instanceCount">The instance count value used by this operation.</param>
     /// <param name="baseVertex">The base vertex value used by this operation.</param>
     /// <param name="baseInstance">The base instance value used by this operation.</param>
-    public void drawIndexedPrimitives(MTLPrimitiveType primitiveType, UIntPtr indexCount, MTLIndexType indexType, MTLBuffer indexBuffer, UIntPtr indexBufferOffset, UIntPtr instanceCount, IntPtr baseVertex, UIntPtr baseInstance) {
+    public void DrawIndexedPrimitives(MTLPrimitiveType primitiveType, UIntPtr indexCount, MTLIndexType indexType, MTLBuffer indexBuffer, UIntPtr indexBufferOffset, UIntPtr instanceCount, IntPtr baseVertex, UIntPtr baseInstance) {
         objc_msgSend(this.NativePtr, sel_drawIndexedPrimitives1, primitiveType, indexCount, indexType, indexBuffer.NativePtr, indexBufferOffset, instanceCount, baseVertex, baseInstance);
     }
 
@@ -201,7 +200,7 @@ public struct MTLRenderCommandEncoder {
     /// <param name="indexBufferOffset">The index buffer offset value used by this operation.</param>
     /// <param name="indirectBuffer">The indirect buffer value used by this operation.</param>
     /// <param name="indirectBufferOffset">The indirect buffer offset value used by this operation.</param>
-    public void drawIndexedPrimitives(MTLPrimitiveType primitiveType, MTLIndexType indexType, MTLBuffer indexBuffer, UIntPtr indexBufferOffset, MTLBuffer indirectBuffer, UIntPtr indirectBufferOffset) {
+    public void DrawIndexedPrimitives(MTLPrimitiveType primitiveType, MTLIndexType indexType, MTLBuffer indexBuffer, UIntPtr indexBufferOffset, MTLBuffer indirectBuffer, UIntPtr indirectBufferOffset) {
         objc_msgSend(this.NativePtr, sel_drawIndexedPrimitives2, primitiveType, indexType, indexBuffer, indexBufferOffset, indirectBuffer, indirectBufferOffset);
     }
 
@@ -209,7 +208,7 @@ public struct MTLRenderCommandEncoder {
     /// Sets the viewport value.
     /// </summary>
     /// <param name="viewport">The viewport value used by this operation.</param>
-    public void setViewport(MTLViewport viewport) {
+    public void SetViewport(MTLViewport viewport) {
         objc_msgSend(this.NativePtr, sel_setViewport, viewport);
     }
 
@@ -218,7 +217,7 @@ public struct MTLRenderCommandEncoder {
     /// </summary>
     /// <param name="viewports">The viewports value used by this operation.</param>
     /// <param name="count">The number of items involved in this operation.</param>
-    public unsafe void setViewports(MTLViewport* viewports, UIntPtr count) {
+    public unsafe void SetViewports(MTLViewport* viewports, UIntPtr count) {
         objc_msgSend(this.NativePtr, sel_setViewports, viewports, count);
     }
 
@@ -226,7 +225,7 @@ public struct MTLRenderCommandEncoder {
     /// Sets the scissor rect value.
     /// </summary>
     /// <param name="scissorRect">The scissor rect value used by this operation.</param>
-    public void setScissorRect(MTLScissorRect scissorRect) {
+    public void SetScissorRect(MTLScissorRect scissorRect) {
         objc_msgSend(this.NativePtr, sel_setScissorRect, scissorRect);
     }
 
@@ -235,7 +234,7 @@ public struct MTLRenderCommandEncoder {
     /// </summary>
     /// <param name="scissorRects">The scissor rects value used by this operation.</param>
     /// <param name="count">The number of items involved in this operation.</param>
-    public unsafe void setScissorRects(MTLScissorRect* scissorRects, UIntPtr count) {
+    public unsafe void SetScissorRects(MTLScissorRect* scissorRects, UIntPtr count) {
         objc_msgSend(this.NativePtr, sel_setScissorRects, scissorRects, count);
     }
 
@@ -243,7 +242,7 @@ public struct MTLRenderCommandEncoder {
     /// Sets the cull mode value.
     /// </summary>
     /// <param name="cullMode">The cull mode value used by this operation.</param>
-    public void setCullMode(MTLCullMode cullMode) {
+    public void SetCullMode(MTLCullMode cullMode) {
         objc_msgSend(this.NativePtr, sel_setCullMode, (uint)cullMode);
     }
 
@@ -251,7 +250,7 @@ public struct MTLRenderCommandEncoder {
     /// Sets the front facing value.
     /// </summary>
     /// <param name="frontFaceWinding">The front face winding value used by this operation.</param>
-    public void setFrontFacing(MTLWinding frontFaceWinding) {
+    public void SetFrontFacing(MTLWinding frontFaceWinding) {
         objc_msgSend(this.NativePtr, sel_setFrontFacingWinding, (uint)frontFaceWinding);
     }
 
@@ -259,7 +258,7 @@ public struct MTLRenderCommandEncoder {
     /// Sets the depth stencil state value.
     /// </summary>
     /// <param name="depthStencilState">The depth stencil state value used by this operation.</param>
-    public void setDepthStencilState(MTLDepthStencilState depthStencilState) {
+    public void SetDepthStencilState(MTLDepthStencilState depthStencilState) {
         objc_msgSend(this.NativePtr, sel_setDepthStencilState, depthStencilState.NativePtr);
     }
 
@@ -267,14 +266,14 @@ public struct MTLRenderCommandEncoder {
     /// Sets the depth clip mode value.
     /// </summary>
     /// <param name="depthClipMode">The depth clip mode value used by this operation.</param>
-    public void setDepthClipMode(MTLDepthClipMode depthClipMode) {
+    public void SetDepthClipMode(MTLDepthClipMode depthClipMode) {
         objc_msgSend(this.NativePtr, sel_setDepthClipMode, (uint)depthClipMode);
     }
 
     /// <summary>
     /// Ends the encoding operation.
     /// </summary>
-    public void endEncoding() {
+    public void EndEncoding() {
         objc_msgSend(this.NativePtr, sel_endEncoding);
     }
 
@@ -282,18 +281,18 @@ public struct MTLRenderCommandEncoder {
     /// Sets the stencil reference value value.
     /// </summary>
     /// <param name="stencilReference">The stencil reference value used by this operation.</param>
-    public void setStencilReferenceValue(uint stencilReference) {
+    public void SetStencilReferenceValue(uint stencilReference) {
         objc_msgSend(this.NativePtr, sel_setStencilReferenceValue, stencilReference);
     }
 
     /// <summary>
     /// Sets the blend color value.
     /// </summary>
-    /// <param name="red">The red value used by this operation.</param>
-    /// <param name="green">The green value used by this operation.</param>
-    /// <param name="blue">The blue value used by this operation.</param>
-    /// <param name="alpha">The alpha value used by this operation.</param>
-    public void setBlendColor(float red, float green, float blue, float alpha) {
+    /// <param name="red">The Red value used by this operation.</param>
+    /// <param name="green">The Green value used by this operation.</param>
+    /// <param name="blue">The Blue value used by this operation.</param>
+    /// <param name="alpha">The Alpha value used by this operation.</param>
+    public void SetBlendColor(float red, float green, float blue, float alpha) {
         objc_msgSend(this.NativePtr, sel_setBlendColor, red, green, blue, alpha);
     }
 
@@ -301,7 +300,7 @@ public struct MTLRenderCommandEncoder {
     /// Sets the triangle fill mode value.
     /// </summary>
     /// <param name="fillMode">The fill mode value used by this operation.</param>
-    public void setTriangleFillMode(MTLTriangleFillMode fillMode) {
+    public void SetTriangleFillMode(MTLTriangleFillMode fillMode) {
         objc_msgSend(this.NativePtr, sel_setTriangleFillMode, (uint)fillMode);
     }
 
@@ -309,23 +308,23 @@ public struct MTLRenderCommandEncoder {
     /// Executes the push debug group logic for this backend.
     /// </summary>
     /// <param name="string">The string value used by this operation.</param>
-    public void pushDebugGroup(NSString @string) {
-        objc_msgSend(this.NativePtr, Selectors.pushDebugGroup, @string.NativePtr);
+    public void PushDebugGroup(NSString @string) {
+        objc_msgSend(this.NativePtr, Selectors.PushDebugGroup, @string.NativePtr);
     }
 
     /// <summary>
     /// Executes the pop debug group logic for this backend.
     /// </summary>
-    public void popDebugGroup() {
-        objc_msgSend(this.NativePtr, Selectors.popDebugGroup);
+    public void PopDebugGroup() {
+        objc_msgSend(this.NativePtr, Selectors.PopDebugGroup);
     }
 
     /// <summary>
     /// Executes the insert debug signpost logic for this backend.
     /// </summary>
     /// <param name="string">The string value used by this operation.</param>
-    public void insertDebugSignpost(NSString @string) {
-        objc_msgSend(this.NativePtr, Selectors.insertDebugSignpost, @string.NativePtr);
+    public void InsertDebugSignpost(NSString @string) {
+        objc_msgSend(this.NativePtr, Selectors.InsertDebugSignpost, @string.NativePtr);
     }
 
     /// <summary>
@@ -386,32 +385,32 @@ public struct MTLRenderCommandEncoder {
     /// <summary>
     /// Stores the sel draw primitives0 state used by this instance.
     /// </summary>
-    private static readonly Selector sel_drawPrimitives0 = "drawPrimitives:vertexStart:vertexCount:instanceCount:baseInstance:";
+    private static readonly Selector sel_drawPrimitives0 = "DrawPrimitives:vertexStart:vertexCount:instanceCount:baseInstance:";
 
     /// <summary>
     /// Stores the sel draw primitives1 state used by this instance.
     /// </summary>
-    private static readonly Selector sel_drawPrimitives1 = "drawPrimitives:indirectBuffer:indirectBufferOffset:";
+    private static readonly Selector sel_drawPrimitives1 = "DrawPrimitives:indirectBuffer:indirectBufferOffset:";
 
     /// <summary>
     /// Stores the sel draw primitives2 state used by this instance.
     /// </summary>
-    private static readonly Selector sel_drawPrimitives2 = "drawPrimitives:vertexStart:vertexCount:instanceCount:";
+    private static readonly Selector sel_drawPrimitives2 = "DrawPrimitives:vertexStart:vertexCount:instanceCount:";
 
     /// <summary>
     /// Stores the sel draw indexed primitives0 value used during command execution.
     /// </summary>
-    private static readonly Selector sel_drawIndexedPrimitives0 = "drawIndexedPrimitives:indexCount:indexType:indexBuffer:indexBufferOffset:instanceCount:";
+    private static readonly Selector sel_drawIndexedPrimitives0 = "DrawIndexedPrimitives:indexCount:indexType:indexBuffer:indexBufferOffset:instanceCount:";
 
     /// <summary>
     /// Stores the sel draw indexed primitives1 value used during command execution.
     /// </summary>
-    private static readonly Selector sel_drawIndexedPrimitives1 = "drawIndexedPrimitives:indexCount:indexType:indexBuffer:indexBufferOffset:instanceCount:baseVertex:baseInstance:";
+    private static readonly Selector sel_drawIndexedPrimitives1 = "DrawIndexedPrimitives:indexCount:indexType:indexBuffer:indexBufferOffset:instanceCount:baseVertex:baseInstance:";
 
     /// <summary>
     /// Stores the sel draw indexed primitives2 value used during command execution.
     /// </summary>
-    private static readonly Selector sel_drawIndexedPrimitives2 = "drawIndexedPrimitives:indexType:indexBuffer:indexBufferOffset:indirectBuffer:indirectBufferOffset:";
+    private static readonly Selector sel_drawIndexedPrimitives2 = "DrawIndexedPrimitives:indexType:indexBuffer:indexBufferOffset:indirectBuffer:indirectBufferOffset:";
 
     /// <summary>
     /// Stores the sel set viewport state used by this instance.
@@ -466,7 +465,7 @@ public struct MTLRenderCommandEncoder {
     /// <summary>
     /// Stores the sel set blend color state used by this instance.
     /// </summary>
-    private static readonly Selector sel_setBlendColor = "setBlendColorRed:green:blue:alpha:";
+    private static readonly Selector sel_setBlendColor = "setBlendColorRed:Green:Blue:Alpha:";
 
     /// <summary>
     /// Stores the sel set triangle fill mode state used by this instance.

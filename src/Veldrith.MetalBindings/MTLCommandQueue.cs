@@ -5,11 +5,10 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrith.MetalBindings;
 
-[StructLayout(LayoutKind.Sequential)]
-
 /// <summary>
 /// Represents the MTLCommandQueue data structure used by the graphics runtime.
 /// </summary>
+[StructLayout(LayoutKind.Sequential)]
 public struct MTLCommandQueue {
 
     /// <summary>
@@ -17,20 +16,19 @@ public struct MTLCommandQueue {
     /// </summary>
     public readonly IntPtr NativePtr;
 
-    [Pure]
-
     /// <summary>
     /// Executes the command buffer logic for this backend.
     /// </summary>
     /// <returns>The value produced by this operation.</returns>
-    public MTLCommandBuffer commandBuffer() {
+    [Pure]
+    public MTLCommandBuffer CommandBuffer() {
         return objc_msgSend<MTLCommandBuffer>(this.NativePtr, sel_commandBuffer);
     }
 
     /// <summary>
     /// Executes the insert debug capture boundary logic for this backend.
     /// </summary>
-    public void insertDebugCaptureBoundary() {
+    public void InsertDebugCaptureBoundary() {
         objc_msgSend(this.NativePtr, sel_insertDebugCaptureBoundary);
     }
 

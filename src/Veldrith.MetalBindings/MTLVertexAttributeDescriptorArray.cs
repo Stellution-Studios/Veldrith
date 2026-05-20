@@ -18,9 +18,9 @@ public struct MTLVertexAttributeDescriptorArray {
     /// </summary>
     public MTLVertexAttributeDescriptor this[uint index] {
         get {
-            IntPtr value = IntPtr_objc_msgSend(this.NativePtr, Selectors.objectAtIndexedSubscript, index);
+            IntPtr value = IntPtr_objc_msgSend(this.NativePtr, Selectors.ObjectAtIndexedSubscript, index);
             return new MTLVertexAttributeDescriptor(value);
         }
-        set => objc_msgSend(this.NativePtr, Selectors.setObjectAtIndexedSubscript, value.NativePtr, index);
+        set => objc_msgSend(this.NativePtr, Selectors.SetObjectAtIndexedSubscript, value.NativePtr, index);
     }
 }

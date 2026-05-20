@@ -10,17 +10,17 @@ public struct MTLOrigin {
     /// <summary>
     /// Stores the x state used by this instance.
     /// </summary>
-    public UIntPtr x;
+    public UIntPtr X;
 
     /// <summary>
     /// Stores the y state used by this instance.
     /// </summary>
-    public UIntPtr y;
+    public UIntPtr Y;
 
     /// <summary>
     /// Stores the z state used by this instance.
     /// </summary>
-    public UIntPtr z;
+    public UIntPtr Z;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MTLOrigin" /> type.
@@ -29,8 +29,8 @@ public struct MTLOrigin {
     /// <param name="y">The Y coordinate.</param>
     /// <param name="z">The Z coordinate.</param>
     public MTLOrigin(uint x, uint y, uint z) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
+        this.X = x;
+        this.Y = y;
+        this.Z = z;
     }
 }

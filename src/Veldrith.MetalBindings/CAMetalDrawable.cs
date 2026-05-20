@@ -24,5 +24,5 @@ public struct CAMetalDrawable {
     /// <summary>
     /// Gets or sets texture.
     /// </summary>
-    public MTLTexture texture => objc_msgSend<MTLTexture>(this.NativePtr, Selectors.texture);
+    public MTLTexture texture => objc_msgSend<MTLTexture>(this.NativePtr, Selectors.Texture);
 }

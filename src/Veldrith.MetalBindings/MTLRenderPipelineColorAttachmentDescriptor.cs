@@ -4,11 +4,10 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrith.MetalBindings;
 
-[StructLayout(LayoutKind.Sequential)]
-
 /// <summary>
 /// Represents the MTLRenderPipelineColorAttachmentDescriptor data structure used by the graphics runtime.
 /// </summary>
+[StructLayout(LayoutKind.Sequential)]
 public struct MTLRenderPipelineColorAttachmentDescriptor {
 
     /// <summary>
@@ -27,15 +26,15 @@ public struct MTLRenderPipelineColorAttachmentDescriptor {
     /// <summary>
     /// Gets or sets pixelFormat.
     /// </summary>
-    public MTLPixelFormat pixelFormat {
-        get => (MTLPixelFormat)uint_objc_msgSend(this.NativePtr, Selectors.pixelFormat);
-        set => objc_msgSend(this.NativePtr, Selectors.setPixelFormat, (uint)value);
+    public MTLPixelFormat PixelFormat {
+        get => (MTLPixelFormat)uint_objc_msgSend(this.NativePtr, Selectors.PixelFormat);
+        set => objc_msgSend(this.NativePtr, Selectors.SetPixelFormat, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets writeMask.
     /// </summary>
-    public MTLColorWriteMask writeMask {
+    public MTLColorWriteMask WriteMask {
         get => (MTLColorWriteMask)uint_objc_msgSend(this.NativePtr, sel_writeMask);
         set => objc_msgSend(this.NativePtr, sel_setWriteMask, (uint)value);
     }
@@ -43,7 +42,7 @@ public struct MTLRenderPipelineColorAttachmentDescriptor {
     /// <summary>
     /// Gets or sets blendingEnabled.
     /// </summary>
-    public Bool8 blendingEnabled {
+    public Bool8 BlendingEnabled {
         get => bool8_objc_msgSend(this.NativePtr, sel_isBlendingEnabled);
         set => objc_msgSend(this.NativePtr, sel_setBlendingEnabled, value);
     }
@@ -51,7 +50,7 @@ public struct MTLRenderPipelineColorAttachmentDescriptor {
     /// <summary>
     /// Gets or sets alphaBlendOperation.
     /// </summary>
-    public MTLBlendOperation alphaBlendOperation {
+    public MTLBlendOperation AlphaBlendOperation {
         get => (MTLBlendOperation)uint_objc_msgSend(this.NativePtr, sel_alphaBlendOperation);
         set => objc_msgSend(this.NativePtr, sel_setAlphaBlendOperation, (uint)value);
     }
@@ -59,7 +58,7 @@ public struct MTLRenderPipelineColorAttachmentDescriptor {
     /// <summary>
     /// Gets or sets rgbBlendOperation.
     /// </summary>
-    public MTLBlendOperation rgbBlendOperation {
+    public MTLBlendOperation RgbBlendOperation {
         get => (MTLBlendOperation)uint_objc_msgSend(this.NativePtr, sel_rgbBlendOperation);
         set => objc_msgSend(this.NativePtr, sel_setRGBBlendOperation, (uint)value);
     }
@@ -67,7 +66,7 @@ public struct MTLRenderPipelineColorAttachmentDescriptor {
     /// <summary>
     /// Gets or sets destinationAlphaBlendFactor.
     /// </summary>
-    public MTLBlendFactor destinationAlphaBlendFactor {
+    public MTLBlendFactor DestinationAlphaBlendFactor {
         get => (MTLBlendFactor)uint_objc_msgSend(this.NativePtr, sel_destinationAlphaBlendFactor);
         set => objc_msgSend(this.NativePtr, sel_setDestinationAlphaBlendFactor, (uint)value);
     }
@@ -75,7 +74,7 @@ public struct MTLRenderPipelineColorAttachmentDescriptor {
     /// <summary>
     /// Gets or sets destinationRGBBlendFactor.
     /// </summary>
-    public MTLBlendFactor destinationRGBBlendFactor {
+    public MTLBlendFactor DestinationRgbBlendFactor {
         get => (MTLBlendFactor)uint_objc_msgSend(this.NativePtr, sel_destinationRGBBlendFactor);
         set => objc_msgSend(this.NativePtr, sel_setDestinationRGBBlendFactor, (uint)value);
     }
@@ -83,7 +82,7 @@ public struct MTLRenderPipelineColorAttachmentDescriptor {
     /// <summary>
     /// Gets or sets sourceAlphaBlendFactor.
     /// </summary>
-    public MTLBlendFactor sourceAlphaBlendFactor {
+    public MTLBlendFactor SourceAlphaBlendFactor {
         get => (MTLBlendFactor)uint_objc_msgSend(this.NativePtr, sel_sourceAlphaBlendFactor);
         set => objc_msgSend(this.NativePtr, sel_setSourceAlphaBlendFactor, (uint)value);
     }
@@ -91,7 +90,7 @@ public struct MTLRenderPipelineColorAttachmentDescriptor {
     /// <summary>
     /// Gets or sets sourceRGBBlendFactor.
     /// </summary>
-    public MTLBlendFactor sourceRGBBlendFactor {
+    public MTLBlendFactor SourceRgbBlendFactor {
         get => (MTLBlendFactor)uint_objc_msgSend(this.NativePtr, sel_sourceRGBBlendFactor);
         set => objc_msgSend(this.NativePtr, sel_setSourceRGBBlendFactor, (uint)value);
     }
@@ -117,12 +116,12 @@ public struct MTLRenderPipelineColorAttachmentDescriptor {
     private static readonly Selector sel_setWriteMask = "setWriteMask:";
 
     /// <summary>
-    /// Stores the sel alpha blend operation state used by this instance.
+    /// Stores the sel Alpha blend operation state used by this instance.
     /// </summary>
     private static readonly Selector sel_alphaBlendOperation = "alphaBlendOperation";
 
     /// <summary>
-    /// Stores the sel set alpha blend operation state used by this instance.
+    /// Stores the sel set Alpha blend operation state used by this instance.
     /// </summary>
     private static readonly Selector sel_setAlphaBlendOperation = "setAlphaBlendOperation:";
 
@@ -137,12 +136,12 @@ public struct MTLRenderPipelineColorAttachmentDescriptor {
     private static readonly Selector sel_setRGBBlendOperation = "setRgbBlendOperation:";
 
     /// <summary>
-    /// Stores the sel destination alpha blend factor state used by this instance.
+    /// Stores the sel destination Alpha blend factor state used by this instance.
     /// </summary>
     private static readonly Selector sel_destinationAlphaBlendFactor = "destinationAlphaBlendFactor";
 
     /// <summary>
-    /// Stores the sel set destination alpha blend factor state used by this instance.
+    /// Stores the sel set destination Alpha blend factor state used by this instance.
     /// </summary>
     private static readonly Selector sel_setDestinationAlphaBlendFactor = "setDestinationAlphaBlendFactor:";
 
@@ -157,12 +156,12 @@ public struct MTLRenderPipelineColorAttachmentDescriptor {
     private static readonly Selector sel_setDestinationRGBBlendFactor = "setDestinationRGBBlendFactor:";
 
     /// <summary>
-    /// Stores the sel source alpha blend factor state used by this instance.
+    /// Stores the sel source Alpha blend factor state used by this instance.
     /// </summary>
     private static readonly Selector sel_sourceAlphaBlendFactor = "sourceAlphaBlendFactor";
 
     /// <summary>
-    /// Stores the sel set source alpha blend factor state used by this instance.
+    /// Stores the sel set source Alpha blend factor state used by this instance.
     /// </summary>
     private static readonly Selector sel_setSourceAlphaBlendFactor = "setSourceAlphaBlendFactor:";
 

@@ -4,13 +4,12 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrith.MetalBindings;
 
-[StructLayout(LayoutKind.Sequential)]
-
 /// <summary>
 /// Represents the MTLCompileOptions data structure used by the graphics runtime.
 /// </summary>
+[StructLayout(LayoutKind.Sequential)]
 public struct MTLCompileOptions {
-
+    
     /// <summary>
     /// Stores the native ptr state used by this instance.
     /// </summary>
@@ -36,7 +35,7 @@ public struct MTLCompileOptions {
     /// <summary>
     /// Gets or sets fastMathEnabled.
     /// </summary>
-    public Bool8 fastMathEnabled {
+    public Bool8 FastMathEnabled {
         get => bool8_objc_msgSend(this.NativePtr, sel_fastMathEnabled);
         set => objc_msgSend(this.NativePtr, sel_setFastMathEnabled, value);
     }
@@ -44,7 +43,7 @@ public struct MTLCompileOptions {
     /// <summary>
     /// Gets or sets languageVersion.
     /// </summary>
-    public MTLLanguageVersion languageVersion {
+    public MTLLanguageVersion LanguageVersion {
         get => (MTLLanguageVersion)uint_objc_msgSend(this.NativePtr, sel_languageVersion);
         set => objc_msgSend(this.NativePtr, sel_setLanguageVersion, (uint)value);
     }

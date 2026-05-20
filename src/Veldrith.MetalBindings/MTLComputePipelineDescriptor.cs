@@ -16,26 +16,25 @@ public struct MTLComputePipelineDescriptor {
     /// <summary>
     /// Gets or sets computeFunction.
     /// </summary>
-    public MTLFunction computeFunction {
-        get => objc_msgSend<MTLFunction>(this.NativePtr, sel_computeFunction);
-        set => objc_msgSend(this.NativePtr, sel_setComputeFunction, value.NativePtr);
+    public MTLFunction ComputeFunction {
+        get => objc_msgSend<MTLFunction>(this.NativePtr, _selComputeFunction);
+        set => objc_msgSend(this.NativePtr, _selSetComputeFunction, value.NativePtr);
     }
 
-    public MTLPipelineBufferDescriptorArray buffers
-        => objc_msgSend<MTLPipelineBufferDescriptorArray>(this.NativePtr, sel_buffers);
+    public MTLPipelineBufferDescriptorArray Buffers => objc_msgSend<MTLPipelineBufferDescriptorArray>(this.NativePtr, _selBuffers);
 
     /// <summary>
     /// Stores the sel compute function state used by this instance.
     /// </summary>
-    private static readonly Selector sel_computeFunction = "computeFunction";
+    private static readonly Selector _selComputeFunction = "computeFunction";
 
     /// <summary>
     /// Stores the sel set compute function state used by this instance.
     /// </summary>
-    private static readonly Selector sel_setComputeFunction = "setComputeFunction:";
+    private static readonly Selector _selSetComputeFunction = "setComputeFunction:";
 
     /// <summary>
     /// Stores the sel buffers collection used by this instance.
     /// </summary>
-    private static readonly Selector sel_buffers = "buffers";
+    private static readonly Selector _selBuffers = "buffers";
 }

@@ -26,28 +26,20 @@ public struct UIView {
     /// Gets or sets layer.
     /// </summary>
 
-    public CALayer layer => objc_msgSend<CALayer>(this.NativePtr, sel_layer);
+    public CALayer Layer => objc_msgSend<CALayer>(this.NativePtr, _selLayer);
 
     /// <summary>
     /// Stores the frame state used by this instance.
     /// </summary>
-    public CGRect frame =>
-        RuntimeInformation.ProcessArchitecture == Architecture.Arm64
-
-            /// <summary>
-            /// Executes the cgrect objc msg send logic for this backend.
-            /// </summary>
-            /// <param name="sel_frame">The sel frame value used by this operation.</param>
-            ? CGRect_objc_msgSend(this.NativePtr, sel_frame)
-            : objc_msgSend_stret<CGRect>(this.NativePtr, sel_frame);
+    public CGRect Frame => RuntimeInformation.ProcessArchitecture == Architecture.Arm64 ? CGRect_objc_msgSend(this.NativePtr, _selFrame) : objc_msgSend_stret<CGRect>(this.NativePtr, _selFrame);
 
     /// <summary>
     /// Stores the sel layer state used by this instance.
     /// </summary>
-    private static readonly Selector sel_layer = "layer";
+    private static readonly Selector _selLayer = "layer";
 
     /// <summary>
     /// Stores the sel frame state used by this instance.
     /// </summary>
-    private static readonly Selector sel_frame = "frame";
+    private static readonly Selector _selFrame = "frame";
 }

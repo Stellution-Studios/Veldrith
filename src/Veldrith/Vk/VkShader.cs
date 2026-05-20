@@ -1,7 +1,6 @@
 using System;
-using Vulkan;
+using Vortice.Vulkan;
 using static Veldrith.Vk.VulkanUtil;
-using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
@@ -16,9 +15,9 @@ internal unsafe class VkShader : Shader {
     private readonly VkShaderModule _shaderModule;
 
     /// <summary>
-    /// Stores the gd state used by this instance.
+    /// Stores the graphics device used by this instance.
     /// </summary>
-    private readonly VkGraphicsDevice gd;
+    private readonly VkGraphicsDevice _gd;
 
     /// <summary>
     /// Stores the disposed state used by this instance.
@@ -36,14 +35,14 @@ internal unsafe class VkShader : Shader {
     /// <param name="gd">The graphics device that owns this operation.</param>
     /// <param name="description">The description used to configure this operation.</param>
     public VkShader(VkGraphicsDevice gd, ref ShaderDescription description) : base(description.Stage, description.EntryPoint) {
-        this.gd = gd;
+        this._gd = gd;
 
-        VkShaderModuleCreateInfo shaderModuleCi = VkShaderModuleCreateInfo.New();
+        VkShaderModuleCreateInfo shaderModuleCi = new VkShaderModuleCreateInfo();
 
         fixed (byte* codePtr = description.ShaderBytes) {
             shaderModuleCi.codeSize = (UIntPtr)description.ShaderBytes.Length;
             shaderModuleCi.pCode = (uint*)codePtr;
-            VkResult result = vkCreateShaderModule(gd.Device, ref shaderModuleCi, null, out this._shaderModule);
+            VkResult result = gd.DeviceApi.vkCreateShaderModule(ref shaderModuleCi, null, out this._shaderModule);
             CheckResult(result);
         }
     }
@@ -65,7 +64,7 @@ internal unsafe class VkShader : Shader {
         get => this._name;
         set {
             this._name = value;
-            this.gd.SetResourceName(this, value);
+            this._gd.SetResourceName(this, value);
         }
     }
 
@@ -77,7 +76,7 @@ internal unsafe class VkShader : Shader {
     public override void Dispose() {
         if (!this._disposed) {
             this._disposed = true;
-            vkDestroyShaderModule(this.gd.Device, this.ShaderModule, null);
+            this._gd.DeviceApi.vkDestroyShaderModule(this.ShaderModule, null);
         }
     }
 

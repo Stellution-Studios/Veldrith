@@ -58,13 +58,13 @@ public unsafe struct ObjCClass {
     public string Name => MTLUtil.GetUtf8String(ObjectiveCRuntime.class_getName(this));
 
     public T Alloc<T>() where T : struct {
-        IntPtr value = ObjectiveCRuntime.IntPtr_objc_msgSend(this.NativePtr, Selectors.alloc);
+        IntPtr value = ObjectiveCRuntime.IntPtr_objc_msgSend(this.NativePtr, Selectors.Alloc);
         return Unsafe.AsRef<T>(&value);
     }
 
     public T AllocInit<T>() where T : struct {
-        IntPtr value = ObjectiveCRuntime.IntPtr_objc_msgSend(this.NativePtr, Selectors.alloc);
-        ObjectiveCRuntime.objc_msgSend(value, Selectors.init);
+        IntPtr value = ObjectiveCRuntime.IntPtr_objc_msgSend(this.NativePtr, Selectors.Alloc);
+        ObjectiveCRuntime.objc_msgSend(value, Selectors.Init);
         return Unsafe.AsRef<T>(&value);
     }
 

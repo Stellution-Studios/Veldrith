@@ -9,22 +9,22 @@ namespace Veldrith;
 public struct RgbaByte : IEquatable<RgbaByte> {
 
     /// <summary>
-    /// The red component.
+    /// The Red component.
     /// </summary>
     public readonly byte R;
 
     /// <summary>
-    /// The green component.
+    /// The Green component.
     /// </summary>
     public readonly byte G;
 
     /// <summary>
-    /// The blue component.
+    /// The Blue component.
     /// </summary>
     public readonly byte B;
 
     /// <summary>
-    /// The alpha component.
+    /// The Alpha component.
     /// </summary>
     public readonly byte A;
 

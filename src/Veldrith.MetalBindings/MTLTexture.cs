@@ -4,11 +4,10 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrith.MetalBindings;
 
-[StructLayout(LayoutKind.Sequential)]
-
 /// <summary>
 /// Provides Objective-C interop bindings for MTLTexture.
 /// </summary>
+[StructLayout(LayoutKind.Sequential)]
 public unsafe struct MTLTexture {
 
     /// <summary>
@@ -38,7 +37,7 @@ public unsafe struct MTLTexture {
     /// <param name="pixelBytes">The pixel bytes value used by this operation.</param>
     /// <param name="bytesPerRow">The bytes per row value used by this operation.</param>
     /// <param name="bytesPerImage">The bytes per image value used by this operation.</param>
-    public void replaceRegion(MTLRegion region, UIntPtr mipmapLevel, UIntPtr slice, void* pixelBytes, UIntPtr bytesPerRow, UIntPtr bytesPerImage) {
+    public void ReplaceRegion(MTLRegion region, UIntPtr mipmapLevel, UIntPtr slice, void* pixelBytes, UIntPtr bytesPerRow, UIntPtr bytesPerImage) {
         objc_msgSend(this.NativePtr, sel_replaceRegion, region, mipmapLevel, slice, (IntPtr)pixelBytes, bytesPerRow, bytesPerImage);
     }
 
@@ -50,7 +49,7 @@ public unsafe struct MTLTexture {
     /// <param name="levelRange">The level range value used by this operation.</param>
     /// <param name="sliceRange">The slice range value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    public MTLTexture newTextureView(MTLPixelFormat pixelFormat, MTLTextureType textureType, NSRange levelRange, NSRange sliceRange) {
+    public MTLTexture NewTextureView(MTLPixelFormat pixelFormat, MTLTextureType textureType, NSRange levelRange, NSRange sliceRange) {
         IntPtr ret = IntPtr_objc_msgSend(this.NativePtr, sel_newTextureView, (uint)pixelFormat, (uint)textureType, levelRange, sliceRange);
         return new MTLTexture(ret);
     }

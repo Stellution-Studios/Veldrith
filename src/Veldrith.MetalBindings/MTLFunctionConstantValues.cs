@@ -17,7 +17,7 @@ public struct MTLFunctionConstantValues {
     /// </summary>
     /// <returns>The value produced by this operation.</returns>
     public static MTLFunctionConstantValues New() {
-        return s_class.AllocInit<MTLFunctionConstantValues>();
+        return _sClass.AllocInit<MTLFunctionConstantValues>();
     }
 
     /// <summary>
@@ -26,17 +26,17 @@ public struct MTLFunctionConstantValues {
     /// <param name="value">The value used by this operation.</param>
     /// <param name="type">The type value used by this operation.</param>
     /// <param name="index">The zero-based index of the target item.</param>
-    public unsafe void setConstantValuetypeatIndex(void* value, MTLDataType type, UIntPtr index) {
-        ObjectiveCRuntime.objc_msgSend(this.NativePtr, sel_setConstantValuetypeatIndex, value, (uint)type, index);
+    public unsafe void SetConstantValueTypeAtIndex(void* value, MTLDataType type, UIntPtr index) {
+        ObjectiveCRuntime.objc_msgSend(this.NativePtr, _selSetConstantValueTypeAtIndex, value, (uint)type, index);
     }
 
     /// <summary>
     /// Stores the s class state used by this instance.
     /// </summary>
-    private static readonly ObjCClass s_class = new(nameof(MTLFunctionConstantValues));
+    private static readonly ObjCClass _sClass = new(nameof(MTLFunctionConstantValues));
 
     /// <summary>
     /// Stores the sel set constant valuetypeat index value used during command execution.
     /// </summary>
-    private static readonly Selector sel_setConstantValuetypeatIndex = "setConstantValue:type:atIndex:";
+    private static readonly Selector _selSetConstantValueTypeAtIndex = "setConstantValue:type:atIndex:";
 }

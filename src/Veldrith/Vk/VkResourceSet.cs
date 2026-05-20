@@ -1,6 +1,5 @@
 using System.Collections.Generic;
-using Vulkan;
-using static Vulkan.VulkanNative;
+using Vortice.Vulkan;
 
 namespace Veldrith.Vk;
 
@@ -20,9 +19,9 @@ internal unsafe class VkResourceSet : ResourceSet {
     private readonly DescriptorResourceCounts _descriptorCounts;
 
     /// <summary>
-    /// Stores the gd state used by this instance.
+    /// Stores the graphics device used by this instance.
     /// </summary>
-    private readonly VkGraphicsDevice gd;
+    private readonly VkGraphicsDevice _gd;
 
     /// <summary>
     /// Stores the destroyed state used by this instance.
@@ -40,13 +39,13 @@ internal unsafe class VkResourceSet : ResourceSet {
     /// <param name="gd">The graphics device that owns this operation.</param>
     /// <param name="description">The description used to configure this operation.</param>
     public VkResourceSet(VkGraphicsDevice gd, ref ResourceSetDescription description) : base(ref description) {
-        this.gd = gd;
+        this._gd = gd;
         this.RefCount = new ResourceRefCount(this.DisposeCore);
         VkResourceLayout vkLayout = Util.AssertSubtype<ResourceLayout, VkResourceLayout>(description.Layout);
 
         VkDescriptorSetLayout dsl = vkLayout.DescriptorSetLayout;
         this._descriptorCounts = vkLayout.DescriptorResourceCounts;
-        this._descriptorAllocationToken = this.gd.DescriptorPoolManager.Allocate(this._descriptorCounts, dsl);
+        this._descriptorAllocationToken = this._gd.DescriptorPoolManager.Allocate(this._descriptorCounts, dsl);
 
         IBindableResource[] boundResources = description.BoundResources;
         uint descriptorWriteCount = (uint)boundResources.Length;
@@ -74,7 +73,7 @@ internal unsafe class VkResourceSet : ResourceSet {
                 this.RefCounts.Add(rangedVkBuffer.RefCount);
             }
             else if (type == VkDescriptorType.SampledImage) {
-                TextureView texView = Util.GetTextureView(this.gd, boundResources[i]);
+                TextureView texView = Util.GetTextureView(this._gd, boundResources[i]);
                 VkTextureView vkTexView = Util.AssertSubtype<TextureView, VkTextureView>(texView);
                 imageInfos[i].imageView = vkTexView.ImageView;
                 imageInfos[i].imageLayout = VkImageLayout.ShaderReadOnlyOptimal;
@@ -83,7 +82,7 @@ internal unsafe class VkResourceSet : ResourceSet {
                 this.RefCounts.Add(vkTexView.RefCount);
             }
             else if (type == VkDescriptorType.StorageImage) {
-                TextureView texView = Util.GetTextureView(this.gd, boundResources[i]);
+                TextureView texView = Util.GetTextureView(this._gd, boundResources[i]);
                 VkTextureView vkTexView = Util.AssertSubtype<TextureView, VkTextureView>(texView);
                 imageInfos[i].imageView = vkTexView.ImageView;
                 imageInfos[i].imageLayout = VkImageLayout.General;
@@ -99,7 +98,7 @@ internal unsafe class VkResourceSet : ResourceSet {
             }
         }
 
-        vkUpdateDescriptorSets(this.gd.Device, descriptorWriteCount, descriptorWrites, 0, null);
+        this._gd.DeviceApi.vkUpdateDescriptorSets(descriptorWriteCount, descriptorWrites, 0, null);
     }
 
     /// <summary>
@@ -139,7 +138,7 @@ internal unsafe class VkResourceSet : ResourceSet {
         get => this._name;
         set {
             this._name = value;
-            this.gd.SetResourceName(this, value);
+            this._gd.SetResourceName(this, value);
         }
     }
 
@@ -160,7 +159,7 @@ internal unsafe class VkResourceSet : ResourceSet {
     private void DisposeCore() {
         if (!this._destroyed) {
             this._destroyed = true;
-            this.gd.DescriptorPoolManager.Free(this._descriptorAllocationToken, this._descriptorCounts);
+            this._gd.DescriptorPoolManager.Free(this._descriptorAllocationToken, this._descriptorCounts);
         }
     }
 }

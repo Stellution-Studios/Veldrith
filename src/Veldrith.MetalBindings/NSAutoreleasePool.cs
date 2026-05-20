@@ -10,7 +10,7 @@ public struct NSAutoreleasePool : IDisposable {
     /// <summary>
     /// Stores the s class state used by this instance.
     /// </summary>
-    private static readonly ObjCClass s_class = new(nameof(NSAutoreleasePool));
+    private static readonly ObjCClass _sClass = new(nameof(NSAutoreleasePool));
 
     /// <summary>
     /// Stores the native ptr state used by this instance.
@@ -30,13 +30,13 @@ public struct NSAutoreleasePool : IDisposable {
     /// </summary>
     /// <returns>The value produced by this operation.</returns>
     public static NSAutoreleasePool Begin() {
-        return s_class.AllocInit<NSAutoreleasePool>();
+        return _sClass.AllocInit<NSAutoreleasePool>();
     }
 
     /// <summary>
     /// Releases resources held by this instance.
     /// </summary>
     public void Dispose() {
-        ObjectiveCRuntime.release(this.NativePtr);
+        ObjectiveCRuntime.Release(this.NativePtr);
     }
 }

@@ -2,32 +2,31 @@ using System.Runtime.InteropServices;
 
 namespace Veldrith.MetalBindings;
 
-[StructLayout(LayoutKind.Sequential)]
-
 /// <summary>
 /// Represents the MTLClearColor data structure used by the graphics runtime.
 /// </summary>
+[StructLayout(LayoutKind.Sequential)]
 public struct MTLClearColor {
 
     /// <summary>
-    /// Stores the red state used by this instance.
+    /// Stores the Red state used by this instance.
     /// </summary>
-    public double red;
+    public double Red;
 
     /// <summary>
-    /// Stores the green state used by this instance.
+    /// Stores the Green state used by this instance.
     /// </summary>
-    public double green;
+    public double Green;
 
     /// <summary>
-    /// Stores the blue state used by this instance.
+    /// Stores the Blue state used by this instance.
     /// </summary>
-    public double blue;
+    public double Blue;
 
     /// <summary>
-    /// Stores the alpha state used by this instance.
+    /// Stores the Alpha state used by this instance.
     /// </summary>
-    public double alpha;
+    public double Alpha;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MTLClearColor" /> type.
@@ -37,9 +36,9 @@ public struct MTLClearColor {
     /// <param name="b">The b value used by this operation.</param>
     /// <param name="a">The a value used by this operation.</param>
     public MTLClearColor(double r, double g, double b, double a) {
-        this.red = r;
-        this.green = g;
-        this.blue = b;
-        this.alpha = a;
+        this.Red = r;
+        this.Green = g;
+        this.Blue = b;
+        this.Alpha = a;
     }
 }

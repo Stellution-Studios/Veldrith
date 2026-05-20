@@ -1,8 +1,7 @@
 using System;
 using System.Collections.Generic;
-using Vulkan;
+using Vortice.Vulkan;
 using static Veldrith.Vk.VulkanUtil;
-using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
@@ -14,12 +13,12 @@ internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
     /// <summary>
     /// Stores the depth format value used during command execution.
     /// </summary>
-    private readonly PixelFormat? depthFormat;
+    private readonly PixelFormat? _depthFormat;
 
     /// <summary>
-    /// Stores the gd state used by this instance.
+    /// Stores the graphics device used by this instance.
     /// </summary>
-    private readonly VkGraphicsDevice gd;
+    private readonly VkGraphicsDevice _gd;
 
     /// <summary>
     /// Stores the depth attachment value used during command execution.
@@ -86,9 +85,9 @@ internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
     /// <param name="height">The height value.</param>
     /// <param name="depthFormat">The depth format value used by this operation.</param>
     public VkSwapchainFramebuffer(VkGraphicsDevice gd, VkSwapchain swapchain, VkSurfaceKHR surface, uint width, uint height, PixelFormat? depthFormat) {
-        this.gd = gd;
+        this._gd = gd;
         this.Swapchain = swapchain;
-        this.depthFormat = depthFormat;
+        this._depthFormat = depthFormat;
 
         this.AttachmentCount = depthFormat.HasValue ? 2u : 1u; // 1 Color + 1 Depth
     }
@@ -96,7 +95,7 @@ internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
     /// <summary>
     /// Stores the current framebuffer state used by this instance.
     /// </summary>
-    public override Vulkan.VkFramebuffer CurrentFramebuffer =>
+    public override global::Vortice.Vulkan.VkFramebuffer CurrentFramebuffer =>
         this._scFramebuffers[(int)this.ImageIndex].CurrentFramebuffer;
 
     /// <summary>
@@ -177,7 +176,7 @@ internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
         get => this._name;
         set {
             this._name = value;
-            this.gd.SetResourceName(this, value);
+            this._gd.SetResourceName(this, value);
         }
     }
 
@@ -227,14 +226,16 @@ internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
 
         // Get the images
         uint scImageCount = 0;
-        VkResult result = vkGetSwapchainImagesKHR(this.gd.Device, deviceSwapchain, ref scImageCount, null);
+        VkResult result = this._gd.DeviceApi.vkGetSwapchainImagesKHR(deviceSwapchain, &scImageCount, null);
         CheckResult(result);
         if (this._scImages.Length < scImageCount) {
             this._scImages = new VkImage[(int)scImageCount];
         }
 
-        result = vkGetSwapchainImagesKHR(this.gd.Device, deviceSwapchain, ref scImageCount, out this._scImages[0]);
-        CheckResult(result);
+        fixed (VkImage* scImagesPtr = this._scImages) {
+            result = this._gd.DeviceApi.vkGetSwapchainImagesKHR(deviceSwapchain, &scImageCount, scImagesPtr);
+            CheckResult(result);
+        }
 
         this._scImageFormat = surfaceFormat.format;
         this._scExtent = swapchainExtent;
@@ -274,9 +275,9 @@ internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
     /// Creates the depth texture instance used by this backend.
     /// </summary>
     private void CreateDepthTexture() {
-        if (this.depthFormat.HasValue) {
+        if (this._depthFormat.HasValue) {
             this._depthAttachment?.Target.Dispose();
-            VkTexture depthTexture = (VkTexture)this.gd.ResourceFactory.CreateTexture(TextureDescription.Texture2D(Math.Max(1, this._scExtent.width), Math.Max(1, this._scExtent.height), 1, 1, this.depthFormat.Value, TextureUsage.DepthStencil));
+            VkTexture depthTexture = (VkTexture)this._gd.ResourceFactory.CreateTexture(TextureDescription.Texture2D(Math.Max(1, this._scExtent.width), Math.Max(1, this._scExtent.height), 1, 1, this._depthFormat.Value, TextureUsage.DepthStencil));
             this._depthAttachment = new FramebufferAttachment(depthTexture, 0);
         }
     }
@@ -298,9 +299,9 @@ internal unsafe class VkSwapchainFramebuffer : VkFramebufferBase {
         Util.EnsureArrayMinimumSize(ref this._scColorTextures, (uint)this._scImages.Length);
 
         for (uint i = 0; i < this._scImages.Length; i++) {
-            VkTexture colorTex = new(this.gd, Math.Max(1, this._scExtent.width), Math.Max(1, this._scExtent.height), 1, 1, this._scImageFormat, TextureUsage.RenderTarget, TextureSampleCount.Count1, this._scImages[i]);
+            VkTexture colorTex = new(this._gd, Math.Max(1, this._scExtent.width), Math.Max(1, this._scExtent.height), 1, 1, this._scImageFormat, TextureUsage.RenderTarget, TextureSampleCount.Count1, this._scImages[i]);
             FramebufferDescription desc = new(this._depthAttachment?.Target, colorTex);
-            VkFramebuffer fb = new(this.gd, ref desc, true);
+            VkFramebuffer fb = new(this._gd, ref desc, true);
             this._scFramebuffers[i] = fb;
             this._scColorTextures[i] = new[] { new FramebufferAttachment(colorTex, 0) };
         }

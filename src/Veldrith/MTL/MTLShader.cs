@@ -31,7 +31,7 @@ internal class MtlShader : Shader {
                 DispatchData dispatchData = Dispatch.dispatch_data_create(shaderBytesPtr, (UIntPtr)description.ShaderBytes.Length, queue, IntPtr.Zero);
 
                 try {
-                    this.Library = gd.Device.newLibraryWithData(dispatchData);
+                    this.Library = gd.Device.NewLibraryWithData(dispatchData);
                 }
                 finally {
                     Dispatch.dispatch_release(dispatchData.NativePtr);
@@ -41,17 +41,17 @@ internal class MtlShader : Shader {
         else {
             string source = Encoding.UTF8.GetString(description.ShaderBytes);
             MTLCompileOptions compileOptions = MTLCompileOptions.New();
-            this.Library = gd.Device.newLibraryWithSource(source, compileOptions);
-            ObjectiveCRuntime.release(compileOptions);
+            this.Library = gd.Device.NewLibraryWithSource(source, compileOptions);
+            ObjectiveCRuntime.Release(compileOptions);
         }
 
-        this.Function = this.Library.newFunctionWithName(description.EntryPoint);
+        this.Function = this.Library.NewFunctionWithName(description.EntryPoint);
 
         if (this.Function.NativePtr == IntPtr.Zero) {
             throw new VeldridException($"Failed to create Metal {description.Stage} Shader. The given entry point \"{description.EntryPoint}\" was not found.");
         }
 
-        this.HasFunctionConstants = this.Function.functionConstantsDictionary.count != UIntPtr.Zero;
+        this.HasFunctionConstants = this.Function.FunctionConstantsDictionary.Count != UIntPtr.Zero;
     }
 
     /// <summary>
@@ -87,8 +87,8 @@ internal class MtlShader : Shader {
     public override void Dispose() {
         if (!this._disposed) {
             this._disposed = true;
-            ObjectiveCRuntime.release(this.Function.NativePtr);
-            ObjectiveCRuntime.release(this.Library.NativePtr);
+            ObjectiveCRuntime.Release(this.Function.NativePtr);
+            ObjectiveCRuntime.Release(this.Library.NativePtr);
         }
     }
 

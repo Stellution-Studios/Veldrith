@@ -1,8 +1,7 @@
 using System;
 using System.Linq;
-using Vulkan;
+using Vortice.Vulkan;
 using static Veldrith.Vk.VulkanUtil;
-using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
@@ -32,9 +31,9 @@ internal unsafe class VkSwapchain : Swapchain {
     private readonly uint _presentQueueIndex;
 
     /// <summary>
-    /// Stores the gd state used by this instance.
+    /// Stores the graphics device used by this instance.
     /// </summary>
-    private readonly VkGraphicsDevice gd;
+    private readonly VkGraphicsDevice _gd;
 
     /// <summary>
     /// Stores the allow tearing state used by this instance.
@@ -59,7 +58,7 @@ internal unsafe class VkSwapchain : Swapchain {
     /// <summary>
     /// Stores the image available fence state used by this instance.
     /// </summary>
-    private Vulkan.VkFence _imageAvailableFence;
+    private global::Vortice.Vulkan.VkFence _imageAvailableFence;
 
     /// <summary>
     /// Stores the human-readable name associated with this instance.
@@ -82,7 +81,7 @@ internal unsafe class VkSwapchain : Swapchain {
     /// <param name="gd">The graphics device that owns this operation.</param>
     /// <param name="description">The description used to configure this operation.</param>
     public VkSwapchain(VkGraphicsDevice gd, ref SwapchainDescription description)
-        : this(gd, ref description, VkSurfaceKHR.Null) { }
+        : this(gd, ref description, default) { }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VkSwapchain" /> type.
@@ -91,13 +90,13 @@ internal unsafe class VkSwapchain : Swapchain {
     /// <param name="description">The description used to configure this operation.</param>
     /// <param name="existingSurface">The existing surface value used by this operation.</param>
     public VkSwapchain(VkGraphicsDevice gd, ref SwapchainDescription description, VkSurfaceKHR existingSurface) {
-        this.gd = gd;
+        this._gd = gd;
         this._syncToVBlank = description.SyncToVerticalBlank;
         this._colorSrgb = description.ColorSrgb;
 
         SwapchainSource swapchainSource = description.Source;
 
-        this.Surface = existingSurface == VkSurfaceKHR.Null
+        this.Surface = existingSurface.IsNull
             ? VkSurfaceUtil.CreateSurface(gd, gd.Instance, swapchainSource)
             : existingSurface;
 
@@ -105,19 +104,19 @@ internal unsafe class VkSwapchain : Swapchain {
             throw new VeldridException("The system does not support presenting the given Vulkan surface.");
         }
 
-        vkGetDeviceQueue(this.gd.Device, this._presentQueueIndex, 0, out this._presentQueue);
+        this._gd.DeviceApi.vkGetDeviceQueue(this._presentQueueIndex, 0, out this._presentQueue);
 
         this._framebuffer = new VkSwapchainFramebuffer(gd, this, this.Surface, description.Width, description.Height, description.DepthFormat);
 
         this.CreateSwapchain(description.Width, description.Height);
 
-        VkFenceCreateInfo fenceCi = VkFenceCreateInfo.New();
+        VkFenceCreateInfo fenceCi = new VkFenceCreateInfo();
         fenceCi.flags = VkFenceCreateFlags.None;
-        vkCreateFence(this.gd.Device, ref fenceCi, null, out this._imageAvailableFence);
+        this._gd.DeviceApi.vkCreateFence(ref fenceCi, null, out this._imageAvailableFence);
 
-        this.AcquireNextImage(this.gd.Device, VkSemaphore.Null, this._imageAvailableFence);
-        vkWaitForFences(this.gd.Device, 1, ref this._imageAvailableFence, true, ulong.MaxValue);
-        vkResetFences(this.gd.Device, 1, ref this._imageAvailableFence);
+        this.AcquireNextImage(this._gd.Device, default, this._imageAvailableFence);
+        this._gd.DeviceApi.vkWaitForFences(this._imageAvailableFence, true, ulong.MaxValue);
+        this._gd.DeviceApi.vkResetFences(this._imageAvailableFence);
 
         this.RefCount = new ResourceRefCount(this.DisposeCore);
     }
@@ -145,7 +144,7 @@ internal unsafe class VkSwapchain : Swapchain {
     /// <summary>
     /// Stores the image available fence state used by this instance.
     /// </summary>
-    public Vulkan.VkFence ImageAvailableFence => this._imageAvailableFence;
+    public global::Vortice.Vulkan.VkFence ImageAvailableFence => this._imageAvailableFence;
 
     /// <summary>
     /// Gets or sets Surface.
@@ -174,7 +173,7 @@ internal unsafe class VkSwapchain : Swapchain {
         get => this._name;
         set {
             this._name = value;
-            this.gd.SetResourceName(this, value);
+            this._gd.SetResourceName(this, value);
         }
     }
 
@@ -233,7 +232,7 @@ internal unsafe class VkSwapchain : Swapchain {
     /// <param name="semaphore">The semaphore value used by this operation.</param>
     /// <param name="fence">The synchronization fence used by this operation.</param>
     /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
-    public bool AcquireNextImage(VkDevice device, VkSemaphore semaphore, Vulkan.VkFence fence) {
+    public bool AcquireNextImage(VkDevice device, VkSemaphore semaphore, global::Vortice.Vulkan.VkFence fence) {
         if (this._newSyncToVBlank != null) {
             this._syncToVBlank = this._newSyncToVBlank.Value;
             this._newSyncToVBlank = null;
@@ -241,7 +240,7 @@ internal unsafe class VkSwapchain : Swapchain {
             return false;
         }
 
-        VkResult result = vkAcquireNextImageKHR(device, this._deviceSwapchain, ulong.MaxValue, semaphore, fence, ref this._currentImageIndex);
+        VkResult result = VulkanDispatch.GetApi(device).vkAcquireNextImageKHR(this._deviceSwapchain, ulong.MaxValue, semaphore, fence, out this._currentImageIndex);
         this._framebuffer.SetImageIndex(this._currentImageIndex);
 
         if (result == VkResult.ErrorOutOfDateKHR || result == VkResult.SuboptimalKHR) {
@@ -263,9 +262,9 @@ internal unsafe class VkSwapchain : Swapchain {
     /// <param name="height">The height value.</param>
     private void RecreateAndReacquire(uint width, uint height) {
         if (this.CreateSwapchain(width, height)) {
-            if (this.AcquireNextImage(this.gd.Device, VkSemaphore.Null, this._imageAvailableFence)) {
-                vkWaitForFences(this.gd.Device, 1, ref this._imageAvailableFence, true, ulong.MaxValue);
-                vkResetFences(this.gd.Device, 1, ref this._imageAvailableFence);
+            if (this.AcquireNextImage(this._gd.Device, default, this._imageAvailableFence)) {
+                this._gd.DeviceApi.vkWaitForFences(this._imageAvailableFence, true, ulong.MaxValue);
+                this._gd.DeviceApi.vkResetFences(this._imageAvailableFence);
             }
         }
     }
@@ -278,7 +277,7 @@ internal unsafe class VkSwapchain : Swapchain {
     /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     private bool CreateSwapchain(uint width, uint height) {
         // Obtain the surface capabilities first -- this will indicate whether the surface has been lost.
-        VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(this.gd.PhysicalDevice, this.Surface, out VkSurfaceCapabilitiesKHR surfaceCapabilities);
+        VkResult result = this._gd.InstanceApi.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(this._gd.PhysicalDevice, this.Surface, out VkSurfaceCapabilitiesKHR surfaceCapabilities);
         if (result == VkResult.ErrorSurfaceLostKHR) {
             throw new VeldridException("The Swapchain's underlying surface has been lost.");
         }
@@ -288,37 +287,39 @@ internal unsafe class VkSwapchain : Swapchain {
             return false;
         }
 
-        if (this._deviceSwapchain != VkSwapchainKHR.Null) {
-            this.gd.WaitForIdle();
+        if (this._deviceSwapchain.IsNotNull) {
+            this._gd.WaitForIdle();
         }
 
         this._currentImageIndex = 0;
         uint surfaceFormatCount = 0;
-        result = vkGetPhysicalDeviceSurfaceFormatsKHR(this.gd.PhysicalDevice, this.Surface, ref surfaceFormatCount, null);
+        result = this._gd.InstanceApi.vkGetPhysicalDeviceSurfaceFormatsKHR(this._gd.PhysicalDevice, this.Surface, &surfaceFormatCount, null);
         CheckResult(result);
         VkSurfaceFormatKHR[] formats = new VkSurfaceFormatKHR[surfaceFormatCount];
-        result = vkGetPhysicalDeviceSurfaceFormatsKHR(this.gd.PhysicalDevice, this.Surface, ref surfaceFormatCount, out formats[0]);
-        CheckResult(result);
+        fixed (VkSurfaceFormatKHR* formatsPtr = formats) {
+            result = this._gd.InstanceApi.vkGetPhysicalDeviceSurfaceFormatsKHR(this._gd.PhysicalDevice, this.Surface, &surfaceFormatCount, formatsPtr);
+            CheckResult(result);
+        }
 
         VkFormat desiredFormat = this._colorSrgb
-            ? VkFormat.B8g8r8a8Srgb
-            : VkFormat.B8g8r8a8Unorm;
+            ? VkFormat.B8G8R8A8Srgb
+            : VkFormat.B8G8R8A8Unorm;
 
         VkSurfaceFormatKHR surfaceFormat = new();
 
         if (formats.Length == 1 && formats[0].format == VkFormat.Undefined) {
-            surfaceFormat = new VkSurfaceFormatKHR { colorSpace = VkColorSpaceKHR.SrgbNonlinearKHR, format = desiredFormat };
+            surfaceFormat = new VkSurfaceFormatKHR { colorSpace = VkColorSpaceKHR.SrgbNonLinear, format = desiredFormat };
         }
         else {
             foreach (VkSurfaceFormatKHR format in formats) {
-                if (format.colorSpace == VkColorSpaceKHR.SrgbNonlinearKHR && format.format == desiredFormat) {
+                if (format.colorSpace == VkColorSpaceKHR.SrgbNonLinear && format.format == desiredFormat) {
                     surfaceFormat = format;
                     break;
                 }
             }
 
             if (surfaceFormat.format == VkFormat.Undefined) {
-                if (this._colorSrgb && surfaceFormat.format != VkFormat.R8g8b8a8Srgb) {
+                if (this._colorSrgb && surfaceFormat.format != VkFormat.R8G8B8A8Srgb) {
                     throw new VeldridException("Unable to create an sRGB Swapchain for this surface.");
                 }
 
@@ -327,33 +328,35 @@ internal unsafe class VkSwapchain : Swapchain {
         }
 
         uint presentModeCount = 0;
-        result = vkGetPhysicalDeviceSurfacePresentModesKHR(this.gd.PhysicalDevice, this.Surface, ref presentModeCount, null);
+        result = this._gd.InstanceApi.vkGetPhysicalDeviceSurfacePresentModesKHR(this._gd.PhysicalDevice, this.Surface, &presentModeCount, null);
         CheckResult(result);
         VkPresentModeKHR[] presentModes = new VkPresentModeKHR[presentModeCount];
-        result = vkGetPhysicalDeviceSurfacePresentModesKHR(this.gd.PhysicalDevice, this.Surface, ref presentModeCount, out presentModes[0]);
-        CheckResult(result);
+        fixed (VkPresentModeKHR* presentModesPtr = presentModes) {
+            result = this._gd.InstanceApi.vkGetPhysicalDeviceSurfacePresentModesKHR(this._gd.PhysicalDevice, this.Surface, &presentModeCount, presentModesPtr);
+            CheckResult(result);
+        }
 
-        VkPresentModeKHR presentMode = VkPresentModeKHR.FifoKHR;
+        VkPresentModeKHR presentMode = VkPresentModeKHR.Fifo;
 
         if (this._syncToVBlank) {
-            if (presentModes.Contains(VkPresentModeKHR.FifoRelaxedKHR)) {
-                presentMode = VkPresentModeKHR.FifoRelaxedKHR;
+            if (presentModes.Contains(VkPresentModeKHR.FifoRelaxed)) {
+                presentMode = VkPresentModeKHR.FifoRelaxed;
             }
         }
-        else if (this._allowTearing && presentModes.Contains(VkPresentModeKHR.ImmediateKHR)) {
-            presentMode = VkPresentModeKHR.ImmediateKHR;
+        else if (this._allowTearing && presentModes.Contains(VkPresentModeKHR.Immediate)) {
+            presentMode = VkPresentModeKHR.Immediate;
         }
-        else if (presentModes.Contains(VkPresentModeKHR.MailboxKHR)) {
-            presentMode = VkPresentModeKHR.MailboxKHR;
+        else if (presentModes.Contains(VkPresentModeKHR.Mailbox)) {
+            presentMode = VkPresentModeKHR.Mailbox;
         }
-        else if (presentModes.Contains(VkPresentModeKHR.ImmediateKHR)) {
-            presentMode = VkPresentModeKHR.ImmediateKHR;
+        else if (presentModes.Contains(VkPresentModeKHR.Immediate)) {
+            presentMode = VkPresentModeKHR.Immediate;
         }
 
         uint maxImageCount = surfaceCapabilities.maxImageCount == 0 ? uint.MaxValue : surfaceCapabilities.maxImageCount;
         uint imageCount = Math.Min(maxImageCount, surfaceCapabilities.minImageCount + 1);
 
-        VkSwapchainCreateInfoKHR swapchainCi = VkSwapchainCreateInfoKHR.New();
+        VkSwapchainCreateInfoKHR swapchainCi = new VkSwapchainCreateInfoKHR();
         swapchainCi.surface = this.Surface;
         swapchainCi.presentMode = presentMode;
         swapchainCi.imageFormat = surfaceFormat.format;
@@ -365,9 +368,9 @@ internal unsafe class VkSwapchain : Swapchain {
         swapchainCi.imageArrayLayers = 1;
         swapchainCi.imageUsage = VkImageUsageFlags.ColorAttachment | VkImageUsageFlags.TransferDst;
 
-        FixedArray2<uint> queueFamilyIndices = new(this.gd.GraphicsQueueIndex, this.gd.PresentQueueIndex);
+        FixedArray2<uint> queueFamilyIndices = new(this._gd.GraphicsQueueIndex, this._gd.PresentQueueIndex);
 
-        if (this.gd.GraphicsQueueIndex != this.gd.PresentQueueIndex) {
+        if (this._gd.GraphicsQueueIndex != this._gd.PresentQueueIndex) {
             swapchainCi.imageSharingMode = VkSharingMode.Concurrent;
             swapchainCi.queueFamilyIndexCount = 2;
             swapchainCi.pQueueFamilyIndices = &queueFamilyIndices.First;
@@ -377,17 +380,19 @@ internal unsafe class VkSwapchain : Swapchain {
             swapchainCi.queueFamilyIndexCount = 0;
         }
 
-        swapchainCi.preTransform = VkSurfaceTransformFlagsKHR.IdentityKHR;
-        swapchainCi.compositeAlpha = VkCompositeAlphaFlagsKHR.OpaqueKHR;
+        swapchainCi.preTransform = VkSurfaceTransformFlagsKHR.Identity;
+        swapchainCi.compositeAlpha = VkCompositeAlphaFlagsKHR.Opaque;
         swapchainCi.clipped = true;
 
         VkSwapchainKHR oldSwapchain = this._deviceSwapchain;
         swapchainCi.oldSwapchain = oldSwapchain;
 
-        result = vkCreateSwapchainKHR(this.gd.Device, ref swapchainCi, null, out this._deviceSwapchain);
+        fixed (VkSwapchainKHR* swapchainPtr = &this._deviceSwapchain) {
+            result = this._gd.DeviceApi.vkCreateSwapchainKHR(&swapchainCi, null, swapchainPtr);
+        }
         CheckResult(result);
-        if (oldSwapchain != VkSwapchainKHR.Null) {
-            vkDestroySwapchainKHR(this.gd.Device, oldSwapchain, null);
+        if (oldSwapchain.IsNotNull) {
+            this._gd.DeviceApi.vkDestroySwapchainKHR(oldSwapchain, null);
         }
 
         this._framebuffer.SetNewSwapchain(this._deviceSwapchain, width, height, surfaceFormat, swapchainCi.imageExtent);
@@ -400,8 +405,8 @@ internal unsafe class VkSwapchain : Swapchain {
     /// <param name="queueFamilyIndex">The queue family index value used by this operation.</param>
     /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     private bool GetPresentQueueIndex(out uint queueFamilyIndex) {
-        uint deviceGraphicsQueueIndex = this.gd.GraphicsQueueIndex;
-        uint devicePresentQueueIndex = this.gd.PresentQueueIndex;
+        uint deviceGraphicsQueueIndex = this._gd.GraphicsQueueIndex;
+        uint devicePresentQueueIndex = this._gd.PresentQueueIndex;
 
         if (this.QueueSupportsPresent(deviceGraphicsQueueIndex, this.Surface)) {
             queueFamilyIndex = deviceGraphicsQueueIndex;
@@ -424,7 +429,7 @@ internal unsafe class VkSwapchain : Swapchain {
     /// <param name="surface">The surface value used by this operation.</param>
     /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     private bool QueueSupportsPresent(uint queueFamilyIndex, VkSurfaceKHR surface) {
-        VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(this.gd.PhysicalDevice, queueFamilyIndex, surface, out VkBool32 supported);
+        VkResult result = this._gd.InstanceApi.vkGetPhysicalDeviceSurfaceSupportKHR(this._gd.PhysicalDevice, queueFamilyIndex, surface, out VkBool32 supported);
         CheckResult(result);
         return supported;
     }
@@ -433,10 +438,10 @@ internal unsafe class VkSwapchain : Swapchain {
     /// Executes the dispose core logic for this backend.
     /// </summary>
     private void DisposeCore() {
-        vkDestroyFence(this.gd.Device, this._imageAvailableFence, null);
+        this._gd.DeviceApi.vkDestroyFence(this._imageAvailableFence, null);
         this._framebuffer.Dispose();
-        vkDestroySwapchainKHR(this.gd.Device, this._deviceSwapchain, null);
-        vkDestroySurfaceKHR(this.gd.Instance, this.Surface, null);
+        this._gd.DeviceApi.vkDestroySwapchainKHR(this._deviceSwapchain, null);
+        this._gd.InstanceApi.vkDestroySurfaceKHR(this.Surface, null);
 
         this._disposed = true;
     }

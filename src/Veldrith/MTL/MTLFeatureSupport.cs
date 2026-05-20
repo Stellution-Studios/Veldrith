@@ -21,7 +21,7 @@ internal class MtlFeatureSupport : IReadOnlyCollection<MTLFeatureSet> {
     /// <param name="device">The device value used by this operation.</param>
     public MtlFeatureSupport(MTLDevice device) {
         foreach (MTLFeatureSet set in Enum.GetValues(typeof(MTLFeatureSet))) {
-            if (device.supportsFeatureSet(set)) {
+            if (device.SupportsFeatureSet(set)) {
                 this._supportedFeatureSets.Add(set);
                 this.MaxFeatureSet = set;
             }

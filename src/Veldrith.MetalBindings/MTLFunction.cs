@@ -25,10 +25,10 @@ public struct MTLFunction {
     /// Gets or sets functionConstantsDictionary.
     /// </summary>
 
-    public NSDictionary functionConstantsDictionary => objc_msgSend<NSDictionary>(this.NativePtr, sel_functionConstantsDictionary);
+    public NSDictionary FunctionConstantsDictionary => objc_msgSend<NSDictionary>(this.NativePtr, _selFunctionConstantsDictionary);
 
     /// <summary>
     /// Stores the sel function constants dictionary state used by this instance.
     /// </summary>
-    private static readonly Selector sel_functionConstantsDictionary = "functionConstantsDictionary";
+    private static readonly Selector _selFunctionConstantsDictionary = "functionConstantsDictionary";
 }

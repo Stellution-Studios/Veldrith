@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using Vulkan;
+using Vortice.Vulkan;
 using static Veldrith.Vk.VulkanUtil;
-using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
@@ -33,29 +32,34 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
     private readonly Dictionary<uint, ChunkAllocatorSet> _allocatorsByMemoryTypeUnmapped = new();
 
     /// <summary>
-    /// Stores the buffer image granularity state used by this instance.
+    /// Stores the buffer/image granularity for Vulkan memory allocations.
     /// </summary>
-    private readonly ulong bufferImageGranularity;
+    private readonly ulong _bufferImageGranularity;
 
     /// <summary>
     /// Stores the device state used by this instance.
     /// </summary>
-    private readonly VkDevice device;
+    private readonly VkDevice _device;
 
     /// <summary>
-    /// Stores the get buffer memory requirements2 state used by this instance.
+    /// Stores the device api state used by this instance.
     /// </summary>
-    private readonly VkGetBufferMemoryRequirements2T getBufferMemoryRequirements2;
+    private readonly VkDeviceApi _deviceApi;
 
     /// <summary>
-    /// Stores the get image memory requirements2 state used by this instance.
+    /// Stores the Vulkan buffer memory requirements function.
     /// </summary>
-    private readonly VkGetImageMemoryRequirements2T getImageMemoryRequirements2;
+    private readonly VkGetBufferMemoryRequirements2T _getBufferMemoryRequirements2;
+
+    /// <summary>
+    /// Stores the Vulkan image memory requirements function.
+    /// </summary>
+    private readonly VkGetImageMemoryRequirements2T _getImageMemoryRequirements2;
 
     /// <summary>
     /// Creates and returns a new instance.
     /// </summary>
-    private readonly object @lock = new();
+    private readonly object _lock = new();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VkDeviceMemoryManager" /> type.
@@ -65,10 +69,11 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
     /// <param name="getBufferMemoryRequirements2">The get buffer memory requirements2 value used by this operation.</param>
     /// <param name="getImageMemoryRequirements2">The get image memory requirements2 value used by this operation.</param>
     public VkDeviceMemoryManager(VkDevice device, ulong bufferImageGranularity, VkGetBufferMemoryRequirements2T getBufferMemoryRequirements2, VkGetImageMemoryRequirements2T getImageMemoryRequirements2) {
-        this.device = device;
-        this.bufferImageGranularity = bufferImageGranularity;
-        this.getBufferMemoryRequirements2 = getBufferMemoryRequirements2;
-        this.getImageMemoryRequirements2 = getImageMemoryRequirements2;
+        this._device = device;
+        this._deviceApi = VulkanDispatch.GetApi(device);
+        this._bufferImageGranularity = bufferImageGranularity;
+        this._getBufferMemoryRequirements2 = getBufferMemoryRequirements2;
+        this._getImageMemoryRequirements2 = getImageMemoryRequirements2;
     }
 
     #region Disposal
@@ -99,7 +104,7 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
     /// <param name="alignment">The alignment value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     public VkMemoryBlock Allocate(VkPhysicalDeviceMemoryProperties memProperties, uint memoryTypeBits, VkMemoryPropertyFlags flags, bool persistentMapped, ulong size, ulong alignment) {
-        return this.Allocate(memProperties, memoryTypeBits, flags, persistentMapped, size, alignment, false, VkImage.Null, Vulkan.VkBuffer.Null);
+        return this.Allocate(memProperties, memoryTypeBits, flags, persistentMapped, size, alignment, false, default, default);
     }
 
     /// <summary>
@@ -115,29 +120,29 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
     /// <param name="dedicatedImage">The dedicated image value used by this operation.</param>
     /// <param name="dedicatedBuffer">The dedicated buffer value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    public VkMemoryBlock Allocate(VkPhysicalDeviceMemoryProperties memProperties, uint memoryTypeBits, VkMemoryPropertyFlags flags, bool persistentMapped, ulong size, ulong alignment, bool dedicated, VkImage dedicatedImage, Vulkan.VkBuffer dedicatedBuffer) {
+    public VkMemoryBlock Allocate(VkPhysicalDeviceMemoryProperties memProperties, uint memoryTypeBits, VkMemoryPropertyFlags flags, bool persistentMapped, ulong size, ulong alignment, bool dedicated, VkImage dedicatedImage, global::Vortice.Vulkan.VkBuffer dedicatedBuffer) {
         if (dedicated) {
-            if (dedicatedImage != VkImage.Null && this.getImageMemoryRequirements2 != null) {
-                VkImageMemoryRequirementsInfo2KHR requirementsInfo = VkImageMemoryRequirementsInfo2KHR.New();
+            if (dedicatedImage.IsNotNull && this._getImageMemoryRequirements2 != null) {
+                VkImageMemoryRequirementsInfo2 requirementsInfo = new VkImageMemoryRequirementsInfo2();
                 requirementsInfo.image = dedicatedImage;
-                VkMemoryRequirements2KHR requirements = VkMemoryRequirements2KHR.New();
-                this.getImageMemoryRequirements2(this.device, &requirementsInfo, &requirements);
+                VkMemoryRequirements2 requirements = new VkMemoryRequirements2();
+                this._getImageMemoryRequirements2(this._device, &requirementsInfo, &requirements);
                 size = requirements.memoryRequirements.size;
             }
-            else if (dedicatedBuffer != Vulkan.VkBuffer.Null && this.getBufferMemoryRequirements2 != null) {
-                VkBufferMemoryRequirementsInfo2KHR requirementsInfo = VkBufferMemoryRequirementsInfo2KHR.New();
+            else if (dedicatedBuffer.IsNotNull && this._getBufferMemoryRequirements2 != null) {
+                VkBufferMemoryRequirementsInfo2 requirementsInfo = new VkBufferMemoryRequirementsInfo2();
                 requirementsInfo.buffer = dedicatedBuffer;
-                VkMemoryRequirements2KHR requirements = VkMemoryRequirements2KHR.New();
-                this.getBufferMemoryRequirements2(this.device, &requirementsInfo, &requirements);
+                VkMemoryRequirements2 requirements = new VkMemoryRequirements2();
+                this._getBufferMemoryRequirements2(this._device, &requirementsInfo, &requirements);
                 size = requirements.memoryRequirements.size;
             }
         }
         else {
             // Round up to the nearest multiple of bufferImageGranularity.
-            size = (size / this.bufferImageGranularity + 1) * this.bufferImageGranularity;
+            size = (size / this._bufferImageGranularity + 1) * this._bufferImageGranularity;
         }
 
-        lock (this.@lock) {
+        lock (this._lock) {
             if (!TryFindMemoryType(memProperties, memoryTypeBits, flags, out uint memoryTypeIndex)) {
                 throw new VeldridException("No suitable memory type.");
             }
@@ -147,21 +152,21 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
                 : _min_dedicated_allocation_size_non_dynamic;
 
             if (dedicated || size >= minDedicatedAllocationSize) {
-                VkMemoryAllocateInfo allocateInfo = VkMemoryAllocateInfo.New();
+                VkMemoryAllocateInfo allocateInfo = new VkMemoryAllocateInfo();
                 allocateInfo.allocationSize = size;
                 allocateInfo.memoryTypeIndex = memoryTypeIndex;
 
                 // ReSharper disable once TooWideLocalVariableScope
-                VkMemoryDedicatedAllocateInfoKHR dedicatedAi;
+                VkMemoryDedicatedAllocateInfo dedicatedAi;
 
                 if (dedicated) {
-                    dedicatedAi = VkMemoryDedicatedAllocateInfoKHR.New();
+                    dedicatedAi = new VkMemoryDedicatedAllocateInfo();
                     dedicatedAi.buffer = dedicatedBuffer;
                     dedicatedAi.image = dedicatedImage;
                     allocateInfo.pNext = &dedicatedAi;
                 }
 
-                VkResult allocationResult = vkAllocateMemory(this.device, ref allocateInfo, null, out VkDeviceMemory memory);
+                VkResult allocationResult = this._deviceApi.vkAllocateMemory(&allocateInfo, null, out VkDeviceMemory memory);
                 if (allocationResult != VkResult.Success) {
                     throw new VeldridException("Unable to allocate sufficient Vulkan memory.");
                 }
@@ -169,7 +174,7 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
                 void* mappedPtr = null;
 
                 if (persistentMapped) {
-                    VkResult mapResult = vkMapMemory(this.device, memory, 0, size, 0, &mappedPtr);
+                    VkResult mapResult = this._deviceApi.vkMapMemory(memory, 0, size, 0, &mappedPtr);
                     if (mapResult != VkResult.Success) {
                         throw new VeldridException("Unable to map newly-allocated Vulkan memory.");
                     }
@@ -193,9 +198,9 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
     /// </summary>
     /// <param name="block">The block value used by this operation.</param>
     public void Free(VkMemoryBlock block) {
-        lock (this.@lock) {
+        lock (this._lock) {
             if (block.DedicatedAllocation) {
-                vkFreeMemory(this.device, block.DeviceMemory, null);
+                this._deviceApi.vkFreeMemory(block.DeviceMemory, null);
             }
             else {
                 this.GetAllocator(block.MemoryTypeIndex, block.IsPersistentMapped).Free(block);
@@ -210,7 +215,7 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
     /// <returns>The value produced by this operation.</returns>
     internal IntPtr Map(VkMemoryBlock memoryBlock) {
         void* ret;
-        VkResult result = vkMapMemory(this.device, memoryBlock.DeviceMemory, memoryBlock.Offset, memoryBlock.Size, 0, &ret);
+        VkResult result = this._deviceApi.vkMapMemory(memoryBlock.DeviceMemory, memoryBlock.Offset, memoryBlock.Size, 0, &ret);
         CheckResult(result);
         return (IntPtr)ret;
     }
@@ -226,13 +231,13 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
 
         if (persistentMapped) {
             if (!this._allocatorsByMemoryType.TryGetValue(memoryTypeIndex, out ret)) {
-                ret = new ChunkAllocatorSet(this.device, memoryTypeIndex, true);
+                ret = new ChunkAllocatorSet(this._device, memoryTypeIndex, true);
                 this._allocatorsByMemoryType.Add(memoryTypeIndex, ret);
             }
         }
         else {
             if (!this._allocatorsByMemoryTypeUnmapped.TryGetValue(memoryTypeIndex, out ret)) {
-                ret = new ChunkAllocatorSet(this.device, memoryTypeIndex, false);
+                ret = new ChunkAllocatorSet(this._device, memoryTypeIndex, false);
                 this._allocatorsByMemoryTypeUnmapped.Add(memoryTypeIndex, ret);
             }
         }
@@ -253,17 +258,17 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
         /// <summary>
         /// Stores the device state used by this instance.
         /// </summary>
-        private readonly VkDevice device;
+        private readonly VkDevice _device;
 
         /// <summary>
         /// Stores the memory type index value used during command execution.
         /// </summary>
-        private readonly uint memoryTypeIndex;
+        private readonly uint _memoryTypeIndex;
 
         /// <summary>
         /// Stores the persistent mapped state used by this instance.
         /// </summary>
-        private readonly bool persistentMapped;
+        private readonly bool _persistentMapped;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ChunkAllocatorSet" /> type.
@@ -272,9 +277,9 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
         /// <param name="memoryTypeIndex">The memory type index value used by this operation.</param>
         /// <param name="persistentMapped">The persistent mapped value used by this operation.</param>
         public ChunkAllocatorSet(VkDevice device, uint memoryTypeIndex, bool persistentMapped) {
-            this.device = device;
-            this.memoryTypeIndex = memoryTypeIndex;
-            this.persistentMapped = persistentMapped;
+            this._device = device;
+            this._memoryTypeIndex = memoryTypeIndex;
+            this._persistentMapped = persistentMapped;
         }
 
         #region Disposal
@@ -304,7 +309,7 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
                 }
             }
 
-            ChunkAllocator newAllocator = new(this.device, this.memoryTypeIndex, this.persistentMapped);
+            ChunkAllocator newAllocator = new(this._device, this._memoryTypeIndex, this._persistentMapped);
             this._allocators.Add(newAllocator);
             return newAllocator.Allocate(size, alignment, out block);
         }
@@ -330,7 +335,7 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
         /// <summary>
         /// Stores the memory state used by this instance.
         /// </summary>
-        public VkDeviceMemory Memory => this.memory;
+        public VkDeviceMemory Memory => this._memory;
 
         /// <summary>
         /// Stores the persistent mapped chunk size value used during command execution.
@@ -345,12 +350,17 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
         /// <summary>
         /// Stores the device state used by this instance.
         /// </summary>
-        private readonly VkDevice device;
+        private readonly VkDevice _device;
+
+        /// <summary>
+        /// Stores the device api state used by this instance.
+        /// </summary>
+        private readonly VkDeviceApi _deviceApi;
 
         /// <summary>
         /// Stores the memory type index value used during command execution.
         /// </summary>
-        private readonly uint memoryTypeIndex;
+        private readonly uint _memoryTypeIndex;
 
         /// <summary>
         /// Synchronizes access to the free blocks state.
@@ -360,12 +370,12 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
         /// <summary>
         /// Stores the memory state used by this instance.
         /// </summary>
-        private readonly VkDeviceMemory memory;
+        private readonly VkDeviceMemory _memory;
 
         /// <summary>
-        /// Stores the mapped ptr state used by this instance.
+        /// Stores the persistently mapped memory pointer.
         /// </summary>
-        private readonly void* mappedPtr;
+        private readonly void* _mappedPtr;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ChunkAllocator" /> type.
@@ -374,26 +384,27 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
         /// <param name="memoryTypeIndex">The memory type index value used by this operation.</param>
         /// <param name="persistentMapped">The persistent mapped value used by this operation.</param>
         public ChunkAllocator(VkDevice device, uint memoryTypeIndex, bool persistentMapped) {
-            this.device = device;
-            this.memoryTypeIndex = memoryTypeIndex;
+            this._device = device;
+            this._deviceApi = VulkanDispatch.GetApi(device);
+            this._memoryTypeIndex = memoryTypeIndex;
             ulong totalMemorySize = persistentMapped ? _persistent_mapped_chunk_size : _unmapped_chunk_size;
 
-            VkMemoryAllocateInfo memoryAi = VkMemoryAllocateInfo.New();
+            VkMemoryAllocateInfo memoryAi = new VkMemoryAllocateInfo();
             memoryAi.allocationSize = totalMemorySize;
-            memoryAi.memoryTypeIndex = this.memoryTypeIndex;
-            VkResult result = vkAllocateMemory(this.device, ref memoryAi, null, out this.memory);
+            memoryAi.memoryTypeIndex = this._memoryTypeIndex;
+            VkResult result = this._deviceApi.vkAllocateMemory(&memoryAi, null, out this._memory);
             CheckResult(result);
 
             if (persistentMapped) {
                 void* ptr = null;
 
-                result = vkMapMemory(this.device, this.memory, 0, totalMemorySize, 0, &ptr);
+                result = this._deviceApi.vkMapMemory(this._memory, 0, totalMemorySize, 0, &ptr);
                 CheckResult(result);
 
-                this.mappedPtr = ptr;
+                this._mappedPtr = ptr;
             }
 
-            VkMemoryBlock initialBlock = new(this.memory, 0, totalMemorySize, this.memoryTypeIndex, this.mappedPtr, false);
+            VkMemoryBlock initialBlock = new(this._memory, 0, totalMemorySize, this._memoryTypeIndex, this._mappedPtr, false);
             this._freeBlocks.Add(initialBlock);
         }
 
@@ -403,7 +414,7 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
         /// Releases resources held by this instance.
         /// </summary>
         public void Dispose() {
-            vkFreeMemory(this.device, this.memory, null);
+            this._deviceApi.vkFreeMemory(this._memory, null);
         }
 
         #endregion
@@ -441,7 +452,7 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
                         block = freeBlock;
 
                         if (alignedBlockSize != size) {
-                            VkMemoryBlock splitBlock = new(freeBlock.DeviceMemory, freeBlock.Offset + size, freeBlock.Size - size, this.memoryTypeIndex, freeBlock.BaseMappedPointer, false);
+                            VkMemoryBlock splitBlock = new(freeBlock.DeviceMemory, freeBlock.Offset + size, freeBlock.Size - size, this._memoryTypeIndex, freeBlock.BaseMappedPointer, false);
                             this._freeBlocks.Insert(i, splitBlock);
                             block = freeBlock;
                             block.Size = size;
@@ -497,7 +508,7 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
                 if (contiguousLength > 1) {
                     ulong blockEnd = this._freeBlocks[i + contiguousLength - 1].End;
                     this._freeBlocks.RemoveRange(i, contiguousLength);
-                    VkMemoryBlock mergedBlock = new(this.Memory, blockStart, blockEnd - blockStart, this.memoryTypeIndex, this.mappedPtr, false);
+                    VkMemoryBlock mergedBlock = new(this.Memory, blockStart, blockEnd - blockStart, this._memoryTypeIndex, this._mappedPtr, false);
                     this._freeBlocks.Insert(i, mergedBlock);
                     contiguousLength = 0;
                 }
@@ -509,16 +520,16 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
         /// <summary>
         /// Executes the list logic for this backend.
         /// </summary>
-        private readonly List<VkMemoryBlock> allocatedBlocks = new List<VkMemoryBlock>();
+        private readonly List<VkMemoryBlock> _allocatedBlocks = new List<VkMemoryBlock>();
 
         /// <summary>
         /// Executes the check allocated block logic for this backend.
         /// </summary>
         /// <param name="block">The block value used by this operation.</param>
         private void checkAllocatedBlock(VkMemoryBlock block) {
-            foreach (var oldBlock in allocatedBlocks) Debug.Assert(!blocksOverlap(block, oldBlock), "Allocated blocks have overlapped.");
+            foreach (var oldBlock in this._allocatedBlocks) Debug.Assert(!blocksOverlap(block, oldBlock), "Allocated blocks have overlapped.");
 
-            allocatedBlocks.Add(block);
+            this._allocatedBlocks.Add(block);
         }
 
         /// <summary>
@@ -544,7 +555,7 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
         /// </summary>
         /// <param name="block">The block value used by this operation.</param>
         private void removeAllocatedBlock(VkMemoryBlock block) {
-            Debug.Assert(allocatedBlocks.Remove(block), "Unable to remove a supposedly allocated block.");
+            Debug.Assert(this._allocatedBlocks.Remove(block), "Unable to remove a supposedly allocated block.");
         }
 #endif
     }

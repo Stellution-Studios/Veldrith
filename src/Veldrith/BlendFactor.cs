@@ -16,22 +16,22 @@ public enum BlendFactor : byte {
     One,
 
     /// <summary>
-    /// Each component is multiplied by the source alpha component.
+    /// Each component is multiplied by the source Alpha component.
     /// </summary>
     SourceAlpha,
 
     /// <summary>
-    /// Each component is multiplied by (1 - source alpha).
+    /// Each component is multiplied by (1 - source Alpha).
     /// </summary>
     InverseSourceAlpha,
 
     /// <summary>
-    /// Each component is multiplied by the destination alpha component.
+    /// Each component is multiplied by the destination Alpha component.
     /// </summary>
     DestinationAlpha,
 
     /// <summary>
-    /// Each component is multiplied by (1 - destination alpha).
+    /// Each component is multiplied by (1 - destination Alpha).
     /// </summary>
     InverseDestinationAlpha,
 

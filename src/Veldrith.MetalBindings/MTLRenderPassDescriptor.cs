@@ -4,11 +4,10 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrith.MetalBindings;
 
-[StructLayout(LayoutKind.Sequential)]
-
 /// <summary>
 /// Represents the MTLRenderPassDescriptor data structure used by the graphics runtime.
 /// </summary>
+[StructLayout(LayoutKind.Sequential)]
 public struct MTLRenderPassDescriptor {
 
     /// <summary>
@@ -29,14 +28,11 @@ public struct MTLRenderPassDescriptor {
         return s_class.AllocInit<MTLRenderPassDescriptor>();
     }
 
-    public MTLRenderPassColorAttachmentDescriptorArray colorAttachments
-        => objc_msgSend<MTLRenderPassColorAttachmentDescriptorArray>(this.NativePtr, sel_colorAttachments);
+    public MTLRenderPassColorAttachmentDescriptorArray ColorAttachments => objc_msgSend<MTLRenderPassColorAttachmentDescriptorArray>(this.NativePtr, sel_colorAttachments);
 
-    public MTLRenderPassDepthAttachmentDescriptor depthAttachment
-        => objc_msgSend<MTLRenderPassDepthAttachmentDescriptor>(this.NativePtr, sel_depthAttachment);
+    public MTLRenderPassDepthAttachmentDescriptor DepthAttachment => objc_msgSend<MTLRenderPassDepthAttachmentDescriptor>(this.NativePtr, sel_depthAttachment);
 
-    public MTLRenderPassStencilAttachmentDescriptor stencilAttachment
-        => objc_msgSend<MTLRenderPassStencilAttachmentDescriptor>(this.NativePtr, sel_stencilAttachment);
+    public MTLRenderPassStencilAttachmentDescriptor StencilAttachment => objc_msgSend<MTLRenderPassStencilAttachmentDescriptor>(this.NativePtr, sel_stencilAttachment);
 
     /// <summary>
     /// Stores the sel color attachments state used by this instance.

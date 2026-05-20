@@ -26,11 +26,11 @@ internal class MtlBuffer : DeviceBuffer {
         bool sharedMemory = this.Usage == BufferUsage.Staging || (this.Usage & BufferUsage.Dynamic) == BufferUsage.Dynamic;
         MTLResourceOptions bufferOptions = sharedMemory ? MTLResourceOptions.StorageModeShared : MTLResourceOptions.StorageModePrivate;
 
-        this.DeviceBuffer = gd.Device.newBufferWithLengthOptions(this.ActualCapacity, bufferOptions);
+        this.DeviceBuffer = gd.Device.NewBufferWithLengthOptions(this.ActualCapacity, bufferOptions);
 
         unsafe {
             if (sharedMemory) {
-                this.Pointer = this.DeviceBuffer.contents();
+                this.Pointer = this.DeviceBuffer.Contents();
             }
         }
     }
@@ -62,8 +62,8 @@ internal class MtlBuffer : DeviceBuffer {
         get;
         set {
             NSString nameNss = NSString.New(value);
-            this.DeviceBuffer.addDebugMarker(nameNss, new NSRange(0, this.SizeInBytes));
-            ObjectiveCRuntime.release(nameNss.NativePtr);
+            this.DeviceBuffer.AddDebugMarker(nameNss, new NSRange(0, this.SizeInBytes));
+            ObjectiveCRuntime.Release(nameNss.NativePtr);
             field = value;
         }
     }
@@ -86,7 +86,7 @@ internal class MtlBuffer : DeviceBuffer {
     public override void Dispose() {
         if (!this._disposed) {
             this._disposed = true;
-            ObjectiveCRuntime.release(this.DeviceBuffer.NativePtr);
+            ObjectiveCRuntime.Release(this.DeviceBuffer.NativePtr);
         }
     }
 

@@ -16,50 +16,50 @@ public struct MTLRenderPassStencilAttachmentDescriptor {
     /// <summary>
     /// Gets or sets texture.
     /// </summary>
-    public MTLTexture texture {
-        get => objc_msgSend<MTLTexture>(this.NativePtr, Selectors.texture);
-        set => objc_msgSend(this.NativePtr, Selectors.setTexture, value.NativePtr);
+    public MTLTexture Texture {
+        get => objc_msgSend<MTLTexture>(this.NativePtr, Selectors.Texture);
+        set => objc_msgSend(this.NativePtr, Selectors.SetTexture, value.NativePtr);
     }
 
     /// <summary>
     /// Gets or sets loadAction.
     /// </summary>
-    public MTLLoadAction loadAction {
-        get => (MTLLoadAction)uint_objc_msgSend(this.NativePtr, Selectors.loadAction);
-        set => objc_msgSend(this.NativePtr, Selectors.setLoadAction, (uint)value);
+    public MTLLoadAction LoadAction {
+        get => (MTLLoadAction)uint_objc_msgSend(this.NativePtr, Selectors.LoadAction);
+        set => objc_msgSend(this.NativePtr, Selectors.SetLoadAction, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets storeAction.
     /// </summary>
-    public MTLStoreAction storeAction {
-        get => (MTLStoreAction)uint_objc_msgSend(this.NativePtr, Selectors.storeAction);
-        set => objc_msgSend(this.NativePtr, Selectors.setStoreAction, (uint)value);
+    public MTLStoreAction StoreAction {
+        get => (MTLStoreAction)uint_objc_msgSend(this.NativePtr, Selectors.StoreAction);
+        set => objc_msgSend(this.NativePtr, Selectors.SetStoreAction, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets clearStencil.
     /// </summary>
-    public uint clearStencil {
-        get => uint_objc_msgSend(this.NativePtr, sel_clearStencil);
-        set => objc_msgSend(this.NativePtr, sel_setClearStencil, value);
+    public uint ClearStencil {
+        get => uint_objc_msgSend(this.NativePtr, _selClearStencil);
+        set => objc_msgSend(this.NativePtr, _selSetClearStencil, value);
     }
 
     /// <summary>
     /// Gets or sets slice.
     /// </summary>
-    public UIntPtr slice {
-        get => UIntPtr_objc_msgSend(this.NativePtr, Selectors.slice);
-        set => objc_msgSend(this.NativePtr, Selectors.setSlice, value);
+    public UIntPtr Slice {
+        get => UIntPtr_objc_msgSend(this.NativePtr, Selectors.Slice);
+        set => objc_msgSend(this.NativePtr, Selectors.SetSlice, value);
     }
 
     /// <summary>
     /// Stores the sel clear stencil state used by this instance.
     /// </summary>
-    private static readonly Selector sel_clearStencil = "clearStencil";
+    private static readonly Selector _selClearStencil = "clearStencil";
 
     /// <summary>
     /// Stores the sel set clear stencil state used by this instance.
     /// </summary>
-    private static readonly Selector sel_setClearStencil = "setClearStencil:";
+    private static readonly Selector _selSetClearStencil = "setClearStencil:";
 }

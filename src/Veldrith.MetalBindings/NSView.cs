@@ -34,54 +34,46 @@ public struct NSView {
     /// <summary>
     /// Gets or sets wantsLayer.
     /// </summary>
-    public Bool8 wantsLayer {
-        get => bool8_objc_msgSend(this.NativePtr, sel_wantsLayer);
-        set => objc_msgSend(this.NativePtr, sel_setWantsLayer, value);
+    public Bool8 WantsLayer {
+        get => bool8_objc_msgSend(this.NativePtr, _selWantsLayer);
+        set => objc_msgSend(this.NativePtr, _selSetWantsLayer, value);
     }
 
     /// <summary>
     /// Gets or sets layer.
     /// </summary>
-    public IntPtr layer {
-        get => IntPtr_objc_msgSend(this.NativePtr, sel_layer);
-        set => objc_msgSend(this.NativePtr, sel_setLayer, value);
+    public IntPtr Layer {
+        get => IntPtr_objc_msgSend(this.NativePtr, _selLayer);
+        set => objc_msgSend(this.NativePtr, _selSetLayer, value);
     }
 
     /// <summary>
     /// Stores the frame state used by this instance.
     /// </summary>
-    public CGRect frame =>
-        RuntimeInformation.ProcessArchitecture == Architecture.Arm64
-
-            /// <summary>
-            /// Executes the cgrect objc msg send logic for this backend.
-            /// </summary>
-            /// <param name="sel_frame">The sel frame value used by this operation.</param>
-            ? CGRect_objc_msgSend(this.NativePtr, sel_frame)
-            : objc_msgSend_stret<CGRect>(this.NativePtr, sel_frame);
+    public CGRect Frame => RuntimeInformation.ProcessArchitecture == Architecture.Arm64 ? CGRect_objc_msgSend(this.NativePtr, _selFrame) : objc_msgSend_stret<CGRect>(this.NativePtr, _selFrame);
 
     /// <summary>
     /// Stores the sel wants layer state used by this instance.
     /// </summary>
-    private static readonly Selector sel_wantsLayer = "wantsLayer";
+    private static readonly Selector _selWantsLayer = "wantsLayer";
 
     /// <summary>
     /// Stores the sel set wants layer state used by this instance.
     /// </summary>
-    private static readonly Selector sel_setWantsLayer = "setWantsLayer:";
+    private static readonly Selector _selSetWantsLayer = "setWantsLayer:";
 
     /// <summary>
     /// Stores the sel layer state used by this instance.
     /// </summary>
-    private static readonly Selector sel_layer = "layer";
+    private static readonly Selector _selLayer = "layer";
 
     /// <summary>
     /// Stores the sel set layer state used by this instance.
     /// </summary>
-    private static readonly Selector sel_setLayer = "setLayer:";
+    private static readonly Selector _selSetLayer = "setLayer:";
 
     /// <summary>
     /// Stores the sel frame state used by this instance.
     /// </summary>
-    private static readonly Selector sel_frame = "frame";
+    private static readonly Selector _selFrame = "frame";
 }

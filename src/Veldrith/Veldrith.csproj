@@ -55,8 +55,8 @@
 
     <!-- Libraries -->
     <ItemGroup>
-        <PackageReference Include="ppy.Vk" Version="1.0.26" Condition="'$(ExcludeVulkan)' != 'true'" />
         <PackageReference Include="Vortice.Direct3D12" Version="$(VorticeWindowsVersion)" />
+        <PackageReference Include="Vortice.Vulkan" Version="3.2.2" />
     </ItemGroup>
 
     <ItemGroup>

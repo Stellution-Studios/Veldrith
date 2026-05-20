@@ -6,7 +6,7 @@ namespace Veldrith.Vk;
 internal class VkResourceFactory : ResourceFactory {
 
     /// <summary>
-    /// Stores the gd state used by this instance.
+    /// Stores the graphics device used by this instance.
     /// </summary>
     private readonly VkGraphicsDevice _gd;
 

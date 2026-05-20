@@ -1,7 +1,6 @@
 using System.Diagnostics;
-using Vulkan;
+using Vortice.Vulkan;
 using static Veldrith.Vk.VulkanUtil;
-using static Vulkan.VulkanNative;
 
 namespace Veldrith.Vk;
 
@@ -28,12 +27,12 @@ internal unsafe class VkTexture : Texture {
     /// <summary>
     /// Stores the staging buffer state used by this instance.
     /// </summary>
-    private readonly Vulkan.VkBuffer _stagingBuffer;
+    private readonly global::Vortice.Vulkan.VkBuffer _stagingBuffer;
 
     /// <summary>
-    /// Stores the gd state used by this instance.
+    /// Stores the graphics device used by this instance.
     /// </summary>
-    private readonly VkGraphicsDevice gd;
+    private readonly VkGraphicsDevice _gd;
 
     /// <summary>
     /// Stores the destroyed state used by this instance.
@@ -48,24 +47,24 @@ internal unsafe class VkTexture : Texture {
     /// <summary>
     /// Stores the depth value used during command execution.
     /// </summary>
-    private uint depth;
+    private uint _depth;
 
     /// <summary>
-    /// Stores the format state used by this instance.
+    /// Stores the texture format used by this instance.
     /// </summary>
-    private PixelFormat format; // Static for regular images -- may change for shared staging images
+    private PixelFormat _format; // Static for regular images -- may change for shared staging images
 
     /// <summary>
     /// Stores the height value used during command execution.
     /// </summary>
-    private uint height;
+    private uint _height;
 
     // Immutable except for shared staging Textures.
 
     /// <summary>
     /// Stores the width value used during command execution.
     /// </summary>
-    private uint width;
+    private uint _width;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VkTexture" /> type.
@@ -73,17 +72,17 @@ internal unsafe class VkTexture : Texture {
     /// <param name="gd">The graphics device that owns this operation.</param>
     /// <param name="description">The description used to configure this operation.</param>
     internal VkTexture(VkGraphicsDevice gd, ref TextureDescription description) {
-        this.gd = gd;
-        this.width = description.Width;
-        this.height = description.Height;
-        this.depth = description.Depth;
+        this._gd = gd;
+        this._width = description.Width;
+        this._height = description.Height;
+        this._depth = description.Depth;
         this.MipLevels = description.MipLevels;
         this.ArrayLayers = description.ArrayLayers;
         bool isCubemap = (description.Usage & TextureUsage.Cubemap) == TextureUsage.Cubemap;
         this.ActualArrayLayers = isCubemap
             ? 6 * this.ArrayLayers
             : this.ArrayLayers;
-        this.format = description.Format;
+        this._format = description.Format;
         this.Usage = description.Usage;
         this.Type = description.Type;
         this.SampleCount = description.SampleCount;
@@ -93,7 +92,7 @@ internal unsafe class VkTexture : Texture {
         bool isStaging = (this.Usage & TextureUsage.Staging) == TextureUsage.Staging;
 
         if (!isStaging) {
-            VkImageCreateInfo imageCi = VkImageCreateInfo.New();
+            VkImageCreateInfo imageCi = new VkImageCreateInfo();
             imageCi.mipLevels = this.MipLevels;
             imageCi.arrayLayers = this.ActualArrayLayers;
             imageCi.imageType = VkFormats.VdToVkTextureType(this.Type);
@@ -112,30 +111,30 @@ internal unsafe class VkTexture : Texture {
             }
 
             uint subresourceCount = this.MipLevels * this.ActualArrayLayers * this.Depth;
-            VkResult result = vkCreateImage(gd.Device, ref imageCi, null, out this._optimalImage);
+            VkResult result = gd.DeviceApi.vkCreateImage(ref imageCi, null, out this._optimalImage);
             CheckResult(result);
 
             VkMemoryRequirements memoryRequirements;
             bool prefersDedicatedAllocation;
 
-            if (this.gd.GetImageMemoryRequirements2 != null) {
-                VkImageMemoryRequirementsInfo2KHR memReqsInfo2 = VkImageMemoryRequirementsInfo2KHR.New();
+            if (this._gd.GetImageMemoryRequirements2 != null) {
+                VkImageMemoryRequirementsInfo2 memReqsInfo2 = new VkImageMemoryRequirementsInfo2();
                 memReqsInfo2.image = this._optimalImage;
-                VkMemoryRequirements2KHR memReqs2 = VkMemoryRequirements2KHR.New();
-                VkMemoryDedicatedRequirementsKHR dedicatedReqs = VkMemoryDedicatedRequirementsKHR.New();
+                VkMemoryRequirements2 memReqs2 = new VkMemoryRequirements2();
+                VkMemoryDedicatedRequirements dedicatedReqs = new VkMemoryDedicatedRequirements();
                 memReqs2.pNext = &dedicatedReqs;
-                this.gd.GetImageMemoryRequirements2(this.gd.Device, &memReqsInfo2, &memReqs2);
+                this._gd.GetImageMemoryRequirements2(this._gd.Device, &memReqsInfo2, &memReqs2);
                 memoryRequirements = memReqs2.memoryRequirements;
                 prefersDedicatedAllocation = dedicatedReqs.prefersDedicatedAllocation || dedicatedReqs.requiresDedicatedAllocation;
             }
             else {
-                vkGetImageMemoryRequirements(gd.Device, this._optimalImage, out memoryRequirements);
+                gd.DeviceApi.vkGetImageMemoryRequirements(this._optimalImage, out memoryRequirements);
                 prefersDedicatedAllocation = false;
             }
 
-            VkMemoryBlock memoryToken = gd.MemoryManager.Allocate(gd.PhysicalDeviceMemProperties, memoryRequirements.memoryTypeBits, VkMemoryPropertyFlags.DeviceLocal, false, memoryRequirements.size, memoryRequirements.alignment, prefersDedicatedAllocation, this._optimalImage, Vulkan.VkBuffer.Null);
+            VkMemoryBlock memoryToken = gd.MemoryManager.Allocate(gd.PhysicalDeviceMemProperties, memoryRequirements.memoryTypeBits, VkMemoryPropertyFlags.DeviceLocal, false, memoryRequirements.size, memoryRequirements.alignment, prefersDedicatedAllocation, this._optimalImage, default);
             this._memoryBlock = memoryToken;
-            result = vkBindImageMemory(gd.Device, this._optimalImage, this._memoryBlock.DeviceMemory, this._memoryBlock.Offset);
+            result = gd.DeviceApi.vkBindImageMemory(this._optimalImage, this._memoryBlock.DeviceMemory, this._memoryBlock.Offset);
             CheckResult(result);
 
             this._imageLayouts = new VkImageLayout[subresourceCount];
@@ -158,40 +157,40 @@ internal unsafe class VkTexture : Texture {
 
             stagingSize *= this.ArrayLayers;
 
-            VkBufferCreateInfo bufferCi = VkBufferCreateInfo.New();
+            VkBufferCreateInfo bufferCi = new VkBufferCreateInfo();
             bufferCi.usage = VkBufferUsageFlags.TransferSrc | VkBufferUsageFlags.TransferDst;
             bufferCi.size = stagingSize;
-            VkResult result = vkCreateBuffer(this.gd.Device, ref bufferCi, null, out this._stagingBuffer);
+            VkResult result = this._gd.DeviceApi.vkCreateBuffer(ref bufferCi, null, out this._stagingBuffer);
             CheckResult(result);
 
             VkMemoryRequirements bufferMemReqs;
             bool prefersDedicatedAllocation;
 
-            if (this.gd.GetBufferMemoryRequirements2 != null) {
-                VkBufferMemoryRequirementsInfo2KHR memReqInfo2 = VkBufferMemoryRequirementsInfo2KHR.New();
+            if (this._gd.GetBufferMemoryRequirements2 != null) {
+                VkBufferMemoryRequirementsInfo2 memReqInfo2 = new VkBufferMemoryRequirementsInfo2();
                 memReqInfo2.buffer = this._stagingBuffer;
-                VkMemoryRequirements2KHR memReqs2 = VkMemoryRequirements2KHR.New();
-                VkMemoryDedicatedRequirementsKHR dedicatedReqs = VkMemoryDedicatedRequirementsKHR.New();
+                VkMemoryRequirements2 memReqs2 = new VkMemoryRequirements2();
+                VkMemoryDedicatedRequirements dedicatedReqs = new VkMemoryDedicatedRequirements();
                 memReqs2.pNext = &dedicatedReqs;
-                this.gd.GetBufferMemoryRequirements2(this.gd.Device, &memReqInfo2, &memReqs2);
+                this._gd.GetBufferMemoryRequirements2(this._gd.Device, &memReqInfo2, &memReqs2);
                 bufferMemReqs = memReqs2.memoryRequirements;
                 prefersDedicatedAllocation = dedicatedReqs.prefersDedicatedAllocation || dedicatedReqs.requiresDedicatedAllocation;
             }
             else {
-                vkGetBufferMemoryRequirements(gd.Device, this._stagingBuffer, out bufferMemReqs);
+                gd.DeviceApi.vkGetBufferMemoryRequirements(this._stagingBuffer, out bufferMemReqs);
                 prefersDedicatedAllocation = false;
             }
 
             // Use "host cached" memory when available, for better performance of GPU -> CPU transfers
             VkMemoryPropertyFlags propertyFlags = VkMemoryPropertyFlags.HostVisible |
                                                   VkMemoryPropertyFlags.HostCoherent | VkMemoryPropertyFlags.HostCached;
-            if (!TryFindMemoryType(this.gd.PhysicalDeviceMemProperties, bufferMemReqs.memoryTypeBits, propertyFlags, out _)) {
+            if (!TryFindMemoryType(this._gd.PhysicalDeviceMemProperties, bufferMemReqs.memoryTypeBits, propertyFlags, out _)) {
                 propertyFlags ^= VkMemoryPropertyFlags.HostCached;
             }
 
-            this._memoryBlock = this.gd.MemoryManager.Allocate(this.gd.PhysicalDeviceMemProperties, bufferMemReqs.memoryTypeBits, propertyFlags, true, bufferMemReqs.size, bufferMemReqs.alignment, prefersDedicatedAllocation, VkImage.Null, this._stagingBuffer);
+            this._memoryBlock = this._gd.MemoryManager.Allocate(this._gd.PhysicalDeviceMemProperties, bufferMemReqs.memoryTypeBits, propertyFlags, true, bufferMemReqs.size, bufferMemReqs.alignment, prefersDedicatedAllocation, default, this._stagingBuffer);
 
-            result = vkBindBufferMemory(this.gd.Device, this._stagingBuffer, this._memoryBlock.DeviceMemory, this._memoryBlock.Offset);
+            result = this._gd.DeviceApi.vkBindBufferMemory(this._stagingBuffer, this._memoryBlock.DeviceMemory, this._memoryBlock.Offset);
             CheckResult(result);
         }
 
@@ -216,13 +215,13 @@ internal unsafe class VkTexture : Texture {
     /// <param name="existingImage">The existing image value used by this operation.</param>
     internal VkTexture(VkGraphicsDevice gd, uint width, uint height, uint mipLevels, uint arrayLayers, VkFormat vkFormat, TextureUsage usage, TextureSampleCount sampleCount, VkImage existingImage) {
         Debug.Assert(width > 0 && height > 0);
-        this.gd = gd;
+        this._gd = gd;
         this.MipLevels = mipLevels;
-        this.width = width;
-        this.height = height;
-        this.depth = 1;
+        this._width = width;
+        this._height = height;
+        this._depth = 1;
         this.VkFormat = vkFormat;
-        this.format = VkFormats.VkToVdPixelFormat(this.VkFormat);
+        this._format = VkFormats.VkToVdPixelFormat(this.VkFormat);
         this.ArrayLayers = arrayLayers;
         this.Usage = usage;
         this.Type = TextureType.Texture2D;
@@ -239,22 +238,22 @@ internal unsafe class VkTexture : Texture {
     /// <summary>
     /// Gets or sets Width.
     /// </summary>
-    public override uint Width => this.width;
+    public override uint Width => this._width;
 
     /// <summary>
     /// Gets or sets Height.
     /// </summary>
-    public override uint Height => this.height;
+    public override uint Height => this._height;
 
     /// <summary>
     /// Gets or sets Depth.
     /// </summary>
-    public override uint Depth => this.depth;
+    public override uint Depth => this._depth;
 
     /// <summary>
     /// Gets or sets Format.
     /// </summary>
-    public override PixelFormat Format => this.format;
+    public override PixelFormat Format => this._format;
 
     /// <summary>
     /// Gets or sets MipLevels.
@@ -299,7 +298,7 @@ internal unsafe class VkTexture : Texture {
     /// <summary>
     /// Stores the staging buffer state used by this instance.
     /// </summary>
-    public Vulkan.VkBuffer StagingBuffer => this._stagingBuffer;
+    public global::Vortice.Vulkan.VkBuffer StagingBuffer => this._stagingBuffer;
 
     /// <summary>
     /// Stores the memory state used by this instance.
@@ -333,7 +332,7 @@ internal unsafe class VkTexture : Texture {
         get => this._name;
         set {
             this._name = value;
-            this.gd.SetResourceName(this, value);
+            this._gd.SetResourceName(this, value);
         }
     }
 
@@ -356,7 +355,8 @@ internal unsafe class VkTexture : Texture {
                 aspectMask = aspect
             };
 
-            vkGetImageSubresourceLayout(this.gd.Device, this._optimalImage, ref imageSubresource, out VkSubresourceLayout layout);
+            VkSubresourceLayout layout;
+            this._gd.DeviceApi.vkGetImageSubresourceLayout(this._optimalImage, &imageSubresource, &layout);
             return layout;
         }
         else {
@@ -386,7 +386,7 @@ internal unsafe class VkTexture : Texture {
     /// <param name="layerCount">The layer count value used by this operation.</param>
     /// <param name="newLayout">The new layout value used by this operation.</param>
     internal void TransitionImageLayout(VkCommandBuffer cb, uint baseMipLevel, uint levelCount, uint baseArrayLayer, uint layerCount, VkImageLayout newLayout) {
-        if (this._stagingBuffer != Vulkan.VkBuffer.Null) {
+        if (this._stagingBuffer.IsNotNull) {
             return;
         }
 
@@ -431,7 +431,7 @@ internal unsafe class VkTexture : Texture {
     /// <param name="layerCount">The layer count value used by this operation.</param>
     /// <param name="newLayout">The new layout value used by this operation.</param>
     internal void TransitionImageLayoutNonmatching(VkCommandBuffer cb, uint baseMipLevel, uint levelCount, uint baseArrayLayer, uint layerCount, VkImageLayout newLayout) {
-        if (this._stagingBuffer != Vulkan.VkBuffer.Null) {
+        if (this._stagingBuffer.IsNotNull) {
             return;
         }
 
@@ -478,12 +478,12 @@ internal unsafe class VkTexture : Texture {
     /// <param name="depth">The depth value.</param>
     /// <param name="format">The format used by this operation.</param>
     internal void SetStagingDimensions(uint width, uint height, uint depth, PixelFormat format) {
-        Debug.Assert(this._stagingBuffer != Vulkan.VkBuffer.Null);
+        Debug.Assert(this._stagingBuffer.IsNotNull);
         Debug.Assert(this.Usage == TextureUsage.Staging);
-        this.width = width;
-        this.height = height;
-        this.depth = depth;
-        this.format = format;
+        this._width = width;
+        this._height = height;
+        this._depth = depth;
+        this._format = format;
     }
 
     /// <summary>
@@ -502,10 +502,10 @@ internal unsafe class VkTexture : Texture {
     private void ClearIfRenderTarget() {
         // If the image is going to be used as a render target, we need to clear the data before its first use.
         if ((this.Usage & TextureUsage.RenderTarget) != 0) {
-            this.gd.ClearColorTexture(this, new VkClearColorValue(0, 0, 0, 0));
+            this._gd.ClearColorTexture(this, new VkClearColorValue(0, 0, 0, 0));
         }
         else if ((this.Usage & TextureUsage.DepthStencil) != 0) {
-            this.gd.ClearDepthTexture(this, new VkClearDepthStencilValue(0, 0));
+            this._gd.ClearDepthTexture(this, new VkClearDepthStencilValue(0, 0));
         }
     }
 
@@ -514,7 +514,7 @@ internal unsafe class VkTexture : Texture {
     /// </summary>
     private void TransitionIfSampled() {
         if ((this.Usage & TextureUsage.Sampled) != 0) {
-            this.gd.TransitionImageLayout(this, VkImageLayout.ShaderReadOnlyOptimal);
+            this._gd.TransitionImageLayout(this, VkImageLayout.ShaderReadOnlyOptimal);
         }
     }
 
@@ -529,14 +529,14 @@ internal unsafe class VkTexture : Texture {
 
             bool isStaging = (this.Usage & TextureUsage.Staging) == TextureUsage.Staging;
             if (isStaging) {
-                vkDestroyBuffer(this.gd.Device, this._stagingBuffer, null);
+                this._gd.DeviceApi.vkDestroyBuffer(this._stagingBuffer, null);
             }
             else {
-                vkDestroyImage(this.gd.Device, this._optimalImage, null);
+                this._gd.DeviceApi.vkDestroyImage(this._optimalImage, null);
             }
 
             if (this._memoryBlock.DeviceMemory.Handle != 0) {
-                this.gd.MemoryManager.Free(this._memoryBlock);
+                this._gd.MemoryManager.Free(this._memoryBlock);
             }
         }
     }

@@ -3,11 +3,10 @@ using System.Runtime.InteropServices;
 
 namespace Veldrith.MetalBindings;
 
-[StructLayout(LayoutKind.Sequential)]
-
 /// <summary>
 /// Provides Objective-C interop bindings for MTLBuffer.
 /// </summary>
+[StructLayout(LayoutKind.Sequential)]
 public unsafe struct MTLBuffer {
 
     /// <summary>
@@ -31,7 +30,7 @@ public unsafe struct MTLBuffer {
     /// <summary>
     /// Executes the contents logic for this backend.
     /// </summary>
-    public void* contents() {
+    public void* Contents() {
         return ObjectiveCRuntime.IntPtr_objc_msgSend(this.NativePtr, sel_contents).ToPointer();
     }
 
@@ -39,13 +38,13 @@ public unsafe struct MTLBuffer {
     /// Executes the uint ptr objc msg send logic for this backend.
     /// </summary>
 
-    public UIntPtr length => ObjectiveCRuntime.UIntPtr_objc_msgSend(this.NativePtr, sel_length);
+    public UIntPtr Length => ObjectiveCRuntime.UIntPtr_objc_msgSend(this.NativePtr, sel_length);
 
     /// <summary>
     /// Executes the did modify range logic for this backend.
     /// </summary>
     /// <param name="range">The range value used by this operation.</param>
-    public void didModifyRange(NSRange range) {
+    public void DidModifyRange(NSRange range) {
         ObjectiveCRuntime.objc_msgSend(this.NativePtr, sel_didModifyRange, range);
     }
 
@@ -54,14 +53,14 @@ public unsafe struct MTLBuffer {
     /// </summary>
     /// <param name="marker">The marker value used by this operation.</param>
     /// <param name="range">The range value used by this operation.</param>
-    public void addDebugMarker(NSString marker, NSRange range) {
+    public void AddDebugMarker(NSString marker, NSRange range) {
         ObjectiveCRuntime.objc_msgSend(this.NativePtr, sel_addDebugMarker, marker.NativePtr, range);
     }
 
     /// <summary>
     /// Executes the remove all debug markers logic for this backend.
     /// </summary>
-    public void removeAllDebugMarkers() {
+    public void RemoveAllDebugMarkers() {
         ObjectiveCRuntime.objc_msgSend(this.NativePtr, sel_removeAllDebugMarkers);
     }
 

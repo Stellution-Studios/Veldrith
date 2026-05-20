@@ -59,40 +59,40 @@ internal class MtlSwapchain : Swapchain {
 
         if (source is NSWindowSwapchainSource nsWindowSource) {
             NSWindow nswindow = new(nsWindowSource.NSWindow);
-            NSView contentView = nswindow.contentView;
-            CGSize windowContentSize = contentView.frame.size;
+            NSView contentView = nswindow.ContentView;
+            CGSize windowContentSize = contentView.Frame.size;
             width = (uint)windowContentSize.width;
             height = (uint)windowContentSize.height;
 
-            if (!CAMetalLayer.TryCast(contentView.layer, out this._metalLayer)) {
+            if (!CAMetalLayer.TryCast(contentView.Layer, out this._metalLayer)) {
                 this._metalLayer = CAMetalLayer.New();
-                contentView.wantsLayer = true;
-                contentView.layer = this._metalLayer.NativePtr;
+                contentView.WantsLayer = true;
+                contentView.Layer = this._metalLayer.NativePtr;
             }
         }
         else if (source is NSViewSwapchainSource nsViewSource) {
             NSView contentView = new(nsViewSource.NSView);
-            CGSize windowContentSize = contentView.frame.size;
+            CGSize windowContentSize = contentView.Frame.size;
             width = (uint)windowContentSize.width;
             height = (uint)windowContentSize.height;
 
-            if (!CAMetalLayer.TryCast(contentView.layer, out this._metalLayer)) {
+            if (!CAMetalLayer.TryCast(contentView.Layer, out this._metalLayer)) {
                 this._metalLayer = CAMetalLayer.New();
-                contentView.wantsLayer = true;
-                contentView.layer = this._metalLayer.NativePtr;
+                contentView.WantsLayer = true;
+                contentView.Layer = this._metalLayer.NativePtr;
             }
         }
         else if (source is UIViewSwapchainSource uiViewSource) {
             this._uiView = new UIView(uiViewSource.UIView);
-            CGSize viewSize = this._uiView.frame.size;
+            CGSize viewSize = this._uiView.Frame.size;
             width = (uint)viewSize.width;
             height = (uint)viewSize.height;
 
-            if (!CAMetalLayer.TryCast(this._uiView.layer, out this._metalLayer)) {
+            if (!CAMetalLayer.TryCast(this._uiView.Layer, out this._metalLayer)) {
                 this._metalLayer = CAMetalLayer.New();
-                this._metalLayer.frame = this._uiView.frame;
+                this._metalLayer.frame = this._uiView.Frame;
                 this._metalLayer.opaque = true;
-                this._uiView.layer.addSublayer(this._metalLayer.NativePtr);
+                this._uiView.Layer.addSublayer(this._metalLayer.NativePtr);
             }
         }
         else {
@@ -154,11 +154,11 @@ internal class MtlSwapchain : Swapchain {
     /// </summary>
     public override void Dispose() {
         if (this._drawable.NativePtr != IntPtr.Zero) {
-            ObjectiveCRuntime.release(this._drawable.NativePtr);
+            ObjectiveCRuntime.Release(this._drawable.NativePtr);
         }
 
         this._framebuffer.Dispose();
-        ObjectiveCRuntime.release(this._metalLayer.NativePtr);
+        ObjectiveCRuntime.Release(this._metalLayer.NativePtr);
 
         this._disposed = true;
     }
@@ -172,7 +172,7 @@ internal class MtlSwapchain : Swapchain {
     /// <param name="height">The height value.</param>
     public override void Resize(uint width, uint height) {
         if (this._uiView.NativePtr != IntPtr.Zero) {
-            this._metalLayer.frame = this._uiView.frame;
+            this._metalLayer.frame = this._uiView.Frame;
         }
 
         this._metalLayer.drawableSize = new CGSize(width, height);
@@ -192,7 +192,7 @@ internal class MtlSwapchain : Swapchain {
     /// Executes the invalidate drawable logic for this backend.
     /// </summary>
     public void InvalidateDrawable() {
-        ObjectiveCRuntime.release(this._drawable.NativePtr);
+        ObjectiveCRuntime.Release(this._drawable.NativePtr);
         this._drawable = default;
     }
 
@@ -202,14 +202,14 @@ internal class MtlSwapchain : Swapchain {
     /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     private bool GetNextDrawable() {
         if (!this._drawable.IsNull) {
-            ObjectiveCRuntime.release(this._drawable.NativePtr);
+            ObjectiveCRuntime.Release(this._drawable.NativePtr);
         }
 
         using (NSAutoreleasePool.Begin()) {
             this._drawable = this._metalLayer.nextDrawable();
 
             if (!this._drawable.IsNull) {
-                ObjectiveCRuntime.retain(this._drawable.NativePtr);
+                ObjectiveCRuntime.Retain(this._drawable.NativePtr);
                 this._framebuffer.UpdateTextures(this._drawable, this._metalLayer.drawableSize);
                 return true;
             }
