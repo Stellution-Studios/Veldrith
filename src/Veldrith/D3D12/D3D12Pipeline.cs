@@ -628,13 +628,13 @@ internal sealed class D3D12Pipeline : Pipeline {
     /// </summary>
     /// <param name="description">The description used to configure this operation.</param>
     private void CreateComputePipelineState(ref ComputePipelineDescription description) {
-        D3D12Shader d3d12Shader = Util.AssertSubtype<Shader, D3D12Shader>(description.ComputeShader);
+        D3D12Shader d3D12Shader = Util.AssertSubtype<Shader, D3D12Shader>(description.ComputeShader);
         ComputePipelineStateDescription psoDescription = new() {
             RootSignature = this.RootSignature,
-            ComputeShader = d3d12Shader.ShaderBytes
+            ComputeShader = d3D12Shader.ShaderBytes
         };
 
-        string cacheKey = BuildComputePipelineStateCacheKey(this._rootSignatureCacheKey, d3d12Shader.ShaderBytes);
+        string cacheKey = BuildComputePipelineStateCacheKey(this._rootSignatureCacheKey, d3D12Shader.ShaderBytes);
         this.PipelineState = this.gd.GetOrCreatePipelineState(cacheKey, () => this.gd.Device.CreateComputePipelineState(psoDescription));
     }
 
@@ -719,8 +719,8 @@ internal sealed class D3D12Pipeline : Pipeline {
         ReadOnlyMemory<byte> domainShader = default;
 
         foreach (Shader shader in description.ShaderSet.Shaders) {
-            D3D12Shader d3d12Shader = Util.AssertSubtype<Shader, D3D12Shader>(shader);
-            ReadOnlyMemory<byte> bytecode = d3d12Shader.ShaderBytes;
+            D3D12Shader d3D12Shader = Util.AssertSubtype<Shader, D3D12Shader>(shader);
+            ReadOnlyMemory<byte> bytecode = d3D12Shader.ShaderBytes;
             switch (shader.Stage) {
                 case ShaderStages.Vertex:
                     vertexShader = bytecode;
