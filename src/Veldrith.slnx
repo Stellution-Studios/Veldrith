@@ -5,6 +5,8 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
+  <Project Path="Bliss.Test/Bliss.Test.csproj" />
+  <Project Path="Bliss/Bliss.csproj" />
   <Project Path="Veldrith.MetalBindings/Veldrith.MetalBindings.csproj" />
   <Project Path="Veldrith.SPIRV/Veldrith.SPIRV.csproj" />
   <Project Path="Veldrith/Veldrith.csproj" />
