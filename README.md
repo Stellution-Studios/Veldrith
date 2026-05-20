@@ -37,8 +37,8 @@ dotnet add package Veldrith --version [VERSION]
 # 📚 Libraries - [Nuget](https://www.nuget.org/packages)
 - [`Vortice.Direct3D12`](https://www.nuget.org/packages/Vortice.Direct3D12)
 - [`Vortice.Vulkan`](https://www.nuget.org/packages/Vortice.Vulkan)
-- [`Silk.NET.Shaderc`](https://www.nuget.org/packages/Silk.NET.Shaderc)
-- [`Silk.NET.SPIRV.Cross`](https://www.nuget.org/packages/Silk.NET.SPIRV.Cross)
+- [`Vortice.ShaderCompiler`](https://www.nuget.org/packages/Vortice.ShaderCompiler)
+- [`Vortice.SpirvCross`](https://www.nuget.org/packages/Vortice.SpirvCross)
 
 ---
 
