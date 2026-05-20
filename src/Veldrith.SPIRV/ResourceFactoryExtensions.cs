@@ -33,9 +33,9 @@ public static class ResourceFactoryExtensions {
             vertexShaderDescription.ShaderBytes = EnsureSpirv(vertexShaderDescription);
             fragmentShaderDescription.ShaderBytes = EnsureSpirv(fragmentShaderDescription);
 
-            return new[] {
+            return [
                 factory.CreateShader(ref vertexShaderDescription), factory.CreateShader(ref fragmentShaderDescription)
-            };
+            ];
         }
 
         CrossCompileTarget target = GetCompilationTarget(factory.BackendType);
@@ -49,7 +49,7 @@ public static class ResourceFactoryExtensions {
         string fragmentEntryPoint = GetTranslatedEntryPoint(backend, compilationResult.FragmentShader, fragmentShaderDescription.Stage, fragmentShaderDescription.EntryPoint);
         Shader fragmentShader = factory.CreateShader(new ShaderDescription(fragmentShaderDescription.Stage, fragmentBytes, fragmentEntryPoint));
 
-        return new[] { vertexShader, fragmentShader };
+        return [vertexShader, fragmentShader];
     }
 
     /// <summary>

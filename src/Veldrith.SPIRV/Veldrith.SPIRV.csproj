@@ -49,8 +49,9 @@
 
     <!-- Libraries -->
     <ItemGroup>
-        <PackageReference Include="Silk.NET.SPIRV.Cross" Version="2.23.0" />
-        <PackageReference Include="Silk.NET.Shaderc" Version="2.23.0" />
+        <PackageReference Include="Vortice.ShaderCompiler" Version="1.9.0" />
+        <PackageReference Include="Vortice.SPIRV" Version="1.0.5" />
+        <PackageReference Include="Vortice.SpirvCross" Version="1.5.4" />
     </ItemGroup>
 
 </Project>

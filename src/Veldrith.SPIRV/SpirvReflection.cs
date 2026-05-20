@@ -11,19 +11,18 @@ public class SpirvReflection {
     /// <summary>
     /// Stores the s json options state used by this instance.
     /// </summary>
-    private static readonly JsonSerializerOptions s_jsonOptions = new() {
+    private static readonly JsonSerializerOptions _sJsonOptions = new() {
         WriteIndented = true,
         IncludeFields = true,
         Converters = { new JsonStringEnumConverter() }
     };
-
-    [JsonConstructor]
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SpirvReflection" /> type.
     /// </summary>
     /// <param name="vertexElements">The vertex elements value used by this operation.</param>
     /// <param name="resourceLayouts">The resource layout used by this operation.</param>
+    [JsonConstructor]
     public SpirvReflection(VertexElementDescription[] vertexElements, ResourceLayoutDescription[] resourceLayouts) {
         this.VertexElements = vertexElements;
         this.ResourceLayouts = resourceLayouts;
@@ -55,6 +54,6 @@ public class SpirvReflection {
     /// <param name="jsonStream">The json stream value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     public static SpirvReflection LoadFromJson(Stream jsonStream) {
-        return JsonSerializer.Deserialize<SpirvReflection>(jsonStream, s_jsonOptions);
+        return JsonSerializer.Deserialize<SpirvReflection>(jsonStream, _sJsonOptions);
     }
 }

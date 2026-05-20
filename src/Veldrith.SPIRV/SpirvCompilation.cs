@@ -1,23 +1,12 @@
-using System.Runtime.InteropServices;
 using System.Text;
-using Silk.NET.Shaderc;
+using Vortice.ShaderCompiler;
 
 namespace Veldrith.SPIRV;
 
 /// <summary>
 /// Provides SPIR-V compilation support for SpirvCompilation.
 /// </summary>
-public static unsafe class SpirvCompilation {
-
-    /// <summary>
-    /// Gets the api value.
-    /// </summary>
-    private static readonly Shaderc s_shaderc = Shaderc.GetApi();
-
-    /// <summary>
-    /// Executes the compiler initialize logic for this backend.
-    /// </summary>
-    private static readonly Compiler* s_compiler = s_shaderc.CompilerInitialize();
+public static class SpirvCompilation {
 
     /// <summary>
     /// Executes the compile vertex fragment logic for this backend.
@@ -75,83 +64,28 @@ public static unsafe class SpirvCompilation {
     /// <param name="options">The options used to configure this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     public static SpirvCompilationResult CompileGlslToSpirv(string sourceText, string fileName, ShaderStages stage, GlslCompileOptions options) {
-        Shaderc shaderc = s_shaderc;
-        Compiler* compiler = s_compiler;
-        CompileOptions* compileOptions = null;
-        CompilationResult* result = null;
-        try {
-            compileOptions = shaderc.CompileOptionsInitialize();
-            if (compileOptions == null) {
-                throw new SpirvCompilationException("Failed to initialize compile options.");
-            }
-
-            if (options.Debug) {
-                shaderc.CompileOptionsSetGenerateDebugInfo(compileOptions);
-            }
-            else {
-                shaderc.CompileOptionsSetOptimizationLevel(compileOptions, OptimizationLevel.Performance);
-            }
-
-            foreach (MacroDefinition macro in options.Macros) {
-                byte[] nameBytes = Encoding.ASCII.GetBytes(macro.Name);
-                if (string.IsNullOrEmpty(macro.Value)) {
-                    fixed (byte* namePtr = nameBytes) {
-                        shaderc.CompileOptionsAddMacroDefinition(compileOptions, namePtr, (nuint)nameBytes.Length, (byte*)null, 0);
-                    }
-                }
-                else {
-                    byte[] valueBytes = Encoding.ASCII.GetBytes(macro.Value);
-                    fixed (byte* namePtr = nameBytes)
-                    fixed (byte* valuePtr = valueBytes) {
-                        shaderc.CompileOptionsAddMacroDefinition(compileOptions, namePtr, (nuint)nameBytes.Length, valuePtr, (nuint)valueBytes.Length);
-                    }
-                }
-            }
-
-            ShaderKind shaderKind = GetShadercKind(stage);
-            byte[] sourceBytes = Encoding.ASCII.GetBytes(sourceText);
-            if (string.IsNullOrEmpty(fileName)) {
-                fileName = "<veldrid-spirv-input>";
-            }
-
-            byte[] fileNameBytes = Encoding.ASCII.GetBytes(fileName + '\0');
-            byte[] entryPointBytes = "main\0"u8.ToArray();
-
-            fixed (byte* sourcePtr = sourceBytes)
-            fixed (byte* fileNamePtr = fileNameBytes)
-            fixed (byte* entryPtr = entryPointBytes) {
-                result = shaderc.CompileIntoSpv(compiler, sourcePtr, (nuint)sourceBytes.Length, shaderKind, fileNamePtr, entryPtr, compileOptions);
-            }
-
-            if (result == null) {
-                throw new SpirvCompilationException("Shaderc returned null result.");
-            }
-
-            CompilationStatus status = shaderc.ResultGetCompilationStatus(result);
-            if (status != CompilationStatus.Success) {
-                byte* errorMsgPtr = shaderc.ResultGetErrorMessage(result);
-                string errorMsg = errorMsgPtr != null
-                    ? Marshal.PtrToStringUTF8((nint)errorMsgPtr)
-                    : "Unknown error";
-                throw new SpirvCompilationException("GLSL compilation failed: " + errorMsg);
-            }
-
-            byte* bytesPtr = shaderc.ResultGetBytes(result);
-            nuint length = shaderc.ResultGetLength(result);
-            byte[] spirvBytes = new byte[(int)length];
-            new Span<byte>(bytesPtr, (int)length).CopyTo(spirvBytes);
-
-            return new SpirvCompilationResult(spirvBytes);
+        if (string.IsNullOrEmpty(fileName)) {
+            fileName = "<veldrid-spirv-input>";
         }
-        finally {
-            if (result != null) {
-                shaderc.ResultRelease(result);
-            }
 
-            if (compileOptions != null) {
-                shaderc.CompileOptionsRelease(compileOptions);
-            }
+        CompilerOptions compilerOptions = new() {
+            ShaderStage = GetShaderKind(stage),
+            GeneratedDebug = options.Debug,
+            OptimizationLevel = options.Debug ? OptimizationLevel.Zero : OptimizationLevel.Performance,
+            EntryPoint = "main"
+        };
+
+        foreach (MacroDefinition macro in options.Macros) {
+            compilerOptions.Defines.Add(new ShaderMacro(macro.Name, macro.Value));
         }
+
+        using Compiler compiler = new();
+        CompileResult result = compiler.Compile(sourceText, fileName, compilerOptions);
+        if (result.Status != CompilationStatus.Success) {
+            throw new SpirvCompilationException("GLSL compilation failed: " + result.ErrorMessage);
+        }
+
+        return new SpirvCompilationResult(result.Bytecode);
     }
 
     /// <summary>
@@ -186,11 +120,11 @@ public static unsafe class SpirvCompilation {
     }
 
     /// <summary>
-    /// Gets the shaderc kind value.
+    /// Gets the shader kind value.
     /// </summary>
     /// <param name="stage">The stage value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    private static ShaderKind GetShadercKind(ShaderStages stage) {
+    private static ShaderKind GetShaderKind(ShaderStages stage) {
         return stage switch {
             ShaderStages.Vertex => ShaderKind.VertexShader,
             ShaderStages.Fragment => ShaderKind.FragmentShader,
