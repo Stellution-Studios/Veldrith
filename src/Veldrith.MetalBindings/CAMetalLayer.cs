@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrith.MetalBindings;
@@ -51,24 +51,24 @@ public struct CAMetalLayer {
     /// Gets or sets device.
     /// </summary>
     public MTLDevice device {
-        get => objc_msgSend<MTLDevice>(this.NativePtr, sel_device);
-        set => objc_msgSend(this.NativePtr, sel_setDevice, value);
+        get => ObjcMsgSend<MTLDevice>(this.NativePtr, sel_device);
+        set => ObjcMsgSend(this.NativePtr, sel_setDevice, value);
     }
 
     /// <summary>
     /// Gets or sets pixelFormat.
     /// </summary>
     public MTLPixelFormat pixelFormat {
-        get => (MTLPixelFormat)uint_objc_msgSend(this.NativePtr, sel_pixelFormat);
-        set => objc_msgSend(this.NativePtr, sel_setPixelFormat, (uint)value);
+        get => (MTLPixelFormat)UIntObjcMsgSend(this.NativePtr, sel_pixelFormat);
+        set => ObjcMsgSend(this.NativePtr, sel_setPixelFormat, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets framebufferOnly.
     /// </summary>
     public Bool8 framebufferOnly {
-        get => bool8_objc_msgSend(this.NativePtr, sel_framebufferOnly);
-        set => objc_msgSend(this.NativePtr, sel_setFramebufferOnly, value);
+        get => Bool8ObjcMsgSend(this.NativePtr, sel_framebufferOnly);
+        set => ObjcMsgSend(this.NativePtr, sel_setFramebufferOnly, value);
     }
 
     /// <summary>
@@ -76,7 +76,7 @@ public struct CAMetalLayer {
     /// </summary>
     public CGSize drawableSize {
         get => CGSize_objc_msgSend(this.NativePtr, sel_drawableSize);
-        set => objc_msgSend(this.NativePtr, sel_setDrawableSize, value);
+        set => ObjcMsgSend(this.NativePtr, sel_setDrawableSize, value);
     }
 
     /// <summary>
@@ -84,31 +84,31 @@ public struct CAMetalLayer {
     /// </summary>
     public CGRect frame {
         get => CGRect_objc_msgSend(this.NativePtr, sel_frame);
-        set => objc_msgSend(this.NativePtr, sel_setFrame, value);
+        set => ObjcMsgSend(this.NativePtr, sel_setFrame, value);
     }
 
     /// <summary>
     /// Gets or sets opaque.
     /// </summary>
     public Bool8 opaque {
-        get => bool8_objc_msgSend(this.NativePtr, sel_isOpaque);
-        set => objc_msgSend(this.NativePtr, sel_setOpaque, value);
+        get => Bool8ObjcMsgSend(this.NativePtr, sel_isOpaque);
+        set => ObjcMsgSend(this.NativePtr, sel_setOpaque, value);
     }
 
     /// <summary>
     /// Executes the next drawable logic for this backend.
     /// </summary>
     /// <returns>The value produced by this operation.</returns>
-    public CAMetalDrawable nextDrawable() {
-        return objc_msgSend<CAMetalDrawable>(this.NativePtr, sel_nextDrawable);
+    public CAMetalDrawable NextDrawable() {
+        return ObjcMsgSend<CAMetalDrawable>(this.NativePtr, sel_nextDrawable);
     }
 
     /// <summary>
     /// Gets or sets displaySyncEnabled.
     /// </summary>
     public Bool8 displaySyncEnabled {
-        get => bool8_objc_msgSend(this.NativePtr, sel_displaySyncEnabled);
-        set => objc_msgSend(this.NativePtr, sel_setDisplaySyncEnabled, value);
+        get => Bool8ObjcMsgSend(this.NativePtr, sel_displaySyncEnabled);
+        set => ObjcMsgSend(this.NativePtr, sel_setDisplaySyncEnabled, value);
     }
 
     /// <summary>
@@ -191,3 +191,4 @@ public struct CAMetalLayer {
     /// </summary>
     private static readonly Selector sel_nextDrawable = "nextDrawable";
 }
+

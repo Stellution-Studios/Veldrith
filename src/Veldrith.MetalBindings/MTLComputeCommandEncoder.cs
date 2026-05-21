@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrith.MetalBindings;
@@ -63,7 +63,7 @@ public struct MTLComputeCommandEncoder {
     /// </summary>
     /// <param name="state">The state value used by this operation.</param>
     public void SetComputePipelineState(MTLComputePipelineState state) {
-        objc_msgSend(this.NativePtr, _selSetComputePipelineState, state.NativePtr);
+        ObjcMsgSend(this.NativePtr, _selSetComputePipelineState, state.NativePtr);
     }
 
     /// <summary>
@@ -73,7 +73,7 @@ public struct MTLComputeCommandEncoder {
     /// <param name="offset">The byte offset used by this operation.</param>
     /// <param name="index">The zero-based index of the target item.</param>
     public void SetBuffer(MTLBuffer buffer, UIntPtr offset, UIntPtr index) {
-        objc_msgSend(this.NativePtr, _selSetBuffer, buffer.NativePtr, offset, index);
+        ObjcMsgSend(this.NativePtr, _selSetBuffer, buffer.NativePtr, offset, index);
     }
 
     /// <summary>
@@ -83,7 +83,7 @@ public struct MTLComputeCommandEncoder {
     /// <param name="length">The number of items involved in this operation.</param>
     /// <param name="index">The zero-based index of the target item.</param>
     public unsafe void SetBytes(void* bytes, UIntPtr length, UIntPtr index) {
-        objc_msgSend(this.NativePtr, _selSetBytes, bytes, length, index);
+        ObjcMsgSend(this.NativePtr, _selSetBytes, bytes, length, index);
     }
 
     /// <summary>
@@ -92,7 +92,7 @@ public struct MTLComputeCommandEncoder {
     /// <param name="threadgroupsPerGrid">The threadgroups per grid value used by this operation.</param>
     /// <param name="threadsPerThreadgroup">The threads per threadgroup value used by this operation.</param>
     public void DispatchThreadGroups(MTLSize threadgroupsPerGrid, MTLSize threadsPerThreadgroup) {
-        objc_msgSend(this.NativePtr, _selDispatchThreadgroups0, threadgroupsPerGrid, threadsPerThreadgroup);
+        ObjcMsgSend(this.NativePtr, _selDispatchThreadgroups0, threadgroupsPerGrid, threadsPerThreadgroup);
     }
 
     /// <summary>
@@ -102,14 +102,14 @@ public struct MTLComputeCommandEncoder {
     /// <param name="indirectBufferOffset">The indirect buffer offset value used by this operation.</param>
     /// <param name="threadsPerThreadgroup">The threads per threadgroup value used by this operation.</param>
     public void DispatchThreadgroupsWithIndirectBuffer(MTLBuffer indirectBuffer, UIntPtr indirectBufferOffset, MTLSize threadsPerThreadgroup) {
-        objc_msgSend(this.NativePtr, _selDispatchThreadgroups1, indirectBuffer.NativePtr, indirectBufferOffset, threadsPerThreadgroup);
+        ObjcMsgSend(this.NativePtr, _selDispatchThreadgroups1, indirectBuffer.NativePtr, indirectBufferOffset, threadsPerThreadgroup);
     }
 
     /// <summary>
     /// Ends the encoding operation.
     /// </summary>
     public void EndEncoding() {
-        objc_msgSend(this.NativePtr, _selEndEncoding);
+        ObjcMsgSend(this.NativePtr, _selEndEncoding);
     }
 
     /// <summary>
@@ -118,7 +118,7 @@ public struct MTLComputeCommandEncoder {
     /// <param name="texture">The texture resource involved in this operation.</param>
     /// <param name="index">The zero-based index of the target item.</param>
     public void SetTexture(MTLTexture texture, UIntPtr index) {
-        objc_msgSend(this.NativePtr, _selSetTexture, texture.NativePtr, index);
+        ObjcMsgSend(this.NativePtr, _selSetTexture, texture.NativePtr, index);
     }
 
     /// <summary>
@@ -127,7 +127,7 @@ public struct MTLComputeCommandEncoder {
     /// <param name="sampler">The sampler resource involved in this operation.</param>
     /// <param name="index">The zero-based index of the target item.</param>
     public void SetSamplerState(MTLSamplerState sampler, UIntPtr index) {
-        objc_msgSend(this.NativePtr, _selSetSamplerState, sampler.NativePtr, index);
+        ObjcMsgSend(this.NativePtr, _selSetSamplerState, sampler.NativePtr, index);
     }
 
     /// <summary>
@@ -135,14 +135,14 @@ public struct MTLComputeCommandEncoder {
     /// </summary>
     /// <param name="string">The string value used by this operation.</param>
     public void PushDebugGroup(NSString @string) {
-        objc_msgSend(this.NativePtr, Selectors.PushDebugGroup, @string.NativePtr);
+        ObjcMsgSend(this.NativePtr, Selectors.PushDebugGroup, @string.NativePtr);
     }
 
     /// <summary>
     /// Executes the pop debug group logic for this backend.
     /// </summary>
     public void PopDebugGroup() {
-        objc_msgSend(this.NativePtr, Selectors.PopDebugGroup);
+        ObjcMsgSend(this.NativePtr, Selectors.PopDebugGroup);
     }
 
     /// <summary>
@@ -150,6 +150,6 @@ public struct MTLComputeCommandEncoder {
     /// </summary>
     /// <param name="string">The string value used by this operation.</param>
     public void InsertDebugSignpost(NSString @string) {
-        objc_msgSend(this.NativePtr, Selectors.InsertDebugSignpost, @string.NativePtr);
+        ObjcMsgSend(this.NativePtr, Selectors.InsertDebugSignpost, @string.NativePtr);
     }
 }

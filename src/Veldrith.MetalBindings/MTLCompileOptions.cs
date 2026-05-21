@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
@@ -36,16 +36,16 @@ public struct MTLCompileOptions {
     /// Gets or sets fastMathEnabled.
     /// </summary>
     public Bool8 FastMathEnabled {
-        get => bool8_objc_msgSend(this.NativePtr, sel_fastMathEnabled);
-        set => objc_msgSend(this.NativePtr, sel_setFastMathEnabled, value);
+        get => Bool8ObjcMsgSend(this.NativePtr, sel_fastMathEnabled);
+        set => ObjcMsgSend(this.NativePtr, sel_setFastMathEnabled, value);
     }
 
     /// <summary>
     /// Gets or sets languageVersion.
     /// </summary>
     public MTLLanguageVersion LanguageVersion {
-        get => (MTLLanguageVersion)uint_objc_msgSend(this.NativePtr, sel_languageVersion);
-        set => objc_msgSend(this.NativePtr, sel_setLanguageVersion, (uint)value);
+        get => (MTLLanguageVersion)UIntObjcMsgSend(this.NativePtr, sel_languageVersion);
+        set => ObjcMsgSend(this.NativePtr, sel_setLanguageVersion, (uint)value);
     }
 
     /// <summary>

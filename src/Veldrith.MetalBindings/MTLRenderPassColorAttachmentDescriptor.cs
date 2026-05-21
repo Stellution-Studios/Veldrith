@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrith.MetalBindings;
@@ -25,32 +25,32 @@ public struct MTLRenderPassColorAttachmentDescriptor {
     /// Gets or sets texture.
     /// </summary>
     public MTLTexture texture {
-        get => objc_msgSend<MTLTexture>(this.NativePtr, Selectors.Texture);
-        set => objc_msgSend(this.NativePtr, Selectors.SetTexture, value.NativePtr);
+        get => ObjcMsgSend<MTLTexture>(this.NativePtr, Selectors.Texture);
+        set => ObjcMsgSend(this.NativePtr, Selectors.SetTexture, value.NativePtr);
     }
 
     /// <summary>
     /// Gets or sets loadAction.
     /// </summary>
     public MTLLoadAction LoadAction {
-        get => (MTLLoadAction)uint_objc_msgSend(this.NativePtr, Selectors.LoadAction);
-        set => objc_msgSend(this.NativePtr, Selectors.SetLoadAction, (uint)value);
+        get => (MTLLoadAction)UIntObjcMsgSend(this.NativePtr, Selectors.LoadAction);
+        set => ObjcMsgSend(this.NativePtr, Selectors.SetLoadAction, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets storeAction.
     /// </summary>
     public MTLStoreAction StoreAction {
-        get => (MTLStoreAction)uint_objc_msgSend(this.NativePtr, Selectors.StoreAction);
-        set => objc_msgSend(this.NativePtr, Selectors.SetStoreAction, (uint)value);
+        get => (MTLStoreAction)UIntObjcMsgSend(this.NativePtr, Selectors.StoreAction);
+        set => ObjcMsgSend(this.NativePtr, Selectors.SetStoreAction, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets resolveTexture.
     /// </summary>
     public MTLTexture ResolveTexture {
-        get => objc_msgSend<MTLTexture>(this.NativePtr, Selectors.ResolveTexture);
-        set => objc_msgSend(this.NativePtr, Selectors.SetResolveTexture, value.NativePtr);
+        get => ObjcMsgSend<MTLTexture>(this.NativePtr, Selectors.ResolveTexture);
+        set => ObjcMsgSend(this.NativePtr, Selectors.SetResolveTexture, value.NativePtr);
     }
 
     /// <summary>
@@ -59,12 +59,12 @@ public struct MTLRenderPassColorAttachmentDescriptor {
     public MTLClearColor ClearColor {
         get {
             if (UseStret<MTLClearColor>()) {
-                return objc_msgSend_stret<MTLClearColor>(this.NativePtr, _selClearColor);
+                return ObjcMsgSendStret<MTLClearColor>(this.NativePtr, _selClearColor);
             }
 
             return MTLClearColor_objc_msgSend(this.NativePtr, _selClearColor);
         }
-        set => objc_msgSend(this.NativePtr, _selSetClearColor, value);
+        set => ObjcMsgSend(this.NativePtr, _selSetClearColor, value);
     }
 
     /// <summary>
@@ -72,7 +72,7 @@ public struct MTLRenderPassColorAttachmentDescriptor {
     /// </summary>
     public UIntPtr Slice {
         get => UIntPtr_objc_msgSend(this.NativePtr, Selectors.Slice);
-        set => objc_msgSend(this.NativePtr, Selectors.SetSlice, value);
+        set => ObjcMsgSend(this.NativePtr, Selectors.SetSlice, value);
     }
 
     /// <summary>
@@ -80,7 +80,7 @@ public struct MTLRenderPassColorAttachmentDescriptor {
     /// </summary>
     public UIntPtr level {
         get => UIntPtr_objc_msgSend(this.NativePtr, Selectors.Level);
-        set => objc_msgSend(this.NativePtr, Selectors.SetLevel, value);
+        set => ObjcMsgSend(this.NativePtr, Selectors.SetLevel, value);
     }
 
     /// <summary>

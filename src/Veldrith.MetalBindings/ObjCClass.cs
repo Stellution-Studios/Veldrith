@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -34,7 +34,7 @@ public unsafe struct ObjCClass {
             Encoding.UTF8.GetBytes(namePtr, name.Length, utf8BytesPtr, byteCount);
         }
 
-        this.NativePtr = ObjectiveCRuntime.objc_getClass(utf8BytesPtr);
+        this.NativePtr = ObjectiveCRuntime.ObjcGetClass(utf8BytesPtr);
     }
 
     /// <summary>
@@ -49,13 +49,13 @@ public unsafe struct ObjCClass {
             Encoding.UTF8.GetBytes(namePtr, propertyName.Length, utf8BytesPtr, byteCount);
         }
 
-        return ObjectiveCRuntime.class_getProperty(this, utf8BytesPtr);
+        return ObjectiveCRuntime.ClassGetProperty(this, utf8BytesPtr);
     }
 
     /// <summary>
     /// Gets the utf8 string value.
     /// </summary>
-    public string Name => MTLUtil.GetUtf8String(ObjectiveCRuntime.class_getName(this));
+    public string Name => MTLUtil.GetUtf8String(ObjectiveCRuntime.ClassGetName(this));
 
     public T Alloc<T>() where T : struct {
         IntPtr value = ObjectiveCRuntime.IntPtr_objc_msgSend(this.NativePtr, Selectors.Alloc);
@@ -64,7 +64,7 @@ public unsafe struct ObjCClass {
 
     public T AllocInit<T>() where T : struct {
         IntPtr value = ObjectiveCRuntime.IntPtr_objc_msgSend(this.NativePtr, Selectors.Alloc);
-        ObjectiveCRuntime.objc_msgSend(value, Selectors.Init);
+        ObjectiveCRuntime.ObjcMsgSend(value, Selectors.Init);
         return Unsafe.AsRef<T>(&value);
     }
 
@@ -72,7 +72,7 @@ public unsafe struct ObjCClass {
     /// Executes the class copy method list logic for this backend.
     /// </summary>
     /// <param name="count">The number of items involved in this operation.</param>
-    public ObjectiveCMethod* class_copyMethodList(out uint count) {
-        return ObjectiveCRuntime.class_copyMethodList(this, out count);
+    public ObjectiveCMethod* ClassCopyMethodList(out uint count) {
+        return ObjectiveCRuntime.ClassCopyMethodList(this, out count);
     }
 }

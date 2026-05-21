@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrith.MetalBindings;
@@ -25,8 +25,8 @@ public struct MTLPipelineBufferDescriptor {
     /// Gets or sets mutability.
     /// </summary>
     public MTLMutability mutability {
-        get => (MTLMutability)uint_objc_msgSend(this.NativePtr, _selMutability);
-        set => objc_msgSend(this.NativePtr, _selSetMutability, (uint)value);
+        get => (MTLMutability)UIntObjcMsgSend(this.NativePtr, _selMutability);
+        set => ObjcMsgSend(this.NativePtr, _selSetMutability, (uint)value);
     }
 
     /// <summary>

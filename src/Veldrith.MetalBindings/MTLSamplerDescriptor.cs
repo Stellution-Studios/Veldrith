@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrith.MetalBindings;
@@ -30,72 +30,72 @@ public struct MTLSamplerDescriptor {
     /// Gets or sets rAddressMode.
     /// </summary>
     public MTLSamplerAddressMode RAddressMode {
-        get => (MTLSamplerAddressMode)uint_objc_msgSend(this.NativePtr, _selRAddressMode);
-        set => objc_msgSend(this.NativePtr, _selSetRAddressMode, (uint)value);
+        get => (MTLSamplerAddressMode)UIntObjcMsgSend(this.NativePtr, _selRAddressMode);
+        set => ObjcMsgSend(this.NativePtr, _selSetRAddressMode, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets sAddressMode.
     /// </summary>
     public MTLSamplerAddressMode SAddressMode {
-        get => (MTLSamplerAddressMode)uint_objc_msgSend(this.NativePtr, _selSAddressMode);
-        set => objc_msgSend(this.NativePtr, _selSetSAddressMode, (uint)value);
+        get => (MTLSamplerAddressMode)UIntObjcMsgSend(this.NativePtr, _selSAddressMode);
+        set => ObjcMsgSend(this.NativePtr, _selSetSAddressMode, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets tAddressMode.
     /// </summary>
     public MTLSamplerAddressMode TAddressMode {
-        get => (MTLSamplerAddressMode)uint_objc_msgSend(this.NativePtr, _selTAddressMode);
-        set => objc_msgSend(this.NativePtr, _selSetTAddressMode, (uint)value);
+        get => (MTLSamplerAddressMode)UIntObjcMsgSend(this.NativePtr, _selTAddressMode);
+        set => ObjcMsgSend(this.NativePtr, _selSetTAddressMode, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets minFilter.
     /// </summary>
     public MTLSamplerMinMagFilter MinFilter {
-        get => (MTLSamplerMinMagFilter)uint_objc_msgSend(this.NativePtr, _selMinFilter);
-        set => objc_msgSend(this.NativePtr, _selSetMinFilter, (uint)value);
+        get => (MTLSamplerMinMagFilter)UIntObjcMsgSend(this.NativePtr, _selMinFilter);
+        set => ObjcMsgSend(this.NativePtr, _selSetMinFilter, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets magFilter.
     /// </summary>
     public MTLSamplerMinMagFilter MagFilter {
-        get => (MTLSamplerMinMagFilter)uint_objc_msgSend(this.NativePtr, _selMagFilter);
-        set => objc_msgSend(this.NativePtr, _selSetMagFilter, (uint)value);
+        get => (MTLSamplerMinMagFilter)UIntObjcMsgSend(this.NativePtr, _selMagFilter);
+        set => ObjcMsgSend(this.NativePtr, _selSetMagFilter, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets mipFilter.
     /// </summary>
     public MTLSamplerMipFilter MipFilter {
-        get => (MTLSamplerMipFilter)uint_objc_msgSend(this.NativePtr, _selMipFilter);
-        set => objc_msgSend(this.NativePtr, _selSetMipFilter, (uint)value);
+        get => (MTLSamplerMipFilter)UIntObjcMsgSend(this.NativePtr, _selMipFilter);
+        set => ObjcMsgSend(this.NativePtr, _selSetMipFilter, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets lodMinClamp.
     /// </summary>
     public float LodMinClamp {
-        get => float_objc_msgSend(this.NativePtr, _selLodMinClamp);
-        set => objc_msgSend(this.NativePtr, _selSetLodMinClamp, value);
+        get => FloatObjcMsgSend(this.NativePtr, _selLodMinClamp);
+        set => ObjcMsgSend(this.NativePtr, _selSetLodMinClamp, value);
     }
 
     /// <summary>
     /// Gets or sets lodMaxClamp.
     /// </summary>
     public float LodMaxClamp {
-        get => float_objc_msgSend(this.NativePtr, _selLodMaxClamp);
-        set => objc_msgSend(this.NativePtr, _selSetLodMaxClamp, value);
+        get => FloatObjcMsgSend(this.NativePtr, _selLodMaxClamp);
+        set => ObjcMsgSend(this.NativePtr, _selSetLodMaxClamp, value);
     }
 
     /// <summary>
     /// Gets or sets lodAverage.
     /// </summary>
     public Bool8 LodAverage {
-        get => bool8_objc_msgSend(this.NativePtr, _selLodAverage);
-        set => objc_msgSend(this.NativePtr, _selSetLodAverage, value);
+        get => Bool8ObjcMsgSend(this.NativePtr, _selLodAverage);
+        set => ObjcMsgSend(this.NativePtr, _selSetLodAverage, value);
     }
 
     /// <summary>
@@ -103,23 +103,23 @@ public struct MTLSamplerDescriptor {
     /// </summary>
     public UIntPtr MaxAnisotropy {
         get => UIntPtr_objc_msgSend(this.NativePtr, _selMaxAnisotropy);
-        set => objc_msgSend(this.NativePtr, _selSetMaAnisotropy, value);
+        set => ObjcMsgSend(this.NativePtr, _selSetMaAnisotropy, value);
     }
 
     /// <summary>
     /// Gets or sets compareFunction.
     /// </summary>
     public MTLCompareFunction CompareFunction {
-        get => (MTLCompareFunction)uint_objc_msgSend(this.NativePtr, _selCompareFunction);
-        set => objc_msgSend(this.NativePtr, _selSetCompareFunction, (uint)value);
+        get => (MTLCompareFunction)UIntObjcMsgSend(this.NativePtr, _selCompareFunction);
+        set => ObjcMsgSend(this.NativePtr, _selSetCompareFunction, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets borderColor.
     /// </summary>
     public MTLSamplerBorderColor BorderColor {
-        get => (MTLSamplerBorderColor)uint_objc_msgSend(this.NativePtr, _selBorderColor);
-        set => objc_msgSend(this.NativePtr, _selSetBorderColor, (uint)value);
+        get => (MTLSamplerBorderColor)UIntObjcMsgSend(this.NativePtr, _selBorderColor);
+        set => ObjcMsgSend(this.NativePtr, _selSetBorderColor, (uint)value);
     }
 
     /// <summary>

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrith.MetalBindings;
@@ -25,32 +25,32 @@ public struct MTLDepthStencilDescriptor {
     /// Gets or sets depthCompareFunction.
     /// </summary>
     public MTLCompareFunction DepthCompareFunction {
-        get => (MTLCompareFunction)uint_objc_msgSend(this.NativePtr, _selDepthCompareFunction);
-        set => objc_msgSend(this.NativePtr, _selSetDepthCompareFunction, (uint)value);
+        get => (MTLCompareFunction)UIntObjcMsgSend(this.NativePtr, _selDepthCompareFunction);
+        set => ObjcMsgSend(this.NativePtr, _selSetDepthCompareFunction, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets depthWriteEnabled.
     /// </summary>
     public Bool8 DepthWriteEnabled {
-        get => bool8_objc_msgSend(this.NativePtr, _selIsDepthWriteEnabled);
-        set => objc_msgSend(this.NativePtr, _selSetDepthWriteEnabled, value);
+        get => Bool8ObjcMsgSend(this.NativePtr, _selIsDepthWriteEnabled);
+        set => ObjcMsgSend(this.NativePtr, _selSetDepthWriteEnabled, value);
     }
 
     /// <summary>
     /// Gets or sets backFaceStencil.
     /// </summary>
     public MTLStencilDescriptor BackFaceStencil {
-        get => objc_msgSend<MTLStencilDescriptor>(this.NativePtr, _selBackFaceStencil);
-        set => objc_msgSend(this.NativePtr, _selSetBackFaceStencil, value.NativePtr);
+        get => ObjcMsgSend<MTLStencilDescriptor>(this.NativePtr, _selBackFaceStencil);
+        set => ObjcMsgSend(this.NativePtr, _selSetBackFaceStencil, value.NativePtr);
     }
 
     /// <summary>
     /// Gets or sets frontFaceStencil.
     /// </summary>
     public MTLStencilDescriptor FrontFaceStencil {
-        get => objc_msgSend<MTLStencilDescriptor>(this.NativePtr, _selFrontFaceStencil);
-        set => objc_msgSend(this.NativePtr, _selSetFrontFaceStencil, value.NativePtr);
+        get => ObjcMsgSend<MTLStencilDescriptor>(this.NativePtr, _selFrontFaceStencil);
+        set => ObjcMsgSend(this.NativePtr, _selSetFrontFaceStencil, value.NativePtr);
     }
 
     /// <summary>

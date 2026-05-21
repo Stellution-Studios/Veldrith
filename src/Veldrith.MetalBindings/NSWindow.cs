@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrith.MetalBindings;
@@ -25,7 +25,7 @@ public struct NSWindow {
     /// Gets or sets contentView.
     /// </summary>
 
-    public NSView ContentView => objc_msgSend<NSView>(this.NativePtr, _selContentView);
+    public NSView ContentView => ObjcMsgSend<NSView>(this.NativePtr, _selContentView);
 
     /// <summary>
     /// Stores the sel content view state used by this instance.

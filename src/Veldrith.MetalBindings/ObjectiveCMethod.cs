@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 namespace Veldrith.MetalBindings;
 
@@ -42,7 +42,7 @@ public struct ObjectiveCMethod {
     /// </summary>
     /// <returns>The value produced by this operation.</returns>
     public Selector GetSelector() {
-        return ObjectiveCRuntime.method_getName(this);
+        return ObjectiveCRuntime.MethodGetName(this);
     }
 
     /// <summary>

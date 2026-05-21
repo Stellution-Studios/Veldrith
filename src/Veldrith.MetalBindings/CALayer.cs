@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrith.MetalBindings;
@@ -34,8 +34,8 @@ public struct CALayer {
     /// Executes the add sublayer logic for this backend.
     /// </summary>
     /// <param name="layer">The layer value used by this operation.</param>
-    public void addSublayer(IntPtr layer) {
-        objc_msgSend(this.NativePtr, sel_addSublayer, layer);
+    public void AddSublayer(IntPtr layer) {
+        ObjcMsgSend(this.NativePtr, sel_addSublayer, layer);
     }
 
     /// <summary>
@@ -43,3 +43,4 @@ public struct CALayer {
     /// </summary>
     private static readonly Selector sel_addSublayer = "addSublayer:";
 }
+

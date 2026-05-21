@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
@@ -37,34 +37,34 @@ public struct MTLRenderPipelineDescriptor {
     /// Gets or sets vertexFunction.
     /// </summary>
     public MTLFunction VertexFunction {
-        get => objc_msgSend<MTLFunction>(this.NativePtr, sel_vertexFunction);
-        set => objc_msgSend(this.NativePtr, sel_setVertexFunction, value.NativePtr);
+        get => ObjcMsgSend<MTLFunction>(this.NativePtr, sel_vertexFunction);
+        set => ObjcMsgSend(this.NativePtr, sel_setVertexFunction, value.NativePtr);
     }
 
     /// <summary>
     /// Gets or sets fragmentFunction.
     /// </summary>
     public MTLFunction FragmentFunction {
-        get => objc_msgSend<MTLFunction>(this.NativePtr, sel_fragmentFunction);
-        set => objc_msgSend(this.NativePtr, sel_setFragmentFunction, value.NativePtr);
+        get => ObjcMsgSend<MTLFunction>(this.NativePtr, sel_fragmentFunction);
+        set => ObjcMsgSend(this.NativePtr, sel_setFragmentFunction, value.NativePtr);
     }
 
-    public MTLRenderPipelineColorAttachmentDescriptorArray ColorAttachments => objc_msgSend<MTLRenderPipelineColorAttachmentDescriptorArray>(this.NativePtr, sel_colorAttachments);
+    public MTLRenderPipelineColorAttachmentDescriptorArray ColorAttachments => ObjcMsgSend<MTLRenderPipelineColorAttachmentDescriptorArray>(this.NativePtr, sel_colorAttachments);
 
     /// <summary>
     /// Gets or sets depthAttachmentPixelFormat.
     /// </summary>
     public MTLPixelFormat DepthAttachmentPixelFormat {
-        get => (MTLPixelFormat)uint_objc_msgSend(this.NativePtr, sel_depthAttachmentPixelFormat);
-        set => objc_msgSend(this.NativePtr, sel_setDepthAttachmentPixelFormat, (uint)value);
+        get => (MTLPixelFormat)UIntObjcMsgSend(this.NativePtr, sel_depthAttachmentPixelFormat);
+        set => ObjcMsgSend(this.NativePtr, sel_setDepthAttachmentPixelFormat, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets stencilAttachmentPixelFormat.
     /// </summary>
     public MTLPixelFormat StencilAttachmentPixelFormat {
-        get => (MTLPixelFormat)uint_objc_msgSend(this.NativePtr, sel_stencilAttachmentPixelFormat);
-        set => objc_msgSend(this.NativePtr, sel_setStencilAttachmentPixelFormat, (uint)value);
+        get => (MTLPixelFormat)UIntObjcMsgSend(this.NativePtr, sel_stencilAttachmentPixelFormat);
+        set => ObjcMsgSend(this.NativePtr, sel_setStencilAttachmentPixelFormat, (uint)value);
     }
 
     /// <summary>
@@ -72,21 +72,21 @@ public struct MTLRenderPipelineDescriptor {
     /// </summary>
     public UIntPtr SampleCount {
         get => UIntPtr_objc_msgSend(this.NativePtr, sel_sampleCount);
-        set => objc_msgSend(this.NativePtr, sel_setSampleCount, value);
+        set => ObjcMsgSend(this.NativePtr, sel_setSampleCount, value);
     }
 
     /// <summary>
     /// Gets or sets vertexDescriptor.
     /// </summary>
 
-    public MTLVertexDescriptor VertexDescriptor => objc_msgSend<MTLVertexDescriptor>(this.NativePtr, sel_vertexDescriptor);
+    public MTLVertexDescriptor VertexDescriptor => ObjcMsgSend<MTLVertexDescriptor>(this.NativePtr, sel_vertexDescriptor);
 
     /// <summary>
     /// Gets or sets alphaToCoverageEnabled.
     /// </summary>
     public Bool8 AlphaToCoverageEnabled {
-        get => bool8_objc_msgSend(this.NativePtr, sel_isAlphaToCoverageEnabled);
-        set => objc_msgSend(this.NativePtr, sel_setAlphaToCoverageEnabled, value);
+        get => Bool8ObjcMsgSend(this.NativePtr, sel_isAlphaToCoverageEnabled);
+        set => ObjcMsgSend(this.NativePtr, sel_setAlphaToCoverageEnabled, value);
     }
 
     /// <summary>

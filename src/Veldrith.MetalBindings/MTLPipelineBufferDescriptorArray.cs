@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrith.MetalBindings;
@@ -21,6 +21,6 @@ public struct MTLPipelineBufferDescriptorArray {
             IntPtr value = IntPtr_objc_msgSend(this.NativePtr, Selectors.ObjectAtIndexedSubscript, (UIntPtr)index);
             return new MTLPipelineBufferDescriptor(value);
         }
-        set => objc_msgSend(this.NativePtr, Selectors.SetObjectAtIndexedSubscript, value.NativePtr, (UIntPtr)index);
+        set => ObjcMsgSend(this.NativePtr, Selectors.SetObjectAtIndexedSubscript, value.NativePtr, (UIntPtr)index);
     }
 }

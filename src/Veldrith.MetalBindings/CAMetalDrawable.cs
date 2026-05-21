@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
@@ -24,5 +24,5 @@ public struct CAMetalDrawable {
     /// <summary>
     /// Gets or sets texture.
     /// </summary>
-    public MTLTexture texture => objc_msgSend<MTLTexture>(this.NativePtr, Selectors.Texture);
+    public MTLTexture texture => ObjcMsgSend<MTLTexture>(this.NativePtr, Selectors.Texture);
 }

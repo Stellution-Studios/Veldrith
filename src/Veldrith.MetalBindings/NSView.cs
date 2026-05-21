@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
@@ -35,8 +35,8 @@ public struct NSView {
     /// Gets or sets wantsLayer.
     /// </summary>
     public Bool8 WantsLayer {
-        get => bool8_objc_msgSend(this.NativePtr, _selWantsLayer);
-        set => objc_msgSend(this.NativePtr, _selSetWantsLayer, value);
+        get => Bool8ObjcMsgSend(this.NativePtr, _selWantsLayer);
+        set => ObjcMsgSend(this.NativePtr, _selSetWantsLayer, value);
     }
 
     /// <summary>
@@ -44,13 +44,13 @@ public struct NSView {
     /// </summary>
     public IntPtr Layer {
         get => IntPtr_objc_msgSend(this.NativePtr, _selLayer);
-        set => objc_msgSend(this.NativePtr, _selSetLayer, value);
+        set => ObjcMsgSend(this.NativePtr, _selSetLayer, value);
     }
 
     /// <summary>
     /// Stores the frame state used by this instance.
     /// </summary>
-    public CGRect Frame => RuntimeInformation.ProcessArchitecture == Architecture.Arm64 ? CGRect_objc_msgSend(this.NativePtr, _selFrame) : objc_msgSend_stret<CGRect>(this.NativePtr, _selFrame);
+    public CGRect Frame => RuntimeInformation.ProcessArchitecture == Architecture.Arm64 ? CGRect_objc_msgSend(this.NativePtr, _selFrame) : ObjcMsgSendStret<CGRect>(this.NativePtr, _selFrame);
 
     /// <summary>
     /// Stores the sel wants layer state used by this instance.

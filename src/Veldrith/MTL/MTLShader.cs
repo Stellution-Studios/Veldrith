@@ -25,16 +25,16 @@ internal class MtlShader : Shader {
             && description.ShaderBytes[1] == 0x54
             && description.ShaderBytes[2] == 0x4c
             && description.ShaderBytes[3] == 0x42) {
-            DispatchQueue queue = Dispatch.dispatch_get_global_queue(QualityOfServiceLevel.QOS_CLASS_USER_INTERACTIVE, 0);
+        DispatchQueue queue = Dispatch.DispatchGetGlobalQueue(QualityOfServiceLevel.QOS_CLASS_USER_INTERACTIVE, 0);
 
             fixed (byte* shaderBytesPtr = description.ShaderBytes) {
-                DispatchData dispatchData = Dispatch.dispatch_data_create(shaderBytesPtr, (UIntPtr)description.ShaderBytes.Length, queue, IntPtr.Zero);
+            DispatchData dispatchData = Dispatch.DispatchDataCreate(shaderBytesPtr, (UIntPtr)description.ShaderBytes.Length, queue, IntPtr.Zero);
 
                 try {
                     this.Library = gd.Device.NewLibraryWithData(dispatchData);
                 }
                 finally {
-                    Dispatch.dispatch_release(dispatchData.NativePtr);
+                Dispatch.DispatchRelease(dispatchData.NativePtr);
                 }
             }
         }

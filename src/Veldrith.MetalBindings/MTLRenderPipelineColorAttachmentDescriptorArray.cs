@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
@@ -23,6 +23,6 @@ public struct MTLRenderPipelineColorAttachmentDescriptorArray {
             IntPtr ptr = IntPtr_objc_msgSend(this.NativePtr, Selectors.ObjectAtIndexedSubscript, index);
             return new MTLRenderPipelineColorAttachmentDescriptor(ptr);
         }
-        set => objc_msgSend(this.NativePtr, Selectors.SetObjectAtIndexedSubscript, value.NativePtr, index);
+        set => ObjcMsgSend(this.NativePtr, Selectors.SetObjectAtIndexedSubscript, value.NativePtr, index);
     }
 }

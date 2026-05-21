@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrith.MetalBindings;
@@ -13,9 +13,9 @@ public struct MTLVertexDescriptor {
     /// </summary>
     public readonly IntPtr NativePtr;
 
-    public MTLVertexBufferLayoutDescriptorArray Layouts => objc_msgSend<MTLVertexBufferLayoutDescriptorArray>(this.NativePtr, _selLayouts);
+    public MTLVertexBufferLayoutDescriptorArray Layouts => ObjcMsgSend<MTLVertexBufferLayoutDescriptorArray>(this.NativePtr, _selLayouts);
 
-    public MTLVertexAttributeDescriptorArray Attributes => objc_msgSend<MTLVertexAttributeDescriptorArray>(this.NativePtr, _selAttributes);
+    public MTLVertexAttributeDescriptorArray Attributes => ObjcMsgSend<MTLVertexAttributeDescriptorArray>(this.NativePtr, _selAttributes);
 
     /// <summary>
     /// Stores the sel layouts state used by this instance.

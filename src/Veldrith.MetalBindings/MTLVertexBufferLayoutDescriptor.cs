@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrith.MetalBindings;
@@ -25,8 +25,8 @@ public struct MTLVertexBufferLayoutDescriptor {
     /// Gets or sets stepFunction.
     /// </summary>
     public MTLVertexStepFunction StepFunction {
-        get => (MTLVertexStepFunction)uint_objc_msgSend(this.NativePtr, _selStepFunction);
-        set => objc_msgSend(this.NativePtr, _selSetStepFunction, (uint)value);
+        get => (MTLVertexStepFunction)UIntObjcMsgSend(this.NativePtr, _selStepFunction);
+        set => ObjcMsgSend(this.NativePtr, _selSetStepFunction, (uint)value);
     }
 
     /// <summary>
@@ -34,7 +34,7 @@ public struct MTLVertexBufferLayoutDescriptor {
     /// </summary>
     public UIntPtr Stride {
         get => UIntPtr_objc_msgSend(this.NativePtr, _selStride);
-        set => objc_msgSend(this.NativePtr, _selSetStride, value);
+        set => ObjcMsgSend(this.NativePtr, _selSetStride, value);
     }
 
     /// <summary>
@@ -42,7 +42,7 @@ public struct MTLVertexBufferLayoutDescriptor {
     /// </summary>
     public UIntPtr StepRate {
         get => UIntPtr_objc_msgSend(this.NativePtr, _selStepRate);
-        set => objc_msgSend(this.NativePtr, _selSetStepRate, value);
+        set => ObjcMsgSend(this.NativePtr, _selSetStepRate, value);
     }
 
     /// <summary>

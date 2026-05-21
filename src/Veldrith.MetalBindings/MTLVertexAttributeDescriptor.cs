@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrith.MetalBindings;
@@ -25,8 +25,8 @@ public struct MTLVertexAttributeDescriptor {
     /// Gets or sets format.
     /// </summary>
     public MTLVertexFormat Format {
-        get => (MTLVertexFormat)uint_objc_msgSend(this.NativePtr, _selFormat);
-        set => objc_msgSend(this.NativePtr, _selSetFormat, (uint)value);
+        get => (MTLVertexFormat)UIntObjcMsgSend(this.NativePtr, _selFormat);
+        set => ObjcMsgSend(this.NativePtr, _selSetFormat, (uint)value);
     }
 
     /// <summary>
@@ -34,7 +34,7 @@ public struct MTLVertexAttributeDescriptor {
     /// </summary>
     public UIntPtr Offset {
         get => UIntPtr_objc_msgSend(this.NativePtr, _selOffset);
-        set => objc_msgSend(this.NativePtr, _selSetOffset, value);
+        set => ObjcMsgSend(this.NativePtr, _selSetOffset, value);
     }
 
     /// <summary>
@@ -42,7 +42,7 @@ public struct MTLVertexAttributeDescriptor {
     /// </summary>
     public UIntPtr BufferIndex {
         get => UIntPtr_objc_msgSend(this.NativePtr, _selBufferIndex);
-        set => objc_msgSend(this.NativePtr, _selSetBufferIndex, value);
+        set => ObjcMsgSend(this.NativePtr, _selSetBufferIndex, value);
     }
 
     /// <summary>

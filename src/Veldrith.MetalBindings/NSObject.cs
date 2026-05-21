@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrith.MetalBindings;
@@ -27,7 +27,7 @@ public struct NSObject {
     /// <param name="class">The class value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     public Bool8 IsKindOfClass(IntPtr @class) {
-        return bool8_objc_msgSend(this.NativePtr, _selIsKindOfClass, @class);
+        return Bool8ObjcMsgSend(this.NativePtr, _selIsKindOfClass, @class);
     }
 
     /// <summary>

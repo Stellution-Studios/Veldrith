@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.InteropServices;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
@@ -22,14 +22,14 @@ public struct MTLCommandQueue {
     /// <returns>The value produced by this operation.</returns>
     [Pure]
     public MTLCommandBuffer CommandBuffer() {
-        return objc_msgSend<MTLCommandBuffer>(this.NativePtr, sel_commandBuffer);
+        return ObjcMsgSend<MTLCommandBuffer>(this.NativePtr, sel_commandBuffer);
     }
 
     /// <summary>
     /// Executes the insert debug capture boundary logic for this backend.
     /// </summary>
     public void InsertDebugCaptureBoundary() {
-        objc_msgSend(this.NativePtr, sel_insertDebugCaptureBoundary);
+        ObjcMsgSend(this.NativePtr, sel_insertDebugCaptureBoundary);
     }
 
     /// <summary>

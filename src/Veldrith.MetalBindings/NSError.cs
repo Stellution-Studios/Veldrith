@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrith.MetalBindings;
@@ -17,13 +17,13 @@ public struct NSError {
     /// Executes the string objc msg send logic for this backend.
     /// </summary>
 
-    public string Domain => string_objc_msgSend(this.NativePtr, _selDomain);
+    public string Domain => StringObjcMsgSend(this.NativePtr, _selDomain);
 
     /// <summary>
     /// Executes the string objc msg send logic for this backend.
     /// </summary>
 
-    public string LocalizedDescription => string_objc_msgSend(this.NativePtr, _selLocalizedDescription);
+    public string LocalizedDescription => StringObjcMsgSend(this.NativePtr, _selLocalizedDescription);
 
     /// <summary>
     /// Stores the sel domain state used by this instance.

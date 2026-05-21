@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrith.MetalBindings;
@@ -30,16 +30,16 @@ public struct MTLTextureDescriptor {
     /// Gets or sets textureType.
     /// </summary>
     public MTLTextureType TextureType {
-        get => (MTLTextureType)uint_objc_msgSend(this.NativePtr, _selTextureType);
-        set => objc_msgSend(this.NativePtr, _selSetTextureType, (uint)value);
+        get => (MTLTextureType)UIntObjcMsgSend(this.NativePtr, _selTextureType);
+        set => ObjcMsgSend(this.NativePtr, _selSetTextureType, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets pixelFormat.
     /// </summary>
     public MTLPixelFormat PixelFormat {
-        get => (MTLPixelFormat)uint_objc_msgSend(this.NativePtr, Selectors.PixelFormat);
-        set => objc_msgSend(this.NativePtr, Selectors.SetPixelFormat, (uint)value);
+        get => (MTLPixelFormat)UIntObjcMsgSend(this.NativePtr, Selectors.PixelFormat);
+        set => ObjcMsgSend(this.NativePtr, Selectors.SetPixelFormat, (uint)value);
     }
 
     /// <summary>
@@ -47,7 +47,7 @@ public struct MTLTextureDescriptor {
     /// </summary>
     public UIntPtr Width {
         get => UIntPtr_objc_msgSend(this.NativePtr, _selWidth);
-        set => objc_msgSend(this.NativePtr, _selSetWidth, value);
+        set => ObjcMsgSend(this.NativePtr, _selSetWidth, value);
     }
 
     /// <summary>
@@ -55,7 +55,7 @@ public struct MTLTextureDescriptor {
     /// </summary>
     public UIntPtr Height {
         get => UIntPtr_objc_msgSend(this.NativePtr, _selHeight);
-        set => objc_msgSend(this.NativePtr, _selSetHeight, value);
+        set => ObjcMsgSend(this.NativePtr, _selSetHeight, value);
     }
 
     /// <summary>
@@ -63,7 +63,7 @@ public struct MTLTextureDescriptor {
     /// </summary>
     public UIntPtr Depth {
         get => UIntPtr_objc_msgSend(this.NativePtr, _selDepth);
-        set => objc_msgSend(this.NativePtr, _selSetDepth, value);
+        set => ObjcMsgSend(this.NativePtr, _selSetDepth, value);
     }
 
     /// <summary>
@@ -71,7 +71,7 @@ public struct MTLTextureDescriptor {
     /// </summary>
     public UIntPtr MipmapLevelCount {
         get => UIntPtr_objc_msgSend(this.NativePtr, _selMipmapLevelCount);
-        set => objc_msgSend(this.NativePtr, _selSetMipmapLevelCount, value);
+        set => ObjcMsgSend(this.NativePtr, _selSetMipmapLevelCount, value);
     }
 
     /// <summary>
@@ -79,7 +79,7 @@ public struct MTLTextureDescriptor {
     /// </summary>
     public UIntPtr SampleCount {
         get => UIntPtr_objc_msgSend(this.NativePtr, _selSampleCount);
-        set => objc_msgSend(this.NativePtr, _selSetSampleCount, value);
+        set => ObjcMsgSend(this.NativePtr, _selSetSampleCount, value);
     }
 
     /// <summary>
@@ -87,39 +87,39 @@ public struct MTLTextureDescriptor {
     /// </summary>
     public UIntPtr ArrayLength {
         get => UIntPtr_objc_msgSend(this.NativePtr, _selArrayLength);
-        set => objc_msgSend(this.NativePtr, _selSetArrayLength, value);
+        set => ObjcMsgSend(this.NativePtr, _selSetArrayLength, value);
     }
 
     /// <summary>
     /// Gets or sets resourceOptions.
     /// </summary>
     public MTLResourceOptions ResourceOptions {
-        get => (MTLResourceOptions)uint_objc_msgSend(this.NativePtr, _selResourceOptions);
-        set => objc_msgSend(this.NativePtr, _selSetResourceOptions, (uint)value);
+        get => (MTLResourceOptions)UIntObjcMsgSend(this.NativePtr, _selResourceOptions);
+        set => ObjcMsgSend(this.NativePtr, _selSetResourceOptions, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets cpuCacheMode.
     /// </summary>
     public MTLCPUCacheMode CpuCacheMode {
-        get => (MTLCPUCacheMode)uint_objc_msgSend(this.NativePtr, _selCpuCacheMode);
-        set => objc_msgSend(this.NativePtr, _selSetCpuCacheMode, (uint)value);
+        get => (MTLCPUCacheMode)UIntObjcMsgSend(this.NativePtr, _selCpuCacheMode);
+        set => ObjcMsgSend(this.NativePtr, _selSetCpuCacheMode, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets storageMode.
     /// </summary>
     public MTLStorageMode StorageMode {
-        get => (MTLStorageMode)uint_objc_msgSend(this.NativePtr, _selStorageMode);
-        set => objc_msgSend(this.NativePtr, _selSetStorageMode, (uint)value);
+        get => (MTLStorageMode)UIntObjcMsgSend(this.NativePtr, _selStorageMode);
+        set => ObjcMsgSend(this.NativePtr, _selSetStorageMode, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets textureUsage.
     /// </summary>
     public MTLTextureUsage TextureUsage {
-        get => (MTLTextureUsage)uint_objc_msgSend(this.NativePtr, _selTextureUsage);
-        set => objc_msgSend(this.NativePtr, _selSetTextureUsage, (uint)value);
+        get => (MTLTextureUsage)UIntObjcMsgSend(this.NativePtr, _selTextureUsage);
+        set => ObjcMsgSend(this.NativePtr, _selSetTextureUsage, (uint)value);
     }
 
     /// <summary>

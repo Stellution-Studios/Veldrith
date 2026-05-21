@@ -92,7 +92,7 @@ internal class MtlSwapchain : Swapchain {
                 this._metalLayer = CAMetalLayer.New();
                 this._metalLayer.frame = this._uiView.Frame;
                 this._metalLayer.opaque = true;
-                this._uiView.Layer.addSublayer(this._metalLayer.NativePtr);
+            this._uiView.Layer.AddSublayer(this._metalLayer.NativePtr);
             }
         }
         else {
@@ -206,7 +206,7 @@ internal class MtlSwapchain : Swapchain {
         }
 
         using (NSAutoreleasePool.Begin()) {
-            this._drawable = this._metalLayer.nextDrawable();
+            this._drawable = this._metalLayer.NextDrawable();
 
             if (!this._drawable.IsNull) {
                 ObjectiveCRuntime.Retain(this._drawable.NativePtr);

@@ -21,34 +21,34 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// <summary>
     /// Stores the vk instance create enumerate portability bit khr state used by this instance.
     /// </summary>
-    private const VkInstanceCreateFlags _vk_instance_create_enumerate_portability_bit_khr = VkInstanceCreateFlags.EnumeratePortabilityKHR;
+    private const VkInstanceCreateFlags _vkInstanceCreateEnumeratePortabilityBitKhr = VkInstanceCreateFlags.EnumeratePortabilityKHR;
 
     /// <summary>
     /// Stores the shared command pool count value used during command execution.
     /// </summary>
-    private const int _shared_command_pool_count = 4;
+    private const int _sharedCommandPoolCount = 4;
 
     // Staging Resources
 
     /// <summary>
     /// Stores the min staging buffer size value used during command execution.
     /// </summary>
-    private const uint _min_staging_buffer_size = 64;
+    private const uint _minStagingBufferSize = 64;
 
     /// <summary>
     /// Stores the max staging buffer size value used during command execution.
     /// </summary>
-    private const uint _max_staging_buffer_size = 512;
+    private const uint _maxStagingBufferSize = 512;
 
     /// <summary>
     /// Stores the human-readable name associated with this instance.
     /// </summary>
-    private static readonly FixedUtf8String _s_name = "Veldrith-VkGraphicsDevice";
+    private static readonly FixedUtf8String _sName = "Veldrith-VkGraphicsDevice";
 
     /// <summary>
     /// Stores the s is supported state used by this instance.
     /// </summary>
-    private static readonly Lazy<bool> _s_is_supported = new(checkIsSupported, true);
+    private static readonly Lazy<bool> _sIsSupported = new(CheckIsSupported, true);
 
     /// <summary>
     /// Enables the persistent Vulkan pipeline cache unless explicitly disabled.
@@ -313,16 +313,16 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// <param name="scDesc">The sc desc value used by this operation.</param>
     /// <param name="vkOptions">The vk options value used by this operation.</param>
     public VkGraphicsDevice(GraphicsDeviceOptions options, SwapchainDescription? scDesc, VulkanDeviceOptions vkOptions) {
-        this.createInstance(options.Debug, vkOptions);
+        this.CreateInstance(options.Debug, vkOptions);
 
         VkSurfaceKHR surface = default;
         if (scDesc != null) {
             surface = VkSurfaceUtil.CreateSurface(this, this._instance, scDesc.Value.Source);
         }
 
-        this.createPhysicalDevice();
-        this.createLogicalDevice(surface, options.PreferStandardClipSpaceYDirection, vkOptions);
-        this.createPipelineCache();
+        this.CreatePhysicalDevice();
+        this.CreateLogicalDevice(surface, options.PreferStandardClipSpaceYDirection, vkOptions);
+        this.CreatePipelineCache();
 
         this.MemoryManager = new VkDeviceMemoryManager(this._device, this._physicalDeviceProperties.limits.bufferImageGranularity, this.GetBufferMemoryRequirements2, this.GetImageMemoryRequirements2);
 
@@ -336,9 +336,9 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
             this._perfLastReportTicks = Stopwatch.GetTimestamp();
         }
 
-        this.createDescriptorPool();
-        this.createGraphicsCommandPool();
-        for (int i = 0; i < _shared_command_pool_count; i++) {
+        this.CreateDescriptorPool();
+        this.CreateGraphicsCommandPool();
+        for (int i = 0; i < _sharedCommandPoolCount; i++) {
             this._sharedGraphicsCommandPools.Push(new SharedCommandPool(this, true));
         }
 
@@ -535,7 +535,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// <param name="flags">The flags value used by this operation.</param>
     public void EnableDebugCallback(VkDebugReportFlagsEXT flags = VkDebugReportFlagsEXT.Warning | VkDebugReportFlagsEXT.Error) {
         Debug.WriteLine("Enabling Vulkan Debug callbacks.");
-        this._debugCallbackFunc = this.debugCallback;
+        this._debugCallbackFunc = this.DebugCallback;
         IntPtr debugFunctionPtr = Marshal.GetFunctionPointerForDelegate(this._debugCallbackFunc);
         VkDebugReportCallbackCreateInfoEXT debugCallbackCi = new VkDebugReportCallbackCreateInfoEXT();
         debugCallbackCi.flags = flags;
@@ -649,7 +649,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// </summary>
     /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     internal static bool IsSupported() {
-        return _s_is_supported.Value;
+        return _sIsSupported.Value;
     }
 
     /// <summary>
@@ -661,53 +661,53 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
         if (this._debugMarkerEnabled) {
             switch (resource) {
                 case VkBuffer buffer:
-                    this.setDebugMarkerName(VkDebugReportObjectTypeEXT.Buffer, buffer.DeviceBuffer.Handle, name);
+                    this.SetDebugMarkerName(VkDebugReportObjectTypeEXT.Buffer, buffer.DeviceBuffer.Handle, name);
                     break;
 
                 case VkCommandList commandList:
-                    this.setDebugMarkerName(VkDebugReportObjectTypeEXT.CommandBuffer, (ulong)commandList.CommandBuffer.Handle, $"{name}_CommandBuffer");
-                    this.setDebugMarkerName(VkDebugReportObjectTypeEXT.CommandPool, commandList.CommandPool.Handle, $"{name}_CommandPool");
+                    this.SetDebugMarkerName(VkDebugReportObjectTypeEXT.CommandBuffer, (ulong)commandList.CommandBuffer.Handle, $"{name}_CommandBuffer");
+                    this.SetDebugMarkerName(VkDebugReportObjectTypeEXT.CommandPool, commandList.CommandPool.Handle, $"{name}_CommandPool");
                     break;
 
                 case VkFramebuffer framebuffer:
-                    this.setDebugMarkerName(VkDebugReportObjectTypeEXT.Framebuffer, framebuffer.CurrentFramebuffer.Handle, name);
+                    this.SetDebugMarkerName(VkDebugReportObjectTypeEXT.Framebuffer, framebuffer.CurrentFramebuffer.Handle, name);
                     break;
 
                 case VkPipeline pipeline:
-                    this.setDebugMarkerName(VkDebugReportObjectTypeEXT.Pipeline, pipeline.DevicePipeline.Handle, name);
-                    this.setDebugMarkerName(VkDebugReportObjectTypeEXT.PipelineLayout, pipeline.PipelineLayout.Handle, name);
+                    this.SetDebugMarkerName(VkDebugReportObjectTypeEXT.Pipeline, pipeline.DevicePipeline.Handle, name);
+                    this.SetDebugMarkerName(VkDebugReportObjectTypeEXT.PipelineLayout, pipeline.PipelineLayout.Handle, name);
                     break;
 
                 case VkResourceLayout resourceLayout:
-                    this.setDebugMarkerName(VkDebugReportObjectTypeEXT.DescriptorSetLayout, resourceLayout.DescriptorSetLayout.Handle, name);
+                    this.SetDebugMarkerName(VkDebugReportObjectTypeEXT.DescriptorSetLayout, resourceLayout.DescriptorSetLayout.Handle, name);
                     break;
 
                 case VkResourceSet resourceSet:
-                    this.setDebugMarkerName(VkDebugReportObjectTypeEXT.DescriptorSet, resourceSet.DescriptorSet.Handle, name);
+                    this.SetDebugMarkerName(VkDebugReportObjectTypeEXT.DescriptorSet, resourceSet.DescriptorSet.Handle, name);
                     break;
 
                 case VkSampler sampler:
-                    this.setDebugMarkerName(VkDebugReportObjectTypeEXT.Sampler, sampler.DeviceSampler.Handle, name);
+                    this.SetDebugMarkerName(VkDebugReportObjectTypeEXT.Sampler, sampler.DeviceSampler.Handle, name);
                     break;
 
                 case VkShader shader:
-                    this.setDebugMarkerName(VkDebugReportObjectTypeEXT.ShaderModule, shader.ShaderModule.Handle, name);
+                    this.SetDebugMarkerName(VkDebugReportObjectTypeEXT.ShaderModule, shader.ShaderModule.Handle, name);
                     break;
 
                 case VkTexture tex:
-                    this.setDebugMarkerName(VkDebugReportObjectTypeEXT.Image, tex.OptimalDeviceImage.Handle, name);
+                    this.SetDebugMarkerName(VkDebugReportObjectTypeEXT.Image, tex.OptimalDeviceImage.Handle, name);
                     break;
 
                 case VkTextureView texView:
-                    this.setDebugMarkerName(VkDebugReportObjectTypeEXT.ImageView, texView.ImageView.Handle, name);
+                    this.SetDebugMarkerName(VkDebugReportObjectTypeEXT.ImageView, texView.ImageView.Handle, name);
                     break;
 
                 case VkFence fence:
-                    this.setDebugMarkerName(VkDebugReportObjectTypeEXT.Fence, fence.DeviceFence.Handle, name);
+                    this.SetDebugMarkerName(VkDebugReportObjectTypeEXT.Fence, fence.DeviceFence.Handle, name);
                     break;
 
                 case VkSwapchain sc:
-                    this.setDebugMarkerName(VkDebugReportObjectTypeEXT.SwapchainKHR, sc.DeviceSwapchain.Handle, name);
+                    this.SetDebugMarkerName(VkDebugReportObjectTypeEXT.SwapchainKHR, sc.DeviceSwapchain.Handle, name);
                     break;
             }
         }
@@ -742,7 +742,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
         }
 
         VkImageSubresourceRange range = new(VkImageAspectFlags.Color, 0, texture.MipLevels, 0, effectiveLayers);
-        SharedCommandPool pool = this.getFreeCommandPool();
+        SharedCommandPool pool = this.GetFreeCommandPool();
         VkCommandBuffer cb = pool.BeginNewCommandBuffer();
         texture.TransitionImageLayout(cb, 0, texture.MipLevels, 0, effectiveLayers, VkImageLayout.TransferDstOptimal);
         VulkanDispatch.GetApi(cb).vkCmdClearColorImage(cb, texture.OptimalDeviceImage, VkImageLayout.TransferDstOptimal, &color, 1, &range);
@@ -768,7 +768,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
             ? VkImageAspectFlags.Depth | VkImageAspectFlags.Stencil
             : VkImageAspectFlags.Depth;
         VkImageSubresourceRange range = new(aspect, 0, texture.MipLevels, 0, effectiveLayers);
-        SharedCommandPool pool = this.getFreeCommandPool();
+        SharedCommandPool pool = this.GetFreeCommandPool();
         VkCommandBuffer cb = pool.BeginNewCommandBuffer();
         texture.TransitionImageLayout(cb, 0, texture.MipLevels, 0, effectiveLayers, VkImageLayout.TransferDstOptimal);
         VulkanDispatch.GetApi(cb).vkCmdClearDepthStencilImage(cb, texture.OptimalDeviceImage, VkImageLayout.TransferDstOptimal, &clearValue, 1, &range);
@@ -798,7 +798,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// <param name="texture">The texture resource involved in this operation.</param>
     /// <param name="layout">The resource layout used by this operation.</param>
     internal void TransitionImageLayout(VkTexture texture, VkImageLayout layout) {
-        SharedCommandPool pool = this.getFreeCommandPool();
+        SharedCommandPool pool = this.GetFreeCommandPool();
         VkCommandBuffer cb = pool.BeginNewCommandBuffer();
         texture.TransitionImageLayout(cb, 0, texture.MipLevels, 0, texture.ActualArrayLayers, layout);
         pool.EndAndSubmit(cb);
@@ -910,7 +910,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
 
         VkResult result = this.DeviceApi.vkDeviceWaitIdle();
         CheckResult(result);
-        this.storeAndDestroyPipelineCache();
+        this.StoreAndDestroyPipelineCache();
         this.DeviceApi.vkDestroyDevice(null);
         this.InstanceApi.vkDestroyInstance(null);
     }
@@ -918,14 +918,14 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// <summary>
     /// Creates the Vulkan pipeline cache used by pipeline creation.
     /// </summary>
-    private void createPipelineCache() {
+    private void CreatePipelineCache() {
         if (!_persistentPipelineCacheEnabled) {
             return;
         }
 
         byte[] initialData = null;
         try {
-            string cachePath = this.getPersistentPipelineCachePath();
+            string cachePath = this.GetPersistentPipelineCachePath();
             if (File.Exists(cachePath)) {
                 initialData = File.ReadAllBytes(cachePath);
             }
@@ -957,7 +957,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// <summary>
     /// Stores and destroys the Vulkan pipeline cache.
     /// </summary>
-    private void storeAndDestroyPipelineCache() {
+    private void StoreAndDestroyPipelineCache() {
         if (this._pipelineCache.Handle == 0) {
             return;
         }
@@ -972,7 +972,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
                         VkResult dataResult = this.DeviceApi.vkGetPipelineCacheData(this._pipelineCache, &cacheSize, cacheDataPtr);
                         if (dataResult == VkResult.Success) {
                             Directory.CreateDirectory(_persistentPipelineCacheDirectory);
-                            File.WriteAllBytes(this.getPersistentPipelineCachePath(), cacheData);
+                            File.WriteAllBytes(this.GetPersistentPipelineCachePath(), cacheData);
                         }
                     }
                 }
@@ -990,7 +990,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// Gets the persistent Vulkan pipeline cache path for the current physical device and driver.
     /// </summary>
     /// <returns>The persistent pipeline cache path.</returns>
-    private string getPersistentPipelineCachePath() {
+    private string GetPersistentPipelineCachePath() {
         return Path.Combine(
             _persistentPipelineCacheDirectory,
             $"{this._physicalDeviceProperties.vendorID:X8}_{this._physicalDeviceProperties.deviceID:X8}_{this._physicalDeviceProperties.driverVersion:X8}.bin");
@@ -1000,7 +1000,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// Executes the check is supported logic for this backend.
     /// </summary>
     /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
-    private static bool checkIsSupported() {
+    private static bool CheckIsSupported() {
         if (!IsVulkanLoaded()) {
             return false;
         }
@@ -1010,8 +1010,8 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
             apiVersion = new global::Vortice.Vulkan.VkVersion(1, 0, 0),
             applicationVersion = new global::Vortice.Vulkan.VkVersion(1, 0, 0),
             engineVersion = new global::Vortice.Vulkan.VkVersion(1, 0, 0),
-            pApplicationName = _s_name,
-            pEngineName = _s_name
+            pApplicationName = _sName,
+            pEngineName = _sName
         };
 
         instanceCi.pApplicationInfo = &applicationInfo;
@@ -1078,12 +1078,12 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// <param name="signalSemaphoreCount">The signal semaphore count value used by this operation.</param>
     /// <param name="signalSemaphoresPtr">The signal semaphores ptr value used by this operation.</param>
     /// <param name="fence">The synchronization fence used by this operation.</param>
-    private void submitCommandList(CommandList cl, uint waitSemaphoreCount, VkSemaphore* waitSemaphoresPtr, uint signalSemaphoreCount, VkSemaphore* signalSemaphoresPtr, Fence fence) {
+    private void SubmitCommandList(CommandList cl, uint waitSemaphoreCount, VkSemaphore* waitSemaphoresPtr, uint signalSemaphoreCount, VkSemaphore* signalSemaphoresPtr, Fence fence) {
         VkCommandList vkCl = Util.AssertSubtype<CommandList, VkCommandList>(cl);
         VkCommandBuffer vkCb = vkCl.CommandBuffer;
 
         vkCl.CommandBufferSubmitted(vkCb);
-        this.submitCommandBuffer(vkCl, vkCb, waitSemaphoreCount, waitSemaphoresPtr, signalSemaphoreCount, signalSemaphoresPtr, fence);
+        this.SubmitCommandBuffer(vkCl, vkCb, waitSemaphoreCount, waitSemaphoresPtr, signalSemaphoreCount, signalSemaphoresPtr, fence);
     }
 
     /// <summary>
@@ -1096,8 +1096,8 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// <param name="signalSemaphoreCount">The signal semaphore count value used by this operation.</param>
     /// <param name="signalSemaphoresPtr">The signal semaphores ptr value used by this operation.</param>
     /// <param name="fence">The synchronization fence used by this operation.</param>
-    private void submitCommandBuffer(VkCommandList vkCl, VkCommandBuffer vkCb, uint waitSemaphoreCount, VkSemaphore* waitSemaphoresPtr, uint signalSemaphoreCount, VkSemaphore* signalSemaphoresPtr, Fence fence) {
-        this.checkSubmittedFences();
+    private void SubmitCommandBuffer(VkCommandList vkCl, VkCommandBuffer vkCb, uint waitSemaphoreCount, VkSemaphore* waitSemaphoresPtr, uint signalSemaphoreCount, VkSemaphore* signalSemaphoresPtr, Fence fence) {
+        this.CheckSubmittedFences();
 
         bool useExtraFence = fence != null;
         VkSubmitInfo si = new VkSubmitInfo();
@@ -1141,13 +1141,13 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// <summary>
     /// Executes the check submitted fences logic for this backend.
     /// </summary>
-    private void checkSubmittedFences() {
+    private void CheckSubmittedFences() {
         lock (this._submittedFencesLock) {
             for (int i = 0; i < this._submittedFences.Count; i++) {
                 FenceSubmissionInfo fsi = this._submittedFences[i];
 
                 if (this.DeviceApi.vkGetFenceStatus(fsi.Fence) == VkResult.Success) {
-                    this.completeFenceSubmission(fsi);
+                    this.CompleteFenceSubmission(fsi);
                     this._submittedFences.RemoveAt(i);
                     i -= 1;
                 }
@@ -1162,13 +1162,13 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// Executes the complete fence submission logic for this backend.
     /// </summary>
     /// <param name="fsi">The fsi value used by this operation.</param>
-    private void completeFenceSubmission(FenceSubmissionInfo fsi) {
+    private void CompleteFenceSubmission(FenceSubmissionInfo fsi) {
         global::Vortice.Vulkan.VkFence fence = fsi.Fence;
         VkCommandBuffer completedCb = fsi.CommandBuffer;
         fsi.CommandList?.CommandBufferCompleted(completedCb);
         VkResult resetResult = this.DeviceApi.vkResetFences(fence);
         CheckResult(resetResult);
-        this.returnSubmissionFence(fence);
+        this.ReturnSubmissionFence(fence);
 
         lock (this._stagingResourcesLock) {
             if (this._submittedStagingTextures.Remove(completedCb, out VkTexture stagingTex)) {
@@ -1178,7 +1178,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
             if (this._submittedStagingBuffers.Remove(completedCb, out List<VkBuffer> stagingBuffers)) {
                 for (int i = 0; i < stagingBuffers.Count; i++) {
                     VkBuffer stagingBuffer = stagingBuffers[i];
-                    if (stagingBuffer.SizeInBytes <= _max_staging_buffer_size) {
+                    if (stagingBuffer.SizeInBytes <= _maxStagingBufferSize) {
                         this._availableStagingBuffers.Add(stagingBuffer);
                     }
                     else {
@@ -1238,7 +1238,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// Executes the return submission fence logic for this backend.
     /// </summary>
     /// <param name="fence">The synchronization fence used by this operation.</param>
-    private void returnSubmissionFence(global::Vortice.Vulkan.VkFence fence) {
+    private void ReturnSubmissionFence(global::Vortice.Vulkan.VkFence fence) {
         this._availableSubmissionFences.Enqueue(fence);
     }
 
@@ -1263,7 +1263,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// <param name="type">The type value used by this operation.</param>
     /// <param name="target">The target value used by this operation.</param>
     /// <param name="name">The name used by this operation.</param>
-    private void setDebugMarkerName(VkDebugReportObjectTypeEXT type, ulong target, string name) {
+    private void SetDebugMarkerName(VkDebugReportObjectTypeEXT type, ulong target, string name) {
         Debug.Assert(this._setObjectNameDelegate != null);
 
         VkDebugMarkerObjectNameInfoEXT nameInfo = new VkDebugMarkerObjectNameInfoEXT();
@@ -1288,7 +1288,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// </summary>
     /// <param name="debug">The debug value used by this operation.</param>
     /// <param name="options">The options used to configure this operation.</param>
-    private void createInstance(bool debug, VulkanDeviceOptions options) {
+    private void CreateInstance(bool debug, VulkanDeviceOptions options) {
         HashSet<string> availableInstanceLayers = new(EnumerateInstanceLayers());
         HashSet<string> availableInstanceExtensions = new(GetInstanceExtensions());
 
@@ -1297,8 +1297,8 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
             apiVersion = new global::Vortice.Vulkan.VkVersion(1, 0, 0),
             applicationVersion = new global::Vortice.Vulkan.VkVersion(1, 0, 0),
             engineVersion = new global::Vortice.Vulkan.VkVersion(1, 0, 0),
-            pApplicationName = _s_name,
-            pEngineName = _s_name
+            pApplicationName = _sName,
+            pEngineName = _sName
         };
 
         instanceCi.pApplicationInfo = &applicationInfo;
@@ -1316,7 +1316,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
 
         if (availableInstanceExtensions.Contains(CommonStrings.VkKhrPortabilityEnumeration)) {
             instanceExtensions.Add(CommonStrings.VkKhrPortabilityEnumeration);
-            instanceCi.flags |= _vk_instance_create_enumerate_portability_bit_khr;
+            instanceCi.flags |= _vkInstanceCreateEnumeratePortabilityBitKhr;
         }
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
@@ -1411,7 +1411,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
         this._instanceApi = VulkanDispatch.RegisterInstance(this._instance);
 
         if (this.HasSurfaceExtension(CommonStrings.VkExtMetalSurfaceExtensionName)) {
-            this.CreateMetalSurfaceExt = this.getInstanceProcAddr<VkCreateMetalSurfaceExtT>("vkCreateMetalSurfaceEXT");
+            this.CreateMetalSurfaceExt = this.GetInstanceProcAddr<VkCreateMetalSurfaceExtT>("vkCreateMetalSurfaceEXT");
         }
 
         if (debug && debugReportExtensionAvailable) {
@@ -1419,8 +1419,8 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
         }
 
         if (hasDeviceProperties2) {
-            this._getPhysicalDeviceProperties2 = this.getInstanceProcAddr<VkGetPhysicalDeviceProperties2T>("vkGetPhysicalDeviceProperties2")
-                ?? this.getInstanceProcAddr<VkGetPhysicalDeviceProperties2T>("vkGetPhysicalDeviceProperties2KHR");
+            this._getPhysicalDeviceProperties2 = this.GetInstanceProcAddr<VkGetPhysicalDeviceProperties2T>("vkGetPhysicalDeviceProperties2")
+                                             ?? this.GetInstanceProcAddr<VkGetPhysicalDeviceProperties2T>("vkGetPhysicalDeviceProperties2KHR");
         }
 
         foreach (FixedUtf8String tempStr in tempStrings) {
@@ -1440,7 +1440,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// <param name="pMessage">The p message value used by this operation.</param>
     /// <param name="pUserData">The p user data value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    private uint debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, ulong @object, UIntPtr location, int messageCode, byte* pLayerPrefix, byte* pMessage, void* pUserData) {
+    private uint DebugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, ulong @object, UIntPtr location, int messageCode, byte* pLayerPrefix, byte* pMessage, void* pUserData) {
         string message = Util.GetString(pMessage);
         VkDebugReportFlagsEXT debugReportFlags = flags;
 
@@ -1457,7 +1457,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// <summary>
     /// Creates the physical device instance used by this backend.
     /// </summary>
-    private void createPhysicalDevice() {
+    private void CreatePhysicalDevice() {
         uint deviceCount = 0;
         this._instanceApi.vkEnumeratePhysicalDevices(out deviceCount);
         if (deviceCount == 0) {
@@ -1472,12 +1472,12 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
         int selectedScore = int.MinValue;
 
         foreach (VkPhysicalDevice physicalDevice in physicalDevices) {
-            if (!this.hasGraphicsQueueFamily(physicalDevice)) {
+            if (!this.HasGraphicsQueueFamily(physicalDevice)) {
                 continue;
             }
 
             this._instanceApi.vkGetPhysicalDeviceProperties(physicalDevice, out VkPhysicalDeviceProperties properties);
-            int score = getPhysicalDeviceScore(properties);
+            int score = GetPhysicalDeviceScore(properties);
             if (score > selectedScore) {
                 selectedScore = score;
                 selectedPhysicalDevice = physicalDevice;
@@ -1497,7 +1497,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
         }
 
         this._vendorName = "id:" + this._physicalDeviceProperties.vendorID.ToString("x8");
-        this._apiVersion = getGraphicsApiVersion(this._physicalDeviceProperties.apiVersion);
+        this._apiVersion = GetGraphicsApiVersion(this._physicalDeviceProperties.apiVersion);
         this.DriverInfo = "version:" + this._physicalDeviceProperties.driverVersion.ToString("x8");
 
         this._instanceApi.vkGetPhysicalDeviceFeatures(this.PhysicalDevice, out this._physicalDeviceFeatures);
@@ -1510,7 +1510,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// </summary>
     /// <param name="physicalDevice">The physical device to inspect.</param>
     /// <returns><see langword="true" /> if a graphics queue exists; otherwise, <see langword="false" />.</returns>
-    private bool hasGraphicsQueueFamily(VkPhysicalDevice physicalDevice) {
+    private bool HasGraphicsQueueFamily(VkPhysicalDevice physicalDevice) {
         uint queueFamilyCount = 0;
         this._instanceApi.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, null);
         if (queueFamilyCount == 0) {
@@ -1536,7 +1536,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// </summary>
     /// <param name="properties">The physical device properties.</param>
     /// <returns>A higher score indicates a stronger default candidate.</returns>
-    private static int getPhysicalDeviceScore(in VkPhysicalDeviceProperties properties) {
+    private static int GetPhysicalDeviceScore(in VkPhysicalDeviceProperties properties) {
         int score = properties.deviceType switch {
             VkPhysicalDeviceType.DiscreteGpu => 5000,
             VkPhysicalDeviceType.IntegratedGpu => 4000,
@@ -1555,7 +1555,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// </summary>
     /// <param name="vkVersion">The packed Vulkan API version.</param>
     /// <returns>The converted API version.</returns>
-    private static GraphicsApiVersion getGraphicsApiVersion(uint vkVersion) {
+    private static GraphicsApiVersion GetGraphicsApiVersion(uint vkVersion) {
         if (vkVersion == 0) {
             return GraphicsApiVersion.Unknown;
         }
@@ -1572,8 +1572,8 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// <param name="surface">The surface value used by this operation.</param>
     /// <param name="preferStandardClipY">The prefer standard clip y value used by this operation.</param>
     /// <param name="options">The options used to configure this operation.</param>
-    private void createLogicalDevice(VkSurfaceKHR surface, bool preferStandardClipY, VulkanDeviceOptions options) {
-        this.getQueueFamilyIndices(surface);
+    private void CreateLogicalDevice(VkSurfaceKHR surface, bool preferStandardClipY, VulkanDeviceOptions options) {
+        this.GetQueueFamilyIndices(surface);
 
         HashSet<uint> familyIndices = new() { this.GraphicsQueueIndex, this.PresentQueueIndex };
         VkDeviceQueueCreateInfo* queueCreateInfos = stackalloc VkDeviceQueueCreateInfo[familyIndices.Count];
@@ -1682,17 +1682,17 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
         VulkanDispatch.RegisterQueue(this._graphicsQueue, this._deviceApi);
 
         if (this._debugMarkerEnabled) {
-            this._setObjectNameDelegate = Marshal.GetDelegateForFunctionPointer<VkDebugMarkerSetObjectNameExtT>(this.getInstanceProcAddr("vkDebugMarkerSetObjectNameEXT"));
-            this.MarkerBegin = Marshal.GetDelegateForFunctionPointer<VkCmdDebugMarkerBeginExtT>(this.getInstanceProcAddr("vkCmdDebugMarkerBeginEXT"));
-            this.MarkerEnd = Marshal.GetDelegateForFunctionPointer<VkCmdDebugMarkerEndExtT>(this.getInstanceProcAddr("vkCmdDebugMarkerEndEXT"));
-            this.MarkerInsert = Marshal.GetDelegateForFunctionPointer<VkCmdDebugMarkerInsertExtT>(this.getInstanceProcAddr("vkCmdDebugMarkerInsertEXT"));
+            this._setObjectNameDelegate = Marshal.GetDelegateForFunctionPointer<VkDebugMarkerSetObjectNameExtT>(this.GetInstanceProcAddr("vkDebugMarkerSetObjectNameEXT"));
+            this.MarkerBegin = Marshal.GetDelegateForFunctionPointer<VkCmdDebugMarkerBeginExtT>(this.GetInstanceProcAddr("vkCmdDebugMarkerBeginEXT"));
+            this.MarkerEnd = Marshal.GetDelegateForFunctionPointer<VkCmdDebugMarkerEndExtT>(this.GetInstanceProcAddr("vkCmdDebugMarkerEndEXT"));
+            this.MarkerInsert = Marshal.GetDelegateForFunctionPointer<VkCmdDebugMarkerInsertExtT>(this.GetInstanceProcAddr("vkCmdDebugMarkerInsertEXT"));
         }
 
         if (hasDedicatedAllocation && hasMemReqs2) {
-            this.GetBufferMemoryRequirements2 = this.getDeviceProcAddr<VkGetBufferMemoryRequirements2T>("vkGetBufferMemoryRequirements2")
-                ?? this.getDeviceProcAddr<VkGetBufferMemoryRequirements2T>("vkGetBufferMemoryRequirements2KHR");
-            this.GetImageMemoryRequirements2 = this.getDeviceProcAddr<VkGetImageMemoryRequirements2T>("vkGetImageMemoryRequirements2")
-                ?? this.getDeviceProcAddr<VkGetImageMemoryRequirements2T>("vkGetImageMemoryRequirements2KHR");
+        this.GetBufferMemoryRequirements2 = this.GetDeviceProcAddr<VkGetBufferMemoryRequirements2T>("vkGetBufferMemoryRequirements2")
+                                          ?? this.GetDeviceProcAddr<VkGetBufferMemoryRequirements2T>("vkGetBufferMemoryRequirements2KHR");
+        this.GetImageMemoryRequirements2 = this.GetDeviceProcAddr<VkGetImageMemoryRequirements2T>("vkGetImageMemoryRequirements2")
+                                         ?? this.GetDeviceProcAddr<VkGetImageMemoryRequirements2T>("vkGetImageMemoryRequirements2KHR");
         }
 
         if (this._getPhysicalDeviceProperties2 != null && hasDriverProperties) {
@@ -1716,7 +1716,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// </summary>
     /// <param name="name">The name used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    private IntPtr getInstanceProcAddr(string name) {
+    private IntPtr GetInstanceProcAddr(string name) {
         return (IntPtr)vkGetInstanceProcAddr(this._instance, name).Value;
     }
 
@@ -1724,8 +1724,8 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// Resolves a Vulkan instance-level function pointer and returns it as a typed delegate.
     /// </summary>
     /// <param name="name">The name used by this operation.</param>
-    private T getInstanceProcAddr<T>(string name) {
-        IntPtr funcPtr = this.getInstanceProcAddr(name);
+    private T GetInstanceProcAddr<T>(string name) {
+        IntPtr funcPtr = this.GetInstanceProcAddr(name);
         if (funcPtr != IntPtr.Zero) {
             return Marshal.GetDelegateForFunctionPointer<T>(funcPtr);
         }
@@ -1738,7 +1738,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// </summary>
     /// <param name="name">The name used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    private IntPtr getDeviceProcAddr(string name) {
+    private IntPtr GetDeviceProcAddr(string name) {
         return (IntPtr)this._instanceApi.vkGetDeviceProcAddr(this._device, name).Value;
     }
 
@@ -1746,8 +1746,8 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// Resolves a Vulkan device-level function pointer and returns it as a typed delegate.
     /// </summary>
     /// <param name="name">The name used by this operation.</param>
-    private T getDeviceProcAddr<T>(string name) {
-        IntPtr funcPtr = this.getDeviceProcAddr(name);
+    private T GetDeviceProcAddr<T>(string name) {
+        IntPtr funcPtr = this.GetDeviceProcAddr(name);
         if (funcPtr != IntPtr.Zero) {
             return Marshal.GetDelegateForFunctionPointer<T>(funcPtr);
         }
@@ -1759,7 +1759,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// Gets the queue family indices value.
     /// </summary>
     /// <param name="surface">The surface value used by this operation.</param>
-    private void getQueueFamilyIndices(VkSurfaceKHR surface) {
+    private void GetQueueFamilyIndices(VkSurfaceKHR surface) {
         uint queueFamilyCount = 0;
         this._instanceApi.vkGetPhysicalDeviceQueueFamilyProperties(this.PhysicalDevice, &queueFamilyCount, null);
         VkQueueFamilyProperties[] qfp = new VkQueueFamilyProperties[queueFamilyCount];
@@ -1818,14 +1818,14 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// <summary>
     /// Creates the descriptor pool instance used by this backend.
     /// </summary>
-    private void createDescriptorPool() {
+    private void CreateDescriptorPool() {
         this.DescriptorPoolManager = new VkDescriptorPoolManager(this);
     }
 
     /// <summary>
     /// Creates the graphics command pool instance used by this backend.
     /// </summary>
-    private void createGraphicsCommandPool() {
+    private void CreateGraphicsCommandPool() {
         VkCommandPoolCreateInfo commandPoolCi = new VkCommandPoolCreateInfo();
         commandPoolCi.flags = VkCommandPoolCreateFlags.ResetCommandBuffer;
         commandPoolCi.queueFamilyIndex = this.GraphicsQueueIndex;
@@ -1837,7 +1837,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// Gets the free command pool value.
     /// </summary>
     /// <returns>The value produced by this operation.</returns>
-    private SharedCommandPool getFreeCommandPool() {
+    private SharedCommandPool GetFreeCommandPool() {
         SharedCommandPool sharedPool = null;
 
         lock (this._graphicsCommandPoolLock) {
@@ -1854,7 +1854,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// </summary>
     private void EnsureImmediateUploadCommandBuffer() {
         if (this._immediateUploadCb.IsNull) {
-            this._immediateUploadPool = this.getFreeCommandPool();
+            this._immediateUploadPool = this.GetFreeCommandPool();
             this._immediateUploadCb = this._immediateUploadPool.BeginNewCommandBuffer();
         }
     }
@@ -1882,7 +1882,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
 
         VkResult endResult = VulkanDispatch.GetApi(uploadCb).vkEndCommandBuffer(uploadCb);
         CheckResult(endResult);
-        this.submitCommandBuffer(null, uploadCb, 0, null, 0, null, null);
+        this.SubmitCommandBuffer(null, uploadCb, 0, null, 0, null, null);
 
         lock (this._stagingResourcesLock) {
             this._submittedSharedCommandPools.Add(uploadCb, uploadPool);
@@ -1896,7 +1896,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// <param name="buffer">The buffer resource involved in this operation.</param>
     /// <param name="numBytes">The num bytes value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    private IntPtr mapBuffer(VkBuffer buffer, uint numBytes) {
+    private IntPtr MapBuffer(VkBuffer buffer, uint numBytes) {
         if (buffer.Memory.IsPersistentMapped) {
             return (IntPtr)buffer.Memory.BlockMappedPointer;
         }
@@ -1911,7 +1911,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// Unmaps the buffer resource from CPU access.
     /// </summary>
     /// <param name="buffer">The buffer resource involved in this operation.</param>
-    private void unmapBuffer(VkBuffer buffer) {
+    private void UnmapBuffer(VkBuffer buffer) {
         if (!buffer.Memory.IsPersistentMapped) {
             this.DeviceApi.vkUnmapMemory(buffer.Memory.DeviceMemory);
         }
@@ -1925,7 +1925,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// <param name="depth">The depth value.</param>
     /// <param name="format">The format used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    private VkTexture getFreeStagingTexture(uint width, uint height, uint depth, PixelFormat format) {
+    private VkTexture GetFreeStagingTexture(uint width, uint height, uint depth, PixelFormat format) {
         uint totalSize = FormatHelpers.GetRegionSize(width, height, depth, format);
 
         lock (this._stagingResourcesLock) {
@@ -1953,7 +1953,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// </summary>
     /// <param name="size">The size, in bytes, used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    private VkBuffer getFreeStagingBuffer(uint size) {
+    private VkBuffer GetFreeStagingBuffer(uint size) {
         lock (this._stagingResourcesLock) {
             for (int i = 0; i < this._availableStagingBuffers.Count; i++) {
                 VkBuffer buffer = this._availableStagingBuffers[i];
@@ -1965,7 +1965,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
             }
         }
 
-        uint newBufferSize = Math.Max(_min_staging_buffer_size, size);
+        uint newBufferSize = Math.Max(_minStagingBufferSize, size);
         VkBuffer newBuffer = (VkBuffer)this.ResourceFactory.CreateBuffer(new BufferDescription(newBufferSize, BufferUsage.Staging));
         return newBuffer;
     }
@@ -1984,11 +1984,11 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
             && vkCommandList.UsesSwapchainFramebuffer) {
             VkSemaphore waitSemaphore = this._mainSwapchain.ImageAvailableSemaphore;
             if (this._mainSwapchain.PresentQueueIndex == this.GraphicsQueueIndex) {
-                this.submitCommandList(cl, 1, &waitSemaphore, 0, null, fence);
+                this.SubmitCommandList(cl, 1, &waitSemaphore, 0, null, fence);
             }
             else {
                 VkSemaphore signalSemaphore = this._mainSwapchain.RenderFinishedSemaphore;
-                this.submitCommandList(cl, 1, &waitSemaphore, 1, &signalSemaphore, fence);
+                this.SubmitCommandList(cl, 1, &waitSemaphore, 1, &signalSemaphore, fence);
             }
 
             if (PerfLogEnabled) {
@@ -1998,7 +1998,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
             return;
         }
 
-        this.submitCommandList(cl, 0, null, 0, null, fence);
+        this.SubmitCommandList(cl, 0, null, 0, null, fence);
         if (PerfLogEnabled) {
             this._perfSubmitMs += TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
         }
@@ -2063,7 +2063,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
             VulkanDispatch.GetApi(this._graphicsQueue).vkQueueWaitIdle(this._graphicsQueue);
         }
 
-        this.checkSubmittedFences();
+        this.CheckSubmittedFences();
     }
 
     /// <summary>
@@ -2116,7 +2116,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
             destPtr = (byte*)mappedPtr + bufferOffsetInBytes;
         }
         else {
-            VkBuffer copySrcVkBuffer = this.getFreeStagingBuffer(sizeInBytes);
+            VkBuffer copySrcVkBuffer = this.GetFreeStagingBuffer(sizeInBytes);
             mappedPtr = (IntPtr)copySrcVkBuffer.Memory.BlockMappedPointer;
             destPtr = (byte*)mappedPtr;
             Unsafe.CopyBlock(destPtr, source.ToPointer(), sizeInBytes);
@@ -2166,9 +2166,9 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
             Util.CopyTextureRegion(source.ToPointer(), 0, 0, 0, srcRowPitch, srcDepthPitch, imageBasePtr, x, y, z, (uint)layout.rowPitch, (uint)layout.depthPitch, width, height, depth, texture.Format);
         }
         else {
-            VkTexture stagingTex = this.getFreeStagingTexture(width, height, depth, texture.Format);
+            VkTexture stagingTex = this.GetFreeStagingTexture(width, height, depth, texture.Format);
             this.UpdateTexture(stagingTex, source, sizeInBytes, 0, 0, 0, width, height, depth, 0, 0);
-            SharedCommandPool pool = this.getFreeCommandPool();
+            SharedCommandPool pool = this.GetFreeCommandPool();
             VkCommandBuffer cb = pool.BeginNewCommandBuffer();
             VkCommandList.CopyTextureCore_VkCommandBuffer(cb, stagingTex, 0, 0, 0, 0, 0, texture, x, y, z, mipLevel, arrayLayer, width, height, depth, 1);
             lock (this._stagingResourcesLock) {
@@ -2250,7 +2250,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
         public void EndAndSubmit(VkCommandBuffer cb) {
             VkResult result = VulkanDispatch.GetApi(cb).vkEndCommandBuffer(cb);
             CheckResult(result);
-            this._gd.submitCommandBuffer(null, cb, 0, null, 0, null, null);
+            this._gd.SubmitCommandBuffer(null, cb, 0, null, 0, null, null);
             lock (this._gd._stagingResourcesLock) {
                 this._gd._submittedSharedCommandPools.Add(cb, this);
             }

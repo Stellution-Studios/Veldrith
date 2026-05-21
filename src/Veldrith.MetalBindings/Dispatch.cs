@@ -13,7 +13,7 @@ public static unsafe class Dispatch {
     /// </summary>
     private const string LibdispatchLocation = @"/usr/lib/system/libdispatch.dylib";
 
-    [DllImport(LibdispatchLocation)]
+    [DllImport(LibdispatchLocation, EntryPoint = "dispatch_get_global_queue")]
 
     /// <summary>
     /// Executes the dispatch get global queue logic for this backend.
@@ -21,9 +21,9 @@ public static unsafe class Dispatch {
     /// <param name="identifier">The identifier value used by this operation.</param>
     /// <param name="flags">The flags value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    public static extern DispatchQueue dispatch_get_global_queue(QualityOfServiceLevel identifier, ulong flags);
+    public static extern DispatchQueue DispatchGetGlobalQueue(QualityOfServiceLevel identifier, ulong flags);
 
-    [DllImport(LibdispatchLocation)]
+    [DllImport(LibdispatchLocation, EntryPoint = "dispatch_data_create")]
 
     /// <summary>
     /// Executes the dispatch data create logic for this backend.
@@ -33,15 +33,15 @@ public static unsafe class Dispatch {
     /// <param name="queue">The queue value used by this operation.</param>
     /// <param name="destructorBlock">The destructor block value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    public static extern DispatchData dispatch_data_create(void* buffer, UIntPtr size, DispatchQueue queue, IntPtr destructorBlock);
+    public static extern DispatchData DispatchDataCreate(void* buffer, UIntPtr size, DispatchQueue queue, IntPtr destructorBlock);
 
-    [DllImport(LibdispatchLocation)]
+    [DllImport(LibdispatchLocation, EntryPoint = "dispatch_release")]
 
     /// <summary>
     /// Executes the dispatch release logic for this backend.
     /// </summary>
     /// <param name="nativePtr">The native ptr value used by this operation.</param>
-    public static extern void dispatch_release(IntPtr nativePtr);
+    public static extern void DispatchRelease(IntPtr nativePtr);
 }
 
 /// <summary>

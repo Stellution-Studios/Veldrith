@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
@@ -29,14 +29,14 @@ public struct MTLCommandBuffer : IEquatable<MTLCommandBuffer> {
     /// </summary>
     /// <param name="drawable">The drawable value used by this operation.</param>
     public void PresentDrawable(IntPtr drawable) {
-        objc_msgSend(this.NativePtr, sel_presentDrawable, drawable);
+        ObjcMsgSend(this.NativePtr, sel_presentDrawable, drawable);
     }
 
     /// <summary>
     /// Executes the commit logic for this backend.
     /// </summary>
     public void Commit() {
-        objc_msgSend(this.NativePtr, sel_commit);
+        ObjcMsgSend(this.NativePtr, sel_commit);
     }
 
     /// <summary>
@@ -44,7 +44,7 @@ public struct MTLCommandBuffer : IEquatable<MTLCommandBuffer> {
     /// </summary>
     /// <returns>The value produced by this operation.</returns>
     public MTLBlitCommandEncoder BlitCommandEncoder() {
-        return objc_msgSend<MTLBlitCommandEncoder>(this.NativePtr, sel_blitCommandEncoder);
+        return ObjcMsgSend<MTLBlitCommandEncoder>(this.NativePtr, sel_blitCommandEncoder);
     }
 
     /// <summary>
@@ -52,14 +52,14 @@ public struct MTLCommandBuffer : IEquatable<MTLCommandBuffer> {
     /// </summary>
     /// <returns>The value produced by this operation.</returns>
     public MTLComputeCommandEncoder ComputeCommandEncoder() {
-        return objc_msgSend<MTLComputeCommandEncoder>(this.NativePtr, sel_computeCommandEncoder);
+        return ObjcMsgSend<MTLComputeCommandEncoder>(this.NativePtr, sel_computeCommandEncoder);
     }
 
     /// <summary>
     /// Executes the wait until completed logic for this backend.
     /// </summary>
     public void WaitUntilCompleted() {
-        objc_msgSend(this.NativePtr, sel_waitUntilCompleted);
+        ObjcMsgSend(this.NativePtr, sel_waitUntilCompleted);
     }
 
     /// <summary>
@@ -67,7 +67,7 @@ public struct MTLCommandBuffer : IEquatable<MTLCommandBuffer> {
     /// </summary>
     /// <param name="block">The block value used by this operation.</param>
     public void AddCompletedHandler(MTLCommandBufferHandler block) {
-        objc_msgSend(this.NativePtr, sel_addCompletedHandler, block);
+        ObjcMsgSend(this.NativePtr, sel_addCompletedHandler, block);
     }
 
     /// <summary>
@@ -75,13 +75,13 @@ public struct MTLCommandBuffer : IEquatable<MTLCommandBuffer> {
     /// </summary>
     /// <param name="block">The block value used by this operation.</param>
     public void AddCompletedHandler(IntPtr block) {
-        objc_msgSend(this.NativePtr, sel_addCompletedHandler, block);
+        ObjcMsgSend(this.NativePtr, sel_addCompletedHandler, block);
     }
 
     /// <summary>
     /// Executes the uint objc msg send logic for this backend.
     /// </summary>
-    public MTLCommandBufferStatus Status => (MTLCommandBufferStatus)uint_objc_msgSend(this.NativePtr, sel_status);
+    public MTLCommandBufferStatus Status => (MTLCommandBufferStatus)UIntObjcMsgSend(this.NativePtr, sel_status);
 
     /// <summary>
     /// Stores the sel render command encoder with descriptor state used by this instance.
@@ -149,3 +149,4 @@ public struct MTLCommandBuffer : IEquatable<MTLCommandBuffer> {
         return this.NativePtr.GetHashCode();
     }
 }
+

@@ -50,7 +50,7 @@ public unsafe struct NSString {
     /// </summary>
     /// <returns>The value produced by this operation.</returns>
     public string GetValue() {
-        byte* utf8Ptr = bytePtr_objc_msgSend(this.NativePtr, _selUtf8String);
+        byte* utf8Ptr = BytePtrObjcMsgSend(this.NativePtr, _selUtf8String);
         return MTLUtil.GetUtf8String(utf8Ptr);
     }
 

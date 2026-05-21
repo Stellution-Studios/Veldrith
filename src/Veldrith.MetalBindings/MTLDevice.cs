@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.InteropServices;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
@@ -41,7 +41,7 @@ public unsafe struct MTLDevice {
     /// Executes the string objc msg send logic for this backend.
     /// </summary>
 
-    public string name => string_objc_msgSend(this.NativePtr, _selName);
+    public string name => StringObjcMsgSend(this.NativePtr, _selName);
 
     /// <summary>
     /// Gets or sets maxThreadsPerThreadgroup.
@@ -49,7 +49,7 @@ public unsafe struct MTLDevice {
     public MTLSize MaxThreadsPerThreadgroup {
         get {
             if (UseStret<MTLSize>()) {
-                return objc_msgSend_stret<MTLSize>(this, _selMaxThreadsPerThreadgroup);
+                return ObjcMsgSendStret<MTLSize>(this, _selMaxThreadsPerThreadgroup);
             }
 
             return MTLSize_objc_msgSend(this, _selMaxThreadsPerThreadgroup);
@@ -127,7 +127,7 @@ public unsafe struct MTLDevice {
     /// </summary>
     /// <returns>The value produced by this operation.</returns>
     public MTLCommandQueue NewCommandQueue() {
-        return objc_msgSend<MTLCommandQueue>(this.NativePtr, _selNewCommandQueue);
+        return ObjcMsgSend<MTLCommandQueue>(this.NativePtr, _selNewCommandQueue);
     }
 
     /// <summary>
@@ -159,7 +159,7 @@ public unsafe struct MTLDevice {
     /// <param name="descriptor">The descriptor value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     public MTLTexture NewTextureWithDescriptor(MTLTextureDescriptor descriptor) {
-        return objc_msgSend<MTLTexture>(this.NativePtr, _selNewTextureWithDescriptor, descriptor.NativePtr);
+        return ObjcMsgSend<MTLTexture>(this.NativePtr, _selNewTextureWithDescriptor, descriptor.NativePtr);
     }
 
     /// <summary>
@@ -168,7 +168,7 @@ public unsafe struct MTLDevice {
     /// <param name="descriptor">The descriptor value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     public MTLSamplerState NewSamplerStateWithDescriptor(MTLSamplerDescriptor descriptor) {
-        return objc_msgSend<MTLSamplerState>(this.NativePtr, _selNewSamplerStateWithDescriptor, descriptor.NativePtr);
+        return ObjcMsgSend<MTLSamplerState>(this.NativePtr, _selNewSamplerStateWithDescriptor, descriptor.NativePtr);
     }
 
     /// <summary>
@@ -177,7 +177,7 @@ public unsafe struct MTLDevice {
     /// <param name="descriptor">The descriptor value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     public MTLDepthStencilState NewDepthStencilStateWithDescriptor(MTLDepthStencilDescriptor descriptor) {
-        return objc_msgSend<MTLDepthStencilState>(this.NativePtr, _selNewDepthStencilStateWithDescriptor, descriptor.NativePtr);
+        return ObjcMsgSend<MTLDepthStencilState>(this.NativePtr, _selNewDepthStencilStateWithDescriptor, descriptor.NativePtr);
     }
 
     /// <summary>
@@ -186,7 +186,7 @@ public unsafe struct MTLDevice {
     /// <param name="sampleCount">The sample count value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     public Bool8 SupportsTextureSampleCount(UIntPtr sampleCount) {
-        return bool8_objc_msgSend(this.NativePtr, _selSupportsTextureSampleCount, sampleCount);
+        return Bool8ObjcMsgSend(this.NativePtr, _selSupportsTextureSampleCount, sampleCount);
     }
 
     /// <summary>
@@ -195,14 +195,14 @@ public unsafe struct MTLDevice {
     /// <param name="featureSet">The feature set value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     public Bool8 SupportsFeatureSet(MTLFeatureSet featureSet) {
-        return bool8_objc_msgSend(this.NativePtr, _selSupportsFeatureSet, (uint)featureSet);
+        return Bool8ObjcMsgSend(this.NativePtr, _selSupportsFeatureSet, (uint)featureSet);
     }
 
     /// <summary>
     /// Gets a value indicating whether the device supports <c>Depth24Stencil8</c> pixel format.
     /// </summary>
 
-    public Bool8 IsDepth24Stencil8PixelFormatSupported => bool8_objc_msgSend(this.NativePtr, _selIsDepth24Stencil8PixelFormatSupported);
+    public Bool8 IsDepth24Stencil8PixelFormatSupported => Bool8ObjcMsgSend(this.NativePtr, _selIsDepth24Stencil8PixelFormatSupported);
 
     /// <summary>
     /// Executes the mtlcreate system default device logic for this backend.

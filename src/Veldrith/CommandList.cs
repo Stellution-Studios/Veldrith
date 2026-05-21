@@ -461,7 +461,7 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     /// <param name="vertexStart">The vertex start value used by this operation.</param>
     /// <param name="instanceStart">The instance start value used by this operation.</param>
     public void Draw(uint vertexCount, uint instanceCount, uint vertexStart, uint instanceStart) {
-        this.preDrawValidation();
+        this.PreDrawValidation();
         this.DrawCore(vertexCount, instanceCount, vertexStart, instanceStart);
     }
 
@@ -482,8 +482,8 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     /// <param name="vertexOffset">The vertex offset value used by this operation.</param>
     /// <param name="instanceStart">The instance start value used by this operation.</param>
     public void DrawIndexed(uint indexCount, uint instanceCount, uint indexStart, int vertexOffset, uint instanceStart) {
-        this.validateIndexBuffer(indexCount);
-        this.preDrawValidation();
+        this.ValidateIndexBuffer(indexCount);
+        this.PreDrawValidation();
 
 #if VALIDATE_USAGE
         if (!this.features.DrawBaseVertex && vertexOffset != 0) {
@@ -506,11 +506,11 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     /// <param name="drawCount">The draw count value used by this operation.</param>
     /// <param name="stride">The stride value used by this operation.</param>
     public unsafe void DrawIndirect(DeviceBuffer indirectBuffer, uint offset, uint drawCount, uint stride) {
-        this.validateDrawIndirectSupport();
-        validateIndirectBuffer(indirectBuffer);
-        validateIndirectOffset(offset);
-        validateIndirectStride(stride, sizeof(IndirectDrawArguments));
-        this.preDrawValidation();
+        this.ValidateDrawIndirectSupport();
+        ValidateIndirectBuffer(indirectBuffer);
+        ValidateIndirectOffset(offset);
+        ValidateIndirectStride(stride, sizeof(IndirectDrawArguments));
+        this.PreDrawValidation();
 
         this.DrawIndirectCore(indirectBuffer, offset, drawCount, stride);
     }
@@ -523,11 +523,11 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     /// <param name="drawCount">The draw count value used by this operation.</param>
     /// <param name="stride">The stride value used by this operation.</param>
     public unsafe void DrawIndexedIndirect(DeviceBuffer indirectBuffer, uint offset, uint drawCount, uint stride) {
-        this.validateDrawIndirectSupport();
-        validateIndirectBuffer(indirectBuffer);
-        validateIndirectOffset(offset);
-        validateIndirectStride(stride, sizeof(IndirectDrawIndexedArguments));
-        this.preDrawValidation();
+        this.ValidateDrawIndirectSupport();
+        ValidateIndirectBuffer(indirectBuffer);
+        ValidateIndirectOffset(offset);
+        ValidateIndirectStride(stride, sizeof(IndirectDrawIndexedArguments));
+        this.PreDrawValidation();
 
         this.DrawIndexedIndirectCore(indirectBuffer, offset, drawCount, stride);
     }
@@ -546,8 +546,8 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     /// <param name="indirectBuffer">The indirect buffer value used by this operation.</param>
     /// <param name="offset">The byte offset used by this operation.</param>
     public void DispatchIndirect(DeviceBuffer indirectBuffer, uint offset) {
-        validateIndirectBuffer(indirectBuffer);
-        validateIndirectOffset(offset);
+        ValidateIndirectBuffer(indirectBuffer);
+        ValidateIndirectOffset(offset);
         this.DispatchIndirectCore(indirectBuffer, offset);
     }
 
@@ -953,7 +953,7 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     /// Executes the validate indirect offset logic for this backend.
     /// </summary>
     /// <param name="offset">The byte offset used by this operation.</param>
-    private static void validateIndirectOffset(uint offset) {
+    private static void ValidateIndirectOffset(uint offset) {
         if (offset % 4 != 0) {
             throw new VeldridException($"{nameof(offset)} must be a multiple of 4.");
         }
@@ -965,7 +965,7 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     /// Executes the validate indirect buffer logic for this backend.
     /// </summary>
     /// <param name="indirectBuffer">The indirect buffer value used by this operation.</param>
-    private static void validateIndirectBuffer(DeviceBuffer indirectBuffer) {
+    private static void ValidateIndirectBuffer(DeviceBuffer indirectBuffer) {
         if ((indirectBuffer.Usage & BufferUsage.IndirectBuffer) != BufferUsage.IndirectBuffer) {
             throw new VeldridException($"{nameof(indirectBuffer)} parameter must have been created with BufferUsage.IndirectBuffer. Instead, it was {indirectBuffer.Usage}.");
         }
@@ -978,7 +978,7 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     /// </summary>
     /// <param name="stride">The stride value used by this operation.</param>
     /// <param name="argumentSize">The argument size value used by this operation.</param>
-    private static void validateIndirectStride(uint stride, int argumentSize) {
+    private static void ValidateIndirectStride(uint stride, int argumentSize) {
         if (stride < argumentSize || stride % 4 != 0) {
             throw new VeldridException($"{nameof(stride)} parameter must be a multiple of 4, and must be larger than the size of the corresponding argument structure.");
         }
@@ -989,7 +989,7 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     /// <summary>
     /// Executes the validate draw indirect support logic for this backend.
     /// </summary>
-    private void validateDrawIndirectSupport() {
+    private void ValidateDrawIndirectSupport() {
         if (!this.features.DrawIndirect) {
             throw new VeldridException("Indirect drawing is not supported by this device.");
         }
@@ -1001,7 +1001,7 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     /// Executes the validate index buffer logic for this backend.
     /// </summary>
     /// <param name="indexCount">The index count value used by this operation.</param>
-    private void validateIndexBuffer(uint indexCount) {
+    private void ValidateIndexBuffer(uint indexCount) {
 #if VALIDATE_USAGE
         if (this.indexBuffer == null) {
             throw new VeldridException($"An index buffer must be bound before {nameof(CommandList)}.{nameof(DrawIndexed)} can be called.");
@@ -1021,7 +1021,7 @@ public abstract class CommandList : IDeviceResource, IDisposable {
     /// <summary>
     /// Executes the pre draw validation logic for this backend.
     /// </summary>
-    private void preDrawValidation() {
+    private void PreDrawValidation() {
 #if VALIDATE_USAGE
 
         if (this.GraphicsPipeline == null) {

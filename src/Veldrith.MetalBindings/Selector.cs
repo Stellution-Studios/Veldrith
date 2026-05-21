@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Text;
 
 namespace Veldrith.MetalBindings;
@@ -32,7 +32,7 @@ public unsafe struct Selector {
             Encoding.UTF8.GetBytes(namePtr, name.Length, utf8BytesPtr, byteCount);
         }
 
-        this.NativePtr = ObjectiveCRuntime.sel_registerName(utf8BytesPtr);
+        this.NativePtr = ObjectiveCRuntime.SelRegisterName(utf8BytesPtr);
     }
 
     /// <summary>
@@ -40,7 +40,7 @@ public unsafe struct Selector {
     /// </summary>
     public string Name {
         get {
-            byte* name = ObjectiveCRuntime.sel_getName(this.NativePtr);
+        byte* name = ObjectiveCRuntime.SelGetName(this.NativePtr);
             return MTLUtil.GetUtf8String(name);
         }
     }

@@ -459,7 +459,7 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
                         }
 
 #if DEBUG
-                        checkAllocatedBlock(block);
+                        this.CheckAllocatedBlock(block);
 #endif
                         return true;
                     }
@@ -480,7 +480,7 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
                     this._freeBlocks.Insert(i, block);
                     this.MergeContiguousBlocks();
 #if DEBUG
-                    removeAllocatedBlock(block);
+                    this.RemoveAllocatedBlock(block);
 #endif
                     return;
                 }
@@ -488,7 +488,7 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
 
             this._freeBlocks.Add(block);
 #if DEBUG
-            removeAllocatedBlock(block);
+            this.RemoveAllocatedBlock(block);
 #endif
         }
 
@@ -526,8 +526,8 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
         /// Executes the check allocated block logic for this backend.
         /// </summary>
         /// <param name="block">The block value used by this operation.</param>
-        private void checkAllocatedBlock(VkMemoryBlock block) {
-            foreach (var oldBlock in this._allocatedBlocks) Debug.Assert(!blocksOverlap(block, oldBlock), "Allocated blocks have overlapped.");
+        private void CheckAllocatedBlock(VkMemoryBlock block) {
+            foreach (var oldBlock in this._allocatedBlocks) Debug.Assert(!BlocksOverlap(block, oldBlock), "Allocated blocks have overlapped.");
 
             this._allocatedBlocks.Add(block);
         }
@@ -538,7 +538,7 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
         /// <param name="first">The first value used by this operation.</param>
         /// <param name="second">The second value used by this operation.</param>
         /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
-        private bool blocksOverlap(VkMemoryBlock first, VkMemoryBlock second) {
+        private bool BlocksOverlap(VkMemoryBlock first, VkMemoryBlock second) {
             ulong firstStart = first.Offset;
             ulong firstEnd = first.Offset + first.Size;
             ulong secondStart = second.Offset;
@@ -554,7 +554,7 @@ internal unsafe class VkDeviceMemoryManager : IDisposable {
         /// Executes the remove allocated block logic for this backend.
         /// </summary>
         /// <param name="block">The block value used by this operation.</param>
-        private void removeAllocatedBlock(VkMemoryBlock block) {
+        private void RemoveAllocatedBlock(VkMemoryBlock block) {
             Debug.Assert(this._allocatedBlocks.Remove(block), "Unable to remove a supposedly allocated block.");
         }
 #endif

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrith.MetalBindings;
@@ -17,11 +17,11 @@ public struct MTLComputePipelineDescriptor {
     /// Gets or sets computeFunction.
     /// </summary>
     public MTLFunction ComputeFunction {
-        get => objc_msgSend<MTLFunction>(this.NativePtr, _selComputeFunction);
-        set => objc_msgSend(this.NativePtr, _selSetComputeFunction, value.NativePtr);
+        get => ObjcMsgSend<MTLFunction>(this.NativePtr, _selComputeFunction);
+        set => ObjcMsgSend(this.NativePtr, _selSetComputeFunction, value.NativePtr);
     }
 
-    public MTLPipelineBufferDescriptorArray Buffers => objc_msgSend<MTLPipelineBufferDescriptorArray>(this.NativePtr, _selBuffers);
+    public MTLPipelineBufferDescriptorArray Buffers => ObjcMsgSend<MTLPipelineBufferDescriptorArray>(this.NativePtr, _selBuffers);
 
     /// <summary>
     /// Stores the sel compute function state used by this instance.

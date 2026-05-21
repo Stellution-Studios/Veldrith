@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrith.MetalBindings;
@@ -17,48 +17,48 @@ public struct MTLStencilDescriptor {
     /// Gets or sets stencilFailureOperation.
     /// </summary>
     public MTLStencilOperation StencilFailureOperation {
-        get => (MTLStencilOperation)uint_objc_msgSend(this.NativePtr, _selStencilFailureOperation);
-        set => objc_msgSend(this.NativePtr, _selSetStencilFailureOperation, (uint)value);
+        get => (MTLStencilOperation)UIntObjcMsgSend(this.NativePtr, _selStencilFailureOperation);
+        set => ObjcMsgSend(this.NativePtr, _selSetStencilFailureOperation, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets depthFailureOperation.
     /// </summary>
     public MTLStencilOperation DepthFailureOperation {
-        get => (MTLStencilOperation)uint_objc_msgSend(this.NativePtr, _selDepthFailureOperation);
-        set => objc_msgSend(this.NativePtr, _selSetDepthFailureOperation, (uint)value);
+        get => (MTLStencilOperation)UIntObjcMsgSend(this.NativePtr, _selDepthFailureOperation);
+        set => ObjcMsgSend(this.NativePtr, _selSetDepthFailureOperation, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets depthStencilPassOperation.
     /// </summary>
     public MTLStencilOperation DepthStencilPassOperation {
-        get => (MTLStencilOperation)uint_objc_msgSend(this.NativePtr, _selDepthStencilPassOperation);
-        set => objc_msgSend(this.NativePtr, _selSetDepthStencilPassOperation, (uint)value);
+        get => (MTLStencilOperation)UIntObjcMsgSend(this.NativePtr, _selDepthStencilPassOperation);
+        set => ObjcMsgSend(this.NativePtr, _selSetDepthStencilPassOperation, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets stencilCompareFunction.
     /// </summary>
     public MTLCompareFunction StencilCompareFunction {
-        get => (MTLCompareFunction)uint_objc_msgSend(this.NativePtr, _selStencilCompareFunction);
-        set => objc_msgSend(this.NativePtr, _selSetStencilCompareFunction, (uint)value);
+        get => (MTLCompareFunction)UIntObjcMsgSend(this.NativePtr, _selStencilCompareFunction);
+        set => ObjcMsgSend(this.NativePtr, _selSetStencilCompareFunction, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets readMask.
     /// </summary>
     public uint ReadMask {
-        get => uint_objc_msgSend(this.NativePtr, _selReadMask);
-        set => objc_msgSend(this.NativePtr, _selSetReadMask, value);
+        get => UIntObjcMsgSend(this.NativePtr, _selReadMask);
+        set => ObjcMsgSend(this.NativePtr, _selSetReadMask, value);
     }
 
     /// <summary>
     /// Gets or sets writeMask.
     /// </summary>
     public uint WriteMask {
-        get => uint_objc_msgSend(this.NativePtr, _selWriteMask);
-        set => objc_msgSend(this.NativePtr, _selSetWriteMask, value);
+        get => UIntObjcMsgSend(this.NativePtr, _selWriteMask);
+        set => ObjcMsgSend(this.NativePtr, _selSetWriteMask, value);
     }
 
     /// <summary>

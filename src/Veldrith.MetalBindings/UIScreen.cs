@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrith.MetalBindings;
@@ -31,7 +31,7 @@ public struct UIScreen {
     /// Gets the primary screen object from UIKit.
     /// </summary>
 
-    public static UIScreen MainScreen => objc_msgSend<UIScreen>(new ObjCClass(nameof(UIScreen)), _selMainScreen);
+    public static UIScreen MainScreen => ObjcMsgSend<UIScreen>(new ObjCClass(nameof(UIScreen)), _selMainScreen);
 
     /// <summary>
     /// Stores the sel native scale state used by this instance.

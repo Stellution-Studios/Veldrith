@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
 
 namespace Veldrith.MetalBindings;
@@ -45,7 +45,7 @@ public unsafe struct MTLBuffer {
     /// </summary>
     /// <param name="range">The range value used by this operation.</param>
     public void DidModifyRange(NSRange range) {
-        ObjectiveCRuntime.objc_msgSend(this.NativePtr, sel_didModifyRange, range);
+        ObjectiveCRuntime.ObjcMsgSend(this.NativePtr, sel_didModifyRange, range);
     }
 
     /// <summary>
@@ -54,14 +54,14 @@ public unsafe struct MTLBuffer {
     /// <param name="marker">The marker value used by this operation.</param>
     /// <param name="range">The range value used by this operation.</param>
     public void AddDebugMarker(NSString marker, NSRange range) {
-        ObjectiveCRuntime.objc_msgSend(this.NativePtr, sel_addDebugMarker, marker.NativePtr, range);
+        ObjectiveCRuntime.ObjcMsgSend(this.NativePtr, sel_addDebugMarker, marker.NativePtr, range);
     }
 
     /// <summary>
     /// Executes the remove all debug markers logic for this backend.
     /// </summary>
     public void RemoveAllDebugMarkers() {
-        ObjectiveCRuntime.objc_msgSend(this.NativePtr, sel_removeAllDebugMarkers);
+        ObjectiveCRuntime.ObjcMsgSend(this.NativePtr, sel_removeAllDebugMarkers);
     }
 
     /// <summary>

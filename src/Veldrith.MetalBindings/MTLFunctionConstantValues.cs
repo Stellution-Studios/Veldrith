@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 namespace Veldrith.MetalBindings;
 
@@ -27,7 +27,7 @@ public struct MTLFunctionConstantValues {
     /// <param name="type">The type value used by this operation.</param>
     /// <param name="index">The zero-based index of the target item.</param>
     public unsafe void SetConstantValueTypeAtIndex(void* value, MTLDataType type, UIntPtr index) {
-        ObjectiveCRuntime.objc_msgSend(this.NativePtr, _selSetConstantValueTypeAtIndex, value, (uint)type, index);
+        ObjectiveCRuntime.ObjcMsgSend(this.NativePtr, _selSetConstantValueTypeAtIndex, value, (uint)type, index);
     }
 
     /// <summary>

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrith.MetalBindings;
@@ -25,7 +25,7 @@ public struct MTLFunction {
     /// Gets or sets functionConstantsDictionary.
     /// </summary>
 
-    public NSDictionary FunctionConstantsDictionary => objc_msgSend<NSDictionary>(this.NativePtr, _selFunctionConstantsDictionary);
+    public NSDictionary FunctionConstantsDictionary => ObjcMsgSend<NSDictionary>(this.NativePtr, _selFunctionConstantsDictionary);
 
     /// <summary>
     /// Stores the sel function constants dictionary state used by this instance.

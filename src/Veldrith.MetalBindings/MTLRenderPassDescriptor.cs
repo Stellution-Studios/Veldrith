@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
@@ -28,11 +28,11 @@ public struct MTLRenderPassDescriptor {
         return s_class.AllocInit<MTLRenderPassDescriptor>();
     }
 
-    public MTLRenderPassColorAttachmentDescriptorArray ColorAttachments => objc_msgSend<MTLRenderPassColorAttachmentDescriptorArray>(this.NativePtr, sel_colorAttachments);
+    public MTLRenderPassColorAttachmentDescriptorArray ColorAttachments => ObjcMsgSend<MTLRenderPassColorAttachmentDescriptorArray>(this.NativePtr, sel_colorAttachments);
 
-    public MTLRenderPassDepthAttachmentDescriptor DepthAttachment => objc_msgSend<MTLRenderPassDepthAttachmentDescriptor>(this.NativePtr, sel_depthAttachment);
+    public MTLRenderPassDepthAttachmentDescriptor DepthAttachment => ObjcMsgSend<MTLRenderPassDepthAttachmentDescriptor>(this.NativePtr, sel_depthAttachment);
 
-    public MTLRenderPassStencilAttachmentDescriptor StencilAttachment => objc_msgSend<MTLRenderPassStencilAttachmentDescriptor>(this.NativePtr, sel_stencilAttachment);
+    public MTLRenderPassStencilAttachmentDescriptor StencilAttachment => ObjcMsgSend<MTLRenderPassStencilAttachmentDescriptor>(this.NativePtr, sel_stencilAttachment);
 
     /// <summary>
     /// Stores the sel color attachments state used by this instance.

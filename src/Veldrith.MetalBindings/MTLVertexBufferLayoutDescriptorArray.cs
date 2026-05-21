@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrith.MetalBindings;
@@ -21,6 +21,6 @@ public struct MTLVertexBufferLayoutDescriptorArray {
             IntPtr value = IntPtr_objc_msgSend(this.NativePtr, Selectors.ObjectAtIndexedSubscript, index);
             return new MTLVertexBufferLayoutDescriptor(value);
         }
-        set => objc_msgSend(this.NativePtr, Selectors.SetObjectAtIndexedSubscript, value.NativePtr, index);
+        set => ObjcMsgSend(this.NativePtr, Selectors.SetObjectAtIndexedSubscript, value.NativePtr, index);
     }
 }

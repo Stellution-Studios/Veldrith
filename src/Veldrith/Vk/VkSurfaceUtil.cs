@@ -221,7 +221,7 @@ internal static unsafe class VkSurfaceUtil {
             metalLayer = CAMetalLayer.New();
             metalLayer.frame = uiView.Frame;
             metalLayer.opaque = true;
-            uiView.Layer.addSublayer(metalLayer.NativePtr);
+            uiView.Layer.AddSublayer(metalLayer.NativePtr);
         }
 
         if (hasExtMetalSurface) {

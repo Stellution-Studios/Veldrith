@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -35,7 +35,7 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="receiver">The receiver value used by this operation.</param>
     /// <param name="selector">The selector value used by this operation.</param>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector);
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector);
 
     /// <summary>
     /// Executes the objc msg send logic for this backend.
@@ -44,7 +44,7 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="selector">The selector value used by this operation.</param>
     /// <param name="a">The a value used by this operation.</param>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, float a);
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, float a);
 
     /// <summary>
     /// Executes the objc msg send logic for this backend.
@@ -53,7 +53,7 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="selector">The selector value used by this operation.</param>
     /// <param name="a">The a value used by this operation.</param>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, double a);
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, double a);
 
     /// <summary>
     /// Executes the objc msg send logic for this backend.
@@ -62,17 +62,7 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="selector">The selector value used by this operation.</param>
     /// <param name="a">The a value used by this operation.</param>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, CGRect a);
-
-    /// <summary>
-    /// Executes the objc msg send logic for this backend.
-    /// </summary>
-    /// <param name="receiver">The receiver value used by this operation.</param>
-    /// <param name="selector">The selector value used by this operation.</param>
-    /// <param name="a">The a value used by this operation.</param>
-    /// <param name="b">The b value used by this operation.</param>
-    [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, IntPtr a, uint b);
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, CGRect a);
 
     /// <summary>
     /// Executes the objc msg send logic for this backend.
@@ -82,7 +72,7 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="a">The a value used by this operation.</param>
     /// <param name="b">The b value used by this operation.</param>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, IntPtr a, NSRange b);
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, IntPtr a, uint b);
 
     /// <summary>
     /// Executes the objc msg send logic for this backend.
@@ -92,7 +82,17 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="a">The a value used by this operation.</param>
     /// <param name="b">The b value used by this operation.</param>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, MTLSize a, MTLSize b);
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, IntPtr a, NSRange b);
+
+    /// <summary>
+    /// Executes the objc msg send logic for this backend.
+    /// </summary>
+    /// <param name="receiver">The receiver value used by this operation.</param>
+    /// <param name="selector">The selector value used by this operation.</param>
+    /// <param name="a">The a value used by this operation.</param>
+    /// <param name="b">The b value used by this operation.</param>
+    [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, MTLSize a, MTLSize b);
 
     /// <summary>
     /// Executes the objc msg send logic for this backend.
@@ -103,7 +103,7 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="d">The d value used by this operation.</param>
     /// <param name="e">The e value used by this operation.</param>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, IntPtr c, UIntPtr d, MTLSize e);
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, IntPtr c, UIntPtr d, MTLSize e);
 
     /// <summary>
     /// Executes the objc msg send logic for this backend.
@@ -112,7 +112,7 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="selector">The selector value used by this operation.</param>
     /// <param name="a">The a value used by this operation.</param>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, MTLClearColor a);
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, MTLClearColor a);
 
     /// <summary>
     /// Executes the objc msg send logic for this backend.
@@ -121,28 +121,7 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="selector">The selector value used by this operation.</param>
     /// <param name="a">The a value used by this operation.</param>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, CGSize a);
-
-    /// <summary>
-    /// Executes the objc msg send logic for this backend.
-    /// </summary>
-    /// <param name="receiver">The receiver value used by this operation.</param>
-    /// <param name="selector">The selector value used by this operation.</param>
-    /// <param name="a">The a value used by this operation.</param>
-    /// <param name="b">The b value used by this operation.</param>
-    /// <param name="c">The c value used by this operation.</param>
-    [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, IntPtr a, UIntPtr b, UIntPtr c);
-
-    /// <summary>
-    /// Executes the objc msg send logic for this backend.
-    /// </summary>
-    /// <param name="receiver">The receiver value used by this operation.</param>
-    /// <param name="selector">The selector value used by this operation.</param>
-    /// <param name="b">The b value used by this operation.</param>
-    /// <param name="c">The c value used by this operation.</param>
-    [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, UIntPtr b, UIntPtr c);
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, CGSize a);
 
     /// <summary>
     /// Executes the objc msg send logic for this backend.
@@ -153,87 +132,17 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="b">The b value used by this operation.</param>
     /// <param name="c">The c value used by this operation.</param>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, void* a, UIntPtr b, UIntPtr c);
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, IntPtr a, UIntPtr b, UIntPtr c);
 
     /// <summary>
     /// Executes the objc msg send logic for this backend.
     /// </summary>
     /// <param name="receiver">The receiver value used by this operation.</param>
     /// <param name="selector">The selector value used by this operation.</param>
-    /// <param name="a">The a value used by this operation.</param>
     /// <param name="b">The b value used by this operation.</param>
     /// <param name="c">The c value used by this operation.</param>
-    /// <param name="d">The d value used by this operation.</param>
-    /// <param name="e">The e value used by this operation.</param>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, MTLPrimitiveType a, UIntPtr b, UIntPtr c, UIntPtr d, UIntPtr e);
-
-    /// <summary>
-    /// Executes the objc msg send logic for this backend.
-    /// </summary>
-    /// <param name="receiver">The receiver value used by this operation.</param>
-    /// <param name="selector">The selector value used by this operation.</param>
-    /// <param name="a">The a value used by this operation.</param>
-    /// <param name="b">The b value used by this operation.</param>
-    /// <param name="c">The c value used by this operation.</param>
-    /// <param name="d">The d value used by this operation.</param>
-    [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, MTLPrimitiveType a, UIntPtr b, UIntPtr c, UIntPtr d);
-
-    /// <summary>
-    /// Executes the objc msg send logic for this backend.
-    /// </summary>
-    /// <param name="receiver">The receiver value used by this operation.</param>
-    /// <param name="selector">The selector value used by this operation.</param>
-    /// <param name="a">The a value used by this operation.</param>
-    [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, NSRange a);
-
-    /// <summary>
-    /// Executes the objc msg send logic for this backend.
-    /// </summary>
-    /// <param name="receiver">The receiver value used by this operation.</param>
-    /// <param name="selector">The selector value used by this operation.</param>
-    /// <param name="a">The a value used by this operation.</param>
-    [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, UIntPtr a);
-
-    /// <summary>
-    /// Executes the objc msg send logic for this backend.
-    /// </summary>
-    /// <param name="receiver">The receiver value used by this operation.</param>
-    /// <param name="selector">The selector value used by this operation.</param>
-    /// <param name="a">The a value used by this operation.</param>
-    [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, MTLCommandBufferHandler a);
-
-    /// <summary>
-    /// Executes the objc msg send logic for this backend.
-    /// </summary>
-    /// <param name="receiver">The receiver value used by this operation.</param>
-    /// <param name="selector">The selector value used by this operation.</param>
-    /// <param name="a">The a value used by this operation.</param>
-    /// <param name="b">The b value used by this operation.</param>
-    [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, IntPtr a, UIntPtr b);
-
-    /// <summary>
-    /// Executes the objc msg send logic for this backend.
-    /// </summary>
-    /// <param name="receiver">The receiver value used by this operation.</param>
-    /// <param name="selector">The selector value used by this operation.</param>
-    /// <param name="a">The a value used by this operation.</param>
-    [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, MTLViewport a);
-
-    /// <summary>
-    /// Executes the objc msg send logic for this backend.
-    /// </summary>
-    /// <param name="receiver">The receiver value used by this operation.</param>
-    /// <param name="selector">The selector value used by this operation.</param>
-    /// <param name="a">The a value used by this operation.</param>
-    [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, MTLScissorRect a);
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, UIntPtr b, UIntPtr c);
 
     /// <summary>
     /// Executes the objc msg send logic for this backend.
@@ -244,17 +153,7 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="b">The b value used by this operation.</param>
     /// <param name="c">The c value used by this operation.</param>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, void* a, uint b, UIntPtr c);
-
-    /// <summary>
-    /// Executes the objc msg send logic for this backend.
-    /// </summary>
-    /// <param name="receiver">The receiver value used by this operation.</param>
-    /// <param name="selector">The selector value used by this operation.</param>
-    /// <param name="a">The a value used by this operation.</param>
-    /// <param name="b">The b value used by this operation.</param>
-    [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, void* a, UIntPtr b);
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, void* a, UIntPtr b, UIntPtr c);
 
     /// <summary>
     /// Executes the objc msg send logic for this backend.
@@ -266,20 +165,8 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="c">The c value used by this operation.</param>
     /// <param name="d">The d value used by this operation.</param>
     /// <param name="e">The e value used by this operation.</param>
-    /// <param name="f">The f value used by this operation.</param>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, MTLPrimitiveType a, UIntPtr b, MTLIndexType c, IntPtr d, UIntPtr e, UIntPtr f);
-
-    /// <summary>
-    /// Executes the objc msg send logic for this backend.
-    /// </summary>
-    /// <param name="receiver">The receiver value used by this operation.</param>
-    /// <param name="selector">The selector value used by this operation.</param>
-    /// <param name="a">The a value used by this operation.</param>
-    /// <param name="b">The b value used by this operation.</param>
-    /// <param name="c">The c value used by this operation.</param>
-    [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, MTLPrimitiveType a, MTLBuffer b, UIntPtr c);
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, MTLPrimitiveType a, UIntPtr b, UIntPtr c, UIntPtr d, UIntPtr e);
 
     /// <summary>
     /// Executes the objc msg send logic for this backend.
@@ -290,12 +177,84 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="b">The b value used by this operation.</param>
     /// <param name="c">The c value used by this operation.</param>
     /// <param name="d">The d value used by this operation.</param>
-    /// <param name="e">The e value used by this operation.</param>
-    /// <param name="f">The f value used by this operation.</param>
-    /// <param name="g">The g value used by this operation.</param>
-    /// <param name="h">The h value used by this operation.</param>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, MTLPrimitiveType a, UIntPtr b, MTLIndexType c, IntPtr d, UIntPtr e, UIntPtr f, IntPtr g, UIntPtr h);
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, MTLPrimitiveType a, UIntPtr b, UIntPtr c, UIntPtr d);
+
+    /// <summary>
+    /// Executes the objc msg send logic for this backend.
+    /// </summary>
+    /// <param name="receiver">The receiver value used by this operation.</param>
+    /// <param name="selector">The selector value used by this operation.</param>
+    /// <param name="a">The a value used by this operation.</param>
+    [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, NSRange a);
+
+    /// <summary>
+    /// Executes the objc msg send logic for this backend.
+    /// </summary>
+    /// <param name="receiver">The receiver value used by this operation.</param>
+    /// <param name="selector">The selector value used by this operation.</param>
+    /// <param name="a">The a value used by this operation.</param>
+    [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, UIntPtr a);
+
+    /// <summary>
+    /// Executes the objc msg send logic for this backend.
+    /// </summary>
+    /// <param name="receiver">The receiver value used by this operation.</param>
+    /// <param name="selector">The selector value used by this operation.</param>
+    /// <param name="a">The a value used by this operation.</param>
+    [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, MTLCommandBufferHandler a);
+
+    /// <summary>
+    /// Executes the objc msg send logic for this backend.
+    /// </summary>
+    /// <param name="receiver">The receiver value used by this operation.</param>
+    /// <param name="selector">The selector value used by this operation.</param>
+    /// <param name="a">The a value used by this operation.</param>
+    /// <param name="b">The b value used by this operation.</param>
+    [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, IntPtr a, UIntPtr b);
+
+    /// <summary>
+    /// Executes the objc msg send logic for this backend.
+    /// </summary>
+    /// <param name="receiver">The receiver value used by this operation.</param>
+    /// <param name="selector">The selector value used by this operation.</param>
+    /// <param name="a">The a value used by this operation.</param>
+    [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, MTLViewport a);
+
+    /// <summary>
+    /// Executes the objc msg send logic for this backend.
+    /// </summary>
+    /// <param name="receiver">The receiver value used by this operation.</param>
+    /// <param name="selector">The selector value used by this operation.</param>
+    /// <param name="a">The a value used by this operation.</param>
+    [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, MTLScissorRect a);
+
+    /// <summary>
+    /// Executes the objc msg send logic for this backend.
+    /// </summary>
+    /// <param name="receiver">The receiver value used by this operation.</param>
+    /// <param name="selector">The selector value used by this operation.</param>
+    /// <param name="a">The a value used by this operation.</param>
+    /// <param name="b">The b value used by this operation.</param>
+    /// <param name="c">The c value used by this operation.</param>
+    [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, void* a, uint b, UIntPtr c);
+
+    /// <summary>
+    /// Executes the objc msg send logic for this backend.
+    /// </summary>
+    /// <param name="receiver">The receiver value used by this operation.</param>
+    /// <param name="selector">The selector value used by this operation.</param>
+    /// <param name="a">The a value used by this operation.</param>
+    /// <param name="b">The b value used by this operation.</param>
+    [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, void* a, UIntPtr b);
 
     /// <summary>
     /// Executes the objc msg send logic for this backend.
@@ -309,7 +268,7 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="e">The e value used by this operation.</param>
     /// <param name="f">The f value used by this operation.</param>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, MTLPrimitiveType a, MTLIndexType b, MTLBuffer c, UIntPtr d, MTLBuffer e, UIntPtr f);
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, MTLPrimitiveType a, UIntPtr b, MTLIndexType c, IntPtr d, UIntPtr e, UIntPtr f);
 
     /// <summary>
     /// Executes the objc msg send logic for this backend.
@@ -319,10 +278,8 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="a">The a value used by this operation.</param>
     /// <param name="b">The b value used by this operation.</param>
     /// <param name="c">The c value used by this operation.</param>
-    /// <param name="d">The d value used by this operation.</param>
-    /// <param name="e">The e value used by this operation.</param>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, MTLBuffer a, UIntPtr b, MTLBuffer c, UIntPtr d, UIntPtr e);
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, MTLPrimitiveType a, MTLBuffer b, UIntPtr c);
 
     /// <summary>
     /// Executes the objc msg send logic for this backend.
@@ -337,9 +294,8 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="f">The f value used by this operation.</param>
     /// <param name="g">The g value used by this operation.</param>
     /// <param name="h">The h value used by this operation.</param>
-    /// <param name="i">The i value used by this operation.</param>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, IntPtr a, UIntPtr b, UIntPtr c, UIntPtr d, MTLSize e, IntPtr f, UIntPtr g, UIntPtr h, MTLOrigin i);
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, MTLPrimitiveType a, UIntPtr b, MTLIndexType c, IntPtr d, UIntPtr e, UIntPtr f, IntPtr g, UIntPtr h);
 
     /// <summary>
     /// Executes the objc msg send logic for this backend.
@@ -353,7 +309,20 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="e">The e value used by this operation.</param>
     /// <param name="f">The f value used by this operation.</param>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, MTLRegion a, UIntPtr b, UIntPtr c, IntPtr d, UIntPtr e, UIntPtr f);
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, MTLPrimitiveType a, MTLIndexType b, MTLBuffer c, UIntPtr d, MTLBuffer e, UIntPtr f);
+
+    /// <summary>
+    /// Executes the objc msg send logic for this backend.
+    /// </summary>
+    /// <param name="receiver">The receiver value used by this operation.</param>
+    /// <param name="selector">The selector value used by this operation.</param>
+    /// <param name="a">The a value used by this operation.</param>
+    /// <param name="b">The b value used by this operation.</param>
+    /// <param name="c">The c value used by this operation.</param>
+    /// <param name="d">The d value used by this operation.</param>
+    /// <param name="e">The e value used by this operation.</param>
+    [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, MTLBuffer a, UIntPtr b, MTLBuffer c, UIntPtr d, UIntPtr e);
 
     /// <summary>
     /// Executes the objc msg send logic for this backend.
@@ -370,7 +339,38 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="h">The h value used by this operation.</param>
     /// <param name="i">The i value used by this operation.</param>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, MTLTexture a, UIntPtr b, UIntPtr c, MTLOrigin d, MTLSize e, MTLBuffer f, UIntPtr g, UIntPtr h, UIntPtr i);
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, IntPtr a, UIntPtr b, UIntPtr c, UIntPtr d, MTLSize e, IntPtr f, UIntPtr g, UIntPtr h, MTLOrigin i);
+
+    /// <summary>
+    /// Executes the objc msg send logic for this backend.
+    /// </summary>
+    /// <param name="receiver">The receiver value used by this operation.</param>
+    /// <param name="selector">The selector value used by this operation.</param>
+    /// <param name="a">The a value used by this operation.</param>
+    /// <param name="b">The b value used by this operation.</param>
+    /// <param name="c">The c value used by this operation.</param>
+    /// <param name="d">The d value used by this operation.</param>
+    /// <param name="e">The e value used by this operation.</param>
+    /// <param name="f">The f value used by this operation.</param>
+    [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, MTLRegion a, UIntPtr b, UIntPtr c, IntPtr d, UIntPtr e, UIntPtr f);
+
+    /// <summary>
+    /// Executes the objc msg send logic for this backend.
+    /// </summary>
+    /// <param name="receiver">The receiver value used by this operation.</param>
+    /// <param name="selector">The selector value used by this operation.</param>
+    /// <param name="a">The a value used by this operation.</param>
+    /// <param name="b">The b value used by this operation.</param>
+    /// <param name="c">The c value used by this operation.</param>
+    /// <param name="d">The d value used by this operation.</param>
+    /// <param name="e">The e value used by this operation.</param>
+    /// <param name="f">The f value used by this operation.</param>
+    /// <param name="g">The g value used by this operation.</param>
+    /// <param name="h">The h value used by this operation.</param>
+    /// <param name="i">The i value used by this operation.</param>
+    [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, MTLTexture a, UIntPtr b, UIntPtr c, MTLOrigin d, MTLSize e, MTLBuffer f, UIntPtr g, UIntPtr h, UIntPtr i);
 
     /// <summary>
     /// Executes the objc msg send logic for this backend.
@@ -387,7 +387,7 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="destinationLevel">The destination level value used by this operation.</param>
     /// <param name="destinationOrigin">The destination origin value used by this operation.</param>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, MTLTexture sourceTexture, UIntPtr sourceSlice, UIntPtr sourceLevel, MTLOrigin sourceOrigin, MTLSize sourceSize, MTLTexture destinationTexture, UIntPtr destinationSlice, UIntPtr destinationLevel, MTLOrigin destinationOrigin);
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, MTLTexture sourceTexture, UIntPtr sourceSlice, UIntPtr sourceLevel, MTLOrigin sourceOrigin, MTLSize sourceSize, MTLTexture destinationTexture, UIntPtr destinationSlice, UIntPtr destinationLevel, MTLOrigin destinationOrigin);
 
     /// <summary>
     /// Executes the byte ptr objc msg send logic for this backend.
@@ -395,7 +395,7 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="receiver">The receiver value used by this operation.</param>
     /// <param name="selector">The selector value used by this operation.</param>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern byte* bytePtr_objc_msgSend(IntPtr receiver, Selector selector);
+    public static extern byte* BytePtrObjcMsgSend(IntPtr receiver, Selector selector);
 
     /// <summary>
     /// Executes the cgsize objc msg send logic for this backend.
@@ -413,7 +413,7 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="selector">The selector value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern byte byte_objc_msgSend(IntPtr receiver, Selector selector);
+    public static extern byte ByteObjcMsgSend(IntPtr receiver, Selector selector);
 
     /// <summary>
     /// Executes the bool8 objc msg send logic for this backend.
@@ -422,17 +422,7 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="selector">The selector value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern Bool8 bool8_objc_msgSend(IntPtr receiver, Selector selector);
-
-    /// <summary>
-    /// Executes the bool8 objc msg send logic for this backend.
-    /// </summary>
-    /// <param name="receiver">The receiver value used by this operation.</param>
-    /// <param name="selector">The selector value used by this operation.</param>
-    /// <param name="a">The a value used by this operation.</param>
-    /// <returns>The value produced by this operation.</returns>
-    [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern Bool8 bool8_objc_msgSend(IntPtr receiver, Selector selector, UIntPtr a);
+    public static extern Bool8 Bool8ObjcMsgSend(IntPtr receiver, Selector selector);
 
     /// <summary>
     /// Executes the bool8 objc msg send logic for this backend.
@@ -442,7 +432,17 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="a">The a value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern Bool8 bool8_objc_msgSend(IntPtr receiver, Selector selector, IntPtr a);
+    public static extern Bool8 Bool8ObjcMsgSend(IntPtr receiver, Selector selector, UIntPtr a);
+
+    /// <summary>
+    /// Executes the bool8 objc msg send logic for this backend.
+    /// </summary>
+    /// <param name="receiver">The receiver value used by this operation.</param>
+    /// <param name="selector">The selector value used by this operation.</param>
+    /// <param name="a">The a value used by this operation.</param>
+    /// <returns>The value produced by this operation.</returns>
+    [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
+    public static extern Bool8 Bool8ObjcMsgSend(IntPtr receiver, Selector selector, IntPtr a);
 
     /// <summary>
     /// Executes the bool8 objc msg send logic for this backend.
@@ -453,7 +453,7 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="b">The b value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern Bool8 bool8_objc_msgSend(IntPtr receiver, Selector selector, UIntPtr a, IntPtr b);
+    public static extern Bool8 Bool8ObjcMsgSend(IntPtr receiver, Selector selector, UIntPtr a, IntPtr b);
 
     /// <summary>
     /// Executes the bool8 objc msg send logic for this backend.
@@ -463,7 +463,7 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="a">The a value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern Bool8 bool8_objc_msgSend(IntPtr receiver, Selector selector, uint a);
+    public static extern Bool8 Bool8ObjcMsgSend(IntPtr receiver, Selector selector, uint a);
 
     /// <summary>
     /// Executes the uint objc msg send logic for this backend.
@@ -472,7 +472,7 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="selector">The selector value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern uint uint_objc_msgSend(IntPtr receiver, Selector selector);
+    public static extern uint UIntObjcMsgSend(IntPtr receiver, Selector selector);
 
     /// <summary>
     /// Executes the float objc msg send logic for this backend.
@@ -481,7 +481,7 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="selector">The selector value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern float float_objc_msgSend(IntPtr receiver, Selector selector);
+    public static extern float FloatObjcMsgSend(IntPtr receiver, Selector selector);
 
     /// <summary>
     /// Executes the cgfloat objc msg send logic for this backend.
@@ -499,7 +499,7 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="selector">The selector value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern double double_objc_msgSend(IntPtr receiver, Selector selector);
+    public static extern double DoubleObjcMsgSend(IntPtr receiver, Selector selector);
 
     /// <summary>
     /// Executes the int ptr objc msg send logic for this backend.
@@ -632,12 +632,12 @@ public static unsafe class ObjectiveCRuntime {
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
     public static extern UIntPtr UIntPtr_objc_msgSend(IntPtr receiver, Selector selector);
 
-    public static T objc_msgSend<T>(IntPtr receiver, Selector selector) where T : struct {
+    public static T ObjcMsgSend<T>(IntPtr receiver, Selector selector) where T : struct {
         IntPtr value = IntPtr_objc_msgSend(receiver, selector);
         return Unsafe.AsRef<T>(&value);
     }
 
-    public static T objc_msgSend<T>(IntPtr receiver, Selector selector, IntPtr a) where T : struct {
+    public static T ObjcMsgSend<T>(IntPtr receiver, Selector selector, IntPtr a) where T : struct {
         IntPtr value = IntPtr_objc_msgSend(receiver, selector, a);
         return Unsafe.AsRef<T>(&value);
     }
@@ -648,8 +648,8 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="receiver">The receiver value used by this operation.</param>
     /// <param name="selector">The selector value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    public static string string_objc_msgSend(IntPtr receiver, Selector selector) {
-        return objc_msgSend<NSString>(receiver, selector).GetValue();
+    public static string StringObjcMsgSend(IntPtr receiver, Selector selector) {
+        return ObjcMsgSend<NSString>(receiver, selector).GetValue();
     }
 
     /// <summary>
@@ -659,7 +659,7 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="selector">The selector value used by this operation.</param>
     /// <param name="b">The b value used by this operation.</param>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, byte b);
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, byte b);
 
     /// <summary>
     /// Executes the objc msg send logic for this backend.
@@ -668,7 +668,7 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="selector">The selector value used by this operation.</param>
     /// <param name="b">The b value used by this operation.</param>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, Bool8 b);
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, Bool8 b);
 
     /// <summary>
     /// Executes the objc msg send logic for this backend.
@@ -677,7 +677,7 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="selector">The selector value used by this operation.</param>
     /// <param name="b">The b value used by this operation.</param>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, uint b);
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, uint b);
 
     /// <summary>
     /// Executes the objc msg send logic for this backend.
@@ -689,7 +689,7 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="c">The c value used by this operation.</param>
     /// <param name="d">The d value used by this operation.</param>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, float a, float b, float c, float d);
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, float a, float b, float c, float d);
 
     /// <summary>
     /// Executes the objc msg send logic for this backend.
@@ -698,7 +698,7 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="selector">The selector value used by this operation.</param>
     /// <param name="b">The b value used by this operation.</param>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend(IntPtr receiver, Selector selector, IntPtr b);
+    public static extern void ObjcMsgSend(IntPtr receiver, Selector selector, IntPtr b);
 
     /// <summary>
     /// Executes the objc msg send stret logic for this backend.
@@ -707,11 +707,11 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="receiver">The receiver value used by this operation.</param>
     /// <param name="selector">The selector value used by this operation.</param>
     [DllImport(_objCLibrary, EntryPoint = "objc_msgSend_stret")]
-    public static extern void objc_msgSend_stret(void* retPtr, IntPtr receiver, Selector selector);
+    public static extern void ObjcMsgSendStret(void* retPtr, IntPtr receiver, Selector selector);
 
-    public static T objc_msgSend_stret<T>(IntPtr receiver, Selector selector) where T : struct {
+    public static T ObjcMsgSendStret<T>(IntPtr receiver, Selector selector) where T : struct {
         T ret = default;
-        objc_msgSend_stret(Unsafe.AsPointer(ref ret), receiver, selector);
+        ObjcMsgSendStret(Unsafe.AsPointer(ref ret), receiver, selector);
         return ret;
     }
 
@@ -757,31 +757,31 @@ public static unsafe class ObjectiveCRuntime {
     /// </summary>
     /// <param name="namePtr">The name ptr value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    [DllImport(_objCLibrary)]
-    public static extern IntPtr sel_registerName(byte* namePtr);
+    [DllImport(_objCLibrary, EntryPoint = "sel_registerName")]
+    public static extern IntPtr SelRegisterName(byte* namePtr);
 
     /// <summary>
     /// Executes the sel get name logic for this backend.
     /// </summary>
     /// <param name="selector">The selector value used by this operation.</param>
-    [DllImport(_objCLibrary)]
-    public static extern byte* sel_getName(IntPtr selector);
+    [DllImport(_objCLibrary, EntryPoint = "sel_getName")]
+    public static extern byte* SelGetName(IntPtr selector);
 
     /// <summary>
     /// Executes the objc get class logic for this backend.
     /// </summary>
     /// <param name="namePtr">The name ptr value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    [DllImport(_objCLibrary)]
-    public static extern IntPtr objc_getClass(byte* namePtr);
+    [DllImport(_objCLibrary, EntryPoint = "objc_getClass")]
+    public static extern IntPtr ObjcGetClass(byte* namePtr);
 
     /// <summary>
     /// Executes the object get class logic for this backend.
     /// </summary>
     /// <param name="obj">The object instance to evaluate.</param>
     /// <returns>The value produced by this operation.</returns>
-    [DllImport(_objCLibrary)]
-    public static extern ObjCClass object_getClass(IntPtr obj);
+    [DllImport(_objCLibrary, EntryPoint = "object_getClass")]
+    public static extern ObjCClass ObjectGetClass(IntPtr obj);
 
     /// <summary>
     /// Executes the class get property logic for this backend.
@@ -789,53 +789,53 @@ public static unsafe class ObjectiveCRuntime {
     /// <param name="cls">The cls value used by this operation.</param>
     /// <param name="namePtr">The name ptr value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    [DllImport(_objCLibrary)]
-    public static extern IntPtr class_getProperty(ObjCClass cls, byte* namePtr);
+    [DllImport(_objCLibrary, EntryPoint = "class_getProperty")]
+    public static extern IntPtr ClassGetProperty(ObjCClass cls, byte* namePtr);
 
     /// <summary>
     /// Executes the class get name logic for this backend.
     /// </summary>
     /// <param name="cls">The cls value used by this operation.</param>
-    [DllImport(_objCLibrary)]
-    public static extern byte* class_getName(ObjCClass cls);
+    [DllImport(_objCLibrary, EntryPoint = "class_getName")]
+    public static extern byte* ClassGetName(ObjCClass cls);
 
     /// <summary>
     /// Executes the property copy attribute value logic for this backend.
     /// </summary>
     /// <param name="property">The property value used by this operation.</param>
     /// <param name="attributeNamePtr">The attribute name ptr value used by this operation.</param>
-    [DllImport(_objCLibrary)]
-    public static extern byte* property_copyAttributeValue(IntPtr property, byte* attributeNamePtr);
+    [DllImport(_objCLibrary, EntryPoint = "property_copyAttributeValue")]
+    public static extern byte* PropertyCopyAttributeValue(IntPtr property, byte* attributeNamePtr);
 
     /// <summary>
     /// Executes the method get name logic for this backend.
     /// </summary>
     /// <param name="method">The method value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    [DllImport(_objCLibrary)]
-    public static extern Selector method_getName(ObjectiveCMethod method);
+    [DllImport(_objCLibrary, EntryPoint = "method_getName")]
+    public static extern Selector MethodGetName(ObjectiveCMethod method);
 
     /// <summary>
     /// Executes the class copy method list logic for this backend.
     /// </summary>
     /// <param name="cls">The cls value used by this operation.</param>
     /// <param name="outCount">The out count value used by this operation.</param>
-    [DllImport(_objCLibrary)]
-    public static extern ObjectiveCMethod* class_copyMethodList(ObjCClass cls, out uint outCount);
+    [DllImport(_objCLibrary, EntryPoint = "class_copyMethodList")]
+    public static extern ObjectiveCMethod* ClassCopyMethodList(ObjCClass cls, out uint outCount);
 
     /// <summary>
-    /// Executes the free logic for this backend.
+    /// Executes the Free logic for this backend.
     /// </summary>
     /// <param name="receiver">The receiver value used by this operation.</param>
-    [DllImport(_objCLibrary)]
-    public static extern void free(IntPtr receiver);
+    [DllImport(_objCLibrary, EntryPoint = "free")]
+    public static extern void Free(IntPtr receiver);
 
     /// <summary>
     /// Executes the retain logic for this backend.
     /// </summary>
     /// <param name="receiver">The receiver value used by this operation.</param>
     public static void Retain(IntPtr receiver) {
-        objc_msgSend(receiver, _selRetain);
+        ObjcMsgSend(receiver, _selRetain);
     }
 
     /// <summary>
@@ -843,7 +843,7 @@ public static unsafe class ObjectiveCRuntime {
     /// </summary>
     /// <param name="receiver">The receiver value used by this operation.</param>
     public static void Release(IntPtr receiver) {
-        objc_msgSend(receiver, _selRelease);
+        ObjcMsgSend(receiver, _selRelease);
     }
 
     /// <summary>
@@ -855,3 +855,4 @@ public static unsafe class ObjectiveCRuntime {
         return UIntPtr_objc_msgSend(receiver, _selRetainCount);
     }
 }
+

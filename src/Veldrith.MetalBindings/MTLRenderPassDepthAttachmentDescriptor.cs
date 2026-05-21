@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrith.MetalBindings;
@@ -25,32 +25,32 @@ public struct MTLRenderPassDepthAttachmentDescriptor {
     /// Gets or sets texture.
     /// </summary>
     public MTLTexture Texture {
-        get => objc_msgSend<MTLTexture>(this.NativePtr, Selectors.Texture);
-        set => objc_msgSend(this.NativePtr, Selectors.SetTexture, value.NativePtr);
+        get => ObjcMsgSend<MTLTexture>(this.NativePtr, Selectors.Texture);
+        set => ObjcMsgSend(this.NativePtr, Selectors.SetTexture, value.NativePtr);
     }
 
     /// <summary>
     /// Gets or sets loadAction.
     /// </summary>
     public MTLLoadAction LoadAction {
-        get => (MTLLoadAction)uint_objc_msgSend(this.NativePtr, Selectors.LoadAction);
-        set => objc_msgSend(this.NativePtr, Selectors.SetLoadAction, (uint)value);
+        get => (MTLLoadAction)UIntObjcMsgSend(this.NativePtr, Selectors.LoadAction);
+        set => ObjcMsgSend(this.NativePtr, Selectors.SetLoadAction, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets storeAction.
     /// </summary>
     public MTLStoreAction StoreAction {
-        get => (MTLStoreAction)uint_objc_msgSend(this.NativePtr, Selectors.StoreAction);
-        set => objc_msgSend(this.NativePtr, Selectors.SetStoreAction, (uint)value);
+        get => (MTLStoreAction)UIntObjcMsgSend(this.NativePtr, Selectors.StoreAction);
+        set => ObjcMsgSend(this.NativePtr, Selectors.SetStoreAction, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets clearDepth.
     /// </summary>
     public double ClearDepth {
-        get => double_objc_msgSend(this.NativePtr, _selClearDepth);
-        set => objc_msgSend(this.NativePtr, _selSetClearDepth, value);
+        get => DoubleObjcMsgSend(this.NativePtr, _selClearDepth);
+        set => ObjcMsgSend(this.NativePtr, _selSetClearDepth, value);
     }
 
     /// <summary>
@@ -58,7 +58,7 @@ public struct MTLRenderPassDepthAttachmentDescriptor {
     /// </summary>
     public UIntPtr Slice {
         get => UIntPtr_objc_msgSend(this.NativePtr, Selectors.Slice);
-        set => objc_msgSend(this.NativePtr, Selectors.SetSlice, value);
+        set => ObjcMsgSend(this.NativePtr, Selectors.SetSlice, value);
     }
 
     /// <summary>
@@ -66,7 +66,7 @@ public struct MTLRenderPassDepthAttachmentDescriptor {
     /// </summary>
     public UIntPtr Level {
         get => UIntPtr_objc_msgSend(this.NativePtr, Selectors.Level);
-        set => objc_msgSend(this.NativePtr, Selectors.SetLevel, value);
+        set => ObjcMsgSend(this.NativePtr, Selectors.SetLevel, value);
     }
 
     /// <summary>

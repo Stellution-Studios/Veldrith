@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
 using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
@@ -26,12 +26,12 @@ public struct UIView {
     /// Gets or sets layer.
     /// </summary>
 
-    public CALayer Layer => objc_msgSend<CALayer>(this.NativePtr, _selLayer);
+    public CALayer Layer => ObjcMsgSend<CALayer>(this.NativePtr, _selLayer);
 
     /// <summary>
     /// Stores the frame state used by this instance.
     /// </summary>
-    public CGRect Frame => RuntimeInformation.ProcessArchitecture == Architecture.Arm64 ? CGRect_objc_msgSend(this.NativePtr, _selFrame) : objc_msgSend_stret<CGRect>(this.NativePtr, _selFrame);
+    public CGRect Frame => RuntimeInformation.ProcessArchitecture == Architecture.Arm64 ? CGRect_objc_msgSend(this.NativePtr, _selFrame) : ObjcMsgSendStret<CGRect>(this.NativePtr, _selFrame);
 
     /// <summary>
     /// Stores the sel layer state used by this instance.
