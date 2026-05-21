@@ -272,12 +272,32 @@ internal unsafe class VkCommandList : CommandList {
     /// </summary>
     /// <param name="cb">The cb value used by this operation.</param>
     public void CommandBufferSubmitted(VkCommandBuffer cb) {
+        if (this._currentStagingInfo == null) {
+            return;
+        }
+
         this.RefCount.Increment();
         foreach (ResourceRefCount rrc in this._currentStagingInfo.Resources) {
             rrc.Increment();
         }
 
-        this._submittedStagingInfos.Add(cb, this._currentStagingInfo);
+        StagingResourceInfo staleInfo = null;
+        lock (this._stagingLock) {
+            if (this._submittedStagingInfos.TryGetValue(cb, out staleInfo)) {
+                this._submittedStagingInfos[cb] = this._currentStagingInfo;
+            }
+            else {
+                this._submittedStagingInfos.Add(cb, this._currentStagingInfo);
+            }
+        }
+
+        if (staleInfo != null) {
+            // A stale in-flight entry can survive a context-loss/hard-recovery path.
+            // Replace it defensively instead of throwing on duplicate key.
+            this.RecycleStagingInfo(staleInfo);
+            this.RefCount.Decrement();
+        }
+
         this._currentStagingInfo = null;
     }
 
