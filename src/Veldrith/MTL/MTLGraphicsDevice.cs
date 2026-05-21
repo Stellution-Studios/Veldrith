@@ -124,6 +124,16 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
     private readonly CommandBufferUsageList<MtlCommandList> _submittedCLs = new();
 
     /// <summary>
+    /// Stores reusable staging buffers used by immediate private-buffer uploads.
+    /// </summary>
+    private readonly List<MtlBuffer> _availableImmediateUploadBuffers = new();
+
+    /// <summary>
+    /// Stores staging buffers referenced by in-flight immediate upload command buffers.
+    /// </summary>
+    private readonly CommandBufferUsageList<MtlBuffer> _submittedImmediateUploadBuffers = new();
+
+    /// <summary>
     /// Synchronizes access to the submitted commands lock state.
     /// </summary>
     private readonly object _submittedCommandsLock = new();
@@ -142,6 +152,16 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
     /// Stores the latest submitted cb state used by this instance.
     /// </summary>
     private MTLCommandBuffer _latestSubmittedCb;
+
+    /// <summary>
+    /// Stores the command buffer currently collecting immediate private-buffer uploads.
+    /// </summary>
+    private MTLCommandBuffer _immediateUploadCb;
+
+    /// <summary>
+    /// Stores the blit encoder currently collecting immediate private-buffer uploads.
+    /// </summary>
+    private MTLBlitCommandEncoder _immediateUploadBce;
 
     /// <summary>
     /// Stores the unaligned buffer copy pipeline state used by this instance.
@@ -507,6 +527,19 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
         }
 
         this._mainSwapchain?.Dispose();
+
+        lock (this._submittedCommandsLock) {
+            foreach (MtlBuffer buffer in this._availableImmediateUploadBuffers) {
+                buffer.Dispose();
+            }
+            this._availableImmediateUploadBuffers.Clear();
+
+            foreach (MtlBuffer buffer in this._submittedImmediateUploadBuffers.EnumerateItems()) {
+                buffer.Dispose();
+            }
+            this._submittedImmediateUploadBuffers.Clear();
+        }
+
         ObjectiveCRuntime.Release(this._commandQueue.NativePtr);
         ObjectiveCRuntime.Release(this._device.NativePtr);
 
@@ -585,6 +618,10 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
         lock (this._submittedCommandsLock) {
             foreach (MtlCommandList cl in this._submittedCLs.EnumerateAndRemove(cb)) {
                 cl.OnCompleted(cb);
+            }
+
+            foreach (MtlBuffer stagingBuffer in this._submittedImmediateUploadBuffers.EnumerateAndRemove(cb)) {
+                this._availableImmediateUploadBuffers.Add(stagingBuffer);
             }
 
             if (this._latestSubmittedCb.NativePtr == cb.NativePtr) {
@@ -674,6 +711,8 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
         mtlCl.CommandBuffer.AddCompletedHandler(this._completionBlockLiteral);
 
         lock (this._submittedCommandsLock) {
+            this.FlushPendingImmediateBufferUploads_NoLock();
+
             if (fence != null) {
                 mtlCl.SetCompletionFence(mtlCl.CommandBuffer, Util.AssertSubtype<Fence, MtlFence>(fence));
             }
@@ -759,6 +798,8 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
     /// </summary>
     /// <param name="swapchain">The swapchain used by this operation.</param>
     private protected override void SwapBuffersCore(Swapchain swapchain) {
+        this.FlushPendingImmediateBufferUploads();
+
         MtlSwapchain mtlSc = Util.AssertSubtype<Swapchain, MtlSwapchain>(swapchain);
         IntPtr currentDrawablePtr = mtlSc.CurrentDrawable.NativePtr;
 
@@ -785,13 +826,27 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
     private protected override void UpdateBufferCore(DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes) {
         MtlBuffer mtlBuffer = Util.AssertSubtype<DeviceBuffer, MtlBuffer>(buffer);
         void* destPtr = mtlBuffer.Pointer;
-        byte* destOffsetPtr = (byte*)destPtr + bufferOffsetInBytes;
 
-        if (destPtr == null) {
-            throw new VeldridException("Attempting to write to a MTLBuffer that is inaccessible from a CPU.");
+        if (destPtr != null) {
+            byte* destOffsetPtr = (byte*)destPtr + bufferOffsetInBytes;
+            Unsafe.CopyBlock(destOffsetPtr, source.ToPointer(), sizeInBytes);
+            return;
         }
 
-        Unsafe.CopyBlock(destOffsetPtr, source.ToPointer(), sizeInBytes);
+        bool isBlitAligned = (bufferOffsetInBytes & 3) == 0;
+        if (!isBlitAligned) {
+            this.UploadPrivateBufferViaOneShotCommandList(buffer, bufferOffsetInBytes, source, sizeInBytes);
+            return;
+        }
+
+        lock (this._submittedCommandsLock) {
+            this.EnsureImmediateUploadEncoder_NoLock();
+            MtlBuffer staging = this.GetFreeImmediateUploadBuffer_NoLock(sizeInBytes);
+            this.UpdateBuffer(staging, 0, source, sizeInBytes);
+            uint copySize = sizeInBytes + ((4 - sizeInBytes % 4) % 4);
+            this._immediateUploadBce.Copy(staging.DeviceBuffer, UIntPtr.Zero, mtlBuffer.DeviceBuffer, bufferOffsetInBytes, copySize);
+            this._submittedImmediateUploadBuffers.Add(this._immediateUploadCb, staging);
+        }
     }
 
     /// <summary>
@@ -839,6 +894,7 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
         MTLCommandBuffer lastCb;
 
         lock (this._submittedCommandsLock) {
+            this.FlushPendingImmediateBufferUploads_NoLock();
             lastCb = this._latestSubmittedCb;
             ObjectiveCRuntime.Retain(lastCb.NativePtr);
         }
@@ -848,6 +904,78 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
         }
 
         ObjectiveCRuntime.Release(lastCb.NativePtr);
+    }
+
+    /// <summary>
+    /// Flushes pending immediate private-buffer uploads.
+    /// </summary>
+    private void FlushPendingImmediateBufferUploads() {
+        lock (this._submittedCommandsLock) {
+            this.FlushPendingImmediateBufferUploads_NoLock();
+        }
+    }
+
+    /// <summary>
+    /// Flushes pending immediate private-buffer uploads.
+    /// </summary>
+    private void FlushPendingImmediateBufferUploads_NoLock() {
+        if (this._immediateUploadCb.NativePtr == IntPtr.Zero) {
+            return;
+        }
+
+        if (this._immediateUploadBce.NativePtr != IntPtr.Zero) {
+            this._immediateUploadBce.EndEncoding();
+            this._immediateUploadBce = default;
+        }
+
+        this._immediateUploadCb.AddCompletedHandler(this._completionBlockLiteral);
+        this._immediateUploadCb.Commit();
+        this._latestSubmittedCb = this._immediateUploadCb;
+        this._immediateUploadCb = default;
+    }
+
+    /// <summary>
+    /// Ensures the immediate private-buffer upload encoder is available.
+    /// </summary>
+    private void EnsureImmediateUploadEncoder_NoLock() {
+        if (this._immediateUploadCb.NativePtr == IntPtr.Zero) {
+            using (NSAutoreleasePool.Begin()) {
+                this._immediateUploadCb = this._commandQueue.CommandBuffer();
+                ObjectiveCRuntime.Retain(this._immediateUploadCb.NativePtr);
+            }
+        }
+
+        if (this._immediateUploadBce.IsNull) {
+            this._immediateUploadBce = this._immediateUploadCb.BlitCommandEncoder();
+        }
+    }
+
+    /// <summary>
+    /// Gets a reusable shared staging buffer for immediate private-buffer uploads.
+    /// </summary>
+    private MtlBuffer GetFreeImmediateUploadBuffer_NoLock(uint sizeInBytes) {
+        for (int i = 0; i < this._availableImmediateUploadBuffers.Count; i++) {
+            MtlBuffer buffer = this._availableImmediateUploadBuffers[i];
+            if (buffer.SizeInBytes >= sizeInBytes) {
+                this._availableImmediateUploadBuffers.RemoveAt(i);
+                return buffer;
+            }
+        }
+
+        DeviceBuffer staging = this.ResourceFactory.CreateBuffer(new BufferDescription(sizeInBytes, BufferUsage.Staging));
+        return Util.AssertSubtype<DeviceBuffer, MtlBuffer>(staging);
+    }
+
+    /// <summary>
+    /// Uploads a private Metal buffer update through a one-shot command list.
+    /// </summary>
+    private void UploadPrivateBufferViaOneShotCommandList(DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes) {
+        CommandList cl = this.ResourceFactory.CreateCommandList();
+        cl.Begin();
+        cl.UpdateBuffer(buffer, bufferOffsetInBytes, source, sizeInBytes);
+        cl.End();
+        this.SubmitCommands(cl);
+        cl.Dispose();
     }
 }
 

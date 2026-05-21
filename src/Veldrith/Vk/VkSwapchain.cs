@@ -61,6 +61,16 @@ internal unsafe class VkSwapchain : Swapchain {
     private global::Vortice.Vulkan.VkFence _imageAvailableFence;
 
     /// <summary>
+    /// Signaled by image acquisition and waited by the render submission.
+    /// </summary>
+    private VkSemaphore _imageAvailableSemaphore;
+
+    /// <summary>
+    /// Signaled by the render submission and waited by presentation.
+    /// </summary>
+    private VkSemaphore _renderFinishedSemaphore;
+
+    /// <summary>
     /// Stores the human-readable name associated with this instance.
     /// </summary>
     private string _name;
@@ -74,6 +84,11 @@ internal unsafe class VkSwapchain : Swapchain {
     /// Stores the sync to vblank state used by this instance.
     /// </summary>
     private bool _syncToVBlank;
+
+    /// <summary>
+    /// Stores the currently selected Vulkan present mode.
+    /// </summary>
+    private VkPresentModeKHR _presentMode;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VkSwapchain" /> type.
@@ -114,9 +129,11 @@ internal unsafe class VkSwapchain : Swapchain {
         fenceCi.flags = VkFenceCreateFlags.None;
         this._gd.DeviceApi.vkCreateFence(ref fenceCi, null, out this._imageAvailableFence);
 
-        this.AcquireNextImage(this._gd.Device, default, this._imageAvailableFence);
-        this._gd.DeviceApi.vkWaitForFences(this._imageAvailableFence, true, ulong.MaxValue);
-        this._gd.DeviceApi.vkResetFences(this._imageAvailableFence);
+        VkSemaphoreCreateInfo semaphoreCi = new VkSemaphoreCreateInfo();
+        this._gd.DeviceApi.vkCreateSemaphore(ref semaphoreCi, null, out this._imageAvailableSemaphore);
+        this._gd.DeviceApi.vkCreateSemaphore(ref semaphoreCi, null, out this._renderFinishedSemaphore);
+
+        this.AcquireNextImage(this._gd.Device, this._imageAvailableSemaphore, default);
 
         this.RefCount = new ResourceRefCount(this.DisposeCore);
     }
@@ -145,6 +162,21 @@ internal unsafe class VkSwapchain : Swapchain {
     /// Stores the image available fence state used by this instance.
     /// </summary>
     public global::Vortice.Vulkan.VkFence ImageAvailableFence => this._imageAvailableFence;
+
+    /// <summary>
+    /// Gets the semaphore signaled when the current swapchain image is available.
+    /// </summary>
+    public VkSemaphore ImageAvailableSemaphore => this._imageAvailableSemaphore;
+
+    /// <summary>
+    /// Gets the semaphore signaled when rendering the current swapchain image finished.
+    /// </summary>
+    public VkSemaphore RenderFinishedSemaphore => this._renderFinishedSemaphore;
+
+    /// <summary>
+    /// Gets the currently selected Vulkan present mode.
+    /// </summary>
+    public VkPresentModeKHR PresentMode => this._presentMode;
 
     /// <summary>
     /// Gets or sets Surface.
@@ -244,8 +276,8 @@ internal unsafe class VkSwapchain : Swapchain {
         this._framebuffer.SetImageIndex(this._currentImageIndex);
 
         if (result == VkResult.ErrorOutOfDateKHR || result == VkResult.SuboptimalKHR) {
-            this.CreateSwapchain(this._framebuffer.Width, this._framebuffer.Height);
-            return false;
+            return this.CreateSwapchain(this._framebuffer.Width, this._framebuffer.Height)
+                   && this.AcquireNextImage(device, semaphore, fence);
         }
 
         if (result != VkResult.Success) {
@@ -262,10 +294,7 @@ internal unsafe class VkSwapchain : Swapchain {
     /// <param name="height">The height value.</param>
     private void RecreateAndReacquire(uint width, uint height) {
         if (this.CreateSwapchain(width, height)) {
-            if (this.AcquireNextImage(this._gd.Device, default, this._imageAvailableFence)) {
-                this._gd.DeviceApi.vkWaitForFences(this._imageAvailableFence, true, ulong.MaxValue);
-                this._gd.DeviceApi.vkResetFences(this._imageAvailableFence);
-            }
+            this.AcquireNextImage(this._gd.Device, this._imageAvailableSemaphore, default);
         }
     }
 
@@ -343,18 +372,22 @@ internal unsafe class VkSwapchain : Swapchain {
                 presentMode = VkPresentModeKHR.FifoRelaxed;
             }
         }
-        else if (this._allowTearing && presentModes.Contains(VkPresentModeKHR.Immediate)) {
+        else if (presentModes.Contains(VkPresentModeKHR.Immediate)) {
             presentMode = VkPresentModeKHR.Immediate;
         }
         else if (presentModes.Contains(VkPresentModeKHR.Mailbox)) {
             presentMode = VkPresentModeKHR.Mailbox;
         }
-        else if (presentModes.Contains(VkPresentModeKHR.Immediate)) {
-            presentMode = VkPresentModeKHR.Immediate;
+
+        this._presentMode = presentMode;
+
+        if (VkGraphicsDevice.PerfLogEnabled) {
+            Console.WriteLine($"[VK PERF] availablePresentModes={string.Join(",", presentModes.Select(static mode => mode.ToString()))}, selected={presentMode}, vsync={this._syncToVBlank}");
         }
 
         uint maxImageCount = surfaceCapabilities.maxImageCount == 0 ? uint.MaxValue : surfaceCapabilities.maxImageCount;
-        uint imageCount = Math.Min(maxImageCount, surfaceCapabilities.minImageCount + 1);
+        uint desiredImageCount = Math.Max(3u, surfaceCapabilities.minImageCount + 1);
+        uint imageCount = Math.Min(maxImageCount, desiredImageCount);
 
         VkSwapchainCreateInfoKHR swapchainCi = new VkSwapchainCreateInfoKHR();
         swapchainCi.surface = this.Surface;
@@ -383,6 +416,10 @@ internal unsafe class VkSwapchain : Swapchain {
         swapchainCi.preTransform = VkSurfaceTransformFlagsKHR.Identity;
         swapchainCi.compositeAlpha = VkCompositeAlphaFlagsKHR.Opaque;
         swapchainCi.clipped = true;
+
+        if (VkGraphicsDevice.PerfLogEnabled) {
+            Console.WriteLine($"[VK PERF] swapchain imageCount selected={imageCount}, min={surfaceCapabilities.minImageCount}, max={(surfaceCapabilities.maxImageCount == 0 ? "unbounded" : surfaceCapabilities.maxImageCount.ToString())}");
+        }
 
         VkSwapchainKHR oldSwapchain = this._deviceSwapchain;
         swapchainCi.oldSwapchain = oldSwapchain;
@@ -438,6 +475,8 @@ internal unsafe class VkSwapchain : Swapchain {
     /// Executes the dispose core logic for this backend.
     /// </summary>
     private void DisposeCore() {
+        this._gd.DeviceApi.vkDestroySemaphore(this._renderFinishedSemaphore, null);
+        this._gd.DeviceApi.vkDestroySemaphore(this._imageAvailableSemaphore, null);
         this._gd.DeviceApi.vkDestroyFence(this._imageAvailableFence, null);
         this._framebuffer.Dispose();
         this._gd.DeviceApi.vkDestroySwapchainKHR(this._deviceSwapchain, null);

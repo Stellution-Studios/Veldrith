@@ -113,7 +113,7 @@ internal static unsafe class VulkanUtil {
     /// <param name="aspectMask">The aspect mask value used by this operation.</param>
     /// <param name="oldLayout">The old layout value used by this operation.</param>
     /// <param name="newLayout">The new layout value used by this operation.</param>
-    public static void TransitionImageLayout(VkCommandBuffer cb, VkImage image, uint baseMipLevel, uint levelCount, uint baseArrayLayer, uint layerCount, VkImageAspectFlags aspectMask, VkImageLayout oldLayout, VkImageLayout newLayout) {
+    public static void TransitionImageLayout(VkDeviceApi deviceApi, VkCommandBuffer cb, VkImage image, uint baseMipLevel, uint levelCount, uint baseArrayLayer, uint layerCount, VkImageAspectFlags aspectMask, VkImageLayout oldLayout, VkImageLayout newLayout) {
         Debug.Assert(oldLayout != newLayout);
         VkImageMemoryBarrier barrier = new VkImageMemoryBarrier();
         barrier.oldLayout = oldLayout;
@@ -156,7 +156,7 @@ internal static unsafe class VulkanUtil {
         }
         else if (oldLayout == VkImageLayout.Preinitialized && newLayout == VkImageLayout.General) {
             barrier.srcAccessMask = VkAccessFlags.None;
-            barrier.dstAccessMask = VkAccessFlags.ShaderRead;
+            barrier.dstAccessMask = VkAccessFlags.ShaderRead | VkAccessFlags.ShaderWrite;
             srcStageFlags = VkPipelineStageFlags.TopOfPipe;
             dstStageFlags = VkPipelineStageFlags.ComputeShader;
         }
@@ -167,15 +167,15 @@ internal static unsafe class VulkanUtil {
             dstStageFlags = VkPipelineStageFlags.FragmentShader;
         }
         else if (oldLayout == VkImageLayout.General && newLayout == VkImageLayout.ShaderReadOnlyOptimal) {
-            barrier.srcAccessMask = VkAccessFlags.TransferRead;
+            barrier.srcAccessMask = VkAccessFlags.ShaderRead | VkAccessFlags.ShaderWrite;
             barrier.dstAccessMask = VkAccessFlags.ShaderRead;
-            srcStageFlags = VkPipelineStageFlags.Transfer;
+            srcStageFlags = VkPipelineStageFlags.ComputeShader | VkPipelineStageFlags.FragmentShader | VkPipelineStageFlags.VertexShader;
             dstStageFlags = VkPipelineStageFlags.FragmentShader;
         }
         else if (oldLayout == VkImageLayout.ShaderReadOnlyOptimal && newLayout == VkImageLayout.General) {
             barrier.srcAccessMask = VkAccessFlags.ShaderRead;
-            barrier.dstAccessMask = VkAccessFlags.ShaderRead;
-            srcStageFlags = VkPipelineStageFlags.FragmentShader;
+            barrier.dstAccessMask = VkAccessFlags.ShaderRead | VkAccessFlags.ShaderWrite;
+            srcStageFlags = VkPipelineStageFlags.FragmentShader | VkPipelineStageFlags.VertexShader;
             dstStageFlags = VkPipelineStageFlags.ComputeShader;
         }
 
@@ -273,7 +273,7 @@ internal static unsafe class VulkanUtil {
             Debug.Fail("Invalid image layout transition.");
         }
 
-        VulkanDispatch.GetApi(cb).vkCmdPipelineBarrier(cb, srcStageFlags, dstStageFlags, VkDependencyFlags.None, 0, null, 0, null, 1, &barrier);
+        deviceApi.vkCmdPipelineBarrier(cb, srcStageFlags, dstStageFlags, VkDependencyFlags.None, 0, null, 0, null, 1, &barrier);
     }
 
     /// <summary>

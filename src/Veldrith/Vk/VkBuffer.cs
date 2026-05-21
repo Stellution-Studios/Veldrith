@@ -96,7 +96,10 @@ internal unsafe class VkBuffer : DeviceBuffer {
         }
 
         bool isStaging = (usage & BufferUsage.Staging) == BufferUsage.Staging;
-        bool hostVisible = isStaging || (usage & BufferUsage.Dynamic) == BufferUsage.Dynamic;
+        bool isDynamic = (usage & BufferUsage.Dynamic) == BufferUsage.Dynamic;
+        bool isUniform = (usage & BufferUsage.UniformBuffer) == BufferUsage.UniformBuffer;
+        bool preferHostVisibleUniform = isUniform && !isStaging && sizeInBytes <= 4 * 1024 * 1024;
+        bool hostVisible = isStaging || isDynamic || preferHostVisibleUniform;
 
         VkMemoryPropertyFlags memoryPropertyFlags = hostVisible
                 ? VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent

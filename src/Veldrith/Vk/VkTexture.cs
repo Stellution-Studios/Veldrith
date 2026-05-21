@@ -411,7 +411,7 @@ internal unsafe class VkTexture : Texture {
                 aspectMask = VkImageAspectFlags.Color;
             }
 
-            VulkanUtil.TransitionImageLayout(cb, this.OptimalDeviceImage, baseMipLevel, levelCount, baseArrayLayer, layerCount, aspectMask, this._imageLayouts[this.CalculateSubresource(baseMipLevel, baseArrayLayer)], newLayout);
+            VulkanUtil.TransitionImageLayout(this._gd.DeviceApi, cb, this.OptimalDeviceImage, baseMipLevel, levelCount, baseArrayLayer, layerCount, aspectMask, this._imageLayouts[this.CalculateSubresource(baseMipLevel, baseArrayLayer)], newLayout);
 
             for (uint level = 0; level < levelCount; level++) {
                 for (uint layer = 0; layer < layerCount; layer++) {
@@ -452,7 +452,7 @@ internal unsafe class VkTexture : Texture {
                         aspectMask = VkImageAspectFlags.Color;
                     }
 
-                    VulkanUtil.TransitionImageLayout(cb, this.OptimalDeviceImage, level, 1, layer, 1, aspectMask, oldLayout, newLayout);
+                    VulkanUtil.TransitionImageLayout(this._gd.DeviceApi, cb, this.OptimalDeviceImage, level, 1, layer, 1, aspectMask, oldLayout, newLayout);
 
                     this._imageLayouts[subresource] = newLayout;
                 }

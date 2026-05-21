@@ -39,11 +39,6 @@ internal unsafe class VkCommandList : CommandList {
     private readonly VkCommandPool _pool;
 
     /// <summary>
-    /// Stores the pre draw sampled images state used by this instance.
-    /// </summary>
-    private readonly List<VkTexture> _preDrawSampledImages = new();
-
-    /// <summary>
     /// Synchronizes access to the staging lock state.
     /// </summary>
     private readonly object _stagingLock = new();
@@ -64,6 +59,11 @@ internal unsafe class VkCommandList : CommandList {
     private readonly VkGraphicsDevice _gd;
 
     /// <summary>
+    /// Cached Vulkan device dispatch used by command-buffer entry points.
+    /// </summary>
+    private readonly VkDeviceApi _deviceApi;
+
+    /// <summary>
     /// Stores the active render pass state used by this instance.
     /// </summary>
     private VkRenderPass _activeRenderPass;
@@ -82,6 +82,11 @@ internal unsafe class VkCommandList : CommandList {
     /// Stores the command buffer ended state used by this instance.
     /// </summary>
     private bool _commandBufferEnded;
+
+    /// <summary>
+    /// Tracks whether this command list records work into a swapchain framebuffer.
+    /// </summary>
+    private bool _usesSwapchainFramebuffer;
 
     /// <summary>
     /// Stores the compute resource sets changed collection used by this instance.
@@ -116,6 +121,36 @@ internal unsafe class VkCommandList : CommandList {
     /// Stores the current graphics pipeline state used by this instance.
     /// </summary>
     private VkPipeline _currentGraphicsPipeline;
+
+    /// <summary>
+    /// Stores vertex buffers currently recorded in Vulkan command-buffer state.
+    /// </summary>
+    private VkBuffer[] _boundVertexBuffers = new VkBuffer[16];
+
+    /// <summary>
+    /// Stores vertex-buffer offsets currently recorded in Vulkan command-buffer state.
+    /// </summary>
+    private uint[] _boundVertexBufferOffsets = new uint[16];
+
+    /// <summary>
+    /// Stores the currently recorded Vulkan index buffer.
+    /// </summary>
+    private VkBuffer _boundIndexBuffer;
+
+    /// <summary>
+    /// Stores the currently recorded Vulkan index-buffer offset.
+    /// </summary>
+    private uint _boundIndexBufferOffset;
+
+    /// <summary>
+    /// Stores the currently recorded Vulkan index-buffer format.
+    /// </summary>
+    private IndexFormat _boundIndexFormat;
+
+    /// <summary>
+    /// Tracks whether an index buffer has been recorded in the current command buffer.
+    /// </summary>
+    private bool _hasBoundIndexBuffer;
 
     /// <summary>
     /// Stores the current graphics resource sets collection used by this instance.
@@ -174,6 +209,7 @@ internal unsafe class VkCommandList : CommandList {
     /// <param name="description">The description used to configure this operation.</param>
     public VkCommandList(VkGraphicsDevice gd, ref CommandListDescription description) : base(ref description, gd.Features, gd.UniformBufferMinOffsetAlignment, gd.StructuredBufferMinOffsetAlignment) {
         this._gd = gd;
+        this._deviceApi = gd.DeviceApi;
         VkCommandPoolCreateInfo poolCi = new VkCommandPoolCreateInfo();
         poolCi.flags = VkCommandPoolCreateFlags.ResetCommandBuffer;
         poolCi.queueFamilyIndex = gd.GraphicsQueueIndex;
@@ -193,6 +229,11 @@ internal unsafe class VkCommandList : CommandList {
     /// Gets or sets CommandBuffer.
     /// </summary>
     public VkCommandBuffer CommandBuffer { get; private set; }
+
+    /// <summary>
+    /// Gets whether this command list records work into a swapchain framebuffer.
+    /// </summary>
+    public bool UsesSwapchainFramebuffer => this._usesSwapchainFramebuffer;
 
     /// <summary>
     /// Gets or sets RefCount.
@@ -287,13 +328,20 @@ internal unsafe class VkCommandList : CommandList {
 
         VkCommandBufferBeginInfo beginInfo = new VkCommandBufferBeginInfo();
         beginInfo.flags = VkCommandBufferUsageFlags.OneTimeSubmit;
-        VulkanDispatch.GetApi(this.CommandBuffer).vkBeginCommandBuffer(this.CommandBuffer, &beginInfo);
+        this._deviceApi.vkBeginCommandBuffer(this.CommandBuffer, &beginInfo);
         this._commandBufferBegun = true;
 
         this.ClearCachedState();
+        this._usesSwapchainFramebuffer = false;
         this._currentFramebuffer = null;
         this._currentGraphicsPipeline = null;
         this.ClearSets(this._currentGraphicsResourceSets);
+        Util.ClearArray(this._boundVertexBuffers);
+        Util.ClearArray(this._boundVertexBufferOffsets);
+        this._boundIndexBuffer = null;
+        this._boundIndexBufferOffset = 0;
+        this._boundIndexFormat = default;
+        this._hasBoundIndexBuffer = false;
         Util.ClearArray(this._scissorRects);
 
         this._currentComputePipeline = null;
@@ -309,7 +357,7 @@ internal unsafe class VkCommandList : CommandList {
     public override void Dispatch(uint groupCountX, uint groupCountY, uint groupCountZ) {
         this.PreDispatchCommand();
 
-        VulkanDispatch.GetApi(this.CommandBuffer).vkCmdDispatch(this.CommandBuffer, groupCountX, groupCountY, groupCountZ);
+        this._deviceApi.vkCmdDispatch(this.CommandBuffer, groupCountX, groupCountY, groupCountZ);
     }
 
     /// <summary>
@@ -332,7 +380,7 @@ internal unsafe class VkCommandList : CommandList {
             this._currentFramebuffer!.TransitionToFinalLayout(this.CommandBuffer);
         }
 
-        VulkanDispatch.GetApi(this.CommandBuffer).vkEndCommandBuffer(this.CommandBuffer);
+        this._deviceApi.vkEndCommandBuffer(this.CommandBuffer);
         this._submittedCommandBuffers.Add(this.CommandBuffer);
     }
 
@@ -350,7 +398,7 @@ internal unsafe class VkCommandList : CommandList {
 
             if (this._scissorRects[index] != scissor) {
                 this._scissorRects[index] = scissor;
-                VulkanDispatch.GetApi(this.CommandBuffer).vkCmdSetScissor(this.CommandBuffer, index, 1, &scissor);
+                this._deviceApi.vkCmdSetScissor(this.CommandBuffer, index, 1, &scissor);
             }
         }
     }
@@ -378,7 +426,7 @@ internal unsafe class VkCommandList : CommandList {
                 maxDepth = viewport.MaxDepth
             };
 
-            VulkanDispatch.GetApi(this.CommandBuffer).vkCmdSetViewport(this.CommandBuffer, index, 1, &vkViewport);
+            this._deviceApi.vkCmdSetViewport(this.CommandBuffer, index, 1, &vkViewport);
         }
     }
 
@@ -390,6 +438,18 @@ internal unsafe class VkCommandList : CommandList {
     /// <param name="source">The source value or resource.</param>
     /// <param name="sizeInBytes">The size, in bytes, used by this operation.</param>
     private protected override void UpdateBufferCore(DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes) {
+        if ((buffer.Usage & BufferUsage.Dynamic) == BufferUsage.Dynamic
+            && sizeInBytes <= 65536
+            && (bufferOffsetInBytes & 3) == 0
+            && (sizeInBytes & 3) == 0) {
+            this.EnsureNoRenderPass();
+            VkBuffer vkBuffer = Util.AssertSubtype<DeviceBuffer, VkBuffer>(buffer);
+            this._currentStagingInfo.Resources.Add(vkBuffer.RefCount);
+            this._deviceApi.vkCmdUpdateBuffer(this.CommandBuffer, vkBuffer.DeviceBuffer, bufferOffsetInBytes, sizeInBytes, (void*)source);
+            this.EmitBufferUpdateBarrier(buffer);
+            return;
+        }
+
         VkBuffer stagingBuffer = this.GetStagingBuffer(sizeInBytes);
         this._gd.UpdateBuffer(stagingBuffer, 0, source, sizeInBytes);
         this.CopyBuffer(stagingBuffer, 0, buffer, bufferOffsetInBytes, sizeInBytes);
@@ -417,8 +477,16 @@ internal unsafe class VkCommandList : CommandList {
             size = sizeInBytes
         };
 
-        VulkanDispatch.GetApi(this.CommandBuffer).vkCmdCopyBuffer(this.CommandBuffer, srcVkBuffer.DeviceBuffer, dstVkBuffer.DeviceBuffer, 1, &region);
+        this._deviceApi.vkCmdCopyBuffer(this.CommandBuffer, srcVkBuffer.DeviceBuffer, dstVkBuffer.DeviceBuffer, 1, &region);
 
+        this.EmitBufferUpdateBarrier(destination);
+    }
+
+    /// <summary>
+    /// Emits the barrier needed after command-buffer recorded writes to a buffer.
+    /// </summary>
+    /// <param name="destination">The destination buffer that was written.</param>
+    private void EmitBufferUpdateBarrier(DeviceBuffer destination) {
         bool needToProtectUniform = destination.Usage.HasFlag(BufferUsage.UniformBuffer);
 
         VkMemoryBarrier barrier;
@@ -426,7 +494,7 @@ internal unsafe class VkCommandList : CommandList {
         barrier.srcAccessMask = VkAccessFlags.TransferWrite;
         barrier.dstAccessMask = needToProtectUniform ? VkAccessFlags.UniformRead : VkAccessFlags.VertexAttributeRead;
         barrier.pNext = null;
-        VulkanDispatch.GetApi(this.CommandBuffer).vkCmdPipelineBarrier(this.CommandBuffer, VkPipelineStageFlags.Transfer, needToProtectUniform
+        this._deviceApi.vkCmdPipelineBarrier(this.CommandBuffer, VkPipelineStageFlags.Transfer, needToProtectUniform
                 ? VkPipelineStageFlags.VertexShader | VkPipelineStageFlags.ComputeShader |
                   VkPipelineStageFlags.FragmentShader | VkPipelineStageFlags.GeometryShader |
                   VkPipelineStageFlags.TessellationControlShader | VkPipelineStageFlags.TessellationEvaluationShader
@@ -699,7 +767,7 @@ internal unsafe class VkCommandList : CommandList {
         this.PreDrawCommand();
         VkBuffer vkBuffer = Util.AssertSubtype<DeviceBuffer, VkBuffer>(indirectBuffer);
         this._currentStagingInfo.Resources.Add(vkBuffer.RefCount);
-        VulkanDispatch.GetApi(this.CommandBuffer).vkCmdDrawIndirect(this.CommandBuffer, vkBuffer.DeviceBuffer, offset, drawCount, stride);
+        this._deviceApi.vkCmdDrawIndirect(this.CommandBuffer, vkBuffer.DeviceBuffer, offset, drawCount, stride);
     }
 
     /// <summary>
@@ -713,7 +781,7 @@ internal unsafe class VkCommandList : CommandList {
         this.PreDrawCommand();
         VkBuffer vkBuffer = Util.AssertSubtype<DeviceBuffer, VkBuffer>(indirectBuffer);
         this._currentStagingInfo.Resources.Add(vkBuffer.RefCount);
-        VulkanDispatch.GetApi(this.CommandBuffer).vkCmdDrawIndexedIndirect(this.CommandBuffer, vkBuffer.DeviceBuffer, offset, drawCount, stride);
+        this._deviceApi.vkCmdDrawIndexedIndirect(this.CommandBuffer, vkBuffer.DeviceBuffer, offset, drawCount, stride);
     }
 
     /// <summary>
@@ -726,7 +794,7 @@ internal unsafe class VkCommandList : CommandList {
 
         VkBuffer vkBuffer = Util.AssertSubtype<DeviceBuffer, VkBuffer>(indirectBuffer);
         this._currentStagingInfo.Resources.Add(vkBuffer.RefCount);
-        VulkanDispatch.GetApi(this.CommandBuffer).vkCmdDispatchIndirect(this.CommandBuffer, vkBuffer.DeviceBuffer, offset);
+        this._deviceApi.vkCmdDispatchIndirect(this.CommandBuffer, vkBuffer.DeviceBuffer, offset);
     }
 
     /// <summary>
@@ -755,7 +823,7 @@ internal unsafe class VkCommandList : CommandList {
         vkSource.TransitionImageLayout(this.CommandBuffer, 0, 1, 0, 1, VkImageLayout.TransferSrcOptimal);
         vkDestination.TransitionImageLayout(this.CommandBuffer, 0, 1, 0, 1, VkImageLayout.TransferDstOptimal);
 
-        VulkanDispatch.GetApi(this.CommandBuffer).vkCmdResolveImage(this.CommandBuffer, vkSource.OptimalDeviceImage, VkImageLayout.TransferSrcOptimal, vkDestination.OptimalDeviceImage, VkImageLayout.TransferDstOptimal, 1, &region);
+        this._deviceApi.vkCmdResolveImage(this.CommandBuffer, vkSource.OptimalDeviceImage, VkImageLayout.TransferSrcOptimal, vkDestination.OptimalDeviceImage, VkImageLayout.TransferDstOptimal, 1, &region);
 
         if ((vkDestination.Usage & TextureUsage.Sampled) != 0) {
             vkDestination.TransitionImageLayout(this.CommandBuffer, 0, 1, 0, 1, VkImageLayout.ShaderReadOnlyOptimal);
@@ -789,6 +857,7 @@ internal unsafe class VkCommandList : CommandList {
         this._currentStagingInfo.Resources.Add(vkFb.RefCount);
 
         if (fb is VkSwapchainFramebuffer scFb) {
+            this._usesSwapchainFramebuffer = true;
             this._currentStagingInfo.Resources.Add(scFb.Swapchain.RefCount);
         }
     }
@@ -854,8 +923,7 @@ internal unsafe class VkCommandList : CommandList {
     /// Executes the pre draw command logic for this backend.
     /// </summary>
     private void PreDrawCommand() {
-        this.TransitionImages(this._preDrawSampledImages, VkImageLayout.ShaderReadOnlyOptimal);
-        this._preDrawSampledImages.Clear();
+        this.TransitionGraphicsResourceSetImages();
 
         this.EnsureRenderPassActive();
 
@@ -907,7 +975,7 @@ internal unsafe class VkCommandList : CommandList {
             if (batchEnded) {
                 if (currentBatchCount != 0) {
                     // Flush current batch.
-                    VulkanDispatch.GetApi(this.CommandBuffer).vkCmdBindDescriptorSets(this.CommandBuffer, bindPoint, pipelineLayout, currentBatchFirstSet, currentBatchCount, descriptorSets, currentBatchDynamicOffsetCount, dynamicOffsets);
+                    this._deviceApi.vkCmdBindDescriptorSets(this.CommandBuffer, bindPoint, pipelineLayout, currentBatchFirstSet, currentBatchCount, descriptorSets, currentBatchDynamicOffsetCount, dynamicOffsets);
                 }
 
                 currentBatchCount = 0;
@@ -939,16 +1007,25 @@ internal unsafe class VkCommandList : CommandList {
 
             this.TransitionImages(vkSet.SampledTextures, VkImageLayout.ShaderReadOnlyOptimal);
             this.TransitionImages(vkSet.StorageTextures, VkImageLayout.General);
-
-            for (int texIdx = 0; texIdx < vkSet.StorageTextures.Count; texIdx++) {
-                VkTexture storageTex = vkSet.StorageTextures[texIdx];
-                if ((storageTex.Usage & TextureUsage.Sampled) != 0) {
-                    this._preDrawSampledImages.Add(storageTex);
-                }
-            }
         }
 
         this.FlushNewResourceSets(this._currentComputeResourceSets, this._computeResourceSetsChanged, this._currentComputePipeline.ResourceSetCount, VkPipelineBindPoint.Compute, this._currentComputePipeline.PipelineLayout);
+    }
+
+    /// <summary>
+    /// Transitions textures referenced by currently bound graphics resource sets to required layouts.
+    /// </summary>
+    private void TransitionGraphicsResourceSetImages() {
+        for (uint currentSlot = 0; currentSlot < this._currentGraphicsPipeline.ResourceSetCount; currentSlot++) {
+            BoundResourceSetInfo setInfo = this._currentGraphicsResourceSets[currentSlot];
+            if (setInfo.Set == null) {
+                continue;
+            }
+
+            VkResourceSet vkSet = Util.AssertSubtype<ResourceSet, VkResourceSet>(setInfo.Set);
+            this.TransitionImages(vkSet.SampledTextures, VkImageLayout.ShaderReadOnlyOptimal);
+            this.TransitionImages(vkSet.StorageTextures, VkImageLayout.General);
+        }
     }
 
     /// <summary>
@@ -999,7 +1076,7 @@ internal unsafe class VkCommandList : CommandList {
             renderPassBi.renderPass = this._newFramebuffer
                 ? this._currentFramebuffer.RenderPassNoClearInit
                 : this._currentFramebuffer.RenderPassNoClearLoad;
-            VulkanDispatch.GetApi(this.CommandBuffer).vkCmdBeginRenderPass(this.CommandBuffer, &renderPassBi, VkSubpassContents.Inline);
+            this._deviceApi.vkCmdBeginRenderPass(this.CommandBuffer, &renderPassBi, VkSubpassContents.Inline);
             this._activeRenderPass = renderPassBi.renderPass;
 
             if (haveAnyClearValues) {
@@ -1031,7 +1108,7 @@ internal unsafe class VkCommandList : CommandList {
                     this._depthClearValue = null;
                 }
 
-                VulkanDispatch.GetApi(this.CommandBuffer).vkCmdBeginRenderPass(this.CommandBuffer, &renderPassBi, VkSubpassContents.Inline);
+                this._deviceApi.vkCmdBeginRenderPass(this.CommandBuffer, &renderPassBi, VkSubpassContents.Inline);
                 this._activeRenderPass = this._currentFramebuffer.RenderPassClear;
                 Util.ClearArray(this._validColorClearValues);
             }
@@ -1045,13 +1122,9 @@ internal unsafe class VkCommandList : CommandList {
     /// </summary>
     private void EndCurrentRenderPass() {
         Debug.Assert(this._activeRenderPass.IsNotNull);
-        VulkanDispatch.GetApi(this.CommandBuffer).vkCmdEndRenderPass(this.CommandBuffer);
+        this._deviceApi.vkCmdEndRenderPass(this.CommandBuffer);
         this._currentFramebuffer.TransitionToIntermediateLayout(this.CommandBuffer);
         this._activeRenderPass = default;
-
-        // Place a barrier between RenderPasses, so that color / depth outputs
-        // can be read in subsequent passes.
-        VulkanDispatch.GetApi(this.CommandBuffer).vkCmdPipelineBarrier(this.CommandBuffer, VkPipelineStageFlags.BottomOfPipe, VkPipelineStageFlags.TopOfPipe, VkDependencyFlags.None, 0, null, 0, null, 0, null);
     }
 
     /// <summary>
@@ -1104,7 +1177,7 @@ internal unsafe class VkCommandList : CommandList {
                                       AccessHostReadBit |
                                       AccessHostWriteBit;
 
-        VulkanDispatch.GetApi(this.CommandBuffer).vkCmdPipelineBarrier(this.CommandBuffer, PipelineStageAllCommandsBit, // srcStageMask
+        this._deviceApi.vkCmdPipelineBarrier(this.CommandBuffer, PipelineStageAllCommandsBit, // srcStageMask
             PipelineStageAllCommandsBit, // dstStageMask
             VkDependencyFlags.None, 1, // memoryBarrierCount
             &memoryBarrier, // pMemoryBarriers
@@ -1219,7 +1292,7 @@ internal unsafe class VkCommandList : CommandList {
                 rect = new VkRect2D(0, 0, colorTex.Width, colorTex.Height)
             };
 
-            VulkanDispatch.GetApi(this.CommandBuffer).vkCmdClearAttachments(this.CommandBuffer, 1, &clearAttachment, 1, &clearRect);
+            this._deviceApi.vkCmdClearAttachments(this.CommandBuffer, 1, &clearAttachment, 1, &clearRect);
         }
         else {
             // Queue up the clear value for the next RenderPass.
@@ -1256,7 +1329,7 @@ internal unsafe class VkCommandList : CommandList {
                     rect = new VkRect2D(0, 0, renderableWidth, renderableHeight)
                 };
 
-                VulkanDispatch.GetApi(this.CommandBuffer).vkCmdClearAttachments(this.CommandBuffer, 1, &clearAttachment, 1, &clearRect);
+                this._deviceApi.vkCmdClearAttachments(this.CommandBuffer, 1, &clearAttachment, 1, &clearRect);
             }
         }
         else {
@@ -1274,7 +1347,7 @@ internal unsafe class VkCommandList : CommandList {
     /// <param name="instanceStart">The instance start value used by this operation.</param>
     private protected override void DrawCore(uint vertexCount, uint instanceCount, uint vertexStart, uint instanceStart) {
         this.PreDrawCommand();
-        VulkanDispatch.GetApi(this.CommandBuffer).vkCmdDraw(this.CommandBuffer, vertexCount, instanceCount, vertexStart, instanceStart);
+        this._deviceApi.vkCmdDraw(this.CommandBuffer, vertexCount, instanceCount, vertexStart, instanceStart);
     }
 
     /// <summary>
@@ -1287,7 +1360,7 @@ internal unsafe class VkCommandList : CommandList {
     /// <param name="instanceStart">The instance start value used by this operation.</param>
     private protected override void DrawIndexedCore(uint indexCount, uint instanceCount, uint indexStart, int vertexOffset, uint instanceStart) {
         this.PreDrawCommand();
-        VulkanDispatch.GetApi(this.CommandBuffer).vkCmdDrawIndexed(this.CommandBuffer, indexCount, instanceCount, indexStart, vertexOffset, instanceStart);
+        this._deviceApi.vkCmdDrawIndexed(this.CommandBuffer, indexCount, instanceCount, indexStart, vertexOffset, instanceStart);
     }
 
     /// <summary>
@@ -1309,7 +1382,7 @@ internal unsafe class VkCommandList : CommandList {
             throw new VeldridException($"Push constants exceed the backend limit of {this._gd.MaxPushConstantsSize} bytes.");
         }
 
-        VulkanDispatch.GetApi(this.CommandBuffer).vkCmdPushConstants(this.CommandBuffer, activePipeline.PipelineLayout, activePipeline.PushConstantStages, offset, sizeInBytes, (void*)data);
+        this._deviceApi.vkCmdPushConstants(this.CommandBuffer, activePipeline.PipelineLayout, activePipeline.PushConstantStages, offset, sizeInBytes, (void*)data);
     }
 
     /// <summary>
@@ -1320,9 +1393,18 @@ internal unsafe class VkCommandList : CommandList {
     /// <param name="offset">The byte offset used by this operation.</param>
     private protected override void SetVertexBufferCore(uint index, DeviceBuffer buffer, uint offset) {
         VkBuffer vkBuffer = Util.AssertSubtype<DeviceBuffer, VkBuffer>(buffer);
+        Util.EnsureArrayMinimumSize(ref this._boundVertexBuffers, index + 1);
+        Util.EnsureArrayMinimumSize(ref this._boundVertexBufferOffsets, index + 1);
+
+        if (ReferenceEquals(this._boundVertexBuffers[index], vkBuffer) && this._boundVertexBufferOffsets[index] == offset) {
+            return;
+        }
+
         global::Vortice.Vulkan.VkBuffer deviceBuffer = vkBuffer.DeviceBuffer;
         ulong offset64 = offset;
-        VulkanDispatch.GetApi(this.CommandBuffer).vkCmdBindVertexBuffers(this.CommandBuffer, index, 1, &deviceBuffer, &offset64);
+        this._deviceApi.vkCmdBindVertexBuffers(this.CommandBuffer, index, 1, &deviceBuffer, &offset64);
+        this._boundVertexBuffers[index] = vkBuffer;
+        this._boundVertexBufferOffsets[index] = offset;
         this._currentStagingInfo.Resources.Add(vkBuffer.RefCount);
     }
 
@@ -1334,7 +1416,18 @@ internal unsafe class VkCommandList : CommandList {
     /// <param name="offset">The byte offset used by this operation.</param>
     private protected override void SetIndexBufferCore(DeviceBuffer buffer, IndexFormat format, uint offset) {
         VkBuffer vkBuffer = Util.AssertSubtype<DeviceBuffer, VkBuffer>(buffer);
-        VulkanDispatch.GetApi(this.CommandBuffer).vkCmdBindIndexBuffer(this.CommandBuffer, vkBuffer.DeviceBuffer, offset, VkFormats.VdToVkIndexFormat(format));
+        if (this._hasBoundIndexBuffer
+            && ReferenceEquals(this._boundIndexBuffer, vkBuffer)
+            && this._boundIndexBufferOffset == offset
+            && this._boundIndexFormat == format) {
+            return;
+        }
+
+        this._deviceApi.vkCmdBindIndexBuffer(this.CommandBuffer, vkBuffer.DeviceBuffer, offset, VkFormats.VdToVkIndexFormat(format));
+        this._boundIndexBuffer = vkBuffer;
+        this._boundIndexBufferOffset = offset;
+        this._boundIndexFormat = format;
+        this._hasBoundIndexBuffer = true;
         this._currentStagingInfo.Resources.Add(vkBuffer.RefCount);
     }
 
@@ -1345,19 +1438,39 @@ internal unsafe class VkCommandList : CommandList {
     private protected override void SetPipelineCore(Pipeline pipeline) {
         VkPipeline vkPipeline = Util.AssertSubtype<Pipeline, VkPipeline>(pipeline);
 
-        if (!pipeline.IsComputePipeline && this._currentGraphicsPipeline != pipeline) {
+        if (!pipeline.IsComputePipeline) {
+            if (ReferenceEquals(this._currentGraphicsPipeline, vkPipeline)) {
+                return;
+            }
+
             Util.EnsureArrayMinimumSize(ref this._currentGraphicsResourceSets, vkPipeline.ResourceSetCount);
-            this.ClearSets(this._currentGraphicsResourceSets);
             Util.EnsureArrayMinimumSize(ref this._graphicsResourceSetsChanged, vkPipeline.ResourceSetCount);
-            VulkanDispatch.GetApi(this.CommandBuffer).vkCmdBindPipeline(this.CommandBuffer, VkPipelineBindPoint.Graphics, vkPipeline.DevicePipeline);
+            bool graphicsPipelineLayoutChanged = this._currentGraphicsPipeline == null
+                                                || this._currentGraphicsPipeline.PipelineLayout != vkPipeline.PipelineLayout;
+
+            if (graphicsPipelineLayoutChanged) {
+                this.ClearSets(this._currentGraphicsResourceSets);
+            }
+
+            this._deviceApi.vkCmdBindPipeline(this.CommandBuffer, VkPipelineBindPoint.Graphics, vkPipeline.DevicePipeline);
             this._currentGraphicsPipeline = vkPipeline;
             this._currentPushConstantBindPoint = VkPipelineBindPoint.Graphics;
         }
-        else if (pipeline.IsComputePipeline && this._currentComputePipeline != pipeline) {
+        else {
+            if (ReferenceEquals(this._currentComputePipeline, vkPipeline)) {
+                return;
+            }
+
             Util.EnsureArrayMinimumSize(ref this._currentComputeResourceSets, vkPipeline.ResourceSetCount);
-            this.ClearSets(this._currentComputeResourceSets);
             Util.EnsureArrayMinimumSize(ref this._computeResourceSetsChanged, vkPipeline.ResourceSetCount);
-            VulkanDispatch.GetApi(this.CommandBuffer).vkCmdBindPipeline(this.CommandBuffer, VkPipelineBindPoint.Compute, vkPipeline.DevicePipeline);
+            bool computePipelineLayoutChanged = this._currentComputePipeline == null
+                                               || this._currentComputePipeline.PipelineLayout != vkPipeline.PipelineLayout;
+
+            if (computePipelineLayoutChanged) {
+                this.ClearSets(this._currentComputeResourceSets);
+            }
+
+            this._deviceApi.vkCmdBindPipeline(this.CommandBuffer, VkPipelineBindPoint.Compute, vkPipeline.DevicePipeline);
             this._currentComputePipeline = vkPipeline;
             this._currentPushConstantBindPoint = VkPipelineBindPoint.Compute;
         }
@@ -1411,7 +1524,7 @@ internal unsafe class VkCommandList : CommandList {
             region.dstOffsets[0] = new VkOffset3D();
             region.dstOffsets[1] = new VkOffset3D { x = (int)mipWidth, y = (int)mipHeight, z = (int)mipDepth };
 
-            VulkanDispatch.GetApi(this.CommandBuffer).vkCmdBlitImage(this.CommandBuffer, deviceImage, VkImageLayout.TransferSrcOptimal, deviceImage, VkImageLayout.TransferDstOptimal, 1, &region, this._gd.GetFormatFilter(vkTex.VkFormat));
+            this._deviceApi.vkCmdBlitImage(this.CommandBuffer, deviceImage, VkImageLayout.TransferSrcOptimal, deviceImage, VkImageLayout.TransferDstOptimal, 1, &region, this._gd.GetFormatFilter(vkTex.VkFormat));
 
             width = mipWidth;
             height = mipHeight;

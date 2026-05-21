@@ -56,6 +56,11 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     private static readonly bool _persistentPipelineCacheEnabled = !string.Equals(Environment.GetEnvironmentVariable("VELDRID_VK_PIPELINE_CACHE"), "0", StringComparison.Ordinal);
 
     /// <summary>
+    /// Enables lightweight Vulkan frame timing diagnostics.
+    /// </summary>
+    internal static readonly bool PerfLogEnabled = IsEnvironmentEnabled("VELDRID_VK_PERF");
+
+    /// <summary>
     /// Stores the persistent Vulkan pipeline cache directory.
     /// </summary>
     private static readonly string _persistentPipelineCacheDirectory = Path.Combine(
@@ -99,6 +104,31 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     private readonly VkSwapchain _mainSwapchain;
 
     /// <summary>
+    /// Accumulates Vulkan submit time for diagnostics.
+    /// </summary>
+    private double _perfSubmitMs;
+
+    /// <summary>
+    /// Accumulates Vulkan present time for diagnostics.
+    /// </summary>
+    private double _perfPresentMs;
+
+    /// <summary>
+    /// Accumulates Vulkan acquire time for diagnostics.
+    /// </summary>
+    private double _perfAcquireMs;
+
+    /// <summary>
+    /// Counts frames in the current Vulkan diagnostics window.
+    /// </summary>
+    private int _perfFrameCount;
+
+    /// <summary>
+    /// Tracks the previous diagnostics report timestamp.
+    /// </summary>
+    private long _perfLastReportTicks;
+
+    /// <summary>
     /// Stores the shared graphics command pools collection used by this instance.
     /// </summary>
     private readonly Stack<SharedCommandPool> _sharedGraphicsCommandPools = new();
@@ -126,12 +156,32 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// <summary>
     /// Stores the submitted staging buffers collection used by this instance.
     /// </summary>
-    private readonly Dictionary<VkCommandBuffer, VkBuffer> _submittedStagingBuffers = new();
+    private readonly Dictionary<VkCommandBuffer, List<VkBuffer>> _submittedStagingBuffers = new();
 
     /// <summary>
     /// Stores the submitted staging textures collection used by this instance.
     /// </summary>
     private readonly Dictionary<VkCommandBuffer, VkTexture> _submittedStagingTextures = new();
+
+    /// <summary>
+    /// Synchronizes immediate Vulkan upload recording.
+    /// </summary>
+    private readonly object _immediateUploadLock = new();
+
+    /// <summary>
+    /// Stores an open shared command pool used for batched immediate uploads.
+    /// </summary>
+    private SharedCommandPool _immediateUploadPool;
+
+    /// <summary>
+    /// Stores an open command buffer used for batched immediate uploads.
+    /// </summary>
+    private VkCommandBuffer _immediateUploadCb;
+
+    /// <summary>
+    /// Stores staging buffers referenced by the open immediate upload command buffer.
+    /// </summary>
+    private readonly List<VkBuffer> _immediateUploadStagingBuffers = new();
 
     /// <summary>
     /// Stores the surface extensions state used by this instance.
@@ -283,6 +333,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
         if (scDesc != null) {
             SwapchainDescription desc = scDesc.Value;
             this._mainSwapchain = new VkSwapchain(this, ref desc, surface);
+            this._perfLastReportTicks = Stopwatch.GetTimestamp();
         }
 
         this.createDescriptorPool();
@@ -1124,13 +1175,18 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
                 this._availableStagingTextures.Add(stagingTex);
             }
 
-            if (this._submittedStagingBuffers.Remove(completedCb, out VkBuffer stagingBuffer)) {
-                if (stagingBuffer.SizeInBytes <= _max_staging_buffer_size) {
-                    this._availableStagingBuffers.Add(stagingBuffer);
+            if (this._submittedStagingBuffers.Remove(completedCb, out List<VkBuffer> stagingBuffers)) {
+                for (int i = 0; i < stagingBuffers.Count; i++) {
+                    VkBuffer stagingBuffer = stagingBuffers[i];
+                    if (stagingBuffer.SizeInBytes <= _max_staging_buffer_size) {
+                        this._availableStagingBuffers.Add(stagingBuffer);
+                    }
+                    else {
+                        stagingBuffer.Dispose();
+                    }
                 }
-                else {
-                    stagingBuffer.Dispose();
-                }
+
+                stagingBuffers.Clear();
             }
 
             if (this._submittedSharedCommandPools.Remove(completedCb, out SharedCommandPool sharedPool)) {
@@ -1144,6 +1200,38 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Reports lightweight Vulkan frame timing diagnostics.
+    /// </summary>
+    /// <param name="swapchain">The swapchain used for the frame.</param>
+    private void ReportPerf(VkSwapchain swapchain) {
+        this._perfFrameCount++;
+        long nowTicks = Stopwatch.GetTimestamp();
+        double windowMs = TicksToMilliseconds(nowTicks - this._perfLastReportTicks);
+        if (windowMs < 1000.0) {
+            return;
+        }
+
+        double invFrames = this._perfFrameCount == 0 ? 0.0 : 1.0 / this._perfFrameCount;
+        double fps = this._perfFrameCount * 1000.0 / windowMs;
+        Console.WriteLine($"[VK PERF] fps={fps:F0}, presentMode={swapchain.PresentMode}, submit={this._perfSubmitMs * invFrames:F3}ms, present={this._perfPresentMs * invFrames:F3}ms, acquire={this._perfAcquireMs * invFrames:F3}ms");
+
+        this._perfSubmitMs = 0.0;
+        this._perfPresentMs = 0.0;
+        this._perfAcquireMs = 0.0;
+        this._perfFrameCount = 0;
+        this._perfLastReportTicks = nowTicks;
+    }
+
+    /// <summary>
+    /// Converts high-resolution stopwatch ticks to milliseconds.
+    /// </summary>
+    /// <param name="ticks">The stopwatch ticks to convert.</param>
+    /// <returns>The converted duration in milliseconds.</returns>
+    private static double TicksToMilliseconds(long ticks) {
+        return ticks * 1000.0 / Stopwatch.Frequency;
     }
 
     /// <summary>
@@ -1379,10 +1467,31 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
         VkPhysicalDevice[] physicalDevices = new VkPhysicalDevice[deviceCount];
         this._instanceApi.vkEnumeratePhysicalDevices(physicalDevices.AsSpan());
         VulkanDispatch.RegisterPhysicalDevices(this._instanceApi, physicalDevices, deviceCount);
-        // Just use the first one.
-        this.PhysicalDevice = physicalDevices[0];
+        VkPhysicalDevice selectedPhysicalDevice = default;
+        VkPhysicalDeviceProperties selectedProperties = default;
+        int selectedScore = int.MinValue;
 
-        this._instanceApi.vkGetPhysicalDeviceProperties(this.PhysicalDevice, out this._physicalDeviceProperties);
+        foreach (VkPhysicalDevice physicalDevice in physicalDevices) {
+            if (!this.hasGraphicsQueueFamily(physicalDevice)) {
+                continue;
+            }
+
+            this._instanceApi.vkGetPhysicalDeviceProperties(physicalDevice, out VkPhysicalDeviceProperties properties);
+            int score = getPhysicalDeviceScore(properties);
+            if (score > selectedScore) {
+                selectedScore = score;
+                selectedPhysicalDevice = physicalDevice;
+                selectedProperties = properties;
+            }
+        }
+
+        if (selectedScore == int.MinValue) {
+            throw new InvalidOperationException("No Vulkan physical device with a graphics queue was found.");
+        }
+
+        this.PhysicalDevice = selectedPhysicalDevice;
+        this._physicalDeviceProperties = selectedProperties;
+
         fixed (byte* utf8NamePtr = this._physicalDeviceProperties.deviceName) {
             this._deviceName = Encoding.UTF8.GetString(utf8NamePtr, (int)MaxPhysicalDeviceNameSize).TrimEnd('\0');
         }
@@ -1394,6 +1503,51 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
         this._instanceApi.vkGetPhysicalDeviceFeatures(this.PhysicalDevice, out this._physicalDeviceFeatures);
 
         this._instanceApi.vkGetPhysicalDeviceMemoryProperties(this.PhysicalDevice, out this._physicalDeviceMemProperties);
+    }
+
+    /// <summary>
+    /// Checks whether a physical device exposes at least one graphics-capable queue family.
+    /// </summary>
+    /// <param name="physicalDevice">The physical device to inspect.</param>
+    /// <returns><see langword="true" /> if a graphics queue exists; otherwise, <see langword="false" />.</returns>
+    private bool hasGraphicsQueueFamily(VkPhysicalDevice physicalDevice) {
+        uint queueFamilyCount = 0;
+        this._instanceApi.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, null);
+        if (queueFamilyCount == 0) {
+            return false;
+        }
+
+        VkQueueFamilyProperties[] queueFamilies = new VkQueueFamilyProperties[queueFamilyCount];
+        fixed (VkQueueFamilyProperties* queueFamiliesPtr = queueFamilies) {
+            this._instanceApi.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, queueFamiliesPtr);
+        }
+
+        for (int i = 0; i < queueFamilies.Length; i++) {
+            if ((queueFamilies[i].queueFlags & VkQueueFlags.Graphics) != 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Computes a simple preference score used to pick the default Vulkan physical device.
+    /// </summary>
+    /// <param name="properties">The physical device properties.</param>
+    /// <returns>A higher score indicates a stronger default candidate.</returns>
+    private static int getPhysicalDeviceScore(in VkPhysicalDeviceProperties properties) {
+        int score = properties.deviceType switch {
+            VkPhysicalDeviceType.DiscreteGpu => 5000,
+            VkPhysicalDeviceType.IntegratedGpu => 4000,
+            VkPhysicalDeviceType.VirtualGpu => 3000,
+            VkPhysicalDeviceType.Cpu => 1000,
+            _ => 2000
+        };
+
+        // Slightly prefer devices reporting larger image limits among same class.
+        score += (int)Math.Min(properties.limits.maxImageDimension2D, 8192u);
+        return score;
     }
 
     /// <summary>
@@ -1599,28 +1753,52 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
             this._instanceApi.vkGetPhysicalDeviceQueueFamilyProperties(this.PhysicalDevice, &queueFamilyCount, qfpPtr);
         }
 
-        bool foundGraphics = false;
-        bool foundPresent = surface.IsNull;
+        // Prefer a single queue family that supports both graphics and present to avoid
+        // cross-queue synchronization and concurrent swapchain sharing.
+        if (surface.IsNotNull) {
+            for (uint i = 0; i < qfp.Length; i++) {
+                if ((qfp[i].queueFlags & VkQueueFlags.Graphics) == 0) {
+                    continue;
+                }
+
+                this._instanceApi.vkGetPhysicalDeviceSurfaceSupportKHR(this.PhysicalDevice, i, surface, out VkBool32 presentSupported);
+                if (presentSupported) {
+                    this.GraphicsQueueIndex = i;
+                    this.PresentQueueIndex = i;
+                    if (PerfLogEnabled) {
+                        Console.WriteLine($"[VK PERF] queueFamilies selected graphics={this.GraphicsQueueIndex}, present={this.PresentQueueIndex} (shared)");
+                    }
+                    return;
+                }
+            }
+        }
+
+        uint? graphicsIndex = null;
+        uint? presentIndex = surface.IsNull ? 0u : null;
 
         for (uint i = 0; i < qfp.Length; i++) {
-            if ((qfp[i].queueFlags & VkQueueFlags.Graphics) != 0) {
-                this.GraphicsQueueIndex = i;
-                foundGraphics = true;
+            if (graphicsIndex == null && (qfp[i].queueFlags & VkQueueFlags.Graphics) != 0) {
+                graphicsIndex = i;
             }
 
-            if (!foundPresent) {
+            if (presentIndex == null) {
                 this._instanceApi.vkGetPhysicalDeviceSurfaceSupportKHR(this.PhysicalDevice, i, surface, out VkBool32 presentSupported);
-
                 if (presentSupported) {
-                    this.PresentQueueIndex = i;
-                    foundPresent = true;
+                    presentIndex = i;
                 }
             }
 
-            if (foundGraphics && foundPresent) {
+            if (graphicsIndex != null && presentIndex != null) {
+                this.GraphicsQueueIndex = graphicsIndex.Value;
+                this.PresentQueueIndex = presentIndex.Value;
+                if (PerfLogEnabled) {
+                    Console.WriteLine($"[VK PERF] queueFamilies selected graphics={this.GraphicsQueueIndex}, present={this.PresentQueueIndex} (split)");
+                }
                 return;
             }
         }
+
+        throw new VeldridException("Failed to find Vulkan queue families for graphics/present.");
     }
 
     /// <summary>
@@ -1655,6 +1833,47 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
         }
 
         return sharedPool ?? new SharedCommandPool(this, false);
+    }
+
+    /// <summary>
+    /// Ensures a command buffer is open for batched immediate uploads.
+    /// </summary>
+    private void EnsureImmediateUploadCommandBuffer() {
+        if (this._immediateUploadCb.IsNull) {
+            this._immediateUploadPool = this.getFreeCommandPool();
+            this._immediateUploadCb = this._immediateUploadPool.BeginNewCommandBuffer();
+        }
+    }
+
+    /// <summary>
+    /// Submits any buffered immediate upload commands.
+    /// </summary>
+    private void FlushImmediateUploads() {
+        VkCommandBuffer uploadCb = default;
+        SharedCommandPool uploadPool = null;
+        List<VkBuffer> uploadStagingBuffers = null;
+
+        lock (this._immediateUploadLock) {
+            if (this._immediateUploadCb.IsNull) {
+                return;
+            }
+
+            uploadCb = this._immediateUploadCb;
+            uploadPool = this._immediateUploadPool;
+            this._immediateUploadCb = default;
+            this._immediateUploadPool = null;
+            uploadStagingBuffers = new List<VkBuffer>(this._immediateUploadStagingBuffers);
+            this._immediateUploadStagingBuffers.Clear();
+        }
+
+        VkResult endResult = VulkanDispatch.GetApi(uploadCb).vkEndCommandBuffer(uploadCb);
+        CheckResult(endResult);
+        this.submitCommandBuffer(null, uploadCb, 0, null, 0, null, null);
+
+        lock (this._stagingResourcesLock) {
+            this._submittedSharedCommandPools.Add(uploadCb, uploadPool);
+            this._submittedStagingBuffers.Add(uploadCb, uploadStagingBuffers);
+        }
     }
 
     /// <summary>
@@ -1743,7 +1962,32 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// <param name="cl">The cl value used by this operation.</param>
     /// <param name="fence">The synchronization fence used by this operation.</param>
     private protected override void SubmitCommandsCore(CommandList cl, Fence fence) {
+        long startTicks = PerfLogEnabled ? Stopwatch.GetTimestamp() : 0;
+        this.FlushImmediateUploads();
+
+        if (this._mainSwapchain != null
+            && cl is VkCommandList vkCommandList
+            && vkCommandList.UsesSwapchainFramebuffer) {
+            VkSemaphore waitSemaphore = this._mainSwapchain.ImageAvailableSemaphore;
+            if (this._mainSwapchain.PresentQueueIndex == this.GraphicsQueueIndex) {
+                this.submitCommandList(cl, 1, &waitSemaphore, 0, null, fence);
+            }
+            else {
+                VkSemaphore signalSemaphore = this._mainSwapchain.RenderFinishedSemaphore;
+                this.submitCommandList(cl, 1, &waitSemaphore, 1, &signalSemaphore, fence);
+            }
+
+            if (PerfLogEnabled) {
+                this._perfSubmitMs += TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
+            }
+
+            return;
+        }
+
         this.submitCommandList(cl, 0, null, 0, null, fence);
+        if (PerfLogEnabled) {
+            this._perfSubmitMs += TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
+        }
     }
 
     /// <summary>
@@ -1751,6 +1995,8 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// </summary>
     /// <param name="swapchain">The swapchain used by this operation.</param>
     private protected override void SwapBuffersCore(Swapchain swapchain) {
+        this.FlushImmediateUploads();
+
         VkSwapchain vkSc = Util.AssertSubtype<Swapchain, VkSwapchain>(swapchain);
         VkSwapchainKHR deviceSwapchain = vkSc.DeviceSwapchain;
         VkPresentInfoKHR presentInfo = new VkPresentInfoKHR();
@@ -1758,24 +2004,47 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
         presentInfo.pSwapchains = &deviceSwapchain;
         uint imageIndex = vkSc.ImageIndex;
         presentInfo.pImageIndices = &imageIndex;
+        VkSemaphore waitSemaphore = vkSc.RenderFinishedSemaphore;
+        if (vkSc.PresentQueueIndex != this.GraphicsQueueIndex) {
+            presentInfo.waitSemaphoreCount = 1;
+            presentInfo.pWaitSemaphores = &waitSemaphore;
+        }
 
         object presentLock = vkSc.PresentQueueIndex == this.GraphicsQueueIndex ? this._graphicsQueueLock : vkSc;
 
         lock (presentLock) {
+            long presentStartTicks = PerfLogEnabled ? Stopwatch.GetTimestamp() : 0;
             VulkanDispatch.GetApi(vkSc.PresentQueue).vkQueuePresentKHR(vkSc.PresentQueue, &presentInfo);
+            if (PerfLogEnabled) {
+                this._perfPresentMs += TicksToMilliseconds(Stopwatch.GetTimestamp() - presentStartTicks);
+            }
 
-            if (vkSc.AcquireNextImage(this._device, default, vkSc.ImageAvailableFence)) {
-                global::Vortice.Vulkan.VkFence fence = vkSc.ImageAvailableFence;
-                this.DeviceApi.vkWaitForFences(fence, true, ulong.MaxValue);
-                this.DeviceApi.vkResetFences(fence);
+            long acquireStartTicks = PerfLogEnabled ? Stopwatch.GetTimestamp() : 0;
+            vkSc.AcquireNextImage(this._device, vkSc.ImageAvailableSemaphore, default);
+            if (PerfLogEnabled) {
+                this._perfAcquireMs += TicksToMilliseconds(Stopwatch.GetTimestamp() - acquireStartTicks);
+                this.ReportPerf(vkSc);
             }
         }
+    }
+
+    /// <summary>
+    /// Reads a boolean diagnostic environment variable.
+    /// </summary>
+    /// <param name="name">The environment variable name.</param>
+    /// <returns><see langword="true" /> when the variable is enabled; otherwise, <see langword="false" />.</returns>
+    private static bool IsEnvironmentEnabled(string name) {
+        string value = (Environment.GetEnvironmentVariable(name) ?? string.Empty).Trim().Trim('\'', '"');
+        return string.Equals(value, "1", StringComparison.Ordinal)
+               || string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
     /// Executes the wait for idle core logic for this backend.
     /// </summary>
     private protected override void WaitForIdleCore() {
+        this.FlushImmediateUploads();
+
         lock (this._graphicsQueueLock) {
             VulkanDispatch.GetApi(this._graphicsQueue).vkQueueWaitIdle(this._graphicsQueue);
         }
@@ -1824,7 +2093,6 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// <param name="sizeInBytes">The size, in bytes, used by this operation.</param>
     private protected override void UpdateBufferCore(DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes) {
         VkBuffer vkBuffer = Util.AssertSubtype<DeviceBuffer, VkBuffer>(buffer);
-        VkBuffer copySrcVkBuffer = null;
         IntPtr mappedPtr;
         byte* destPtr;
         bool isPersistentMapped = vkBuffer.Memory.IsPersistentMapped;
@@ -1834,28 +2102,25 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
             destPtr = (byte*)mappedPtr + bufferOffsetInBytes;
         }
         else {
-            copySrcVkBuffer = this.getFreeStagingBuffer(sizeInBytes);
+            VkBuffer copySrcVkBuffer = this.getFreeStagingBuffer(sizeInBytes);
             mappedPtr = (IntPtr)copySrcVkBuffer.Memory.BlockMappedPointer;
             destPtr = (byte*)mappedPtr;
+            Unsafe.CopyBlock(destPtr, source.ToPointer(), sizeInBytes);
+
+            lock (this._immediateUploadLock) {
+                this.EnsureImmediateUploadCommandBuffer();
+                VkBufferCopy copyRegion = new() {
+                    dstOffset = bufferOffsetInBytes,
+                    size = sizeInBytes
+                };
+                VulkanDispatch.GetApi(this._immediateUploadCb).vkCmdCopyBuffer(this._immediateUploadCb, copySrcVkBuffer.DeviceBuffer, vkBuffer.DeviceBuffer, 1, &copyRegion);
+                this._immediateUploadStagingBuffers.Add(copySrcVkBuffer);
+            }
+
+            return;
         }
 
         Unsafe.CopyBlock(destPtr, source.ToPointer(), sizeInBytes);
-
-        if (!isPersistentMapped) {
-            SharedCommandPool pool = this.getFreeCommandPool();
-            VkCommandBuffer cb = pool.BeginNewCommandBuffer();
-
-            VkBufferCopy copyRegion = new() {
-                dstOffset = bufferOffsetInBytes,
-                size = sizeInBytes
-            };
-            VulkanDispatch.GetApi(cb).vkCmdCopyBuffer(cb, copySrcVkBuffer.DeviceBuffer, vkBuffer.DeviceBuffer, 1, &copyRegion);
-
-            pool.EndAndSubmit(cb);
-            lock (this._stagingResourcesLock) {
-                this._submittedStagingBuffers.Add(cb, copySrcVkBuffer);
-            }
-        }
     }
 
     /// <summary>
