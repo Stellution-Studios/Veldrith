@@ -1497,7 +1497,7 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
         }
 
         this._vendorName = "id:" + this._physicalDeviceProperties.vendorID.ToString("x8");
-        this._apiVersion = GraphicsApiVersion.Unknown;
+        this._apiVersion = getGraphicsApiVersion(this._physicalDeviceProperties.apiVersion);
         this.DriverInfo = "version:" + this._physicalDeviceProperties.driverVersion.ToString("x8");
 
         this._instanceApi.vkGetPhysicalDeviceFeatures(this.PhysicalDevice, out this._physicalDeviceFeatures);
@@ -1548,6 +1548,22 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
         // Slightly prefer devices reporting larger image limits among same class.
         score += (int)Math.Min(properties.limits.maxImageDimension2D, 8192u);
         return score;
+    }
+
+    /// <summary>
+    /// Converts a packed Vulkan API version into a <see cref="GraphicsApiVersion" />.
+    /// </summary>
+    /// <param name="vkVersion">The packed Vulkan API version.</param>
+    /// <returns>The converted API version.</returns>
+    private static GraphicsApiVersion getGraphicsApiVersion(uint vkVersion) {
+        if (vkVersion == 0) {
+            return GraphicsApiVersion.Unknown;
+        }
+
+        int major = (int)((vkVersion >> 22) & 0x3FF);
+        int minor = (int)((vkVersion >> 12) & 0x3FF);
+        int patch = (int)(vkVersion & 0xFFF);
+        return new GraphicsApiVersion(major, minor, 0, patch);
     }
 
     /// <summary>
@@ -1690,8 +1706,6 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
 
             string driverInfo = Encoding.UTF8.GetString(driverProps.DriverInfo, VkPhysicalDeviceDriverProperties.DRIVER_INFO_LENGTH).TrimEnd('\0');
 
-            VkConformanceVersion conforming = driverProps.ConformanceVersion;
-            this._apiVersion = new GraphicsApiVersion(conforming.Major, conforming.Minor, conforming.Subminor, conforming.Patch);
             this.DriverName = driverName;
             this.DriverInfo = driverInfo;
         }
