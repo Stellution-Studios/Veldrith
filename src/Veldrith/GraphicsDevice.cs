@@ -97,6 +97,11 @@ public abstract class GraphicsDevice : IDisposable {
     /// Gets a <see cref="Framebuffer" /> object representing the render targets of the main swapchain.
     /// </summary>
     public Framebuffer SwapchainFramebuffer => this.MainSwapchain?.Framebuffer;
+    
+    /// <summary>
+    /// Indicates whether the object has already been disposed.
+    /// </summary>
+    private bool _disposed;
 
     /// <summary>
     /// Gets a simple 4x anisotropic-filtered <see cref="Sampler" /> object owned by this instance.
@@ -147,6 +152,11 @@ public abstract class GraphicsDevice : IDisposable {
     /// Releases resources held by this instance.
     /// </summary>
     public void Dispose() {
+        if (this._disposed) {
+            return;
+        }
+        this._disposed = true;
+        
         this.WaitForIdle();
         this.PointSampler.Dispose();
         this.LinearSampler.Dispose();
