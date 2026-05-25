@@ -99,6 +99,11 @@ public abstract class GraphicsDevice : IDisposable {
     public Framebuffer SwapchainFramebuffer => this.MainSwapchain?.Framebuffer;
     
     /// <summary>
+    /// A bool indicating whether this instance has been disposed.
+    /// </summary>
+    public bool IsDisposed => this._disposed;
+    
+    /// <summary>
     /// Indicates whether the object has already been disposed.
     /// </summary>
     private bool _disposed;
