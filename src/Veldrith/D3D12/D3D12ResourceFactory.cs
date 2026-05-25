@@ -10,7 +10,7 @@ internal sealed class D3D12ResourceFactory : ResourceFactory {
     /// <summary>
     /// Stores the gd state used by this instance.
     /// </summary>
-    private readonly D3D12GraphicsDevice gd;
+    private readonly D3D12GraphicsDevice _gd;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="D3D12ResourceFactory" /> class.
@@ -18,7 +18,7 @@ internal sealed class D3D12ResourceFactory : ResourceFactory {
     /// <param name="gd">The graphics device that owns this operation.</param>
     /// <param name="features">The features value used by this operation.</param>
     public D3D12ResourceFactory(D3D12GraphicsDevice gd, GraphicsDeviceFeatures features) : base(features) {
-        this.gd = gd;
+        this._gd = gd;
     }
 
     /// <summary>
@@ -40,7 +40,7 @@ internal sealed class D3D12ResourceFactory : ResourceFactory {
         }
 
         double elapsedMs = (Stopwatch.GetTimestamp() - startTicks) * 1000.0 / Stopwatch.Frequency;
-        this.gd.RecordResourceCreationPerf(kind, elapsedMs);
+        this._gd.RecordResourceCreationPerf(kind, elapsedMs);
     }
 
     /// <summary>
@@ -56,7 +56,7 @@ internal sealed class D3D12ResourceFactory : ResourceFactory {
     public override Pipeline CreateComputePipeline(ref ComputePipelineDescription description) {
         long startTicks = GetPerfStartTicks();
         try {
-            return new D3D12Pipeline(this.gd, ref description);
+            return new D3D12Pipeline(this._gd, ref description);
         }
         finally {
             this.RecordCreationPerf(D3D12ResourceCreationKind.Pipeline, startTicks);
@@ -69,7 +69,7 @@ internal sealed class D3D12ResourceFactory : ResourceFactory {
     /// <param name="description">The description used to configure this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     public override Framebuffer CreateFramebuffer(ref FramebufferDescription description) {
-        return new D3D12Framebuffer(this.gd, ref description);
+        return new D3D12Framebuffer(this._gd, ref description);
     }
 
     /// <summary>
@@ -78,7 +78,7 @@ internal sealed class D3D12ResourceFactory : ResourceFactory {
     /// <param name="description">The description used to configure this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     public override CommandList CreateCommandList(ref CommandListDescription description) {
-        return new D3D12CommandList(this.gd, ref description, this.gd.Features, this.gd.UniformBufferMinOffsetAlignment, this.gd.StructuredBufferMinOffsetAlignment);
+        return new D3D12CommandList(this._gd, ref description, this._gd.Features, this._gd.UniformBufferMinOffsetAlignment, this._gd.StructuredBufferMinOffsetAlignment);
     }
 
     /// <summary>
@@ -98,7 +98,7 @@ internal sealed class D3D12ResourceFactory : ResourceFactory {
     public override ResourceSet CreateResourceSet(ref ResourceSetDescription description) {
         long startTicks = GetPerfStartTicks();
         try {
-            return new D3D12ResourceSet(this.gd, ref description);
+            return new D3D12ResourceSet(this._gd, ref description);
         }
         finally {
             this.RecordCreationPerf(D3D12ResourceCreationKind.ResourceSet, startTicks);
@@ -111,7 +111,7 @@ internal sealed class D3D12ResourceFactory : ResourceFactory {
     /// <param name="signaled">The signaled value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     public override Fence CreateFence(bool signaled) {
-        return new D3D12Fence(this.gd, signaled);
+        return new D3D12Fence(this._gd, signaled);
     }
 
     /// <summary>
@@ -120,7 +120,7 @@ internal sealed class D3D12ResourceFactory : ResourceFactory {
     /// <param name="description">The description used to configure this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     public override Swapchain CreateSwapchain(ref SwapchainDescription description) {
-        return new D3D12Swapchain(this.gd, ref description);
+        return new D3D12Swapchain(this._gd, ref description);
     }
 
     /// <summary>
@@ -131,7 +131,7 @@ internal sealed class D3D12ResourceFactory : ResourceFactory {
     protected override Pipeline CreateGraphicsPipelineCore(ref GraphicsPipelineDescription description) {
         long startTicks = GetPerfStartTicks();
         try {
-            return new D3D12Pipeline(this.gd, ref description);
+            return new D3D12Pipeline(this._gd, ref description);
         }
         finally {
             this.RecordCreationPerf(D3D12ResourceCreationKind.Pipeline, startTicks);
@@ -147,7 +147,7 @@ internal sealed class D3D12ResourceFactory : ResourceFactory {
     protected override Texture CreateTextureCore(ulong nativeTexture, ref TextureDescription description) {
         long startTicks = GetPerfStartTicks();
         try {
-            return new D3D12Texture(this.gd, ref description, nativeTexture);
+            return new D3D12Texture(this._gd, ref description, nativeTexture);
         }
         finally {
             this.RecordCreationPerf(D3D12ResourceCreationKind.Texture, startTicks);
@@ -162,7 +162,7 @@ internal sealed class D3D12ResourceFactory : ResourceFactory {
     protected override Texture CreateTextureCore(ref TextureDescription description) {
         long startTicks = GetPerfStartTicks();
         try {
-            return new D3D12Texture(this.gd, ref description, null);
+            return new D3D12Texture(this._gd, ref description, null);
         }
         finally {
             this.RecordCreationPerf(D3D12ResourceCreationKind.Texture, startTicks);
@@ -175,7 +175,7 @@ internal sealed class D3D12ResourceFactory : ResourceFactory {
     /// <param name="description">The description used to configure this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     protected override TextureView CreateTextureViewCore(ref TextureViewDescription description) {
-        return new D3D12TextureView(this.gd, ref description);
+        return new D3D12TextureView(this._gd, ref description);
     }
 
     /// <summary>
@@ -186,7 +186,7 @@ internal sealed class D3D12ResourceFactory : ResourceFactory {
     protected override DeviceBuffer CreateBufferCore(ref BufferDescription description) {
         long startTicks = GetPerfStartTicks();
         try {
-            return new D3D12DeviceBuffer(this.gd, ref description);
+            return new D3D12DeviceBuffer(this._gd, ref description);
         }
         finally {
             this.RecordCreationPerf(D3D12ResourceCreationKind.Buffer, startTicks);
@@ -199,7 +199,7 @@ internal sealed class D3D12ResourceFactory : ResourceFactory {
     /// <param name="description">The description used to configure this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     protected override Sampler CreateSamplerCore(ref SamplerDescription description) {
-        return new D3D12Sampler(this.gd, ref description);
+        return new D3D12Sampler(this._gd, ref description);
     }
 
     /// <summary>

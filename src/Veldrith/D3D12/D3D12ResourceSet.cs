@@ -66,21 +66,21 @@ internal sealed class D3D12ResourceSet : ResourceSet {
             switch (elements[i].Kind) {
                 case ResourceKind.TextureReadOnly: {
                         TextureView textureView = Util.GetTextureView(gd, resource);
-                        D3D12TextureView d3d12TextureView = Util.AssertSubtype<TextureView, D3D12TextureView>(textureView);
-                        d3d12TextureView.EnsureBindingSupport(TextureUsage.Sampled, "sampled");
-                        d3d12TextureView.GetOrCreateShaderResourceViewDescriptor();
+                        D3D12TextureView d3D12TextureView = Util.AssertSubtype<TextureView, D3D12TextureView>(textureView);
+                        d3D12TextureView.EnsureBindingSupport(TextureUsage.Sampled, "sampled");
+                        d3D12TextureView.GetOrCreateShaderResourceViewDescriptor();
                         break;
                     }
                 case ResourceKind.TextureReadWrite: {
                         TextureView textureView = Util.GetTextureView(gd, resource);
-                        D3D12TextureView d3d12TextureView = Util.AssertSubtype<TextureView, D3D12TextureView>(textureView);
-                        d3d12TextureView.EnsureBindingSupport(TextureUsage.Storage, "storage");
-                        d3d12TextureView.GetOrCreateUnorderedAccessViewDescriptor();
+                        D3D12TextureView d3D12TextureView = Util.AssertSubtype<TextureView, D3D12TextureView>(textureView);
+                        d3D12TextureView.EnsureBindingSupport(TextureUsage.Storage, "storage");
+                        d3D12TextureView.GetOrCreateUnorderedAccessViewDescriptor();
                         break;
                     }
                 case ResourceKind.Sampler: {
-                        D3D12Sampler d3d12Sampler = Util.AssertSubtype<IBindableResource, D3D12Sampler>(resource);
-                        d3d12Sampler.GetOrCreateDescriptor();
+                        D3D12Sampler d3D12Sampler = Util.AssertSubtype<IBindableResource, D3D12Sampler>(resource);
+                        d3D12Sampler.GetOrCreateDescriptor();
                         break;
                     }
             }

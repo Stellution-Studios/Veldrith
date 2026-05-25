@@ -23,46 +23,27 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// <summary>
     /// Stores the largest upload buffer size that is retained for reuse.
     /// </summary>
-    private const ulong MaxPooledUploadBufferSize = 16UL * 1024UL * 1024UL;
+    private const ulong _maxPooledUploadBufferSize = 16UL * 1024UL * 1024UL;
 
     /// <summary>
     /// Stores the size of each transient upload ring page.
     /// </summary>
-    private const ulong UploadRingPageSize = 16UL * 1024UL * 1024UL;
+    private const ulong _uploadRingPageSize = 16UL * 1024UL * 1024UL;
 
     /// <summary>
     /// Stores the total upload-buffer pool budget.
     /// </summary>
-    private const ulong MaxPooledUploadBufferBytes = 128UL * 1024UL * 1024UL;
+    private const ulong _maxPooledUploadBufferBytes = 128UL * 1024UL * 1024UL;
 
     /// <summary>
     /// Stores the number of submissions between D3D12 device performance reports.
     /// </summary>
-    private const int PerfReportIntervalSubmissions = 240;
+    private const int _perfReportIntervalSubmissions = 240;
 
     /// <summary>
     /// Stores the d3d12 features state used by this instance.
     /// </summary>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    private static readonly GraphicsDeviceFeatures _d3d12Features = new(true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, false);
+    private static readonly GraphicsDeviceFeatures _d3D12Features = new(true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, false);
 
     /// <summary>
     /// Tracks whether D3D12 performance logging is enabled for device-level upload and submit work.
@@ -77,7 +58,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// <summary>
     /// Stores the d3d12 info state used by this instance.
     /// </summary>
-    private readonly BackendInfoD3D12 _d3d12Info;
+    private readonly BackendInfoD3D12 _d3D12Info;
 
     /// <summary>
     /// Stores the device state used by this instance.
@@ -497,7 +478,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
             this.MainSwapchain = new D3D12Swapchain(this, ref scDesc);
         }
 
-        this._d3d12Info = new BackendInfoD3D12(this._device.NativePointer);
+        this._d3D12Info = new BackendInfoD3D12(this._device.NativePointer);
         if (this.MainSwapchain != null) {
             this.SyncToVerticalBlank = options.SyncToVerticalBlank;
         }
@@ -553,16 +534,16 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// <summary>
     /// Gets or sets Features.
     /// </summary>
-    public override GraphicsDeviceFeatures Features => _d3d12Features;
+    public override GraphicsDeviceFeatures Features => _d3D12Features;
 
     /// <summary>
     /// Gets or sets AllowTearing.
     /// </summary>
     public override bool AllowTearing {
-        get => this.MainSwapchain is D3D12Swapchain d3d12Swapchain && d3d12Swapchain.AllowTearing;
+        get => this.MainSwapchain is D3D12Swapchain d3D12Swapchain && d3D12Swapchain.AllowTearing;
         set {
-            if (this.MainSwapchain is D3D12Swapchain d3d12Swapchain) {
-                d3d12Swapchain.AllowTearing = value;
+            if (this.MainSwapchain is D3D12Swapchain d3D12Swapchain) {
+                d3D12Swapchain.AllowTearing = value;
             }
         }
     }
@@ -624,15 +605,15 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         this._perfSubmissions++;
         this._perfAccumSubmitMs += submitMs;
         this._perfMaxSubmitMs = Math.Max(this._perfMaxSubmitMs, submitMs);
-        if (this._perfSubmissions % PerfReportIntervalSubmissions != 0) {
+        if (this._perfSubmissions % _perfReportIntervalSubmissions != 0) {
             return;
         }
 
         double elapsedMs = this._perfStopwatch.Elapsed.TotalMilliseconds;
         double reportWindowMs = elapsedMs - this._perfLastReportMs;
         this._perfLastReportMs = elapsedMs;
-        double invSubmissions = 1.0 / PerfReportIntervalSubmissions;
-        Console.WriteLine($"[D3D12 PERF] device {PerfReportIntervalSubmissions} submits/{reportWindowMs:F0}ms avg: " + $"submitMs={this._perfAccumSubmitMs * invSubmissions:F3}, " + $"immRecordMs={this._perfAccumImmediateRecordMs * invSubmissions:F3} ({this._perfAccumImmediateRecordCalls * invSubmissions:F2}x), " + $"immFlushMs={this._perfAccumImmediateFlushMs * invSubmissions:F3} ({this._perfAccumImmediateFlushes * invSubmissions:F2}x), " + $"immExecMs={this._perfAccumImmediateExecuteMs * invSubmissions:F3} ({this._perfAccumImmediateExecutes * invSubmissions:F2}x), " + $"immWaitMs={this._perfAccumImmediateWaitMs * invSubmissions:F3}, " + $"createBuf={this._perfAccumCreateBuffers * invSubmissions:F2}/{this._perfMaxCreateBufferMs:F3}ms, " + $"createTex={this._perfAccumCreateTextures * invSubmissions:F2}/{this._perfMaxCreateTextureMs:F3}ms, " + $"createPipe={this._perfAccumCreatePipelines * invSubmissions:F2}/{this._perfMaxCreatePipelineMs:F3}ms, " + $"createSet={this._perfAccumCreateResourceSets * invSubmissions:F2}/{this._perfMaxCreateResourceSetMs:F3}ms, " + $"createShader={this._perfAccumCreateShaders * invSubmissions:F2}/{this._perfMaxCreateShaderMs:F3}ms, " + $"maxSubmitMs={this._perfMaxSubmitMs:F3}, maxImmRecordMs={this._perfMaxImmediateRecordMs:F3}, maxImmFlushMs={this._perfMaxImmediateFlushMs:F3}, " + $"maxImmExecMs={this._perfMaxImmediateExecuteMs:F3}, maxImmWaitMs={this._perfMaxImmediateWaitMs:F3}, " + $"immUploadBuf={this._perfAccumImmediateUploadBuffers * invSubmissions:F2}, " + this.MemoryManager.GetStatsString());
+        double invSubmissions = 1.0 / _perfReportIntervalSubmissions;
+        Console.WriteLine($"[D3D12 PERF] device {_perfReportIntervalSubmissions} submits/{reportWindowMs:F0}ms avg: " + $"submitMs={this._perfAccumSubmitMs * invSubmissions:F3}, " + $"immRecordMs={this._perfAccumImmediateRecordMs * invSubmissions:F3} ({this._perfAccumImmediateRecordCalls * invSubmissions:F2}x), " + $"immFlushMs={this._perfAccumImmediateFlushMs * invSubmissions:F3} ({this._perfAccumImmediateFlushes * invSubmissions:F2}x), " + $"immExecMs={this._perfAccumImmediateExecuteMs * invSubmissions:F3} ({this._perfAccumImmediateExecutes * invSubmissions:F2}x), " + $"immWaitMs={this._perfAccumImmediateWaitMs * invSubmissions:F3}, " + $"createBuf={this._perfAccumCreateBuffers * invSubmissions:F2}/{this._perfMaxCreateBufferMs:F3}ms, " + $"createTex={this._perfAccumCreateTextures * invSubmissions:F2}/{this._perfMaxCreateTextureMs:F3}ms, " + $"createPipe={this._perfAccumCreatePipelines * invSubmissions:F2}/{this._perfMaxCreatePipelineMs:F3}ms, " + $"createSet={this._perfAccumCreateResourceSets * invSubmissions:F2}/{this._perfMaxCreateResourceSetMs:F3}ms, " + $"createShader={this._perfAccumCreateShaders * invSubmissions:F2}/{this._perfMaxCreateShaderMs:F3}ms, " + $"maxSubmitMs={this._perfMaxSubmitMs:F3}, maxImmRecordMs={this._perfMaxImmediateRecordMs:F3}, maxImmFlushMs={this._perfMaxImmediateFlushMs:F3}, " + $"maxImmExecMs={this._perfMaxImmediateExecuteMs:F3}, maxImmWaitMs={this._perfMaxImmediateWaitMs:F3}, " + $"immUploadBuf={this._perfAccumImmediateUploadBuffers * invSubmissions:F2}, " + this.MemoryManager.GetStatsString());
 
         this._perfAccumImmediateFlushMs = 0;
         this._perfAccumImmediateExecuteMs = 0;
@@ -996,7 +977,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         }
 
         ulong allocationSize = AlignUp(sizeInBytes, 256UL);
-        if (allocationSize <= UploadRingPageSize) {
+        if (allocationSize <= _uploadRingPageSize) {
             lock (this._availableUploadBuffersLock) {
                 D3D12ResourceAllocation ringAllocation = this.TryRentUploadRingAllocation(allocationSize);
                 if (ringAllocation != null) {
@@ -1044,13 +1025,13 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         }
 
         ulong size = buffer.Resource.Description.Width;
-        if (size > MaxPooledUploadBufferSize) {
+        if (size > _maxPooledUploadBufferSize) {
             buffer.Dispose();
             return;
         }
 
         lock (this._availableUploadBuffersLock) {
-            if (this._availableUploadBufferBytes + size > MaxPooledUploadBufferBytes) {
+            if (this._availableUploadBufferBytes + size > _maxPooledUploadBufferBytes) {
                 buffer.Dispose();
                 return;
             }
@@ -1099,7 +1080,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
             }
         }
 
-        ResourceDescription description = ResourceDescription.Buffer(UploadRingPageSize);
+        ResourceDescription description = ResourceDescription.Buffer(_uploadRingPageSize);
         D3D12ResourceAllocation pageAllocation = this.MemoryManager.CreateResource(ref description, ResourceStates.GenericRead, HeapType.Upload, HeapFlags.AllowOnlyBuffers);
         UploadRingPage page = new(pageAllocation);
         this._uploadRingPages.Add(page);
@@ -1685,7 +1666,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// <param name="info">The info value used by this operation.</param>
     /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     public override bool GetD3D12Info(out BackendInfoD3D12 info) {
-        info = this._d3d12Info;
+        info = this._d3D12Info;
         return true;
     }
 
@@ -1702,10 +1683,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
                 while (factory6.EnumAdapterByGpuPreference(hpIndex, GpuPreference.HighPerformance, out IDXGIAdapter1 hpAdapter).Success) {
                     AdapterDescription1 hpDescription = hpAdapter.Description1;
                     bool softwareHp = (hpDescription.Flags & AdapterFlags.Software) != 0;
-                    if (!softwareHp
-                        && VorticeD3D12
-                            .D3D12CreateDevice(hpAdapter, FeatureLevel.Level_11_0, out ID3D12Device hpProbeDevice)
-                            .Success) {
+                    if (!softwareHp && VorticeD3D12.D3D12CreateDevice(hpAdapter, FeatureLevel.Level_11_0, out ID3D12Device hpProbeDevice).Success) {
                         hpProbeDevice.Dispose();
                         return hpAdapter;
                     }
@@ -1723,9 +1701,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         while (factory.EnumAdapters1(index, out IDXGIAdapter1 adapter).Success) {
             AdapterDescription1 description = adapter.Description1;
             bool software = (description.Flags & AdapterFlags.Software) != 0;
-            if (!software
-                && VorticeD3D12.D3D12CreateDevice(adapter, FeatureLevel.Level_11_0, out ID3D12Device probeDevice)
-                    .Success) {
+            if (!software && VorticeD3D12.D3D12CreateDevice(adapter, FeatureLevel.Level_11_0, out ID3D12Device probeDevice).Success) {
                 probeDevice.Dispose();
                 long dedicatedMemory = description.DedicatedVideoMemory;
                 if (dedicatedMemory > bestDedicatedMemory) {
@@ -1913,8 +1889,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         }
     }
 
-    private bool TryCheckFeatureSupport<T>(D3D12Feature feature, ref T data)
-        where T : unmanaged {
+    private bool TryCheckFeatureSupport<T>(D3D12Feature feature, ref T data) where T : unmanaged {
         return this._device.CheckFeatureSupport(feature, ref data);
     }
 
@@ -2012,8 +1987,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
             return;
         }
 
-        this._immediateCopyFence
-            .SetEventOnCompletion(value, this._immediateCopyFenceEvent.SafeWaitHandle.DangerousGetHandle()).CheckError();
+        this._immediateCopyFence.SetEventOnCompletion(value, this._immediateCopyFenceEvent.SafeWaitHandle.DangerousGetHandle()).CheckError();
         this._immediateCopyFenceEvent.WaitOne();
     }
 
@@ -2315,12 +2289,12 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         /// <returns>The allocation, or null when this page has no room.</returns>
         public D3D12ResourceAllocation TryAllocate(ulong sizeInBytes) {
             lock (this._lock) {
-                if (this._offset + sizeInBytes > UploadRingPageSize) {
+                if (this._offset + sizeInBytes > _uploadRingPageSize) {
                     if (this._activeAllocations == 0) {
                         this._offset = 0;
                     }
 
-                    if (this._offset + sizeInBytes > UploadRingPageSize) {
+                    if (this._offset + sizeInBytes > _uploadRingPageSize) {
                         return null;
                     }
                 }
@@ -2340,7 +2314,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         private void ReturnAllocation(D3D12ResourceAllocation returnedAllocation) {
             lock (this._lock) {
                 this._activeAllocations--;
-                if (this._activeAllocations == 0 && this._offset >= UploadRingPageSize) {
+                if (this._activeAllocations == 0 && this._offset >= _uploadRingPageSize) {
                     this._offset = 0;
                 }
             }

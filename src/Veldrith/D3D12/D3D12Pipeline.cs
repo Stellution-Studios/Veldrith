@@ -14,12 +14,12 @@ internal sealed class D3D12Pipeline : Pipeline {
     /// <summary>
     /// Stores the size, in bytes, reserved for push constants in the root signature.
     /// </summary>
-    private const uint PushConstantSizeInBytes = 64;
+    private const uint _pushConstantSizeInBytes = 64;
 
     /// <summary>
     /// Stores the number of 32-bit constants reserved for push constants.
     /// </summary>
-    private const uint PushConstantDwordCount = PushConstantSizeInBytes / 4;
+    private const uint _pushConstantDwordCount = _pushConstantSizeInBytes / 4;
 
     /// <summary>
     /// Stores the pipeline resource layouts state used by this instance.
@@ -29,7 +29,7 @@ internal sealed class D3D12Pipeline : Pipeline {
     /// <summary>
     /// Stores the gd state used by this instance.
     /// </summary>
-    private readonly D3D12GraphicsDevice gd;
+    private readonly D3D12GraphicsDevice _gd;
 
     /// <summary>
     /// Stores the disposed state used by this instance.
@@ -67,7 +67,7 @@ internal sealed class D3D12Pipeline : Pipeline {
     /// <param name="gd">The graphics device that owns this operation.</param>
     /// <param name="description">The description used to configure this operation.</param>
     public D3D12Pipeline(D3D12GraphicsDevice gd, ref GraphicsPipelineDescription description) : base(ref description) {
-        this.gd = gd;
+        this._gd = gd;
         this.IsComputePipeline = false;
         this.PrimitiveTopology = D3D12Formats.ToD3DPrimitiveTopology(description.PrimitiveTopology);
         this.PrimitiveTopologyType = D3D12Formats.ToPrimitiveTopologyType(description.PrimitiveTopology);
@@ -88,7 +88,7 @@ internal sealed class D3D12Pipeline : Pipeline {
     /// <param name="gd">The graphics device that owns this operation.</param>
     /// <param name="description">The description used to configure this operation.</param>
     public D3D12Pipeline(D3D12GraphicsDevice gd, ref ComputePipelineDescription description) : base(ref description) {
-        this.gd = gd;
+        this._gd = gd;
         this.IsComputePipeline = true;
         this._pipelineResourceLayouts = description.ResourceLayouts;
         this.CreateRootSignature(description.ResourceLayouts, false);
@@ -138,7 +138,7 @@ internal sealed class D3D12Pipeline : Pipeline {
     /// <summary>
     /// Gets the maximum push-constant payload size supported by this pipeline.
     /// </summary>
-    public uint MaxPushConstantSizeInBytes => PushConstantSizeInBytes;
+    public uint MaxPushConstantSizeInBytes => _pushConstantSizeInBytes;
 
     /// <summary>
     /// Gets or sets IsDisposed.
@@ -240,7 +240,7 @@ internal sealed class D3D12Pipeline : Pipeline {
             }
         }
 
-        RootConstants rootConstants = new(0, 0, PushConstantDwordCount);
+        RootConstants rootConstants = new(0, 0, _pushConstantDwordCount);
         this._pushConstantRootParameterIndex = (uint)rootParameters.Count;
         rootParameters.Add(new RootParameter(rootConstants, ShaderVisibility.All));
 
@@ -251,7 +251,7 @@ internal sealed class D3D12Pipeline : Pipeline {
         RootSignatureDescription rootSignatureDescription = new(rootSignatureFlags, rootParameters.ToArray(), Array.Empty<StaticSamplerDescription>());
         string cacheKey = BuildRootSignatureCacheKey(resourceLayouts, useSetRegisterSpaces, this.IsComputePipeline);
         this._rootSignatureCacheKey = cacheKey;
-        this.RootSignature = this.gd.GetOrCreateRootSignature(cacheKey, in rootSignatureDescription);
+        this.RootSignature = this._gd.GetOrCreateRootSignature(cacheKey, in rootSignatureDescription);
     }
 
     /// <summary>
@@ -635,7 +635,7 @@ internal sealed class D3D12Pipeline : Pipeline {
         };
 
         string cacheKey = BuildComputePipelineStateCacheKey(this._rootSignatureCacheKey, d3D12Shader.ShaderBytes);
-        this.PipelineState = this.gd.GetOrCreatePipelineState(cacheKey, () => this.gd.Device.CreateComputePipelineState(psoDescription));
+        this.PipelineState = this._gd.GetOrCreatePipelineState(cacheKey, () => this._gd.Device.CreateComputePipelineState(psoDescription));
     }
 
     /// <summary>
@@ -772,10 +772,10 @@ internal sealed class D3D12Pipeline : Pipeline {
 
         try {
             string cacheKey = BuildGraphicsPipelineStateCacheKey(ref description, this._rootSignatureCacheKey, vertexShader, pixelShader, geometryShader, hullShader, domainShader, inputElements, colorCount, psoDescription.DepthStencilFormat);
-            this.PipelineState = this.gd.GetOrCreatePipelineState(cacheKey, () => this.gd.Device.CreateGraphicsPipelineState(psoDescription));
+            this.PipelineState = this._gd.GetOrCreatePipelineState(cacheKey, () => this._gd.Device.CreateGraphicsPipelineState(psoDescription));
         }
         catch (Exception ex) {
-            string removedReason = this.gd.GetDeviceRemovedReasonDescription();
+            string removedReason = this._gd.GetDeviceRemovedReasonDescription();
             throw new VeldridException($"D3D12 graphics PSO creation failed. " + $"VS={(vertexShader.IsEmpty ? "missing" : vertexShader.Length.ToString())}, " + $"PS={(pixelShader.IsEmpty ? "missing" : pixelShader.Length.ToString())}, " + $"GS={(geometryShader.IsEmpty ? "none" : geometryShader.Length.ToString())}, " + $"HS={(hullShader.IsEmpty ? "none" : hullShader.Length.ToString())}, " + $"DS={(domainShader.IsEmpty ? "none" : domainShader.Length.ToString())}, " + $"InputElements={inputElements.Length}, " + $"ColorTargets={colorCount}, " + $"DepthFormat={psoDescription.DepthStencilFormat}, " + $"SampleCount={FormatHelpers.GetSampleCountUInt32(description.Outputs.SampleCount)}, " + $"PrimitiveTopology={description.PrimitiveTopology}, " + $"UseSetRegisterSpaces={this._usingSetRegisterSpaces}, " + $"DeviceRemovedReason={removedReason}.", ex);
         }
     }

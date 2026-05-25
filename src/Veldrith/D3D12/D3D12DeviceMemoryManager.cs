@@ -12,17 +12,17 @@ internal sealed class D3D12DeviceMemoryManager : IDisposable {
     /// <summary>
     /// Stores the default chunk size for pooled heaps.
     /// </summary>
-    private const ulong DefaultChunkSize = 256UL * 1024UL * 1024UL;
+    private const ulong _defaultChunkSize = 256UL * 1024UL * 1024UL;
 
     /// <summary>
     /// Stores the chunk size for persistently CPU-visible transfer heaps.
     /// </summary>
-    private const ulong TransferChunkSize = 64UL * 1024UL * 1024UL;
+    private const ulong _transferChunkSize = 64UL * 1024UL * 1024UL;
 
     /// <summary>
     /// Stores the minimum size that should use a dedicated committed resource instead of the pool.
     /// </summary>
-    private const ulong DedicatedThreshold = 192UL * 1024UL * 1024UL;
+    private const ulong _dedicatedThreshold = 192UL * 1024UL * 1024UL;
 
     /// <summary>
     /// Stores the device used to allocate native resources.
@@ -167,7 +167,7 @@ internal sealed class D3D12DeviceMemoryManager : IDisposable {
                 }
             }
 
-            ulong preferredChunkSize = heapType == HeapType.Default ? DefaultChunkSize : TransferChunkSize;
+            ulong preferredChunkSize = heapType == HeapType.Default ? _defaultChunkSize : _transferChunkSize;
             ulong chunkSize = AlignUp(Math.Max(preferredChunkSize, size), allocationAlignment);
             Chunk chunk = new(this._device, chunkSize, heapAlignment, heapType, heapFlags);
             chunks.Add(chunk);
@@ -207,7 +207,7 @@ internal sealed class D3D12DeviceMemoryManager : IDisposable {
     /// <param name="heapFlags">The heap flags.</param>
     /// <returns><see langword="true" /> when the resource should use a dedicated committed allocation.</returns>
     private static bool ShouldUseDedicatedResource(ref ResourceDescription description, ResourceAllocationInfo allocationInfo, HeapType heapType, HeapFlags heapFlags) {
-        if (allocationInfo.SizeInBytes >= DedicatedThreshold) {
+        if (allocationInfo.SizeInBytes >= _dedicatedThreshold) {
             return true;
         }
 

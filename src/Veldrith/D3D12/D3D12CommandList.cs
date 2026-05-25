@@ -2361,13 +2361,12 @@ internal sealed class D3D12CommandList : CommandList {
             }
         }
     }
-
-    [SupportedOSPlatform("windows")]
-
+    
     /// <summary>
     /// Executes the ensure gpu mipmap resources logic for this backend.
     /// </summary>
     /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
+    [SupportedOSPlatform("windows")]
     private bool EnsureGpuMipmapResources() {
         if (this._gpuMipResourcesInitialized) {
             return this._gpuMipResourcesAvailable;
@@ -2398,9 +2397,7 @@ internal sealed class D3D12CommandList : CommandList {
 
         return this._gpuMipResourcesAvailable;
     }
-
-    [SupportedOSPlatform("windows")]
-
+    
     /// <summary>
     /// Executes the compile compute shader logic for this backend.
     /// </summary>
@@ -2408,6 +2405,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="entryPoint">The entry point value used by this operation.</param>
     /// <param name="target">The target value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
+    [SupportedOSPlatform("windows")]
     private static byte[] CompileComputeShader(string sourceCode, string entryPoint, string target) {
         byte[] sourceBytes = Encoding.UTF8.GetBytes(sourceCode);
 
@@ -2633,9 +2631,7 @@ internal sealed class D3D12CommandList : CommandList {
 
         return null;
     }
-
-    [DllImport("d3dcompiler_47.dll", CharSet = CharSet.Ansi)]
-
+    
     /// <summary>
     /// Executes the d3 dcompile logic for this backend.
     /// </summary>
@@ -2651,6 +2647,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="code">The code value used by this operation.</param>
     /// <param name="errorMsgs">The error msgs value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
+    [DllImport("d3dcompiler_47.dll", CharSet = CharSet.Ansi)]
     private static extern int D3DCompile(byte[] srcData, nuint srcDataSize, string sourceName, IntPtr defines, IntPtr include, string entryPoint, string target, uint flags1, uint flags2, out IntPtr code, out IntPtr errorMsgs);
 
     /// <summary>
@@ -2660,7 +2657,6 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="resource">The resource involved in this operation.</param>
     /// <param name="dynamicOffset">The dynamic offset value used by this operation.</param>
     private void BindGraphicsResource(D3D12Pipeline.RootBindingInfo bindingInfo, IBindableResource resource, uint dynamicOffset) {
-
         if (bindingInfo.DescriptorTable) {
             return;
         }
@@ -3459,13 +3455,12 @@ internal sealed class D3D12CommandList : CommandList {
         }
     }
 
-    [ComImport]
-    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    [Guid("8BA5FB08-5195-40E2-AC58-0D989C3A0102")]
-
     /// <summary>
     /// Defines the ID3DBlob interface.
     /// </summary>
+    [ComImport]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    [Guid("8BA5FB08-5195-40E2-AC58-0D989C3A0102")]
     private interface ID3DBlob {
         [PreserveSig]
 

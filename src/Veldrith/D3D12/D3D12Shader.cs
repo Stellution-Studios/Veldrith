@@ -263,9 +263,7 @@ internal sealed class D3D12Shader : Shader {
             Marshal.Release(codeBlobPtr);
         }
     }
-
-    [DllImport("d3dcompiler_47.dll", CharSet = CharSet.Ansi)]
-
+    
     /// <summary>
     /// Executes the d3 dcompile logic for this backend.
     /// </summary>
@@ -281,30 +279,29 @@ internal sealed class D3D12Shader : Shader {
     /// <param name="code">The code value used by this operation.</param>
     /// <param name="errorMsgs">The error msgs value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
+    [DllImport("d3dcompiler_47.dll", CharSet = CharSet.Ansi)]
     private static extern int D3DCompile(byte[] srcData, nuint srcDataSize, string sourceName, IntPtr defines, IntPtr include, string entryPoint, string target, uint flags1, uint flags2, out IntPtr code, out IntPtr errorMsgs);
-
-    [ComImport]
-    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    [Guid("8BA5FB08-5195-40E2-AC58-0D989C3A0102")]
 
     /// <summary>
     /// Defines the ID3DBlob interface.
     /// </summary>
+    [ComImport]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    [Guid("8BA5FB08-5195-40E2-AC58-0D989C3A0102")]
     private interface ID3DBlob {
-        [PreserveSig]
-
+        
         /// <summary>
         /// Gets the buffer pointer value.
         /// </summary>
         /// <returns>The value produced by this operation.</returns>
-        IntPtr GetBufferPointer();
-
         [PreserveSig]
-
+        IntPtr GetBufferPointer();
+        
         /// <summary>
         /// Gets the buffer size value.
         /// </summary>
         /// <returns>The value produced by this operation.</returns>
+        [PreserveSig]
         nuint GetBufferSize();
     }
 }

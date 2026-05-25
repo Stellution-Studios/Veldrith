@@ -98,17 +98,14 @@ internal sealed class D3D12Fence : Fence {
             return true;
         }
 
-        this._nativeFence.SetEventOnCompletion(this._fenceValue, this._waitEvent.SafeWaitHandle.DangerousGetHandle())
-            .CheckError();
+        this._nativeFence.SetEventOnCompletion(this._fenceValue, this._waitEvent.SafeWaitHandle.DangerousGetHandle()).CheckError();
 
         if (nanosecondTimeout == ulong.MaxValue) {
             this._waitEvent.WaitOne();
             return true;
         }
 
-        int milliseconds = nanosecondTimeout > 0
-            ? (int)Math.Min(int.MaxValue, nanosecondTimeout / 1_000_000)
-            : 0;
+        int milliseconds = nanosecondTimeout > 0 ? (int)Math.Min(int.MaxValue, nanosecondTimeout / 1_000_000) : 0;
         return this._waitEvent.WaitOne(milliseconds);
     }
 }
