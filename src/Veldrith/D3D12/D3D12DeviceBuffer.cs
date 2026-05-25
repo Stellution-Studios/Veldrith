@@ -141,13 +141,14 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         this._isDynamic = (description.Usage & BufferUsage.Dynamic) == BufferUsage.Dynamic;
         this._isStaging = (description.Usage & BufferUsage.Staging) == BufferUsage.Staging;
         this.CanTransitionState = !this._isDynamic && !this._isStaging;
-        this._dynamicSnapshotEnabled = this._isDynamic
-                                       && (((description.Usage & BufferUsage.VertexBuffer) == BufferUsage.VertexBuffer)
-                                           || ((description.Usage & BufferUsage.IndexBuffer) == BufferUsage.IndexBuffer)
-                                           || ((description.Usage & BufferUsage.UniformBuffer) == BufferUsage.UniformBuffer)
-                                           || ((description.Usage & BufferUsage.StructuredBufferReadOnly) == BufferUsage.StructuredBufferReadOnly));
+        this._dynamicSnapshotEnabled = this._isDynamic && (((description.Usage & BufferUsage.VertexBuffer) == BufferUsage.VertexBuffer)
+                                                           || ((description.Usage & BufferUsage.IndexBuffer) == BufferUsage.IndexBuffer)
+                                                           || ((description.Usage & BufferUsage.UniformBuffer) == BufferUsage.UniformBuffer)
+                                                           || ((description.Usage & BufferUsage.StructuredBufferReadOnly) == BufferUsage.StructuredBufferReadOnly));
+        
         bool isUniformBuffer = (description.Usage & BufferUsage.UniformBuffer) == BufferUsage.UniformBuffer;
         this._dynamicSnapshotAlignment = isUniformBuffer ? 256u : 16u;
+        
         uint minimumSnapshotCount = isUniformBuffer ? 1024u : 8u;
         this._dynamicSnapshotCapacity = this._dynamicSnapshotEnabled ? CalculateDynamicSnapshotCapacity(description.SizeInBytes, this._dynamicSnapshotAlignment, minimumSnapshotCount) : description.SizeInBytes;
 
