@@ -202,7 +202,7 @@ internal unsafe class VkPipeline : Pipeline {
 
         // Shader Stage
 
-        VkSpecializationInfo specializationInfo;
+        VkSpecializationInfo specializationInfo = default;
         SpecializationConstant[] specDescs = description.ShaderSet.Specializations;
 
         if (specDescs != null) {
@@ -234,7 +234,12 @@ internal unsafe class VkPipeline : Pipeline {
         }
 
         Shader[] shaders = description.ShaderSet.Shaders;
-        StackList<VkPipelineShaderStageCreateInfo> stages = new();
+        VkPipelineShaderStageCreateInfo* stages = null;
+        if (shaders.Length > 0) {
+            byte* stageStorage = stackalloc byte[shaders.Length * Unsafe.SizeOf<VkPipelineShaderStageCreateInfo>()];
+            stages = (VkPipelineShaderStageCreateInfo*)stageStorage;
+        }
+        int stageCount = 0;
         VkShaderStageFlags pushConstantStages = 0;
 
         foreach (Shader shader in shaders) {
@@ -245,13 +250,13 @@ internal unsafe class VkPipeline : Pipeline {
             pushConstantStages |= stageCi.stage;
             // stageCI.pName = CommonStrings.main; // Meh
             stageCi.pName = new FixedUtf8String(shader.EntryPoint); // TODO: DONT ALLOCATE HERE
-            stageCi.pSpecializationInfo = &specializationInfo;
-            stages.Add(stageCi);
+            stageCi.pSpecializationInfo = specDescs != null ? &specializationInfo : null;
+            stages[stageCount++] = stageCi;
         }
         this._pushConstantStages = pushConstantStages;
 
-        pipelineCi.stageCount = stages.Count;
-        pipelineCi.pStages = (VkPipelineShaderStageCreateInfo*)stages.Data;
+        pipelineCi.stageCount = (uint)stageCount;
+        pipelineCi.pStages = stages;
 
         // ViewportState
         VkPipelineViewportStateCreateInfo viewportStateCi = new VkPipelineViewportStateCreateInfo();
@@ -285,26 +290,39 @@ internal unsafe class VkPipeline : Pipeline {
 
         VkRenderPassCreateInfo renderPassCi = new VkRenderPassCreateInfo();
         OutputDescription outputDesc = description.Outputs;
-        StackList<VkAttachmentDescription, Size512Bytes> attachments = new();
+        int colorAttachmentCount = outputDesc.ColorAttachments.Length;
+        int totalAttachmentCount = colorAttachmentCount + (outputDesc.DepthAttachment != null ? 1 : 0);
+        VkAttachmentDescription* attachments = null;
+        if (totalAttachmentCount > 0) {
+            byte* attachmentStorage = stackalloc byte[totalAttachmentCount * Unsafe.SizeOf<VkAttachmentDescription>()];
+            attachments = (VkAttachmentDescription*)attachmentStorage;
+        }
+
+        VkAttachmentReference* colorAttachmentRefs = null;
+        if (colorAttachmentCount > 0) {
+            byte* colorAttachmentRefStorage = stackalloc byte[colorAttachmentCount * Unsafe.SizeOf<VkAttachmentReference>()];
+            colorAttachmentRefs = (VkAttachmentReference*)colorAttachmentRefStorage;
+        }
 
         // TODO: A huge portion of this next part is duplicated in VkFramebuffer.cs.
 
-        StackList<VkAttachmentDescription> colorAttachmentDescs = new();
-        StackList<VkAttachmentReference> colorAttachmentRefs = new();
+        for (int i = 0; i < outputDesc.ColorAttachments.Length; i++) {
+            VkAttachmentDescription colorAttachmentDesc = new() {
+                format = VkFormats.VdToVkPixelFormat(outputDesc.ColorAttachments[i].Format),
+                samples = vkSampleCount,
+                loadOp = VkAttachmentLoadOp.DontCare,
+                storeOp = VkAttachmentStoreOp.Store,
+                stencilLoadOp = VkAttachmentLoadOp.DontCare,
+                stencilStoreOp = VkAttachmentStoreOp.DontCare,
+                initialLayout = VkImageLayout.Undefined,
+                finalLayout = VkImageLayout.ShaderReadOnlyOptimal
+            };
+            attachments[i] = colorAttachmentDesc;
 
-        for (uint i = 0; i < outputDesc.ColorAttachments.Length; i++) {
-            colorAttachmentDescs[i].format = VkFormats.VdToVkPixelFormat(outputDesc.ColorAttachments[i].Format);
-            colorAttachmentDescs[i].samples = vkSampleCount;
-            colorAttachmentDescs[i].loadOp = VkAttachmentLoadOp.DontCare;
-            colorAttachmentDescs[i].storeOp = VkAttachmentStoreOp.Store;
-            colorAttachmentDescs[i].stencilLoadOp = VkAttachmentLoadOp.DontCare;
-            colorAttachmentDescs[i].stencilStoreOp = VkAttachmentStoreOp.DontCare;
-            colorAttachmentDescs[i].initialLayout = VkImageLayout.Undefined;
-            colorAttachmentDescs[i].finalLayout = VkImageLayout.ShaderReadOnlyOptimal;
-            attachments.Add(colorAttachmentDescs[i]);
-
-            colorAttachmentRefs[i].attachment = i;
-            colorAttachmentRefs[i].layout = VkImageLayout.ColorAttachmentOptimal;
+            colorAttachmentRefs[i] = new VkAttachmentReference {
+                attachment = (uint)i,
+                layout = VkImageLayout.ColorAttachmentOptimal
+            };
         }
 
         VkAttachmentDescription depthAttachmentDesc = new();
@@ -329,15 +347,12 @@ internal unsafe class VkPipeline : Pipeline {
         VkSubpassDescription subpass = new() {
             pipelineBindPoint = VkPipelineBindPoint.Graphics,
             colorAttachmentCount = (uint)outputDesc.ColorAttachments.Length,
-            pColorAttachments = (VkAttachmentReference*)colorAttachmentRefs.Data
+            pColorAttachments = colorAttachmentRefs
         };
-        for (int i = 0; i < colorAttachmentDescs.Count; i++) {
-            attachments.Add(colorAttachmentDescs[i]);
-        }
 
         if (outputDesc.DepthAttachment != null) {
             subpass.pDepthStencilAttachment = &depthAttachmentRef;
-            attachments.Add(depthAttachmentDesc);
+            attachments[colorAttachmentCount] = depthAttachmentDesc;
         }
 
         VkSubpassDependency subpassDependency = new() {
@@ -347,8 +362,8 @@ internal unsafe class VkPipeline : Pipeline {
             dstAccessMask = VkAccessFlags.ColorAttachmentRead | VkAccessFlags.ColorAttachmentWrite
         };
 
-        renderPassCi.attachmentCount = attachments.Count;
-        renderPassCi.pAttachments = (VkAttachmentDescription*)attachments.Data;
+        renderPassCi.attachmentCount = (uint)totalAttachmentCount;
+        renderPassCi.pAttachments = attachments;
         renderPassCi.subpassCount = 1;
         renderPassCi.pSubpasses = &subpass;
         renderPassCi.dependencyCount = 1;

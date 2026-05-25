@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Vortice.Vulkan;
 using static Veldrith.Vk.VulkanDispatch;
 using static Veldrith.Vk.VulkanUtil;
@@ -62,10 +63,20 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
 
         VkRenderPassCreateInfo renderPassCi = new VkRenderPassCreateInfo();
 
-        StackList<VkAttachmentDescription> attachments = new();
-
         uint colorAttachmentCount = (uint)this.ColorTargets.Count;
-        StackList<VkAttachmentReference> colorAttachmentRefs = new();
+        int totalAttachmentCount = this.ColorTargets.Count + (this.DepthTarget != null ? 1 : 0);
+        VkAttachmentDescription* attachments = null;
+        if (totalAttachmentCount > 0) {
+            byte* attachmentStorage = stackalloc byte[totalAttachmentCount * Unsafe.SizeOf<VkAttachmentDescription>()];
+            attachments = (VkAttachmentDescription*)attachmentStorage;
+        }
+
+        VkAttachmentReference* colorAttachmentRefs = null;
+        if (colorAttachmentCount > 0) {
+            byte* colorAttachmentRefStorage = stackalloc byte[(int)colorAttachmentCount * Unsafe.SizeOf<VkAttachmentReference>()];
+            colorAttachmentRefs = (VkAttachmentReference*)colorAttachmentRefStorage;
+        }
+        int depthAttachmentIndex = -1;
 
         for (int i = 0; i < colorAttachmentCount; i++) {
             VkTexture vkColorTex = Util.AssertSubtype<Texture, VkTexture>(this.ColorTargets[i].Target);
@@ -83,13 +94,13 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
                         : VkImageLayout.ColorAttachmentOptimal,
                 finalLayout = VkImageLayout.ColorAttachmentOptimal
             };
-            attachments.Add(colorAttachmentDesc);
+            attachments[i] = colorAttachmentDesc;
 
             VkAttachmentReference colorAttachmentRef = new() {
                 attachment = (uint)i,
                 layout = VkImageLayout.ColorAttachmentOptimal
             };
-            colorAttachmentRefs.Add(colorAttachmentRef);
+            colorAttachmentRefs[i] = colorAttachmentRef;
         }
 
         VkAttachmentDescription depthAttachmentDesc = new();
@@ -121,12 +132,13 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
 
         if (this.ColorTargets.Count > 0) {
             subpass.colorAttachmentCount = colorAttachmentCount;
-            subpass.pColorAttachments = (VkAttachmentReference*)colorAttachmentRefs.Data;
+            subpass.pColorAttachments = colorAttachmentRefs;
         }
 
         if (this.DepthTarget != null) {
             subpass.pDepthStencilAttachment = &depthAttachmentRef;
-            attachments.Add(depthAttachmentDesc);
+            depthAttachmentIndex = (int)colorAttachmentCount;
+            attachments[depthAttachmentIndex] = depthAttachmentDesc;
         }
 
         VkSubpassDependency subpassDependency = new() {
@@ -136,8 +148,8 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
             dstAccessMask = VkAccessFlags.ColorAttachmentRead | VkAccessFlags.ColorAttachmentWrite
         };
 
-        renderPassCi.attachmentCount = attachments.Count;
-        renderPassCi.pAttachments = (VkAttachmentDescription*)attachments.Data;
+        renderPassCi.attachmentCount = (uint)totalAttachmentCount;
+        renderPassCi.pAttachments = attachments;
         renderPassCi.subpassCount = 1;
         renderPassCi.pSubpasses = &subpass;
         renderPassCi.dependencyCount = 1;
@@ -152,11 +164,11 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
         }
 
         if (this.DepthTarget != null) {
-            attachments[attachments.Count - 1].loadOp = VkAttachmentLoadOp.Load;
-            attachments[attachments.Count - 1].initialLayout = VkImageLayout.DepthStencilAttachmentOptimal;
+            attachments[depthAttachmentIndex].loadOp = VkAttachmentLoadOp.Load;
+            attachments[depthAttachmentIndex].initialLayout = VkImageLayout.DepthStencilAttachmentOptimal;
             bool hasStencil = FormatHelpers.IsStencilFormat(this.DepthTarget.Value.Target.Format);
             if (hasStencil) {
-                attachments[attachments.Count - 1].stencilLoadOp = VkAttachmentLoadOp.Load;
+                attachments[depthAttachmentIndex].stencilLoadOp = VkAttachmentLoadOp.Load;
             }
         }
 
@@ -166,11 +178,11 @@ internal unsafe class VkFramebuffer : VkFramebufferBase {
         // Load version
 
         if (this.DepthTarget != null) {
-            attachments[attachments.Count - 1].loadOp = VkAttachmentLoadOp.Clear;
-            attachments[attachments.Count - 1].initialLayout = VkImageLayout.Undefined;
+            attachments[depthAttachmentIndex].loadOp = VkAttachmentLoadOp.Clear;
+            attachments[depthAttachmentIndex].initialLayout = VkImageLayout.Undefined;
             bool hasStencil = FormatHelpers.IsStencilFormat(this.DepthTarget.Value.Target.Format);
             if (hasStencil) {
-                attachments[attachments.Count - 1].stencilLoadOp = VkAttachmentLoadOp.Clear;
+                attachments[depthAttachmentIndex].stencilLoadOp = VkAttachmentLoadOp.Clear;
             }
         }
 
