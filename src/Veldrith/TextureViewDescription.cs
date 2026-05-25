@@ -96,7 +96,7 @@ public struct TextureViewDescription : IEquatable<TextureViewDescription> {
         this.MipLevels = mipLevels;
         this.BaseArrayLayer = baseArrayLayer;
         this.ArrayLayers = arrayLayers;
-        this.Format = target.Format;
+        this.Format = format;
     }
 
     /// <summary>
