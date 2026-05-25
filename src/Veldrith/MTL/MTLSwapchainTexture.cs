@@ -89,9 +89,9 @@ internal class MtlSwapchainTexture : MtlTexture {
     /// <param name="size">The size, in bytes, used by this operation.</param>
     /// <param name="format">The format used by this operation.</param>
     public void SetDrawable(CAMetalDrawable drawable, CGSize size, PixelFormat format) {
-        this._deviceTexture = drawable.texture;
-        this._width = (uint)size.width;
-        this._height = (uint)size.height;
+        this._deviceTexture = drawable.Texture;
+        this._width = (uint)size.Width;
+        this._height = (uint)size.Height;
         this._mtlPixelFormat = MtlFormats.VdToMtlPixelFormat(this.Format, false);
     }
 }

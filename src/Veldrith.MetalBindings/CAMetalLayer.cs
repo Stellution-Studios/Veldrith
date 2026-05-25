@@ -26,7 +26,7 @@ public struct CAMetalLayer {
     /// </summary>
     /// <returns>The value produced by this operation.</returns>
     public static CAMetalLayer New() {
-        return s_class.AllocInit<CAMetalLayer>();
+        return _sClass.AllocInit<CAMetalLayer>();
     }
 
     /// <summary>
@@ -38,7 +38,7 @@ public struct CAMetalLayer {
     public static bool TryCast(IntPtr layerPointer, out CAMetalLayer metalLayer) {
         NSObject layerObject = new(layerPointer);
 
-        if (layerObject.IsKindOfClass(s_class)) {
+        if (layerObject.IsKindOfClass(_sClass)) {
             metalLayer = new CAMetalLayer(layerPointer);
             return true;
         }
@@ -50,49 +50,49 @@ public struct CAMetalLayer {
     /// <summary>
     /// Gets or sets device.
     /// </summary>
-    public MTLDevice device {
-        get => ObjcMsgSend<MTLDevice>(this.NativePtr, sel_device);
-        set => ObjcMsgSend(this.NativePtr, sel_setDevice, value);
+    public MTLDevice Device {
+        get => ObjcMsgSend<MTLDevice>(this.NativePtr, _selDevice);
+        set => ObjcMsgSend(this.NativePtr, _selSetDevice, value);
     }
 
     /// <summary>
     /// Gets or sets pixelFormat.
     /// </summary>
-    public MTLPixelFormat pixelFormat {
-        get => (MTLPixelFormat)UIntObjcMsgSend(this.NativePtr, sel_pixelFormat);
-        set => ObjcMsgSend(this.NativePtr, sel_setPixelFormat, (uint)value);
+    public MTLPixelFormat PixelFormat {
+        get => (MTLPixelFormat)UIntObjcMsgSend(this.NativePtr, _selPixelFormat);
+        set => ObjcMsgSend(this.NativePtr, _selSetPixelFormat, (uint)value);
     }
 
     /// <summary>
     /// Gets or sets framebufferOnly.
     /// </summary>
-    public Bool8 framebufferOnly {
-        get => Bool8ObjcMsgSend(this.NativePtr, sel_framebufferOnly);
-        set => ObjcMsgSend(this.NativePtr, sel_setFramebufferOnly, value);
+    public Bool8 FramebufferOnly {
+        get => Bool8ObjcMsgSend(this.NativePtr, _selFramebufferOnly);
+        set => ObjcMsgSend(this.NativePtr, _selSetFramebufferOnly, value);
     }
 
     /// <summary>
     /// Gets or sets drawableSize.
     /// </summary>
-    public CGSize drawableSize {
-        get => CGSize_objc_msgSend(this.NativePtr, sel_drawableSize);
-        set => ObjcMsgSend(this.NativePtr, sel_setDrawableSize, value);
+    public CGSize DrawableSize {
+        get => CGSize_objc_msgSend(this.NativePtr, _selDrawableSize);
+        set => ObjcMsgSend(this.NativePtr, _selSetDrawableSize, value);
     }
 
     /// <summary>
     /// Gets or sets frame.
     /// </summary>
-    public CGRect frame {
-        get => CGRect_objc_msgSend(this.NativePtr, sel_frame);
-        set => ObjcMsgSend(this.NativePtr, sel_setFrame, value);
+    public CGRect Frame {
+        get => CGRect_objc_msgSend(this.NativePtr, _selFrame);
+        set => ObjcMsgSend(this.NativePtr, _selSetFrame, value);
     }
 
     /// <summary>
     /// Gets or sets opaque.
     /// </summary>
-    public Bool8 opaque {
-        get => Bool8ObjcMsgSend(this.NativePtr, sel_isOpaque);
-        set => ObjcMsgSend(this.NativePtr, sel_setOpaque, value);
+    public Bool8 Opaque {
+        get => Bool8ObjcMsgSend(this.NativePtr, _selIsOpaque);
+        set => ObjcMsgSend(this.NativePtr, _selSetOpaque, value);
     }
 
     /// <summary>
@@ -100,95 +100,95 @@ public struct CAMetalLayer {
     /// </summary>
     /// <returns>The value produced by this operation.</returns>
     public CAMetalDrawable NextDrawable() {
-        return ObjcMsgSend<CAMetalDrawable>(this.NativePtr, sel_nextDrawable);
+        return ObjcMsgSend<CAMetalDrawable>(this.NativePtr, _selNextDrawable);
     }
 
     /// <summary>
     /// Gets or sets displaySyncEnabled.
     /// </summary>
-    public Bool8 displaySyncEnabled {
-        get => Bool8ObjcMsgSend(this.NativePtr, sel_displaySyncEnabled);
-        set => ObjcMsgSend(this.NativePtr, sel_setDisplaySyncEnabled, value);
+    public Bool8 DisplaySyncEnabled {
+        get => Bool8ObjcMsgSend(this.NativePtr, _selDisplaySyncEnabled);
+        set => ObjcMsgSend(this.NativePtr, _selSetDisplaySyncEnabled, value);
     }
 
     /// <summary>
     /// Stores the s class state used by this instance.
     /// </summary>
-    private static readonly ObjCClass s_class = new(nameof(CAMetalLayer));
+    private static readonly ObjCClass _sClass = new(nameof(CAMetalLayer));
 
     /// <summary>
     /// Stores the sel device state used by this instance.
     /// </summary>
-    private static readonly Selector sel_device = "device";
+    private static readonly Selector _selDevice = "device";
 
     /// <summary>
     /// Stores the sel set device state used by this instance.
     /// </summary>
-    private static readonly Selector sel_setDevice = "setDevice:";
+    private static readonly Selector _selSetDevice = "setDevice:";
 
     /// <summary>
     /// Stores the sel pixel format state used by this instance.
     /// </summary>
-    private static readonly Selector sel_pixelFormat = "pixelFormat";
+    private static readonly Selector _selPixelFormat = "pixelFormat";
 
     /// <summary>
     /// Stores the sel set pixel format state used by this instance.
     /// </summary>
-    private static readonly Selector sel_setPixelFormat = "setPixelFormat:";
+    private static readonly Selector _selSetPixelFormat = "setPixelFormat:";
 
     /// <summary>
     /// Stores the sel framebuffer only state used by this instance.
     /// </summary>
-    private static readonly Selector sel_framebufferOnly = "framebufferOnly";
+    private static readonly Selector _selFramebufferOnly = "framebufferOnly";
 
     /// <summary>
     /// Stores the sel set framebuffer only state used by this instance.
     /// </summary>
-    private static readonly Selector sel_setFramebufferOnly = "setFramebufferOnly:";
+    private static readonly Selector _selSetFramebufferOnly = "setFramebufferOnly:";
 
     /// <summary>
     /// Stores the sel drawable size value used during command execution.
     /// </summary>
-    private static readonly Selector sel_drawableSize = "drawableSize";
+    private static readonly Selector _selDrawableSize = "drawableSize";
 
     /// <summary>
     /// Stores the sel set drawable size value used during command execution.
     /// </summary>
-    private static readonly Selector sel_setDrawableSize = "setDrawableSize:";
+    private static readonly Selector _selSetDrawableSize = "setDrawableSize:";
 
     /// <summary>
     /// Stores the sel frame state used by this instance.
     /// </summary>
-    private static readonly Selector sel_frame = "frame";
+    private static readonly Selector _selFrame = "frame";
 
     /// <summary>
     /// Stores the sel set frame state used by this instance.
     /// </summary>
-    private static readonly Selector sel_setFrame = "setFrame:";
+    private static readonly Selector _selSetFrame = "setFrame:";
 
     /// <summary>
     /// Stores the sel is opaque state used by this instance.
     /// </summary>
-    private static readonly Selector sel_isOpaque = "isOpaque";
+    private static readonly Selector _selIsOpaque = "isOpaque";
 
     /// <summary>
     /// Stores the sel set opaque state used by this instance.
     /// </summary>
-    private static readonly Selector sel_setOpaque = "setOpaque:";
+    private static readonly Selector _selSetOpaque = "setOpaque:";
 
     /// <summary>
     /// Stores the sel display sync enabled state used by this instance.
     /// </summary>
-    private static readonly Selector sel_displaySyncEnabled = "displaySyncEnabled";
+    private static readonly Selector _selDisplaySyncEnabled = "displaySyncEnabled";
 
     /// <summary>
     /// Stores the sel set display sync enabled state used by this instance.
     /// </summary>
-    private static readonly Selector sel_setDisplaySyncEnabled = "setDisplaySyncEnabled:";
+    private static readonly Selector _selSetDisplaySyncEnabled = "setDisplaySyncEnabled:";
 
     /// <summary>
     /// Stores the sel next drawable state used by this instance.
     /// </summary>
-    private static readonly Selector sel_nextDrawable = "nextDrawable";
+    private static readonly Selector _selNextDrawable = "nextDrawable";
 }
 

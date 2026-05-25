@@ -465,6 +465,7 @@ internal unsafe class VkCommandList : CommandList {
             this.EnsureNoRenderPass();
             VkBuffer vkBuffer = Util.AssertSubtype<DeviceBuffer, VkBuffer>(buffer);
             this._currentStagingInfo.Resources.Add(vkBuffer.RefCount);
+            this.EmitBufferPreUpdateBarrier(buffer);
             this._deviceApi.vkCmdUpdateBuffer(this.CommandBuffer, vkBuffer.DeviceBuffer, bufferOffsetInBytes, sizeInBytes, (void*)source);
             this.EmitBufferUpdateBarrier(buffer);
             return;
@@ -497,9 +498,28 @@ internal unsafe class VkCommandList : CommandList {
             size = sizeInBytes
         };
 
+        this.EmitBufferPreUpdateBarrier(destination);
         this._deviceApi.vkCmdCopyBuffer(this.CommandBuffer, srcVkBuffer.DeviceBuffer, dstVkBuffer.DeviceBuffer, 1, &region);
 
         this.EmitBufferUpdateBarrier(destination);
+    }
+
+    /// <summary>
+    /// Emits the barrier needed before overwriting a buffer that may already be read by earlier commands.
+    /// </summary>
+    /// <param name="destination">The destination buffer about to be written.</param>
+    private void EmitBufferPreUpdateBarrier(DeviceBuffer destination) {
+        VkAccessFlags readAccessMask = this.GetBufferReadAccessMask(destination);
+        if (readAccessMask == 0) {
+            return;
+        }
+
+        VkMemoryBarrier barrier;
+        barrier.sType = VkStructureType.MemoryBarrier;
+        barrier.srcAccessMask = readAccessMask;
+        barrier.dstAccessMask = VkAccessFlags.TransferWrite;
+        barrier.pNext = null;
+        this._deviceApi.vkCmdPipelineBarrier(this.CommandBuffer, this.GetBufferReadStageMask(destination), VkPipelineStageFlags.Transfer, VkDependencyFlags.None, 1, &barrier, 0, null, 0, null);
     }
 
     /// <summary>
@@ -507,18 +527,71 @@ internal unsafe class VkCommandList : CommandList {
     /// </summary>
     /// <param name="destination">The destination buffer that was written.</param>
     private void EmitBufferUpdateBarrier(DeviceBuffer destination) {
-        bool needToProtectUniform = destination.Usage.HasFlag(BufferUsage.UniformBuffer);
+        VkAccessFlags readAccessMask = this.GetBufferReadAccessMask(destination);
+        VkPipelineStageFlags readStageMask = this.GetBufferReadStageMask(destination);
 
         VkMemoryBarrier barrier;
         barrier.sType = VkStructureType.MemoryBarrier;
         barrier.srcAccessMask = VkAccessFlags.TransferWrite;
-        barrier.dstAccessMask = needToProtectUniform ? VkAccessFlags.UniformRead : VkAccessFlags.VertexAttributeRead;
+        barrier.dstAccessMask = readAccessMask;
         barrier.pNext = null;
-        this._deviceApi.vkCmdPipelineBarrier(this.CommandBuffer, VkPipelineStageFlags.Transfer, needToProtectUniform
-                ? VkPipelineStageFlags.VertexShader | VkPipelineStageFlags.ComputeShader |
-                  VkPipelineStageFlags.FragmentShader | VkPipelineStageFlags.GeometryShader |
-                  VkPipelineStageFlags.TessellationControlShader | VkPipelineStageFlags.TessellationEvaluationShader
-                : VkPipelineStageFlags.VertexInput, VkDependencyFlags.None, 1, &barrier, 0, null, 0, null);
+        this._deviceApi.vkCmdPipelineBarrier(this.CommandBuffer, VkPipelineStageFlags.Transfer, readStageMask, VkDependencyFlags.None, 1, &barrier, 0, null, 0, null);
+    }
+
+    /// <summary>
+    /// Gets the Vulkan read access mask for a buffer based on its declared usages.
+    /// </summary>
+    /// <param name="buffer">The buffer whose usage is being translated.</param>
+    /// <returns>The access mask used by later reads of the buffer.</returns>
+    private VkAccessFlags GetBufferReadAccessMask(DeviceBuffer buffer) {
+        VkAccessFlags accessMask = 0;
+
+        if (buffer.Usage.HasFlag(BufferUsage.VertexBuffer)) {
+            accessMask |= VkAccessFlags.VertexAttributeRead;
+        }
+
+        if (buffer.Usage.HasFlag(BufferUsage.IndexBuffer)) {
+            accessMask |= VkAccessFlags.IndexRead;
+        }
+
+        if (buffer.Usage.HasFlag(BufferUsage.UniformBuffer)) {
+            accessMask |= VkAccessFlags.UniformRead;
+        }
+
+        if (buffer.Usage.HasFlag(BufferUsage.StructuredBufferReadOnly) || buffer.Usage.HasFlag(BufferUsage.StructuredBufferReadWrite)) {
+            accessMask |= VkAccessFlags.ShaderRead;
+        }
+
+        if (buffer.Usage.HasFlag(BufferUsage.IndirectBuffer)) {
+            accessMask |= VkAccessFlags.IndirectCommandRead;
+        }
+
+        return accessMask == 0 ? VkAccessFlags.MemoryRead : accessMask;
+    }
+
+    /// <summary>
+    /// Gets the Vulkan pipeline stage mask for a buffer based on its declared usages.
+    /// </summary>
+    /// <param name="buffer">The buffer whose usage is being translated.</param>
+    /// <returns>The pipeline stages used by reads of the buffer.</returns>
+    private VkPipelineStageFlags GetBufferReadStageMask(DeviceBuffer buffer) {
+        VkPipelineStageFlags stageMask = 0;
+
+        if (buffer.Usage.HasFlag(BufferUsage.VertexBuffer) || buffer.Usage.HasFlag(BufferUsage.IndexBuffer)) {
+            stageMask |= VkPipelineStageFlags.VertexInput;
+        }
+
+        if (buffer.Usage.HasFlag(BufferUsage.UniformBuffer) || buffer.Usage.HasFlag(BufferUsage.StructuredBufferReadOnly) || buffer.Usage.HasFlag(BufferUsage.StructuredBufferReadWrite)) {
+            stageMask |= VkPipelineStageFlags.VertexShader | VkPipelineStageFlags.ComputeShader |
+                         VkPipelineStageFlags.FragmentShader | VkPipelineStageFlags.GeometryShader |
+                         VkPipelineStageFlags.TessellationControlShader | VkPipelineStageFlags.TessellationEvaluationShader;
+        }
+
+        if (buffer.Usage.HasFlag(BufferUsage.IndirectBuffer)) {
+            stageMask |= VkPipelineStageFlags.DrawIndirect;
+        }
+
+        return stageMask == 0 ? VkPipelineStageFlags.AllCommands : stageMask;
     }
 
     /// <summary>

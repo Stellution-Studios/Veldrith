@@ -1112,29 +1112,24 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
         si.signalSemaphoreCount = signalSemaphoreCount;
 
         global::Vortice.Vulkan.VkFence vkFence;
-        global::Vortice.Vulkan.VkFence submissionFence;
+        bool ownsSubmissionFence;
 
         if (useExtraFence) {
             vkFence = Util.AssertSubtype<Fence, VkFence>(fence).DeviceFence;
-            submissionFence = this.getFreeSubmissionFence();
+            ownsSubmissionFence = false;
         }
         else {
             vkFence = this.getFreeSubmissionFence();
-            submissionFence = vkFence;
+            ownsSubmissionFence = true;
         }
 
         lock (this._graphicsQueueLock) {
             VkResult result = VulkanDispatch.GetApi(this._graphicsQueue).vkQueueSubmit(this._graphicsQueue, 1, &si, vkFence);
             CheckResult(result);
-
-            if (useExtraFence) {
-                result = VulkanDispatch.GetApi(this._graphicsQueue).vkQueueSubmit(this._graphicsQueue, 0, null, submissionFence);
-                CheckResult(result);
-            }
         }
 
         lock (this._submittedFencesLock) {
-            this._submittedFences.Add(new FenceSubmissionInfo(submissionFence, vkCl, vkCb));
+            this._submittedFences.Add(new FenceSubmissionInfo(vkFence, ownsSubmissionFence, vkCl, vkCb));
         }
     }
 
@@ -1166,9 +1161,11 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
         global::Vortice.Vulkan.VkFence fence = fsi.Fence;
         VkCommandBuffer completedCb = fsi.CommandBuffer;
         fsi.CommandList?.CommandBufferCompleted(completedCb);
-        VkResult resetResult = this.DeviceApi.vkResetFences(fence);
-        CheckResult(resetResult);
-        this.ReturnSubmissionFence(fence);
+        if (fsi.OwnsFence) {
+            VkResult resetResult = this.DeviceApi.vkResetFences(fence);
+            CheckResult(resetResult);
+            this.ReturnSubmissionFence(fence);
+        }
 
         lock (this._stagingResourcesLock) {
             if (this._submittedStagingTextures.Remove(completedCb, out VkTexture stagingTex)) {
@@ -2280,6 +2277,11 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
         public readonly VkCommandList CommandList;
 
         /// <summary>
+        /// Stores whether the fence is owned by the submission-fence pool.
+        /// </summary>
+        public readonly bool OwnsFence;
+
+        /// <summary>
         /// Stores the command buffer state used by this instance.
         /// </summary>
         public readonly VkCommandBuffer CommandBuffer;
@@ -2288,10 +2290,12 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
         /// Initializes a new instance of the <see cref="FenceSubmissionInfo" /> type.
         /// </summary>
         /// <param name="fence">The synchronization fence used by this operation.</param>
+        /// <param name="ownsFence">Whether the fence should be reset and returned to the internal pool.</param>
         /// <param name="commandList">The command list used by this operation.</param>
         /// <param name="commandBuffer">The command buffer value used by this operation.</param>
-        public FenceSubmissionInfo(global::Vortice.Vulkan.VkFence fence, VkCommandList commandList, VkCommandBuffer commandBuffer) {
+        public FenceSubmissionInfo(global::Vortice.Vulkan.VkFence fence, bool ownsFence, VkCommandList commandList, VkCommandBuffer commandBuffer) {
             this.Fence = fence;
+            this.OwnsFence = ownsFence;
             this.CommandList = commandList;
             this.CommandBuffer = commandBuffer;
         }

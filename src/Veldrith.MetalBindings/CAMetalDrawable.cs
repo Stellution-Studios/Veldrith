@@ -4,11 +4,10 @@ using static Veldrith.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrith.MetalBindings;
 
-[StructLayout(LayoutKind.Sequential)]
-
 /// <summary>
 /// Represents the CAMetalDrawable data structure used by the graphics runtime.
 /// </summary>
+[StructLayout(LayoutKind.Sequential)]
 public struct CAMetalDrawable {
 
     /// <summary>
@@ -24,5 +23,5 @@ public struct CAMetalDrawable {
     /// <summary>
     /// Gets or sets texture.
     /// </summary>
-    public MTLTexture texture => ObjcMsgSend<MTLTexture>(this.NativePtr, Selectors.Texture);
+    public MTLTexture Texture => ObjcMsgSend<MTLTexture>(this.NativePtr, Selectors.Texture);
 }

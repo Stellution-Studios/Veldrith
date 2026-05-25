@@ -173,6 +173,7 @@ internal sealed class D3D12Swapchain : Swapchain {
         }
 
         this._disposed = true;
+        this.gd.WaitForIdle();
         this.DisposeNativeResources(disposeDescriptorHeap: true);
         this._frameLatencyWaitHandle?.Dispose();
         this._dxgiSwapChain?.Dispose();

@@ -35,12 +35,12 @@ public struct CALayer {
     /// </summary>
     /// <param name="layer">The layer value used by this operation.</param>
     public void AddSublayer(IntPtr layer) {
-        ObjcMsgSend(this.NativePtr, sel_addSublayer, layer);
+        ObjcMsgSend(this.NativePtr, _selAddSublayer, layer);
     }
 
     /// <summary>
     /// Stores the sel add sublayer state used by this instance.
     /// </summary>
-    private static readonly Selector sel_addSublayer = "addSublayer:";
+    private static readonly Selector _selAddSublayer = "addSublayer:";
 }
 

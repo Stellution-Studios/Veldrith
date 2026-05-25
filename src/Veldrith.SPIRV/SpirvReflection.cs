@@ -14,7 +14,9 @@ public class SpirvReflection {
     private static readonly JsonSerializerOptions _sJsonOptions = new() {
         WriteIndented = true,
         IncludeFields = true,
-        Converters = { new JsonStringEnumConverter() }
+        Converters = {
+            new JsonStringEnumConverter()
+        }
     };
 
     /// <summary>

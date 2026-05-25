@@ -219,8 +219,8 @@ internal static unsafe class VkSurfaceUtil {
 
         if (!CAMetalLayer.TryCast(uiView.Layer, out CAMetalLayer metalLayer)) {
             metalLayer = CAMetalLayer.New();
-            metalLayer.frame = uiView.Frame;
-            metalLayer.opaque = true;
+            metalLayer.Frame = uiView.Frame;
+            metalLayer.Opaque = true;
             uiView.Layer.AddSublayer(metalLayer.NativePtr);
         }
 

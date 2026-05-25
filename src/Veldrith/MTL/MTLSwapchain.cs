@@ -60,9 +60,9 @@ internal class MtlSwapchain : Swapchain {
         if (source is NSWindowSwapchainSource nsWindowSource) {
             NSWindow nswindow = new(nsWindowSource.NSWindow);
             NSView contentView = nswindow.ContentView;
-            CGSize windowContentSize = contentView.Frame.size;
-            width = (uint)windowContentSize.width;
-            height = (uint)windowContentSize.height;
+            CGSize windowContentSize = contentView.Frame.Size;
+            width = (uint)windowContentSize.Width;
+            height = (uint)windowContentSize.Height;
 
             if (!CAMetalLayer.TryCast(contentView.Layer, out this._metalLayer)) {
                 this._metalLayer = CAMetalLayer.New();
@@ -72,9 +72,9 @@ internal class MtlSwapchain : Swapchain {
         }
         else if (source is NSViewSwapchainSource nsViewSource) {
             NSView contentView = new(nsViewSource.NSView);
-            CGSize windowContentSize = contentView.Frame.size;
-            width = (uint)windowContentSize.width;
-            height = (uint)windowContentSize.height;
+            CGSize windowContentSize = contentView.Frame.Size;
+            width = (uint)windowContentSize.Width;
+            height = (uint)windowContentSize.Height;
 
             if (!CAMetalLayer.TryCast(contentView.Layer, out this._metalLayer)) {
                 this._metalLayer = CAMetalLayer.New();
@@ -84,14 +84,14 @@ internal class MtlSwapchain : Swapchain {
         }
         else if (source is UIViewSwapchainSource uiViewSource) {
             this._uiView = new UIView(uiViewSource.UIView);
-            CGSize viewSize = this._uiView.Frame.size;
-            width = (uint)viewSize.width;
-            height = (uint)viewSize.height;
+            CGSize viewSize = this._uiView.Frame.Size;
+            width = (uint)viewSize.Width;
+            height = (uint)viewSize.Height;
 
             if (!CAMetalLayer.TryCast(this._uiView.Layer, out this._metalLayer)) {
                 this._metalLayer = CAMetalLayer.New();
-                this._metalLayer.frame = this._uiView.Frame;
-                this._metalLayer.opaque = true;
+                this._metalLayer.Frame = this._uiView.Frame;
+                this._metalLayer.Opaque = true;
             this._uiView.Layer.AddSublayer(this._metalLayer.NativePtr);
             }
         }
@@ -103,10 +103,10 @@ internal class MtlSwapchain : Swapchain {
             ? PixelFormat.B8G8R8A8UNormSRgb
             : PixelFormat.B8G8R8A8UNorm;
 
-        this._metalLayer.device = this.gd.Device;
-        this._metalLayer.pixelFormat = MtlFormats.VdToMtlPixelFormat(format, false);
-        this._metalLayer.framebufferOnly = true;
-        this._metalLayer.drawableSize = new CGSize(width, height);
+        this._metalLayer.Device = this.gd.Device;
+        this._metalLayer.PixelFormat = MtlFormats.VdToMtlPixelFormat(format, false);
+        this._metalLayer.FramebufferOnly = true;
+        this._metalLayer.DrawableSize = new CGSize(width, height);
 
         this.SetSyncToVerticalBlank(this._syncToVerticalBlank);
 
@@ -172,10 +172,10 @@ internal class MtlSwapchain : Swapchain {
     /// <param name="height">The height value.</param>
     public override void Resize(uint width, uint height) {
         if (this._uiView.NativePtr != IntPtr.Zero) {
-            this._metalLayer.frame = this._uiView.Frame;
+            this._metalLayer.Frame = this._uiView.Frame;
         }
 
-        this._metalLayer.drawableSize = new CGSize(width, height);
+        this._metalLayer.DrawableSize = new CGSize(width, height);
 
         this.GetNextDrawable();
     }
@@ -210,7 +210,7 @@ internal class MtlSwapchain : Swapchain {
 
             if (!this._drawable.IsNull) {
                 ObjectiveCRuntime.Retain(this._drawable.NativePtr);
-                this._framebuffer.UpdateTextures(this._drawable, this._metalLayer.drawableSize);
+                this._framebuffer.UpdateTextures(this._drawable, this._metalLayer.DrawableSize);
                 return true;
             }
 
@@ -228,7 +228,7 @@ internal class MtlSwapchain : Swapchain {
         if (this.gd.MetalFeatures.MaxFeatureSet == MTLFeatureSet.macOS_GPUFamily1_v3
             || this.gd.MetalFeatures.MaxFeatureSet == MTLFeatureSet.macOS_GPUFamily1_v4
             || this.gd.MetalFeatures.MaxFeatureSet == MTLFeatureSet.macOS_GPUFamily2_v1) {
-            this._metalLayer.displaySyncEnabled = value;
+            this._metalLayer.DisplaySyncEnabled = value;
         }
     }
 }

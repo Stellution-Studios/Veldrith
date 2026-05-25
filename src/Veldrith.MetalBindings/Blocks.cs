@@ -10,27 +10,27 @@ public unsafe struct BlockLiteral {
     /// <summary>
     /// Stores the isa state used by this instance.
     /// </summary>
-    public IntPtr isa;
+    public IntPtr Isa;
 
     /// <summary>
     /// Stores the flags state used by this instance.
     /// </summary>
-    public int flags;
+    public int Flags;
 
     /// <summary>
     /// Stores the reserved state used by this instance.
     /// </summary>
-    public int reserved;
+    public int Reserved;
 
     /// <summary>
     /// Stores the invoke state used by this instance.
     /// </summary>
-    public IntPtr invoke;
+    public IntPtr Invoke;
 
     /// <summary>
     /// Stores the descriptor state used by this instance.
     /// </summary>
-    public BlockDescriptor* descriptor;
+    public BlockDescriptor* Descriptor;
 }
 
 /// <summary>
@@ -41,10 +41,10 @@ public struct BlockDescriptor {
     /// <summary>
     /// Stores the reserved state used by this instance.
     /// </summary>
-    public ulong reserved;
+    public ulong Reserved;
 
     /// <summary>
     /// Stores the block size value used during command execution.
     /// </summary>
-    public ulong Block_size;
+    public ulong BlockSize;
 }

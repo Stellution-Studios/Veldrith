@@ -937,6 +937,11 @@ internal sealed class D3D12CommandList : CommandList {
     /// Releases resources held by this instance.
     /// </summary>
     public override void Dispose() {
+        if (this._disposed) {
+            return;
+        }
+
+        this.WaitForSubmittedFrameSlots();
         this.DisposePendingSubmissionDisposals();
         this._gpuMipPipeline?.Dispose();
         this._gpuMipResourceLayout?.Dispose();
@@ -3439,6 +3444,19 @@ internal sealed class D3D12CommandList : CommandList {
         }
 
         this._pendingSubmissionUploadBuffers.Clear();
+    }
+
+    /// <summary>
+    /// Waits for all GPU submissions that can still reference this command list's allocators and descriptor heaps.
+    /// </summary>
+    private void WaitForSubmittedFrameSlots() {
+        for (int i = 0; i < this._frameSlotFenceValues.Length; i++) {
+            ulong fenceValue = this._frameSlotFenceValues[i];
+            if (fenceValue != 0) {
+                this.gd.WaitForSubmissionFence(fenceValue);
+                this._frameSlotFenceValues[i] = 0;
+            }
+        }
     }
 
     [ComImport]

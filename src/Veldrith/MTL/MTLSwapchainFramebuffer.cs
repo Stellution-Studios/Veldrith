@@ -120,8 +120,8 @@ internal class MtlSwapchainFramebuffer : MtlFramebuffer {
     public void UpdateTextures(CAMetalDrawable drawable, CGSize size) {
         this._colorTexture.SetDrawable(drawable, size, this.colorFormat);
 
-        if (this.depthFormat.HasValue && (size.width != this._depthTexture?.Width || size.height != this._depthTexture?.Height)) {
-            this.RecreateDepthTexture((uint)size.width, (uint)size.height);
+        if (this.depthFormat.HasValue && (size.Width != this._depthTexture?.Width || size.Height != this._depthTexture?.Height)) {
+            this.RecreateDepthTexture((uint)size.Width, (uint)size.Height);
         }
     }
 

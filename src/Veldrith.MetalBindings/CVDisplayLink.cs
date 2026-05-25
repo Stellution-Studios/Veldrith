@@ -85,9 +85,7 @@ public struct CVDisplayLink {
             CVDisplayLinkSetCurrentCGDisplay(this, displays[0]);
         }
     }
-
-    [DllImport(CGFramework)]
-
+    
     /// <summary>
     /// Executes the cgget displays with rect logic for this backend.
     /// </summary>
@@ -96,6 +94,7 @@ public struct CVDisplayLink {
     /// <param name="displays">The displays value used by this operation.</param>
     /// <param name="displayCount">The display count value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
+    [DllImport(CGFramework)]
     private static extern int CGGetDisplaysWithRect(CGRect rect, int maxDisplays, uint[] displays, ref uint displayCount);
 
     /// <summary>
@@ -120,25 +119,21 @@ public struct CVDisplayLink {
         CVDisplayLinkRelease(this);
     }
 
-    [DllImport(CVFramework)]
-
     /// <summary>
     /// Executes the cvdisplay link create with active cgdisplays logic for this backend.
     /// </summary>
     /// <param name="displayLink">The display link value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    private static extern int CVDisplayLinkCreateWithActiveCGDisplays(out CVDisplayLink displayLink);
-
     [DllImport(CVFramework)]
+    private static extern int CVDisplayLinkCreateWithActiveCGDisplays(out CVDisplayLink displayLink);
 
     /// <summary>
     /// Executes the cvdisplay link get actual output video refresh period logic for this backend.
     /// </summary>
     /// <param name="displayLink">The display link value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    private static extern double CVDisplayLinkGetActualOutputVideoRefreshPeriod(CVDisplayLink displayLink);
-
     [DllImport(CVFramework)]
+    private static extern double CVDisplayLinkGetActualOutputVideoRefreshPeriod(CVDisplayLink displayLink);
 
     /// <summary>
     /// Executes the cvdisplay link set output callback logic for this backend.
@@ -147,9 +142,8 @@ public struct CVDisplayLink {
     /// <param name="callback">The callback value used by this operation.</param>
     /// <param name="userData">The user data value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    private static extern int CVDisplayLinkSetOutputCallback(CVDisplayLink displayLink, CVDisplayLinkOutputCallbackDelegate callback, IntPtr userData);
-
     [DllImport(CVFramework)]
+    private static extern int CVDisplayLinkSetOutputCallback(CVDisplayLink displayLink, CVDisplayLinkOutputCallbackDelegate callback, IntPtr userData);
 
     /// <summary>
     /// Executes the cvdisplay link set current cgdisplay logic for this backend.
@@ -157,33 +151,31 @@ public struct CVDisplayLink {
     /// <param name="displayLink">The display link value used by this operation.</param>
     /// <param name="displayId">The display id value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    private static extern int CVDisplayLinkSetCurrentCGDisplay(CVDisplayLink displayLink, uint displayId);
-
     [DllImport(CVFramework)]
+    private static extern int CVDisplayLinkSetCurrentCGDisplay(CVDisplayLink displayLink, uint displayId);
 
     /// <summary>
     /// Executes the cvdisplay link start logic for this backend.
     /// </summary>
     /// <param name="displayLink">The display link value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    private static extern int CVDisplayLinkStart(CVDisplayLink displayLink);
-
     [DllImport(CVFramework)]
+    private static extern int CVDisplayLinkStart(CVDisplayLink displayLink);
 
     /// <summary>
     /// Executes the cvdisplay link stop logic for this backend.
     /// </summary>
     /// <param name="displayLink">The display link value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    private static extern int CVDisplayLinkStop(CVDisplayLink displayLink);
-
     [DllImport(CVFramework)]
+    private static extern int CVDisplayLinkStop(CVDisplayLink displayLink);
 
     /// <summary>
     /// Executes the cvdisplay link release logic for this backend.
     /// </summary>
     /// <param name="displayLink">The display link value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
+    [DllImport(CVFramework)]
     private static extern int CVDisplayLinkRelease(CVDisplayLink displayLink);
 }
 

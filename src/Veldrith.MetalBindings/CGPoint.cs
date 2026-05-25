@@ -8,12 +8,12 @@ public struct CGPoint {
     /// <summary>
     /// Stores the x state used by this instance.
     /// </summary>
-    public CGFloat x;
+    public CGFloat X;
 
     /// <summary>
     /// Stores the y state used by this instance.
     /// </summary>
-    public CGFloat y;
+    public CGFloat Y;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CGPoint" /> type.
@@ -21,8 +21,8 @@ public struct CGPoint {
     /// <param name="x">The X coordinate.</param>
     /// <param name="y">The Y coordinate.</param>
     public CGPoint(double x, double y) {
-        this.x = x;
-        this.y = y;
+        this.X = x;
+        this.Y = y;
     }
 
     /// <summary>
@@ -30,6 +30,6 @@ public struct CGPoint {
     /// </summary>
     /// <returns>The value produced by this operation.</returns>
     public override string ToString() {
-        return string.Format("({0},{1})", this.x, this.y);
+        return string.Format("({0},{1})", this.X, this.Y);
     }
 }

@@ -220,15 +220,15 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
         this._completionHandlerFuncPtr = Marshal.GetFunctionPointerForDelegate(this._completionHandler);
         this._completionBlockDescriptor = Marshal.AllocHGlobal(Unsafe.SizeOf<BlockDescriptor>());
         BlockDescriptor* descriptorPtr = (BlockDescriptor*)this._completionBlockDescriptor;
-        descriptorPtr->reserved = 0;
-        descriptorPtr->Block_size = (ulong)Unsafe.SizeOf<BlockDescriptor>();
+        descriptorPtr->Reserved = 0;
+        descriptorPtr->BlockSize = (ulong)Unsafe.SizeOf<BlockDescriptor>();
 
         this._completionBlockLiteral = Marshal.AllocHGlobal(Unsafe.SizeOf<BlockLiteral>());
         BlockLiteral* blockPtr = (BlockLiteral*)this._completionBlockLiteral;
-        blockPtr->isa = this._concreteGlobalBlock;
-        blockPtr->flags = (1 << 28) | (1 << 29);
-        blockPtr->invoke = this._completionHandlerFuncPtr;
-        blockPtr->descriptor = descriptorPtr;
+        blockPtr->Isa = this._concreteGlobalBlock;
+        blockPtr->Flags = (1 << 28) | (1 << 29);
+        blockPtr->Invoke = this._completionHandlerFuncPtr;
+        blockPtr->Descriptor = descriptorPtr;
 
         if (!this.MetalFeatures.IsMacOS) {
             lock (_s_aot_registered_blocks) {
