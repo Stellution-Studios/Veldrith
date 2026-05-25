@@ -80,9 +80,11 @@ public abstract class Texture : IDeviceResource, IMappableResource, IDisposable,
     public virtual void Dispose() {
         lock (this._fullTextureViewLock) {
             this._fullTextureView?.Dispose();
+            
+            // Held through DisposeCore so a concurrent GetFullTextureView can't
+            // build a view on a texture whose device resource is being freed.
+            this.DisposeCore();
         }
-
-        this.DisposeCore();
     }
 
     #endregion
