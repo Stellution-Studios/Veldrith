@@ -56,7 +56,7 @@
     <!-- Libraries -->
     <ItemGroup>
         <PackageReference Include="Vortice.Direct3D12" Version="$(VorticeWindowsVersion)" />
-        <PackageReference Include="Vortice.Vulkan" Version="3.2.2" />
+        <PackageReference Include="Vortice.Vulkan" Version="3.2.3" />
     </ItemGroup>
 
     <ItemGroup>
