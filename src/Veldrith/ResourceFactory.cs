@@ -264,15 +264,6 @@ public abstract class ResourceFactory {
                 throw new VeldridException("Structured Buffer objects must have a non-zero StructureByteStride.");
             }
 
-            if ((usage & BufferUsage.StructuredBufferReadWrite) != 0 && usage != BufferUsage.StructuredBufferReadWrite) {
-                throw new VeldridException($"{nameof(BufferUsage)}.{nameof(BufferUsage.StructuredBufferReadWrite)} cannot be combined with any other flag.");
-            }
-
-            if ((usage & BufferUsage.VertexBuffer) != 0
-                || (usage & BufferUsage.IndexBuffer) != 0
-                || (usage & BufferUsage.IndirectBuffer) != 0) {
-                throw new VeldridException($"Read-Only Structured Buffer objects cannot specify {nameof(BufferUsage)}.{nameof(BufferUsage.VertexBuffer)}, {nameof(BufferUsage)}.{nameof(BufferUsage.IndexBuffer)}, or {nameof(BufferUsage)}.{nameof(BufferUsage.IndirectBuffer)}.");
-            }
         }
         else if (description.StructureByteStride != 0) {
             throw new VeldridException("Non-structured Buffers must have a StructureByteStride of zero.");
@@ -280,6 +271,19 @@ public abstract class ResourceFactory {
 
         if ((usage & BufferUsage.Staging) != 0 && usage != BufferUsage.Staging) {
             throw new VeldridException("Buffers with Staging Usage must not specify any other Usage flags.");
+        }
+
+        if (((usage & BufferUsage.StructuredBufferReadOnly) != 0 || (usage & BufferUsage.StructuredBufferReadWrite) != 0)
+            && (usage & BufferUsage.UniformBuffer) != 0) {
+            throw new VeldridException($"Structured Buffer objects cannot specify {nameof(BufferUsage)}.{nameof(BufferUsage.UniformBuffer)}.");
+        }
+
+        if ((usage & BufferUsage.Dynamic) != 0 && (usage & BufferUsage.StructuredBufferReadWrite) != 0) {
+            throw new VeldridException($"{nameof(BufferUsage)}.{nameof(BufferUsage.Dynamic)} cannot be combined with {nameof(BufferUsage)}.{nameof(BufferUsage.StructuredBufferReadWrite)}.");
+        }
+
+        if ((usage & BufferUsage.Dynamic) != 0 && (usage & BufferUsage.IndirectBuffer) != 0) {
+            throw new VeldridException($"{nameof(BufferUsage)}.{nameof(BufferUsage.Dynamic)} cannot be combined with {nameof(BufferUsage)}.{nameof(BufferUsage.IndirectBuffer)}.");
         }
 
         if ((usage & BufferUsage.UniformBuffer) != 0 && description.SizeInBytes % 16 != 0) {

@@ -148,13 +148,29 @@ internal static unsafe class VkSurfaceUtil {
     /// <param name="androidSource">The android source value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     private static VkSurfaceKHR CreateAndroidSurface(VkInstance instance, AndroidSurfaceSwapchainSource androidSource) {
-        IntPtr aNativeWindow = AndroidRuntime.ANativeWindow_fromSurface(androidSource.JniEnv, androidSource.Surface);
+        if (androidSource.JniEnv == IntPtr.Zero) {
+            throw new VeldridException("Cannot create an Android Vulkan surface: JNIEnv handle was null.");
+        }
 
-        VkAndroidSurfaceCreateInfoKHR androidSurfaceCi = new VkAndroidSurfaceCreateInfoKHR();
-        androidSurfaceCi.window = aNativeWindow;
-        VkResult result = VulkanDispatch.GetApi(instance).vkCreateAndroidSurfaceKHR(ref androidSurfaceCi, null, out VkSurfaceKHR surface);
-        CheckResult(result);
-        return surface;
+        if (androidSource.Surface == IntPtr.Zero) {
+            throw new VeldridException("Cannot create an Android Vulkan surface: Surface handle was null.");
+        }
+
+        IntPtr aNativeWindow = AndroidRuntime.ANativeWindow_fromSurface(androidSource.JniEnv, androidSource.Surface);
+        if (aNativeWindow == IntPtr.Zero) {
+            throw new VeldridException("ANativeWindow_fromSurface returned null. The Android surface is not valid.");
+        }
+
+        try {
+            VkAndroidSurfaceCreateInfoKHR androidSurfaceCi = new VkAndroidSurfaceCreateInfoKHR();
+            androidSurfaceCi.window = aNativeWindow;
+            VkResult result = VulkanDispatch.GetApi(instance).vkCreateAndroidSurfaceKHR(ref androidSurfaceCi, null, out VkSurfaceKHR surface);
+            CheckResult(result);
+            return surface;
+        }
+        finally {
+            AndroidRuntime.ANativeWindow_release(aNativeWindow);
+        }
     }
 
     /// <summary>

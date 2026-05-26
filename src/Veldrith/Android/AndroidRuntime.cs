@@ -11,7 +11,7 @@ internal static class AndroidRuntime {
     /// <summary>
     /// Stores the lib name state used by this instance.
     /// </summary>
-    private const string _lib_name = "android.so";
+    private const string _lib_name = "android";
 
     [DllImport(_lib_name)]
 

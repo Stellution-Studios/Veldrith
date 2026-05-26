@@ -25,11 +25,13 @@ public enum BufferUsage : byte {
 
     /// <summary>
     /// Indicates that a <see cref="DeviceBuffer" /> can be used as a read-only structured Buffer.
+    /// May be combined with <see cref="VertexBuffer" />, <see cref="IndexBuffer" />, and <see cref="IndirectBuffer" />.
     /// </summary>
     StructuredBufferReadOnly = 1 << 3,
 
     /// <summary>
     /// Indicates that a <see cref="DeviceBuffer" /> can be used as a read-write structured Buffer.
+    /// May be combined with <see cref="VertexBuffer" />, <see cref="IndexBuffer" />, and <see cref="IndirectBuffer" />.
     /// </summary>
     StructuredBufferReadWrite = 1 << 4,
 
@@ -40,6 +42,7 @@ public enum BufferUsage : byte {
 
     /// <summary>
     /// Indicates that a <see cref="DeviceBuffer" /> will be updated with new data very frequently. Dynamic Buffers can be
+    /// combined with most usages except <see cref="StructuredBufferReadWrite" /> and <see cref="IndirectBuffer" />.
     /// </summary>
     Dynamic = 1 << 6,
 

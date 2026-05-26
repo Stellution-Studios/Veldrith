@@ -62,6 +62,10 @@ internal static unsafe class VulkanUtil {
     /// </summary>
     /// <returns>The value produced by this operation.</returns>
     public static string[] EnumerateInstanceLayers() {
+        if (!IsVulkanLoaded()) {
+            return Array.Empty<string>();
+        }
+
         uint propCount = 0;
         VkResult result = vkEnumerateInstanceLayerProperties(&propCount, null);
         CheckResult(result);

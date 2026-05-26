@@ -1286,6 +1286,10 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// <param name="debug">The debug value used by this operation.</param>
     /// <param name="options">The options used to configure this operation.</param>
     private void CreateInstance(bool debug, VulkanDeviceOptions options) {
+        if (!IsVulkanLoaded()) {
+            throw new VeldridException("Vulkan is not available or failed to initialize.");
+        }
+
         HashSet<string> availableInstanceLayers = new(EnumerateInstanceLayers());
         HashSet<string> availableInstanceExtensions = new(GetInstanceExtensions());
 
