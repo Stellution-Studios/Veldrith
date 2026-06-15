@@ -1882,6 +1882,7 @@ internal sealed class D3D12CommandList : CommandList {
         D3D12ResourceAllocation temporaryUpload = d3D12Buffer.Update(this.NativeCommandList, source, bufferOffsetInBytes, sizeInBytes);
         if (d3D12Buffer.BindVersion != previousBindVersion) {
             this.MarkResourceSetsReferencingBufferDirty(d3D12Buffer);
+            this.RefreshDynamicBufferBindings(d3D12Buffer);
         }
 
         if (temporaryUpload != null) {
@@ -2052,6 +2053,38 @@ internal sealed class D3D12CommandList : CommandList {
             }
 
             this.BindVertexBuffer(index, buffer, this._boundVertexBufferOffsets[index]);
+        }
+    }
+
+    /// <summary>
+    /// Refreshes input-assembler views that point at a dynamic buffer whose native snapshot offset changed.
+    /// </summary>
+    /// <param name="buffer">The dynamic buffer whose binding version changed.</param>
+    private void RefreshDynamicBufferBindings(D3D12DeviceBuffer buffer) {
+        ulong bindVersion = buffer.BindVersion;
+        for (uint index = 0; index < this._maxBoundVertexBufferSlot; index++) {
+            if (!ReferenceEquals(this._boundVertexBuffers[index], buffer)) {
+                continue;
+            }
+
+            this.BindVertexBuffer(index, buffer, this._boundVertexBufferOffsets[index]);
+            this._boundVertexBufferVersions[index] = bindVersion;
+            if (_perfLogEnabled) {
+                this._perfVertexBufferBinds++;
+            }
+        }
+
+        if (!this._hasBoundIndexBuffer || !ReferenceEquals(this._boundIndexBuffer, buffer)) {
+            return;
+        }
+
+        this.TransitionBuffer(buffer, ResourceStates.IndexBuffer);
+        uint viewSize = buffer.GetBindableSize(this._boundIndexBufferOffset);
+        IndexBufferView indexView = new(buffer.GetGpuVirtualAddress(this._boundIndexBufferOffset), viewSize, D3D12Formats.ToDxgiFormat(this._boundIndexFormat));
+        this.NativeCommandList.IASetIndexBuffer(indexView);
+        this._boundIndexBufferVersion = bindVersion;
+        if (_perfLogEnabled) {
+            this._perfIndexBufferBinds++;
         }
     }
 
