@@ -10,29 +10,9 @@ namespace Veldrith.D3D12;
 internal sealed class D3D12DeviceBuffer : DeviceBuffer {
 
     /// <summary>
-    /// Stores the dynamic mapped pointer state used by this instance.
+    /// Tracks dynamic upload-ring snapshots for buffer usages that are rebound frequently.
     /// </summary>
-    private readonly IntPtr _dynamicMappedPointer;
-
-    /// <summary>
-    /// Stores the dynamic snapshot capacity state used by this instance.
-    /// </summary>
-    private readonly uint _dynamicSnapshotCapacity;
-
-    /// <summary>
-    /// Stores the alignment used between dynamic snapshots.
-    /// </summary>
-    private readonly uint _dynamicSnapshotAlignment;
-
-    /// <summary>
-    /// Stores the reserved byte size for one logical dynamic snapshot.
-    /// </summary>
-    private readonly uint _dynamicSnapshotSlotSize;
-
-    /// <summary>
-    /// Stores the dynamic snapshot enabled state used by this instance.
-    /// </summary>
-    private readonly bool _dynamicSnapshotEnabled;
+    private readonly D3D12DynamicBufferSnapshotState _dynamicSnapshot;
 
     /// <summary>
     /// Tracks whether is dynamic is currently enabled.
@@ -45,19 +25,9 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     private readonly bool _isStaging;
 
     /// <summary>
-    /// Stores the staging read buffer state used by this instance.
+    /// Tracks the upload/readback resource pair used by staging buffers.
     /// </summary>
-    private readonly ID3D12Resource _stagingReadBuffer;
-
-    /// <summary>
-    /// Stores the staging read mapped pointer state used by this instance.
-    /// </summary>
-    private readonly IntPtr _stagingReadMappedPointer;
-
-    /// <summary>
-    /// Stores the staging write buffer state used by this instance.
-    /// </summary>
-    private readonly ID3D12Resource _stagingWriteBuffer;
+    private readonly D3D12StagingBufferState _staging;
 
     /// <summary>
     /// Reuses a single barrier array for buffer state transitions.
@@ -68,21 +38,6 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     /// Stores the placed-resource allocation block when this buffer is allocated from the D3D12 memory manager.
     /// </summary>
     private D3D12ResourceAllocation _allocation;
-
-    /// <summary>
-    /// Stores the staging write allocation when this buffer is backed by staging resources.
-    /// </summary>
-    private D3D12ResourceAllocation _stagingWriteAllocation;
-
-    /// <summary>
-    /// Stores the staging read allocation when this buffer is backed by staging resources.
-    /// </summary>
-    private D3D12ResourceAllocation _stagingReadAllocation;
-
-    /// <summary>
-    /// Stores the staging write mapped pointer state used by this instance.
-    /// </summary>
-    private readonly IntPtr _stagingWriteMappedPointer;
 
     /// <summary>
     /// Stores the gd state used by this instance.
@@ -109,55 +64,6 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     /// </summary>
     private bool _disposed;
 
-    /// <summary>
-    /// Stores the dynamic bind version state used by this instance.
-    /// </summary>
-    private ulong _dynamicBindVersion;
-
-    /// <summary>
-    /// Stores the dynamic snapshot base offset value used during command execution.
-    /// </summary>
-    private uint _dynamicSnapshotBaseOffset;
-
-    /// <summary>
-    /// Stores the dynamic snapshot initialized state used by this instance.
-    /// </summary>
-    private bool _dynamicSnapshotInitialized;
-
-    /// <summary>
-    /// Stores the dynamic snapshot write head state used by this instance.
-    /// </summary>
-    private uint _dynamicSnapshotWriteHead;
-
-    /// <summary>
-    /// Stores the logical end of the writes recorded into the current dynamic snapshot.
-    /// </summary>
-    private uint _dynamicSnapshotWrittenEnd;
-
-    /// <summary>
-    /// Stores the source-copy byte count from the most recent dynamic snapshot update.
-    /// </summary>
-    private uint _lastDynamicSnapshotCopyBytes;
-
-    /// <summary>
-    /// Stores the prefix-copy byte count from the most recent dynamic snapshot update.
-    /// </summary>
-    private uint _lastDynamicSnapshotPrefixCopyBytes;
-
-    /// <summary>
-    /// Tracks whether the most recent dynamic snapshot update moved to a new slot.
-    /// </summary>
-    private bool _lastDynamicSnapshotRotated;
-
-    /// <summary>
-    /// Stores the staging read buffer dirty from write buffer state used by this instance.
-    /// </summary>
-    private bool _stagingReadBufferDirtyFromWriteBuffer;
-
-    /// <summary>
-    /// Stores the staging write buffer dirty from read buffer state used by this instance.
-    /// </summary>
-    private bool _stagingWriteBufferDirtyFromReadBuffer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="D3D12DeviceBuffer" /> type.
@@ -172,34 +78,23 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         this._isDynamic = (description.Usage & BufferUsage.Dynamic) == BufferUsage.Dynamic;
         this._isStaging = (description.Usage & BufferUsage.Staging) == BufferUsage.Staging;
         this.CanTransitionState = !this._isDynamic && !this._isStaging;
-        this._dynamicSnapshotEnabled = this._isDynamic && (((description.Usage & BufferUsage.VertexBuffer) == BufferUsage.VertexBuffer)
-                                                           || ((description.Usage & BufferUsage.IndexBuffer) == BufferUsage.IndexBuffer)
-                                                           || ((description.Usage & BufferUsage.UniformBuffer) == BufferUsage.UniformBuffer)
-                                                           || ((description.Usage & BufferUsage.StructuredBufferReadOnly) == BufferUsage.StructuredBufferReadOnly));
-        
-        bool isUniformBuffer = (description.Usage & BufferUsage.UniformBuffer) == BufferUsage.UniformBuffer;
-        this._dynamicSnapshotAlignment = isUniformBuffer ? 256u : 16u;
-        this._dynamicSnapshotSlotSize = AlignUp(description.SizeInBytes, this._dynamicSnapshotAlignment);
-        
-        uint minimumSnapshotCount = isUniformBuffer ? 1024u : 8u;
-        this._dynamicSnapshotCapacity = this._dynamicSnapshotEnabled ? CalculateDynamicSnapshotCapacity(description.SizeInBytes, this._dynamicSnapshotAlignment, minimumSnapshotCount) : description.SizeInBytes;
+        bool dynamicSnapshotEnabled = D3D12DynamicBufferSnapshotState.IsSupported(description.Usage);
+        uint nativeSizeInBytes = dynamicSnapshotEnabled ? D3D12DynamicBufferSnapshotState.CalculateCapacity(description.SizeInBytes, description.Usage) : description.SizeInBytes;
 
-        ResourceDescription resourceDescription = ResourceDescription.Buffer(this._dynamicSnapshotEnabled ? this._dynamicSnapshotCapacity : description.SizeInBytes, GetResourceFlags(description.Usage));
+        ResourceDescription resourceDescription = ResourceDescription.Buffer(nativeSizeInBytes, GetResourceFlags(description.Usage));
 
         if (this._isStaging) {
-            this._stagingWriteAllocation = gd.MemoryManager.CreateResource(ref resourceDescription, ResourceStates.GenericRead, HeapType.Upload, HeapFlags.AllowOnlyBuffers);
-            this._stagingReadAllocation = gd.MemoryManager.CreateResource(ref resourceDescription, ResourceStates.CopyDest, HeapType.Readback, HeapFlags.AllowOnlyBuffers);
-            this._stagingWriteBuffer = this._stagingWriteAllocation.Resource;
-            this._stagingReadBuffer = this._stagingReadAllocation.Resource;
-            this.NativeBuffer = this._stagingWriteBuffer;
-
-            this._stagingWriteMappedPointer = this._stagingWriteAllocation.MappedPointer;
-            this._stagingReadMappedPointer = this._stagingReadAllocation.MappedPointer;
+            D3D12ResourceAllocation stagingWriteAllocation = gd.MemoryManager.CreateResource(ref resourceDescription, ResourceStates.GenericRead, HeapType.Upload, HeapFlags.AllowOnlyBuffers);
+            D3D12ResourceAllocation stagingReadAllocation = gd.MemoryManager.CreateResource(ref resourceDescription, ResourceStates.CopyDest, HeapType.Readback, HeapFlags.AllowOnlyBuffers);
+            this._staging = new D3D12StagingBufferState(stagingWriteAllocation, stagingReadAllocation);
+            this.NativeBuffer = this._staging.WriteBuffer;
         }
         else if (this._isDynamic) {
             this._allocation = gd.MemoryManager.CreateResource(ref resourceDescription, ResourceStates.GenericRead, HeapType.Upload, HeapFlags.AllowOnlyBuffers);
             this.NativeBuffer = this._allocation.Resource;
-            this._dynamicMappedPointer = this._allocation.MappedPointer;
+            if (dynamicSnapshotEnabled) {
+                this._dynamicSnapshot = new D3D12DynamicBufferSnapshotState(this._allocation.MappedPointer, description.SizeInBytes, description.Usage);
+            }
         }
         else {
             this._allocation = gd.MemoryManager.CreateResource(ref resourceDescription, ResourceStates.Common, HeapType.Default, HeapFlags.AllowOnlyBuffers);
@@ -249,22 +144,22 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     /// <summary>
     /// Stores the bind version state used by this instance.
     /// </summary>
-    internal ulong BindVersion => this._dynamicSnapshotEnabled ? this._dynamicBindVersion : 0UL;
+    internal ulong BindVersion => this._dynamicSnapshot?.BindVersion ?? 0UL;
 
     /// <summary>
     /// Gets the source-copy byte count from the most recent dynamic snapshot update.
     /// </summary>
-    internal uint LastDynamicSnapshotCopyBytes => this._lastDynamicSnapshotCopyBytes;
+    internal uint LastDynamicSnapshotCopyBytes => this._dynamicSnapshot?.LastCopyBytes ?? 0;
 
     /// <summary>
     /// Gets the prefix-copy byte count from the most recent dynamic snapshot update.
     /// </summary>
-    internal uint LastDynamicSnapshotPrefixCopyBytes => this._lastDynamicSnapshotPrefixCopyBytes;
+    internal uint LastDynamicSnapshotPrefixCopyBytes => this._dynamicSnapshot?.LastPrefixCopyBytes ?? 0;
 
     /// <summary>
     /// Gets whether the most recent dynamic snapshot update moved to a new slot.
     /// </summary>
-    internal bool LastDynamicSnapshotRotated => this._lastDynamicSnapshotRotated;
+    internal bool LastDynamicSnapshotRotated => this._dynamicSnapshot?.LastRotated ?? false;
 
     /// <summary>
     /// Gets or sets IsDisposed.
@@ -300,7 +195,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     /// <param name="offset">The byte offset used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     internal uint ResolveNativeOffset(uint offset) {
-        return this._dynamicSnapshotEnabled ? this._dynamicSnapshotBaseOffset + offset : offset;
+        return this._dynamicSnapshot?.ResolveNativeOffset(offset) ?? offset;
     }
 
     /// <summary>
@@ -312,8 +207,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         }
 
         if (this._isStaging) {
-            this.gd.ReleaseAfterLastSubmission(this._stagingWriteAllocation);
-            this.gd.ReleaseAfterLastSubmission(this._stagingReadAllocation);
+            this._staging.ReleaseAfterLastSubmission(this.gd);
         }
         else if (this._isDynamic) {
             this.gd.ReleaseAfterLastSubmission(this._allocation);
@@ -339,8 +233,8 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         }
 
         if (!this.CanTransitionState) {
-            if (this._dynamicSnapshotEnabled) {
-                this.UpdateDynamicSnapshot(source, destinationOffset, sizeInBytes);
+            if (this._dynamicSnapshot != null) {
+                this._dynamicSnapshot.Update(source, destinationOffset, sizeInBytes);
                 return null;
             }
 
@@ -359,71 +253,6 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         this.Transition(commandList, ResourceStates.CopyDest, previousState);
         this.CurrentState = previousState;
         return uploadBuffer;
-    }
-
-    /// <summary>
-    /// Updates the dynamic snapshot state for this command sequence.
-    /// </summary>
-    /// <param name="source">The source value or resource.</param>
-    /// <param name="destinationOffset">The destination offset value used by this operation.</param>
-    /// <param name="copySize">The copy size value used by this operation.</param>
-    private unsafe void UpdateDynamicSnapshot(IntPtr source, uint destinationOffset, uint copySize) {
-        this._lastDynamicSnapshotCopyBytes = 0;
-        this._lastDynamicSnapshotPrefixCopyBytes = 0;
-        this._lastDynamicSnapshotRotated = false;
-
-        if (copySize == 0) {
-            return;
-        }
-
-        uint writtenEnd = destinationOffset + copySize;
-
-        if (writtenEnd > this._dynamicSnapshotSlotSize || this._dynamicSnapshotSlotSize > this._dynamicSnapshotCapacity) {
-            throw new VeldridException("Dynamic snapshot update exceeds snapshot buffer capacity.");
-        }
-
-        byte* mappedPointer = (byte*)this._dynamicMappedPointer.ToPointer();
-        if (!this._dynamicSnapshotInitialized || destinationOffset < this._dynamicSnapshotWrittenEnd) {
-            uint previousBaseOffset = this._dynamicSnapshotBaseOffset;
-            uint newBaseOffset = this.AllocateDynamicSnapshotSlot();
-            if (this._dynamicSnapshotInitialized && newBaseOffset != previousBaseOffset) {
-                // Preserve only the unchanged prefix when callers update a subrange.
-                // Sequential appends reserve a full slot and continue writing in-place.
-                if (destinationOffset > 0) {
-                    uint prefixSize = destinationOffset;
-                    byte* src = mappedPointer + previousBaseOffset;
-                    byte* dst = mappedPointer + newBaseOffset;
-                    CopyMemory(src, dst, prefixSize);
-                    this._lastDynamicSnapshotPrefixCopyBytes = prefixSize;
-                }
-            }
-
-            this._dynamicSnapshotBaseOffset = newBaseOffset;
-            this._dynamicSnapshotWriteHead = AlignUp((uint)((ulong)newBaseOffset + this._dynamicSnapshotSlotSize), this._dynamicSnapshotAlignment);
-            this._dynamicSnapshotWrittenEnd = 0;
-            this._dynamicSnapshotInitialized = true;
-            this._lastDynamicSnapshotRotated = newBaseOffset != previousBaseOffset;
-            if (newBaseOffset != previousBaseOffset) {
-                this._dynamicBindVersion++;
-            }
-        }
-
-        byte* destination = mappedPointer + this._dynamicSnapshotBaseOffset + destinationOffset;
-        CopyMemory(source.ToPointer(), destination, copySize);
-        this._dynamicSnapshotWrittenEnd = Math.Max(this._dynamicSnapshotWrittenEnd, writtenEnd);
-        this._lastDynamicSnapshotCopyBytes = copySize;
-    }
-
-    /// <summary>
-    /// Reserves a full logical dynamic snapshot slot in the ring.
-    /// </summary>
-    /// <returns>The native byte offset of the reserved slot.</returns>
-    private uint AllocateDynamicSnapshotSlot() {
-        if ((ulong)this._dynamicSnapshotWriteHead + this._dynamicSnapshotSlotSize > this._dynamicSnapshotCapacity) {
-            this._dynamicSnapshotWriteHead = 0;
-        }
-
-        return this._dynamicSnapshotWriteHead;
     }
 
     /// <summary>
@@ -471,8 +300,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         }
 
         if (destination._isStaging) {
-            destination._stagingWriteBufferDirtyFromReadBuffer = true;
-            destination._stagingReadBufferDirtyFromWriteBuffer = false;
+            destination._staging.MarkReadBufferChanged(destinationOffset, sizeInBytes, destination.sizeInBytes);
         }
     }
 
@@ -494,13 +322,13 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     internal bool TryGetCpuReadPointer(out IntPtr pointer) {
         if (this._isStaging) {
-            this.EnsureReadBufferIsCurrent();
-            pointer = this._stagingReadMappedPointer;
+            this._staging.EnsureReadBufferIsCurrent(this.sizeInBytes);
+            pointer = this._staging.ReadMappedPointer;
             return true;
         }
 
         if (this._isDynamic) {
-            pointer = this._dynamicMappedPointer;
+            pointer = this._allocation.MappedPointer;
             return true;
         }
 
@@ -518,13 +346,11 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
 
         if (this._isStaging) {
             if (this._activeMapMode == MapMode.Write) {
-                this._stagingReadBufferDirtyFromWriteBuffer = true;
-                this._stagingWriteBufferDirtyFromReadBuffer = false;
+                this._staging.MarkWriteBufferChanged(0, this.sizeInBytes, this.sizeInBytes);
             }
             else if (this._activeMapMode == MapMode.ReadWrite) {
-                this._stagingWriteBufferDirtyFromReadBuffer = true;
-                this._stagingReadBufferDirtyFromWriteBuffer = false;
-                this.SyncReadBufferToWriteBuffer();
+                this._staging.MarkReadBufferChanged(0, this.sizeInBytes, this.sizeInBytes);
+                this._staging.SyncReadBufferToWriteBuffer(this.sizeInBytes);
             }
         }
 
@@ -542,16 +368,16 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
                 throw new VeldridException("Dynamic D3D12 buffers only support MapMode.Write.");
             }
 
-            return this._dynamicMappedPointer;
+            return this._allocation.MappedPointer;
         }
 
         if (this._isStaging) {
             if (mode == MapMode.Read || mode == MapMode.ReadWrite) {
-                this.EnsureReadBufferIsCurrent();
-                return this._stagingReadMappedPointer;
+                this._staging.EnsureReadBufferIsCurrent(this.sizeInBytes);
+                return this._staging.ReadMappedPointer;
             }
 
-            return this._stagingWriteMappedPointer;
+            return this._staging.WriteMappedPointer;
         }
 
         throw new VeldridException("Only Dynamic or Staging buffers can be mapped.");
@@ -565,16 +391,15 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     /// <param name="copySize">The copy size value used by this operation.</param>
     private unsafe void WriteCpuData(IntPtr source, uint destinationOffset, uint copySize) {
         if (this._isDynamic) {
-            byte* dst = (byte*)this._dynamicMappedPointer + destinationOffset;
+            byte* dst = (byte*)this._allocation.MappedPointer + destinationOffset;
             CopyMemory(source.ToPointer(), dst, copySize);
             return;
         }
 
         if (this._isStaging) {
-            byte* dst = (byte*)this._stagingWriteMappedPointer + destinationOffset;
+            byte* dst = (byte*)this._staging.WriteMappedPointer + destinationOffset;
             CopyMemory(source.ToPointer(), dst, copySize);
-            this._stagingReadBufferDirtyFromWriteBuffer = true;
-            this._stagingWriteBufferDirtyFromReadBuffer = false;
+            this._staging.MarkWriteBufferChanged(destinationOffset, copySize, this.sizeInBytes);
             return;
         }
 
@@ -621,10 +446,10 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
 
         IntPtr destinationPtr;
         if (destination._isDynamic) {
-            destinationPtr = destination._dynamicMappedPointer;
+            destinationPtr = destination._allocation.MappedPointer;
         }
         else if (destination._isStaging) {
-            destinationPtr = destination._stagingWriteMappedPointer;
+            destinationPtr = destination._staging.WriteMappedPointer;
         }
         else {
             throw new PlatformNotSupportedException("This D3D12 buffer copy direction is unsupported because the destination cannot be CPU-written.");
@@ -634,8 +459,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         byte* dst = (byte*)destinationPtr + destinationOffset;
         Buffer.MemoryCopy(src, dst, destination.SizeInBytes - destinationOffset, copySize);
         if (destination._isStaging) {
-            destination._stagingReadBufferDirtyFromWriteBuffer = true;
-            destination._stagingWriteBufferDirtyFromReadBuffer = false;
+            destination._staging.MarkWriteBufferChanged(destinationOffset, copySize, destination.sizeInBytes);
         }
     }
 
@@ -649,10 +473,10 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     private unsafe void CopyDefaultSourceToCpuWritableDestination(D3D12DeviceBuffer destination, uint sourceOffset, uint destinationOffset, uint copySize) {
         IntPtr destinationPtr;
         if (destination._isDynamic) {
-            destinationPtr = destination._dynamicMappedPointer;
+            destinationPtr = destination._allocation.MappedPointer;
         }
         else if (destination._isStaging) {
-            destinationPtr = destination._stagingWriteMappedPointer;
+            destinationPtr = destination._staging.WriteMappedPointer;
         }
         else {
             throw new PlatformNotSupportedException("This D3D12 buffer copy direction is unsupported because the destination cannot be CPU-written.");
@@ -688,8 +512,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         }
 
         if (destination._isStaging) {
-            destination._stagingReadBufferDirtyFromWriteBuffer = true;
-            destination._stagingWriteBufferDirtyFromReadBuffer = false;
+            destination._staging.MarkWriteBufferChanged(destinationOffset, copySize, destination.sizeInBytes);
         }
     }
 
@@ -703,8 +526,8 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         }
 
         if (this._isStaging) {
-            this.EnsureWriteBufferIsCurrent();
-            return this._stagingWriteBuffer;
+            this._staging.EnsureWriteBufferIsCurrent(this.sizeInBytes);
+            return this._staging.WriteBuffer;
         }
 
         return null;
@@ -720,49 +543,10 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         }
 
         if (this._isStaging) {
-            return this._stagingReadBuffer;
+            return this._staging.ReadBuffer;
         }
 
         return null;
-    }
-
-    /// <summary>
-    /// Executes the ensure read buffer is current logic for this backend.
-    /// </summary>
-    private void EnsureReadBufferIsCurrent() {
-        if (!this._isStaging || !this._stagingReadBufferDirtyFromWriteBuffer) {
-            return;
-        }
-
-        unsafe {
-            Buffer.MemoryCopy(this._stagingWriteMappedPointer.ToPointer(), this._stagingReadMappedPointer.ToPointer(), this.sizeInBytes, this.sizeInBytes);
-        }
-
-        this._stagingReadBufferDirtyFromWriteBuffer = false;
-        this._stagingWriteBufferDirtyFromReadBuffer = false;
-    }
-
-    /// <summary>
-    /// Executes the ensure write buffer is current logic for this backend.
-    /// </summary>
-    private void EnsureWriteBufferIsCurrent() {
-        if (!this._isStaging || !this._stagingWriteBufferDirtyFromReadBuffer) {
-            return;
-        }
-
-        this.SyncReadBufferToWriteBuffer();
-    }
-
-    /// <summary>
-    /// Executes the sync read buffer to write buffer logic for this backend.
-    /// </summary>
-    private void SyncReadBufferToWriteBuffer() {
-        unsafe {
-            Buffer.MemoryCopy(this._stagingReadMappedPointer.ToPointer(), this._stagingWriteMappedPointer.ToPointer(), this.sizeInBytes, this.sizeInBytes);
-        }
-
-        this._stagingWriteBufferDirtyFromReadBuffer = false;
-        this._stagingReadBufferDirtyFromWriteBuffer = false;
     }
 
     /// <summary>
@@ -779,52 +563,6 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         ResourceBarrier barrier = ResourceBarrier.BarrierTransition(this.NativeBuffer, from, to);
         this._singleBarrier[0] = barrier;
         commandList.ResourceBarrier(this._singleBarrier);
-    }
-
-    /// <summary>
-    /// Executes the calculate dynamic snapshot capacity logic for this backend.
-    /// </summary>
-    /// <param name="logicalSize">The logical size value used by this operation.</param>
-    /// <returns>The value produced by this operation.</returns>
-    private static uint CalculateDynamicSnapshotCapacity(uint logicalSize, uint alignment, uint minimumSnapshotCount) {
-        // Keep enough history to avoid write-after-read hazards across a few in-flight frames,
-        // but avoid very large per-buffer overallocation spikes when many dynamic meshes stream in.
-        const ulong maxSnapshotBytes = 64UL * 1024UL * 1024UL;
-        ulong alignedLogicalSize = AlignUp(logicalSize, alignment);
-        ulong minimumSize = alignedLogicalSize * minimumSnapshotCount;
-        ulong desired;
-        if (logicalSize <= 256UL * 1024UL) {
-            desired = logicalSize * 8UL;
-        }
-        else if (logicalSize <= 2UL * 1024UL * 1024UL) {
-            desired = logicalSize * 4UL;
-        }
-        else {
-            desired = logicalSize * 3UL;
-        }
-
-        ulong capped = Math.Min(Math.Max(desired, minimumSize), maxSnapshotBytes);
-        ulong finalSize = Math.Max(alignedLogicalSize, capped);
-        if (finalSize > uint.MaxValue) {
-            return uint.MaxValue;
-        }
-
-        return (uint)finalSize;
-    }
-
-    /// <summary>
-    /// Executes the align up logic for this backend.
-    /// </summary>
-    /// <param name="value">The value used by this operation.</param>
-    /// <param name="alignment">The alignment value used by this operation.</param>
-    /// <returns>The value produced by this operation.</returns>
-    private static uint AlignUp(uint value, uint alignment) {
-        if (alignment == 0) {
-            return value;
-        }
-
-        uint remainder = value % alignment;
-        return remainder == 0 ? value : value + (alignment - remainder);
     }
 
     /// <summary>

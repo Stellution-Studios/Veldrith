@@ -42,9 +42,14 @@ internal sealed class D3D12ResourceSet : ResourceSet {
     internal D3D12DeviceBuffer[] ReferencedBuffers { get; }
 
     /// <summary>
-    /// Cached GPU descriptor table handle for the SRV/UAV descriptor table. Valid when <see cref="CachedSrvUavSignature"/> matches.
+    /// Cached GPU descriptor table handle for the SRV/UAV descriptor table. Valid when the heap cache id and <see cref="CachedSrvUavSignature"/> match.
     /// </summary>
     internal GpuDescriptorHandle CachedSrvUavHandle;
+
+    /// <summary>
+    /// Shader-visible descriptor heap cache id that owns <see cref="CachedSrvUavHandle"/>.
+    /// </summary>
+    internal uint CachedSrvUavHeapId;
 
     /// <summary>
     /// Signature value that was active when <see cref="CachedSrvUavHandle"/> was populated.
@@ -57,9 +62,14 @@ internal sealed class D3D12ResourceSet : ResourceSet {
     internal bool HasCachedSrvUavHandle;
 
     /// <summary>
-    /// Cached GPU descriptor table handle for the sampler descriptor table. Valid when <see cref="CachedSamplerSignature"/> matches.
+    /// Cached GPU descriptor table handle for the sampler descriptor table. Valid when the heap cache id and <see cref="CachedSamplerSignature"/> match.
     /// </summary>
     internal GpuDescriptorHandle CachedSamplerHandle;
+
+    /// <summary>
+    /// Shader-visible descriptor heap cache id that owns <see cref="CachedSamplerHandle"/>.
+    /// </summary>
+    internal uint CachedSamplerHeapId;
 
     /// <summary>
     /// Signature value that was active when <see cref="CachedSamplerHandle"/> was populated.
