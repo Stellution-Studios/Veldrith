@@ -1,6 +1,7 @@
 using Vortice.Direct3D12;
 using Vortice.DXGI;
 using Microsoft.Win32.SafeHandles;
+using SharpGen.Runtime;
 using System.Threading;
 
 namespace Veldrith.D3D12;
@@ -51,9 +52,19 @@ internal sealed class D3D12Swapchain : Swapchain {
     private bool _allowTearing;
 
     /// <summary>
+    /// Stores the sync-to-vblank state used by this instance.
+    /// </summary>
+    private bool _syncToVerticalBlank;
+
+    /// <summary>
     /// Stores the back buffer resources collection used by this instance.
     /// </summary>
     private ID3D12Resource[] _backBufferResources;
+
+    /// <summary>
+    /// Cached current back buffer index — updated after every Present and resize so TryGetCurrentBackBuffer avoids a COM call.
+    /// </summary>
+    private int _currentBackBufferIndex;
 
     /// <summary>
     /// Stores the back buffer rtvs state used by this instance.
@@ -112,12 +123,14 @@ internal sealed class D3D12Swapchain : Swapchain {
     /// <param name="description">The description used to configure this operation.</param>
     public D3D12Swapchain(D3D12GraphicsDevice gd, ref SwapchainDescription description) {
         this.gd = gd;
-        this.SyncToVerticalBlank = description.SyncToVerticalBlank;
+        this._syncToVerticalBlank = description.SyncToVerticalBlank;
         this._nativeColorFormat = Format.B8G8R8A8_UNorm;
         this._nativeRtvFormat = description.ColorSrgb ? Format.B8G8R8A8_UNorm_SRgb : Format.B8G8R8A8_UNorm;
         using (IDXGIFactory5 factory5 = gd.DxgiFactory.QueryInterfaceOrNull<IDXGIFactory5>()) {
             this._canTear = factory5?.PresentAllowTearing == true;
         }
+
+        this._allowTearing = !description.SyncToVerticalBlank;
 
         using (IDXGIFactory3 factory3 = gd.DxgiFactory.QueryInterfaceOrNull<IDXGIFactory3>()) {
             this._canCreateFrameLatencyWaitableObject = factory3 != null;
@@ -143,7 +156,23 @@ internal sealed class D3D12Swapchain : Swapchain {
     /// <summary>
     /// Gets or sets SyncToVerticalBlank.
     /// </summary>
-    public override bool SyncToVerticalBlank { get; set; }
+    public override bool SyncToVerticalBlank {
+        get => this._syncToVerticalBlank;
+        set {
+            if (this._syncToVerticalBlank == value) {
+                return;
+            }
+
+            this._syncToVerticalBlank = value;
+            if (!value) {
+                this._allowTearing = true;
+            }
+
+            if (this._hasNativeSwapchain && this._dxgiSwapChain != null) {
+                this.ConfigureFrameLatencyWaitableObject();
+            }
+        }
+    }
 
     /// <summary>
     /// Gets or sets AllowTearing.
@@ -216,9 +245,33 @@ internal sealed class D3D12Swapchain : Swapchain {
             }
 
             lock (this.gd.CommandQueueLock) {
-                this._dxgiSwapChain.Present(this.SyncToVerticalBlank ? 1u : 0u, presentFlags);
+                this.PresentNoAlloc(this.SyncToVerticalBlank ? 1u : 0u, presentFlags);
+                this._currentBackBufferIndex = (int)this.GetCurrentBackBufferIndexNoAlloc();
             }
         }
+    }
+
+    /// <summary>
+    /// Presents the swapchain without going through the managed COM wrapper.
+    /// </summary>
+    /// <param name="syncInterval">The vertical sync interval.</param>
+    /// <param name="presentFlags">The DXGI present flags.</param>
+    private unsafe void PresentNoAlloc(uint syncInterval, PresentFlags presentFlags) {
+        void** vtbl = *(void***)this._dxgiSwapChain.NativePointer;
+        delegate* unmanaged[Stdcall]<void*, uint, uint, int> present =
+            (delegate* unmanaged[Stdcall]<void*, uint, uint, int>)vtbl[8];
+        Result result = new(present((void*)this._dxgiSwapChain.NativePointer, syncInterval, (uint)presentFlags));
+        result.CheckError();
+    }
+
+    /// <summary>
+    /// Queries the current back buffer index without going through the managed COM wrapper.
+    /// IDXGISwapChain3::GetCurrentBackBufferIndex is at vtable index 36.
+    /// </summary>
+    private unsafe uint GetCurrentBackBufferIndexNoAlloc() {
+        void** vtbl = *(void***)this._dxgiSwapChain.NativePointer;
+        delegate* unmanaged[Stdcall]<void*, uint> getIndex = (delegate* unmanaged[Stdcall]<void*, uint>)vtbl[36];
+        return getIndex((void*)this._dxgiSwapChain.NativePointer);
     }
 
     /// <summary>
@@ -376,7 +429,7 @@ internal sealed class D3D12Swapchain : Swapchain {
             return false;
         }
 
-        index = (int)this._dxgiSwapChain.CurrentBackBufferIndex;
+        index = this._currentBackBufferIndex;
         resource = this._backBufferResources[index];
         rtv = this._backBufferRtvs[index];
         state = this._backBufferStates[index];
@@ -413,6 +466,8 @@ internal sealed class D3D12Swapchain : Swapchain {
             this._backBufferStates[i] = ResourceStates.Present;
             this.gd.Device.CreateRenderTargetView(buffer, this.CreateBackBufferRenderTargetViewDescription(), this._backBufferRtvs[i]);
         }
+
+        this._currentBackBufferIndex = (int)this.GetCurrentBackBufferIndexNoAlloc();
     }
 
     /// <summary>
@@ -518,7 +573,7 @@ internal sealed class D3D12Swapchain : Swapchain {
             flags |= SwapChainFlags.AllowTearing;
         }
 
-        if (this._canCreateFrameLatencyWaitableObject) {
+        if (this.SyncToVerticalBlank && this._canCreateFrameLatencyWaitableObject) {
             flags |= SwapChainFlags.FrameLatencyWaitableObject;
         }
 
@@ -531,6 +586,10 @@ internal sealed class D3D12Swapchain : Swapchain {
     private void ConfigureFrameLatencyWaitableObject() {
         this._frameLatencyWaitHandle?.Dispose();
         this._frameLatencyWaitHandle = null;
+
+        if (!this.SyncToVerticalBlank) {
+            return;
+        }
 
         if ((this.GetSwapChainFlags() & SwapChainFlags.FrameLatencyWaitableObject) == 0) {
             return;

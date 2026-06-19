@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using Vortice.Direct3D12;
 
 namespace Veldrith.D3D12;
@@ -22,6 +23,11 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     /// Stores the alignment used between dynamic snapshots.
     /// </summary>
     private readonly uint _dynamicSnapshotAlignment;
+
+    /// <summary>
+    /// Stores the reserved byte size for one logical dynamic snapshot.
+    /// </summary>
+    private readonly uint _dynamicSnapshotSlotSize;
 
     /// <summary>
     /// Stores the dynamic snapshot enabled state used by this instance.
@@ -84,6 +90,11 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     private readonly D3D12GraphicsDevice gd;
 
     /// <summary>
+    /// Stores the stable GPU virtual address for this buffer resource.
+    /// </summary>
+    private readonly ulong _gpuVirtualAddress;
+
+    /// <summary>
     /// Stores the size in bytes value used during command execution.
     /// </summary>
     private readonly uint sizeInBytes;
@@ -119,6 +130,26 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     private uint _dynamicSnapshotWriteHead;
 
     /// <summary>
+    /// Stores the logical end of the writes recorded into the current dynamic snapshot.
+    /// </summary>
+    private uint _dynamicSnapshotWrittenEnd;
+
+    /// <summary>
+    /// Stores the source-copy byte count from the most recent dynamic snapshot update.
+    /// </summary>
+    private uint _lastDynamicSnapshotCopyBytes;
+
+    /// <summary>
+    /// Stores the prefix-copy byte count from the most recent dynamic snapshot update.
+    /// </summary>
+    private uint _lastDynamicSnapshotPrefixCopyBytes;
+
+    /// <summary>
+    /// Tracks whether the most recent dynamic snapshot update moved to a new slot.
+    /// </summary>
+    private bool _lastDynamicSnapshotRotated;
+
+    /// <summary>
     /// Stores the staging read buffer dirty from write buffer state used by this instance.
     /// </summary>
     private bool _stagingReadBufferDirtyFromWriteBuffer;
@@ -148,6 +179,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         
         bool isUniformBuffer = (description.Usage & BufferUsage.UniformBuffer) == BufferUsage.UniformBuffer;
         this._dynamicSnapshotAlignment = isUniformBuffer ? 256u : 16u;
+        this._dynamicSnapshotSlotSize = AlignUp(description.SizeInBytes, this._dynamicSnapshotAlignment);
         
         uint minimumSnapshotCount = isUniformBuffer ? 1024u : 8u;
         this._dynamicSnapshotCapacity = this._dynamicSnapshotEnabled ? CalculateDynamicSnapshotCapacity(description.SizeInBytes, this._dynamicSnapshotAlignment, minimumSnapshotCount) : description.SizeInBytes;
@@ -174,6 +206,8 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
             this.NativeBuffer = this._allocation.Resource;
             this.CurrentState = ResourceStates.Common;
         }
+
+        this._gpuVirtualAddress = this.NativeBuffer.GPUVirtualAddress;
     }
 
     /// <summary>
@@ -194,7 +228,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     /// <summary>
     /// Stores the gpu virtual address state used by this instance.
     /// </summary>
-    internal ulong GpuVirtualAddress => this.NativeBuffer.GPUVirtualAddress;
+    internal ulong GpuVirtualAddress => this._gpuVirtualAddress;
 
     /// <summary>
     /// Executes the min logic for this backend.
@@ -218,6 +252,21 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     internal ulong BindVersion => this._dynamicSnapshotEnabled ? this._dynamicBindVersion : 0UL;
 
     /// <summary>
+    /// Gets the source-copy byte count from the most recent dynamic snapshot update.
+    /// </summary>
+    internal uint LastDynamicSnapshotCopyBytes => this._lastDynamicSnapshotCopyBytes;
+
+    /// <summary>
+    /// Gets the prefix-copy byte count from the most recent dynamic snapshot update.
+    /// </summary>
+    internal uint LastDynamicSnapshotPrefixCopyBytes => this._lastDynamicSnapshotPrefixCopyBytes;
+
+    /// <summary>
+    /// Gets whether the most recent dynamic snapshot update moved to a new slot.
+    /// </summary>
+    internal bool LastDynamicSnapshotRotated => this._lastDynamicSnapshotRotated;
+
+    /// <summary>
     /// Gets or sets IsDisposed.
     /// </summary>
     public override bool IsDisposed => this._disposed;
@@ -233,7 +282,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     /// <param name="offset">The byte offset used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     internal ulong GetGpuVirtualAddress(uint offset) {
-        return this.NativeBuffer.GPUVirtualAddress + this.ResolveNativeOffset(offset);
+        return this._gpuVirtualAddress + this.ResolveNativeOffset(offset);
     }
 
     /// <summary>
@@ -319,47 +368,62 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     /// <param name="destinationOffset">The destination offset value used by this operation.</param>
     /// <param name="copySize">The copy size value used by this operation.</param>
     private unsafe void UpdateDynamicSnapshot(IntPtr source, uint destinationOffset, uint copySize) {
+        this._lastDynamicSnapshotCopyBytes = 0;
+        this._lastDynamicSnapshotPrefixCopyBytes = 0;
+        this._lastDynamicSnapshotRotated = false;
+
         if (copySize == 0) {
             return;
         }
 
-        uint snapshotSize = destinationOffset + copySize;
-        if (snapshotSize == 0) {
-            snapshotSize = 1;
-        }
+        uint writtenEnd = destinationOffset + copySize;
 
-        if (snapshotSize > this._dynamicSnapshotCapacity) {
+        if (writtenEnd > this._dynamicSnapshotSlotSize || this._dynamicSnapshotSlotSize > this._dynamicSnapshotCapacity) {
             throw new VeldridException("Dynamic snapshot update exceeds snapshot buffer capacity.");
         }
 
-        if (this._dynamicSnapshotWriteHead + snapshotSize > this._dynamicSnapshotCapacity) {
-            this._dynamicSnapshotWriteHead = 0;
-        }
-
-        uint newBaseOffset = this._dynamicSnapshotWriteHead;
         byte* mappedPointer = (byte*)this._dynamicMappedPointer.ToPointer();
-        if (this._dynamicSnapshotInitialized && newBaseOffset != this._dynamicSnapshotBaseOffset) {
-            // Preserve only the unchanged prefix when callers update a subrange.
-            // Most high-frequency VB/IB updates write from offset 0, so this avoids
-            // copying the full logical buffer every flush.
-            if (destinationOffset > 0) {
-                uint prefixSize = destinationOffset;
-                byte* src = mappedPointer + this._dynamicSnapshotBaseOffset;
-                byte* dst = mappedPointer + newBaseOffset;
-                Buffer.MemoryCopy(src, dst, snapshotSize, prefixSize);
+        if (!this._dynamicSnapshotInitialized || destinationOffset < this._dynamicSnapshotWrittenEnd) {
+            uint previousBaseOffset = this._dynamicSnapshotBaseOffset;
+            uint newBaseOffset = this.AllocateDynamicSnapshotSlot();
+            if (this._dynamicSnapshotInitialized && newBaseOffset != previousBaseOffset) {
+                // Preserve only the unchanged prefix when callers update a subrange.
+                // Sequential appends reserve a full slot and continue writing in-place.
+                if (destinationOffset > 0) {
+                    uint prefixSize = destinationOffset;
+                    byte* src = mappedPointer + previousBaseOffset;
+                    byte* dst = mappedPointer + newBaseOffset;
+                    CopyMemory(src, dst, prefixSize);
+                    this._lastDynamicSnapshotPrefixCopyBytes = prefixSize;
+                }
+            }
+
+            this._dynamicSnapshotBaseOffset = newBaseOffset;
+            this._dynamicSnapshotWriteHead = AlignUp((uint)((ulong)newBaseOffset + this._dynamicSnapshotSlotSize), this._dynamicSnapshotAlignment);
+            this._dynamicSnapshotWrittenEnd = 0;
+            this._dynamicSnapshotInitialized = true;
+            this._lastDynamicSnapshotRotated = newBaseOffset != previousBaseOffset;
+            if (newBaseOffset != previousBaseOffset) {
+                this._dynamicBindVersion++;
             }
         }
 
-        byte* destination = mappedPointer + newBaseOffset + destinationOffset;
-        Buffer.MemoryCopy(source.ToPointer(), destination, snapshotSize - destinationOffset, copySize);
+        byte* destination = mappedPointer + this._dynamicSnapshotBaseOffset + destinationOffset;
+        CopyMemory(source.ToPointer(), destination, copySize);
+        this._dynamicSnapshotWrittenEnd = Math.Max(this._dynamicSnapshotWrittenEnd, writtenEnd);
+        this._lastDynamicSnapshotCopyBytes = copySize;
+    }
 
-        uint previousBaseOffset = this._dynamicSnapshotBaseOffset;
-        this._dynamicSnapshotBaseOffset = newBaseOffset;
-        this._dynamicSnapshotWriteHead = AlignUp(newBaseOffset + snapshotSize, this._dynamicSnapshotAlignment);
-        this._dynamicSnapshotInitialized = true;
-        if (newBaseOffset != previousBaseOffset) {
-            this._dynamicBindVersion++;
+    /// <summary>
+    /// Reserves a full logical dynamic snapshot slot in the ring.
+    /// </summary>
+    /// <returns>The native byte offset of the reserved slot.</returns>
+    private uint AllocateDynamicSnapshotSlot() {
+        if ((ulong)this._dynamicSnapshotWriteHead + this._dynamicSnapshotSlotSize > this._dynamicSnapshotCapacity) {
+            this._dynamicSnapshotWriteHead = 0;
         }
+
+        return this._dynamicSnapshotWriteHead;
     }
 
     /// <summary>
@@ -502,13 +566,13 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     private unsafe void WriteCpuData(IntPtr source, uint destinationOffset, uint copySize) {
         if (this._isDynamic) {
             byte* dst = (byte*)this._dynamicMappedPointer + destinationOffset;
-            Buffer.MemoryCopy(source.ToPointer(), dst, this.SizeInBytes - destinationOffset, copySize);
+            CopyMemory(source.ToPointer(), dst, copySize);
             return;
         }
 
         if (this._isStaging) {
             byte* dst = (byte*)this._stagingWriteMappedPointer + destinationOffset;
-            Buffer.MemoryCopy(source.ToPointer(), dst, this.SizeInBytes - destinationOffset, copySize);
+            CopyMemory(source.ToPointer(), dst, copySize);
             this._stagingReadBufferDirtyFromWriteBuffer = true;
             this._stagingWriteBufferDirtyFromReadBuffer = false;
             return;
@@ -527,7 +591,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         D3D12ResourceAllocation uploadBuffer = this.gd.RentUploadBuffer(copySize);
         try {
             unsafe {
-                Buffer.MemoryCopy(source.ToPointer(), uploadBuffer.MappedPointer.ToPointer(), copySize, copySize);
+                CopyMemory(source.ToPointer(), uploadBuffer.MappedPointer.ToPointer(), copySize);
             }
 
             return uploadBuffer;
@@ -761,6 +825,20 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
 
         uint remainder = value % alignment;
         return remainder == 0 ? value : value + (alignment - remainder);
+    }
+
+    /// <summary>
+    /// Copies a bounds-checked buffer update payload.
+    /// </summary>
+    /// <param name="source">The source memory.</param>
+    /// <param name="destination">The destination memory.</param>
+    /// <param name="byteCount">The byte count.</param>
+    private static unsafe void CopyMemory(void* source, void* destination, uint byteCount) {
+        if (byteCount == 0) {
+            return;
+        }
+
+        Unsafe.CopyBlockUnaligned(destination, source, byteCount);
     }
 
     /// <summary>

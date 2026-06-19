@@ -13,6 +13,10 @@ using D3D12Feature = Vortice.Direct3D12.Feature;
 using VorticeD3D12 = Vortice.Direct3D12.D3D12;
 using VorticeDXGI = Vortice.DXGI.DXGI;
 
+#if !VELDRID_D3D12_PERF
+#pragma warning disable CS0162
+#endif
+
 namespace Veldrith.D3D12;
 
 /// <summary>
@@ -48,12 +52,20 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// <summary>
     /// Tracks whether D3D12 performance logging is enabled for device-level upload and submit work.
     /// </summary>
+    #if VELDRID_D3D12_PERF
     private static readonly bool _perfLogEnabled = string.Equals(Environment.GetEnvironmentVariable("VELDRID_D3D12_PERF"), "1", StringComparison.Ordinal);
+    #else
+    private const bool _perfLogEnabled = false;
+    #endif
 
     /// <summary>
     /// Gets whether D3D12 performance logging is enabled.
     /// </summary>
+    #if VELDRID_D3D12_PERF
     internal static bool PerfLogEnabled => _perfLogEnabled;
+    #else
+    internal const bool PerfLogEnabled = false;
+    #endif
 
     /// <summary>
     /// Stores the d3d12 info state used by this instance.
@@ -161,6 +173,11 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     private readonly object _submissionDeferredDisposalsLock = new();
 
     /// <summary>
+    /// Tracks the approximate number of pending submission deferred disposals for lock-free empty checks.
+    /// </summary>
+    private int _submissionDeferredDisposalCount;
+
+    /// <summary>
     /// Stores deferred disposals tracked by immediate copy fence values.
     /// </summary>
     private readonly Queue<DeferredDisposal> _immediateDeferredDisposals = new();
@@ -169,6 +186,16 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// Protects immediate deferred disposal queue access.
     /// </summary>
     private readonly object _immediateDeferredDisposalsLock = new();
+
+    /// <summary>
+    /// Tracks the approximate number of pending immediate deferred disposals for lock-free empty checks.
+    /// </summary>
+    private int _immediateDeferredDisposalCount;
+
+    /// <summary>
+    /// Reusable batch buffer for deferred disposal drains — avoids per-pump List allocation.
+    /// </summary>
+    private IDisposable[] _pumpDisposalBatch = new IDisposable[64];
 
     /// <summary>
     /// Stores reusable upload buffers after their GPU fence has completed.
@@ -219,6 +246,41 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// Stores accumulated CPU time spent submitting command lists.
     /// </summary>
     private double _perfAccumSubmitMs;
+
+    /// <summary>
+    /// Stores accumulated CPU time spent waiting to enter the D3D12 command queue lock.
+    /// </summary>
+    private double _perfAccumSubmitLockWaitMs;
+
+    /// <summary>
+    /// Stores accumulated CPU time spent pumping D3D12 deferred-disposal queues during submit.
+    /// </summary>
+    private double _perfAccumSubmitDisposalPumpMs;
+
+    /// <summary>
+    /// Stores accumulated CPU time spent executing D3D12 command lists on the queue.
+    /// </summary>
+    private double _perfAccumSubmitExecuteMs;
+
+    /// <summary>
+    /// Stores accumulated CPU time spent signaling D3D12 submit fences.
+    /// </summary>
+    private double _perfAccumSubmitSignalMs;
+
+    /// <summary>
+    /// Stores accumulated CPU time spent marking D3D12 command lists submitted.
+    /// </summary>
+    private double _perfAccumSubmitMarkMs;
+
+    /// <summary>
+    /// Stores accumulated CPU time spent presenting swapchains.
+    /// </summary>
+    private double _perfAccumPresentMs;
+
+    /// <summary>
+    /// Stores accumulated CPU time spent waiting for next frame readiness.
+    /// </summary>
+    private double _perfAccumFrameWaitMs;
 
     /// <summary>
     /// Stores accumulated CPU time spent creating D3D12 buffers.
@@ -319,6 +381,41 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// Stores the largest submit time observed in the current device performance window.
     /// </summary>
     private double _perfMaxSubmitMs;
+
+    /// <summary>
+    /// Stores the largest command queue lock wait observed in the current device performance window.
+    /// </summary>
+    private double _perfMaxSubmitLockWaitMs;
+
+    /// <summary>
+    /// Stores the largest deferred-disposal pump time observed in the current device performance window.
+    /// </summary>
+    private double _perfMaxSubmitDisposalPumpMs;
+
+    /// <summary>
+    /// Stores the largest command-list execute time observed in the current device performance window.
+    /// </summary>
+    private double _perfMaxSubmitExecuteMs;
+
+    /// <summary>
+    /// Stores the largest submit fence signal time observed in the current device performance window.
+    /// </summary>
+    private double _perfMaxSubmitSignalMs;
+
+    /// <summary>
+    /// Stores the largest submitted command-list bookkeeping time observed in the current device performance window.
+    /// </summary>
+    private double _perfMaxSubmitMarkMs;
+
+    /// <summary>
+    /// Stores the largest present time observed in the current device performance window.
+    /// </summary>
+    private double _perfMaxPresentMs;
+
+    /// <summary>
+    /// Stores the largest next-frame wait time observed in the current device performance window.
+    /// </summary>
+    private double _perfMaxFrameWaitMs;
 
     /// <summary>
     /// Stores the largest buffer creation time observed in the current device performance window.
@@ -564,6 +661,31 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     internal object CommandQueueLock => this._commandQueueLock;
 
     /// <summary>
+    /// Executes one command list without allocating a temporary submit array.
+    /// </summary>
+    /// <param name="commandList">The command list to execute.</param>
+    internal unsafe void ExecuteCommandListNoAlloc(ID3D12GraphicsCommandList commandList) {
+        IntPtr* commandLists = stackalloc IntPtr[1];
+        commandLists[0] = commandList.NativePointer;
+        void** vtbl = *(void***)this.CommandQueue.NativePointer;
+        delegate* unmanaged[Stdcall]<void*, uint, void*, void> executeCommandLists = (delegate* unmanaged[Stdcall]<void*, uint, void*, void>)vtbl[10];
+        executeCommandLists((void*)this.CommandQueue.NativePointer, 1u, commandLists);
+    }
+
+    /// <summary>
+    /// Signals a queue fence without going through the managed COM wrapper.
+    /// </summary>
+    /// <param name="fence">The fence to signal.</param>
+    /// <param name="value">The fence value to signal.</param>
+    internal unsafe void SignalQueueFenceNoAlloc(ID3D12Fence fence, ulong value) {
+        void** vtbl = *(void***)this.CommandQueue.NativePointer;
+        delegate* unmanaged[Stdcall]<void*, void*, ulong, int> signal =
+            (delegate* unmanaged[Stdcall]<void*, void*, ulong, int>)vtbl[14];
+        Result result = new(signal((void*)this.CommandQueue.NativePointer, (void*)fence.NativePointer, value));
+        result.CheckError();
+    }
+
+    /// <summary>
     /// Gets or sets DxgiFactory.
     /// </summary>
     internal IDXGIFactory4 DxgiFactory { get; }
@@ -613,13 +735,20 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         double reportWindowMs = elapsedMs - this._perfLastReportMs;
         this._perfLastReportMs = elapsedMs;
         double invSubmissions = 1.0 / _perfReportIntervalSubmissions;
-        Console.WriteLine($"[D3D12 PERF] device {_perfReportIntervalSubmissions} submits/{reportWindowMs:F0}ms avg: " + $"submitMs={this._perfAccumSubmitMs * invSubmissions:F3}, " + $"immRecordMs={this._perfAccumImmediateRecordMs * invSubmissions:F3} ({this._perfAccumImmediateRecordCalls * invSubmissions:F2}x), " + $"immFlushMs={this._perfAccumImmediateFlushMs * invSubmissions:F3} ({this._perfAccumImmediateFlushes * invSubmissions:F2}x), " + $"immExecMs={this._perfAccumImmediateExecuteMs * invSubmissions:F3} ({this._perfAccumImmediateExecutes * invSubmissions:F2}x), " + $"immWaitMs={this._perfAccumImmediateWaitMs * invSubmissions:F3}, " + $"createBuf={this._perfAccumCreateBuffers * invSubmissions:F2}/{this._perfMaxCreateBufferMs:F3}ms, " + $"createTex={this._perfAccumCreateTextures * invSubmissions:F2}/{this._perfMaxCreateTextureMs:F3}ms, " + $"createPipe={this._perfAccumCreatePipelines * invSubmissions:F2}/{this._perfMaxCreatePipelineMs:F3}ms, " + $"createSet={this._perfAccumCreateResourceSets * invSubmissions:F2}/{this._perfMaxCreateResourceSetMs:F3}ms, " + $"createShader={this._perfAccumCreateShaders * invSubmissions:F2}/{this._perfMaxCreateShaderMs:F3}ms, " + $"maxSubmitMs={this._perfMaxSubmitMs:F3}, maxImmRecordMs={this._perfMaxImmediateRecordMs:F3}, maxImmFlushMs={this._perfMaxImmediateFlushMs:F3}, " + $"maxImmExecMs={this._perfMaxImmediateExecuteMs:F3}, maxImmWaitMs={this._perfMaxImmediateWaitMs:F3}, " + $"immUploadBuf={this._perfAccumImmediateUploadBuffers * invSubmissions:F2}, " + this.MemoryManager.GetStatsString());
+        Console.WriteLine($"[D3D12 PERF] device {_perfReportIntervalSubmissions} submits/{reportWindowMs:F0}ms avg: " + $"submitMs={this._perfAccumSubmitMs * invSubmissions:F3}, submitLockMs={this._perfAccumSubmitLockWaitMs * invSubmissions:F3}, submitPumpMs={this._perfAccumSubmitDisposalPumpMs * invSubmissions:F3}, submitExecMs={this._perfAccumSubmitExecuteMs * invSubmissions:F3}, submitSignalMs={this._perfAccumSubmitSignalMs * invSubmissions:F3}, submitMarkMs={this._perfAccumSubmitMarkMs * invSubmissions:F3}, presentMs={this._perfAccumPresentMs * invSubmissions:F3}, frameWaitMs={this._perfAccumFrameWaitMs * invSubmissions:F3}, " + $"immRecordMs={this._perfAccumImmediateRecordMs * invSubmissions:F3} ({this._perfAccumImmediateRecordCalls * invSubmissions:F2}x), " + $"immFlushMs={this._perfAccumImmediateFlushMs * invSubmissions:F3} ({this._perfAccumImmediateFlushes * invSubmissions:F2}x), " + $"immExecMs={this._perfAccumImmediateExecuteMs * invSubmissions:F3} ({this._perfAccumImmediateExecutes * invSubmissions:F2}x), " + $"immWaitMs={this._perfAccumImmediateWaitMs * invSubmissions:F3}, " + $"createBuf={this._perfAccumCreateBuffers * invSubmissions:F2}/{this._perfMaxCreateBufferMs:F3}ms, " + $"createTex={this._perfAccumCreateTextures * invSubmissions:F2}/{this._perfMaxCreateTextureMs:F3}ms, " + $"createPipe={this._perfAccumCreatePipelines * invSubmissions:F2}/{this._perfMaxCreatePipelineMs:F3}ms, " + $"createSet={this._perfAccumCreateResourceSets * invSubmissions:F2}/{this._perfMaxCreateResourceSetMs:F3}ms, " + $"createShader={this._perfAccumCreateShaders * invSubmissions:F2}/{this._perfMaxCreateShaderMs:F3}ms, " + $"maxSubmitMs={this._perfMaxSubmitMs:F3}, maxSubmitLockMs={this._perfMaxSubmitLockWaitMs:F3}, maxSubmitPumpMs={this._perfMaxSubmitDisposalPumpMs:F3}, maxSubmitExecMs={this._perfMaxSubmitExecuteMs:F3}, maxSubmitSignalMs={this._perfMaxSubmitSignalMs:F3}, maxSubmitMarkMs={this._perfMaxSubmitMarkMs:F3}, maxPresentMs={this._perfMaxPresentMs:F3}, maxFrameWaitMs={this._perfMaxFrameWaitMs:F3}, maxImmRecordMs={this._perfMaxImmediateRecordMs:F3}, maxImmFlushMs={this._perfMaxImmediateFlushMs:F3}, " + $"maxImmExecMs={this._perfMaxImmediateExecuteMs:F3}, maxImmWaitMs={this._perfMaxImmediateWaitMs:F3}, " + $"immUploadBuf={this._perfAccumImmediateUploadBuffers * invSubmissions:F2}, " + this.MemoryManager.GetStatsString());
 
         this._perfAccumImmediateFlushMs = 0;
         this._perfAccumImmediateExecuteMs = 0;
         this._perfAccumImmediateRecordMs = 0;
         this._perfAccumImmediateWaitMs = 0;
         this._perfAccumSubmitMs = 0;
+        this._perfAccumSubmitLockWaitMs = 0;
+        this._perfAccumSubmitDisposalPumpMs = 0;
+        this._perfAccumSubmitExecuteMs = 0;
+        this._perfAccumSubmitSignalMs = 0;
+        this._perfAccumSubmitMarkMs = 0;
+        this._perfAccumPresentMs = 0;
+        this._perfAccumFrameWaitMs = 0;
         this._perfAccumCreateBufferMs = 0;
         this._perfAccumCreatePipelineMs = 0;
         this._perfAccumCreateResourceSetMs = 0;
@@ -644,6 +773,13 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         this._perfMaxImmediateRecordMs = 0;
         this._perfMaxImmediateWaitMs = 0;
         this._perfMaxSubmitMs = 0;
+        this._perfMaxSubmitLockWaitMs = 0;
+        this._perfMaxSubmitDisposalPumpMs = 0;
+        this._perfMaxSubmitExecuteMs = 0;
+        this._perfMaxSubmitSignalMs = 0;
+        this._perfMaxSubmitMarkMs = 0;
+        this._perfMaxPresentMs = 0;
+        this._perfMaxFrameWaitMs = 0;
     }
 
     /// <summary>
@@ -696,7 +832,18 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// <param name="value">The value used by this operation.</param>
     /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
     internal bool IsSubmissionFenceComplete(ulong value) {
-        return this._submissionFence.CompletedValue >= value;
+        return this.GetCompletedValueNoAlloc(this._submissionFence) >= value;
+    }
+
+    /// <summary>
+    /// Gets the completed fence value without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe ulong GetCompletedValueNoAlloc(ID3D12Fence fence) {
+        void** vtbl = *(void***)fence.NativePointer;
+        delegate* unmanaged[Stdcall]<void*, ulong> getCompletedValue =
+            (delegate* unmanaged[Stdcall]<void*, ulong>)vtbl[8];
+        return getCompletedValue((void*)fence.NativePointer);
     }
 
     /// <summary>
@@ -704,7 +851,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// </summary>
     /// <param name="value">The value used by this operation.</param>
     internal void WaitForSubmissionFence(ulong value) {
-        if (this._submissionFence.CompletedValue >= value) {
+        if (this.GetCompletedValueNoAlloc(this._submissionFence) >= value) {
             return;
         }
 
@@ -748,7 +895,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
                 context.CommandList.Close();
                 this.CommandQueue.ExecuteCommandList(context.CommandList);
                 signalValue = this._nextImmediateCopyFenceValue++;
-                this.CommandQueue.Signal(this._immediateCopyFence, signalValue).CheckError();
+                this.SignalQueueFenceNoAlloc(this._immediateCopyFence, signalValue);
                 context.FenceValue = signalValue;
 
                 if (waitForCompletion) {
@@ -860,6 +1007,10 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// <param name="waitForCompletion">When true, waits until the submitted upload work has completed.</param>
     /// <returns>The signaled fence value, or zero when there was no batched work.</returns>
     internal ulong FlushBatchedImmediateCommands(bool waitForCompletion = false) {
+        if (!Volatile.Read(ref this._batchedImmediateCopyHasWork)) {
+            return 0;
+        }
+
         long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
         ImmediateCopyContext context;
         ulong signalValue;
@@ -878,7 +1029,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
                 context.CommandList.Close();
                 this.CommandQueue.ExecuteCommandList(context.CommandList);
                 signalValue = this._nextImmediateCopyFenceValue++;
-                this.CommandQueue.Signal(this._immediateCopyFence, signalValue).CheckError();
+                this.SignalQueueFenceNoAlloc(this._immediateCopyFence, signalValue);
                 context.FenceValue = signalValue;
 
                 uploadBufferCount = this._batchedImmediateUploadBuffers.Count;
@@ -931,6 +1082,8 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         lock (this._submissionDeferredDisposalsLock) {
             this._submissionDeferredDisposals.Enqueue(new DeferredDisposal(disposable, fenceValue));
         }
+
+        Interlocked.Increment(ref this._submissionDeferredDisposalCount);
     }
 
     /// <summary>
@@ -943,7 +1096,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         }
 
         ulong fenceValue = this._lastSubmissionFenceValue;
-        if (fenceValue == 0 || this._submissionFence.CompletedValue >= fenceValue) {
+        if (fenceValue == 0 || this.GetCompletedValueNoAlloc(this._submissionFence) >= fenceValue) {
             disposable.Dispose();
             return;
         }
@@ -964,6 +1117,8 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         lock (this._immediateDeferredDisposalsLock) {
             this._immediateDeferredDisposals.Enqueue(new DeferredDisposal(disposable, fenceValue));
         }
+
+        Interlocked.Increment(ref this._immediateDeferredDisposalCount);
     }
 
     /// <summary>
@@ -1385,27 +1540,59 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// <param name="fence">The synchronization fence used by this operation.</param>
     private protected override void SubmitCommandsCore(CommandList commandList, Fence fence) {
         long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
+
+        long pumpStartTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
+        this.PumpSubmissionDeferredDisposals();
+        this.PumpImmediateDeferredDisposals();
+        if (_perfLogEnabled) {
+            double pumpMs = TicksToMilliseconds(Stopwatch.GetTimestamp() - pumpStartTicks);
+            this._perfAccumSubmitDisposalPumpMs += pumpMs;
+            this._perfMaxSubmitDisposalPumpMs = Math.Max(this._perfMaxSubmitDisposalPumpMs, pumpMs);
+        }
+
+        long lockWaitStartTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
         lock (this._commandQueueLock) {
+            if (_perfLogEnabled) {
+                double lockWaitMs = TicksToMilliseconds(Stopwatch.GetTimestamp() - lockWaitStartTicks);
+                this._perfAccumSubmitLockWaitMs += lockWaitMs;
+                this._perfMaxSubmitLockWaitMs = Math.Max(this._perfMaxSubmitLockWaitMs, lockWaitMs);
+            }
+
             this.FlushBatchedImmediateCommands();
-            this.PumpSubmissionDeferredDisposals();
-            this.PumpImmediateDeferredDisposals();
 
             try {
                 if (commandList is D3D12CommandList d3d12CommandList) {
+                    long executeStartTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
                     d3d12CommandList.ExecuteNoSignal();
+                    if (_perfLogEnabled) {
+                        double executeMs = TicksToMilliseconds(Stopwatch.GetTimestamp() - executeStartTicks);
+                        this._perfAccumSubmitExecuteMs += executeMs;
+                        this._perfMaxSubmitExecuteMs = Math.Max(this._perfMaxSubmitExecuteMs, executeMs);
+                    }
+
+                    long signalStartTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
                     ulong signalValue = this._nextSubmissionFenceValue++;
-                    this.CommandQueue.Signal(this._submissionFence, signalValue).CheckError();
+                    this.SignalQueueFenceNoAlloc(this._submissionFence, signalValue);
                     this._lastSubmissionFenceValue = signalValue;
+                    if (_perfLogEnabled) {
+                        double signalMs = TicksToMilliseconds(Stopwatch.GetTimestamp() - signalStartTicks);
+                        this._perfAccumSubmitSignalMs += signalMs;
+                        this._perfMaxSubmitSignalMs = Math.Max(this._perfMaxSubmitSignalMs, signalMs);
+                    }
+
+                    long markStartTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
                     d3d12CommandList.MarkSubmitted(signalValue);
                     d3d12CommandList.ClearCachedState();
+                    if (_perfLogEnabled) {
+                        double markMs = TicksToMilliseconds(Stopwatch.GetTimestamp() - markStartTicks);
+                        this._perfAccumSubmitMarkMs += markMs;
+                        this._perfMaxSubmitMarkMs = Math.Max(this._perfMaxSubmitMarkMs, markMs);
+                    }
                 }
 
                 if (fence is D3D12Fence d3d12Fence) {
                     d3d12Fence.Signal(this.CommandQueue);
                 }
-
-                this.PumpSubmissionDeferredDisposals();
-                this.PumpImmediateDeferredDisposals();
             }
             catch (SharpGenException ex) {
                 string reason = this.GetDeviceRemovedReasonDescription();
@@ -1424,7 +1611,14 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// <param name="swapchain">The swapchain used by this operation.</param>
     private protected override void SwapBuffersCore(Swapchain swapchain) {
         if (swapchain is D3D12Swapchain d3d12Swapchain) {
+            long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
             d3d12Swapchain.Present();
+            if (_perfLogEnabled) {
+                double presentMs = TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
+                this._perfAccumPresentMs += presentMs;
+                this._perfMaxPresentMs = Math.Max(this._perfMaxPresentMs, presentMs);
+            }
+
             return;
         }
 
@@ -1445,7 +1639,13 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// </summary>
     private protected override void WaitForNextFrameReadyCore() {
         if (this.MainSwapchain is D3D12Swapchain swapchain) {
+            long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
             swapchain.WaitForNextFrameReady();
+            if (_perfLogEnabled) {
+                double waitMs = TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
+                this._perfAccumFrameWaitMs += waitMs;
+                this._perfMaxFrameWaitMs = Math.Max(this._perfMaxFrameWaitMs, waitMs);
+            }
         }
     }
 
@@ -1966,8 +2166,8 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
             this.FlushBatchedImmediateCommands();
             try {
                 ulong signalValue = this._nextSubmissionFenceValue++;
-                this.CommandQueue.Signal(this._submissionFence, signalValue).CheckError();
-                if (this._submissionFence.CompletedValue < signalValue) {
+                this.SignalQueueFenceNoAlloc(this._submissionFence, signalValue);
+                if (this.GetCompletedValueNoAlloc(this._submissionFence) < signalValue) {
                     this._submissionFence.SetEventOnCompletion(signalValue, this._submissionFenceEvent.SafeWaitHandle.DangerousGetHandle()).CheckError();
                     this._submissionFenceEvent.WaitOne();
                 }
@@ -1983,7 +2183,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// </summary>
     /// <param name="value">The fence value to wait for.</param>
     private void WaitForImmediateCopyFence(ulong value) {
-        if (this._immediateCopyFence.CompletedValue >= value) {
+        if (this.GetCompletedValueNoAlloc(this._immediateCopyFence) >= value) {
             return;
         }
 
@@ -1997,7 +2197,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// <returns>The acquired immediate copy command context.</returns>
     private ImmediateCopyContext AcquireImmediateCopyContext() {
         lock (this._immediateCopyContextsLock) {
-            ulong completedValue = this._immediateCopyFence.CompletedValue;
+            ulong completedValue = this.GetCompletedValueNoAlloc(this._immediateCopyFence);
             for (int i = 0; i < this._immediateCopyContexts.Count; i++) {
                 ImmediateCopyContext context = this._immediateCopyContexts[i];
                 if (!context.InUse && completedValue >= context.FenceValue) {
@@ -2052,22 +2252,30 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// Releases resources whose submission-fence lifetime has already completed.
     /// </summary>
     private void PumpSubmissionDeferredDisposals() {
-        this.PumpDeferredDisposals(this._submissionDeferredDisposalsLock, this._submissionDeferredDisposals, this._submissionFence.CompletedValue);
+        if (Volatile.Read(ref this._submissionDeferredDisposalCount) == 0) {
+            return;
+        }
+
+        this.PumpDeferredDisposals(this._submissionDeferredDisposalsLock, this._submissionDeferredDisposals, ref this._submissionDeferredDisposalCount, this.GetCompletedValueNoAlloc(this._submissionFence));
     }
 
     /// <summary>
     /// Releases resources whose immediate-copy-fence lifetime has already completed.
     /// </summary>
     private void PumpImmediateDeferredDisposals() {
-        this.PumpDeferredDisposals(this._immediateDeferredDisposalsLock, this._immediateDeferredDisposals, this._immediateCopyFence.CompletedValue);
+        if (Volatile.Read(ref this._immediateDeferredDisposalCount) == 0) {
+            return;
+        }
+
+        this.PumpDeferredDisposals(this._immediateDeferredDisposalsLock, this._immediateDeferredDisposals, ref this._immediateDeferredDisposalCount, this.GetCompletedValueNoAlloc(this._immediateCopyFence));
     }
 
     /// <summary>
     /// Disposes all deferred resources, regardless of fence value.
     /// </summary>
     private void DisposeAllDeferredDisposals() {
-        this.DisposeDeferredQueue(this._submissionDeferredDisposalsLock, this._submissionDeferredDisposals);
-        this.DisposeDeferredQueue(this._immediateDeferredDisposalsLock, this._immediateDeferredDisposals);
+        this.DisposeDeferredQueue(this._submissionDeferredDisposalsLock, this._submissionDeferredDisposals, ref this._submissionDeferredDisposalCount);
+        this.DisposeDeferredQueue(this._immediateDeferredDisposalsLock, this._immediateDeferredDisposals, ref this._immediateDeferredDisposalCount);
     }
 
     /// <summary>
@@ -2075,21 +2283,28 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// </summary>
     /// <param name="lockObject">The queue lock object.</param>
     /// <param name="queue">The deferred disposal queue to process.</param>
+    /// <param name="pendingCount">The approximate pending item count.</param>
     /// <param name="completedFenceValue">The latest completed fence value.</param>
-    private void PumpDeferredDisposals(object lockObject, Queue<DeferredDisposal> queue, ulong completedFenceValue) {
-        List<IDisposable> disposables = null;
+    private void PumpDeferredDisposals(object lockObject, Queue<DeferredDisposal> queue, ref int pendingCount, ulong completedFenceValue) {
+        int count = 0;
         lock (lockObject) {
             while (queue.Count > 0 && queue.Peek().FenceValue <= completedFenceValue) {
-                (disposables ??= new List<IDisposable>(4)).Add(queue.Dequeue().Disposable);
+                if (count == this._pumpDisposalBatch.Length) {
+                    Array.Resize(ref this._pumpDisposalBatch, this._pumpDisposalBatch.Length * 2);
+                }
+
+                this._pumpDisposalBatch[count++] = queue.Dequeue().Disposable;
             }
         }
 
-        if (disposables == null) {
+        if (count == 0) {
             return;
         }
 
-        for (int i = 0; i < disposables.Count; i++) {
-            disposables[i].Dispose();
+        Interlocked.Add(ref pendingCount, -count);
+        for (int i = 0; i < count; i++) {
+            this._pumpDisposalBatch[i].Dispose();
+            this._pumpDisposalBatch[i] = null;
         }
     }
 
@@ -2098,20 +2313,23 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// </summary>
     /// <param name="lockObject">The queue lock object.</param>
     /// <param name="queue">The deferred disposal queue to drain.</param>
-    private void DisposeDeferredQueue(object lockObject, Queue<DeferredDisposal> queue) {
-        List<IDisposable> disposables = null;
+    /// <param name="pendingCount">The approximate pending item count.</param>
+    private void DisposeDeferredQueue(object lockObject, Queue<DeferredDisposal> queue, ref int pendingCount) {
+        int count = 0;
         lock (lockObject) {
             while (queue.Count > 0) {
-                (disposables ??= new List<IDisposable>(queue.Count)).Add(queue.Dequeue().Disposable);
+                if (count == this._pumpDisposalBatch.Length) {
+                    Array.Resize(ref this._pumpDisposalBatch, this._pumpDisposalBatch.Length * 2);
+                }
+
+                this._pumpDisposalBatch[count++] = queue.Dequeue().Disposable;
             }
         }
 
-        if (disposables == null) {
-            return;
-        }
-
-        for (int i = 0; i < disposables.Count; i++) {
-            disposables[i].Dispose();
+        Volatile.Write(ref pendingCount, 0);
+        for (int i = 0; i < count; i++) {
+            this._pumpDisposalBatch[i].Dispose();
+            this._pumpDisposalBatch[i] = null;
         }
     }
 

@@ -72,6 +72,7 @@ internal sealed class D3D12Pipeline : Pipeline {
         this.PrimitiveTopology = D3D12Formats.ToD3DPrimitiveTopology(description.PrimitiveTopology);
         this.PrimitiveTopologyType = D3D12Formats.ToPrimitiveTopologyType(description.PrimitiveTopology);
         this.StencilReference = description.DepthStencilState.StencilReference;
+        this.UsesStencilReference = description.DepthStencilState.StencilTestEnabled;
         this.VertexStrides = new uint[description.ShaderSet.VertexLayouts.Length];
         for (uint i = 0; i < this.VertexStrides.Length; i++) {
             this.VertexStrides[i] = description.ShaderSet.VertexLayouts[i].Stride;
@@ -131,6 +132,11 @@ internal sealed class D3D12Pipeline : Pipeline {
     public uint StencilReference { get; }
 
     /// <summary>
+    /// Gets whether the graphics pipeline consumes the dynamic stencil reference state.
+    /// </summary>
+    public bool UsesStencilReference { get; }
+
+    /// <summary>
     /// Gets the root-parameter index that receives push constants.
     /// </summary>
     public uint PushConstantRootParameterIndex => this._pushConstantRootParameterIndex;
@@ -139,6 +145,11 @@ internal sealed class D3D12Pipeline : Pipeline {
     /// Gets the maximum push-constant payload size supported by this pipeline.
     /// </summary>
     public uint MaxPushConstantSizeInBytes => _pushConstantSizeInBytes;
+
+    /// <summary>
+    /// Gets the number of resource set slots used by this pipeline.
+    /// </summary>
+    public uint ResourceSetCount => (uint)(this._pipelineResourceLayouts?.Length ?? 0);
 
     /// <summary>
     /// Gets or sets IsDisposed.

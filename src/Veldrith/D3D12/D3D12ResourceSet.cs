@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using Vortice.Direct3D12;
 
 namespace Veldrith.D3D12;
 
@@ -20,6 +22,7 @@ internal sealed class D3D12ResourceSet : ResourceSet {
     public D3D12ResourceSet(D3D12GraphicsDevice gd, ref ResourceSetDescription description) : base(ref description) {
         this.ResourceLayoutInfo = Util.AssertSubtype<ResourceLayout, D3D12ResourceLayout>(description.Layout);
         this.BoundResources = Util.ShallowClone(description.BoundResources);
+        this.ReferencedBuffers = CollectReferencedBuffers(this.BoundResources);
         this.PrepareDescriptors(gd);
     }
 
@@ -32,6 +35,41 @@ internal sealed class D3D12ResourceSet : ResourceSet {
     /// Gets or sets BoundResources.
     /// </summary>
     internal IBindableResource[] BoundResources { get; }
+
+    /// <summary>
+    /// Gets buffers referenced by this resource set for fast dynamic snapshot dirty checks.
+    /// </summary>
+    internal D3D12DeviceBuffer[] ReferencedBuffers { get; }
+
+    /// <summary>
+    /// Cached GPU descriptor table handle for the SRV/UAV descriptor table. Valid when <see cref="CachedSrvUavSignature"/> matches.
+    /// </summary>
+    internal GpuDescriptorHandle CachedSrvUavHandle;
+
+    /// <summary>
+    /// Signature value that was active when <see cref="CachedSrvUavHandle"/> was populated.
+    /// </summary>
+    internal uint CachedSrvUavSignature;
+
+    /// <summary>
+    /// Whether <see cref="CachedSrvUavHandle"/> holds a valid cached value.
+    /// </summary>
+    internal bool HasCachedSrvUavHandle;
+
+    /// <summary>
+    /// Cached GPU descriptor table handle for the sampler descriptor table. Valid when <see cref="CachedSamplerSignature"/> matches.
+    /// </summary>
+    internal GpuDescriptorHandle CachedSamplerHandle;
+
+    /// <summary>
+    /// Signature value that was active when <see cref="CachedSamplerHandle"/> was populated.
+    /// </summary>
+    internal uint CachedSamplerSignature;
+
+    /// <summary>
+    /// Whether <see cref="CachedSamplerHandle"/> holds a valid cached value.
+    /// </summary>
+    internal bool HasCachedSamplerHandle;
 
     /// <summary>
     /// Gets or sets IsDisposed.
@@ -85,5 +123,35 @@ internal sealed class D3D12ResourceSet : ResourceSet {
                     }
             }
         }
+    }
+
+    /// <summary>
+    /// Collects unique D3D12 buffers referenced by a resource set.
+    /// </summary>
+    /// <param name="resources">The resources to inspect.</param>
+    /// <returns>The referenced D3D12 buffers.</returns>
+    private static D3D12DeviceBuffer[] CollectReferencedBuffers(IBindableResource[] resources) {
+        List<D3D12DeviceBuffer> buffers = null;
+        for (int i = 0; i < resources.Length; i++) {
+            if (!Util.GetDeviceBuffer(resources[i], out DeviceBuffer buffer)) {
+                continue;
+            }
+
+            D3D12DeviceBuffer d3d12Buffer = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(buffer);
+            buffers ??= new List<D3D12DeviceBuffer>(1);
+            bool alreadyAdded = false;
+            for (int j = 0; j < buffers.Count; j++) {
+                if (ReferenceEquals(buffers[j], d3d12Buffer)) {
+                    alreadyAdded = true;
+                    break;
+                }
+            }
+
+            if (!alreadyAdded) {
+                buffers.Add(d3d12Buffer);
+            }
+        }
+
+        return buffers?.ToArray() ?? Array.Empty<D3D12DeviceBuffer>();
     }
 }

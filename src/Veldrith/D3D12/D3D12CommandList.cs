@@ -6,10 +6,15 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
+using SharpGen.Runtime;
 using Vortice;
 using Vortice.Direct3D12;
 using Vortice.DXGI;
 using Vortice.Mathematics;
+
+#if !VELDRID_D3D12_PERF
+#pragma warning disable CS0162
+#endif
 
 namespace Veldrith.D3D12;
 
@@ -60,12 +65,20 @@ internal sealed class D3D12CommandList : CommandList {
     /// <summary>
     /// Determines whether this instance is equal to the specified value.
     /// </summary>
+    #if VELDRID_D3D12_PERF
     private static readonly bool _perfLogEnabled = string.Equals(Environment.GetEnvironmentVariable("VELDRID_D3D12_PERF"), "1", StringComparison.Ordinal);
+    #else
+    private const bool _perfLogEnabled = false;
+    #endif
 
     /// <summary>
     /// Enables stack traces for D3D12 performance gap spikes.
     /// </summary>
+    #if VELDRID_D3D12_PERF
     private static readonly bool _perfStackLogEnabled = string.Equals(Environment.GetEnvironmentVariable("VELDRID_D3D12_PERF_STACK"), "1", StringComparison.Ordinal);
+    #else
+    private const bool _perfStackLogEnabled = false;
+    #endif
 
     /// <summary>
     /// Stores the active scissor rects state used by this instance.
@@ -115,12 +128,17 @@ internal sealed class D3D12CommandList : CommandList {
     /// <summary>
     /// Stores the compute resource set binding plans collection used by this instance.
     /// </summary>
-    private readonly Dictionary<ResourceSetBindingPlanKey, ResourceSetBindingPlanEntry[]> _computeResourceSetBindingPlans = new(ResourceSetBindingPlanKeyComparer.Instance);
+    private readonly Dictionary<ResourceSetBindingPlanKey, ResourceSetBindingPlan> _computeResourceSetBindingPlans = new(ResourceSetBindingPlanKeyComparer.Instance);
 
     /// <summary>
-    /// Caches shader-visible descriptor table handles for resources already copied into the persistent heap.
+    /// Per-slot array cache for compute binding plans — avoids dictionary lookup when the pipeline is unchanged.
     /// </summary>
-    private readonly Dictionary<DescriptorCacheKey, GpuDescriptorHandle> _descriptorTableCache = new(DescriptorCacheKeyComparer.Instance);
+    private ResourceSetBindingPlan[] _computeBindingPlanCache = new ResourceSetBindingPlan[8];
+
+    /// <summary>
+    /// The pipeline whose binding plans are stored in <see cref="_computeBindingPlanCache"/>.
+    /// </summary>
+    private D3D12Pipeline _computeBindingPlanCachePipeline;
 
     /// <summary>
     /// Stores the end event method state used by this instance.
@@ -135,7 +153,17 @@ internal sealed class D3D12CommandList : CommandList {
     /// <summary>
     /// Stores the graphics resource set binding plans collection used by this instance.
     /// </summary>
-    private readonly Dictionary<ResourceSetBindingPlanKey, ResourceSetBindingPlanEntry[]> _graphicsResourceSetBindingPlans = new(ResourceSetBindingPlanKeyComparer.Instance);
+    private readonly Dictionary<ResourceSetBindingPlanKey, ResourceSetBindingPlan> _graphicsResourceSetBindingPlans = new(ResourceSetBindingPlanKeyComparer.Instance);
+
+    /// <summary>
+    /// Per-slot array cache for graphics binding plans — avoids dictionary lookup when the pipeline is unchanged.
+    /// </summary>
+    private ResourceSetBindingPlan[] _graphicsBindingPlanCache = new ResourceSetBindingPlan[8];
+
+    /// <summary>
+    /// The pipeline whose binding plans are stored in <see cref="_graphicsBindingPlanCache"/>.
+    /// </summary>
+    private D3D12Pipeline _graphicsBindingPlanCachePipeline;
 
     /// <summary>
     /// Stores active debug group names for D3D12 performance gap attribution.
@@ -178,9 +206,64 @@ internal sealed class D3D12CommandList : CommandList {
     private readonly ID3D12DescriptorHeap _shaderVisibleSrvUavHeap;
 
     /// <summary>
+    /// Pre-cached CPU start handle for the shader-visible SRV/UAV heap.
+    /// </summary>
+    private CpuDescriptorHandle _srvUavHeapCpuStart;
+
+    /// <summary>
+    /// Pre-cached GPU start handle for the shader-visible SRV/UAV heap.
+    /// </summary>
+    private GpuDescriptorHandle _srvUavHeapGpuStart;
+
+    /// <summary>
+    /// Pre-cached CPU start handle for the shader-visible sampler heap.
+    /// </summary>
+    private CpuDescriptorHandle _samplerHeapCpuStart;
+
+    /// <summary>
+    /// Pre-cached GPU start handle for the shader-visible sampler heap.
+    /// </summary>
+    private GpuDescriptorHandle _samplerHeapGpuStart;
+
+    /// <summary>
     /// Stores the single barrier state used by this instance.
     /// </summary>
     private readonly ResourceBarrier[] _singleBarrier = new ResourceBarrier[1];
+
+    /// <summary>
+    /// Reusable barrier batch buffer — barriers are accumulated here and flushed in one batch call.
+    /// </summary>
+    private readonly ResourceBarrier[] _barrierBatch = new ResourceBarrier[32];
+
+    /// <summary>
+    /// Number of barriers currently accumulated in <see cref="_barrierBatch"/> awaiting a batch flush.
+    /// </summary>
+    private uint _pendingBarrierCount;
+
+    /// <summary>
+    /// Pre-allocated state capture buffer for src texture transitions in copy/resolve operations.
+    /// </summary>
+    private readonly ResourceStates[] _srcCaptureStates = new ResourceStates[128];
+
+    /// <summary>
+    /// Pre-allocated state capture buffer for dst texture transitions in copy/resolve operations.
+    /// </summary>
+    private readonly ResourceStates[] _dstCaptureStates = new ResourceStates[128];
+
+    /// <summary>
+    /// Reusable source descriptor handle batch for batched descriptor copies.
+    /// </summary>
+    private readonly CpuDescriptorHandle[] _descriptorCopySources = new CpuDescriptorHandle[16];
+
+    /// <summary>
+    /// Reusable destination descriptor handle batch for batched descriptor copies.
+    /// </summary>
+    private readonly CpuDescriptorHandle[] _descriptorCopyDests = new CpuDescriptorHandle[16];
+
+    /// <summary>
+    /// Reusable per-range size array (all 1s) for batched descriptor copies.
+    /// </summary>
+    private static readonly uint[] _descriptorCopyRangeSizes = new uint[] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 
     /// <summary>
     /// Stores the srv uav descriptor size value used during command execution.
@@ -228,6 +311,16 @@ internal sealed class D3D12CommandList : CommandList {
     private bool _computeResourceSetsDirty;
 
     /// <summary>
+    /// Stores the first dirty compute resource set slot, or -1 when none are dirty.
+    /// </summary>
+    private int _computeResourceSetsChangedStart = -1;
+
+    /// <summary>
+    /// Stores the last dirty compute resource set slot, or -1 when none are dirty.
+    /// </summary>
+    private int _computeResourceSetsChangedEnd = -1;
+
+    /// <summary>
     /// Stores the bound graphics resource sets collection used by this instance.
     /// </summary>
     private BoundResourceSetInfo[] _boundGraphicsResourceSets = Array.Empty<BoundResourceSetInfo>();
@@ -241,6 +334,16 @@ internal sealed class D3D12CommandList : CommandList {
     /// Tracks whether any graphics resource set is dirty.
     /// </summary>
     private bool _graphicsResourceSetsDirty;
+
+    /// <summary>
+    /// Stores the first dirty graphics resource set slot, or -1 when none are dirty.
+    /// </summary>
+    private int _graphicsResourceSetsChangedStart = -1;
+
+    /// <summary>
+    /// Stores the last dirty graphics resource set slot, or -1 when none are dirty.
+    /// </summary>
+    private int _graphicsResourceSetsChangedEnd = -1;
 
     /// <summary>
     /// Stores the bound index buffer value used during command execution.
@@ -265,22 +368,22 @@ internal sealed class D3D12CommandList : CommandList {
     /// <summary>
     /// Executes the empty logic for this backend.
     /// </summary>
-    private ulong[] _computeRootBufferAddresses = Array.Empty<ulong>();
+    private ulong[] _computeRootBufferAddresses = new ulong[32];
 
     /// <summary>
     /// Executes the empty logic for this backend.
     /// </summary>
-    private bool[] _computeRootBufferAddressValid = Array.Empty<bool>();
+    private bool[] _computeRootBufferAddressValid = new bool[32];
 
     /// <summary>
     /// Executes the empty logic for this backend.
     /// </summary>
-    private ulong[] _computeRootTablePointers = Array.Empty<ulong>();
+    private ulong[] _computeRootTablePointers = new ulong[32];
 
     /// <summary>
     /// Executes the empty logic for this backend.
     /// </summary>
-    private bool[] _computeRootTablePointerValid = Array.Empty<bool>();
+    private bool[] _computeRootTablePointerValid = new bool[32];
 
     /// <summary>
     /// Stores the current compute pipeline state used by this instance.
@@ -375,22 +478,22 @@ internal sealed class D3D12CommandList : CommandList {
     /// <summary>
     /// Executes the empty logic for this backend.
     /// </summary>
-    private ulong[] _graphicsRootBufferAddresses = Array.Empty<ulong>();
+    private ulong[] _graphicsRootBufferAddresses = new ulong[32];
 
     /// <summary>
     /// Executes the empty logic for this backend.
     /// </summary>
-    private bool[] _graphicsRootBufferAddressValid = Array.Empty<bool>();
+    private bool[] _graphicsRootBufferAddressValid = new bool[32];
 
     /// <summary>
     /// Executes the empty logic for this backend.
     /// </summary>
-    private ulong[] _graphicsRootTablePointers = Array.Empty<ulong>();
+    private ulong[] _graphicsRootTablePointers = new ulong[32];
 
     /// <summary>
     /// Executes the empty logic for this backend.
     /// </summary>
-    private bool[] _graphicsRootTablePointerValid = Array.Empty<bool>();
+    private bool[] _graphicsRootTablePointerValid = new bool[32];
 
     /// <summary>
     /// Tracks whether has bound index buffer is currently enabled.
@@ -443,6 +546,11 @@ internal sealed class D3D12CommandList : CommandList {
     private ulong _perfAccumBeginWaitCount;
 
     /// <summary>
+    /// Stores managed bytes allocated while recording command lists during the current reporting window.
+    /// </summary>
+    private ulong _perfAccumAllocatedBytes;
+
+    /// <summary>
     /// Stores the perf accum begin wait ms state used by this instance.
     /// </summary>
     private double _perfAccumBeginWaitMs;
@@ -466,6 +574,21 @@ internal sealed class D3D12CommandList : CommandList {
     /// Stores the perf accum dispatch calls state used by this instance.
     /// </summary>
     private ulong _perfAccumDispatchCalls;
+
+    /// <summary>
+    /// Stores dynamic snapshot source-copy bytes accumulated during the current reporting window.
+    /// </summary>
+    private ulong _perfAccumDynamicSnapshotCopyBytes;
+
+    /// <summary>
+    /// Stores dynamic snapshot prefix-copy bytes accumulated during the current reporting window.
+    /// </summary>
+    private ulong _perfAccumDynamicSnapshotPrefixCopyBytes;
+
+    /// <summary>
+    /// Stores dynamic snapshot slot rotations accumulated during the current reporting window.
+    /// </summary>
+    private ulong _perfAccumDynamicSnapshotRotations;
 
     /// <summary>
     /// Stores the accumulated CPU time spent recording draw work during the current reporting window.
@@ -503,9 +626,24 @@ internal sealed class D3D12CommandList : CommandList {
     private ulong _perfAccumResourceSetChanges;
 
     /// <summary>
+    /// Stores resource set dirty slots scanned during the current reporting window.
+    /// </summary>
+    private ulong _perfAccumResourceSetScanSlots;
+
+    /// <summary>
+    /// Stores resource sets rebound during the current reporting window.
+    /// </summary>
+    private ulong _perfAccumResourceSetBinds;
+
+    /// <summary>
     /// Stores the perf accum root table sets state used by this instance.
     /// </summary>
     private ulong _perfAccumRootTableSets;
+
+    /// <summary>
+    /// Stores root buffer view bindings accumulated during the current reporting window.
+    /// </summary>
+    private ulong _perfAccumRootBufferSets;
 
     /// <summary>
     /// Stores the perf accum subresource transitions state used by this instance.
@@ -573,9 +711,34 @@ internal sealed class D3D12CommandList : CommandList {
     private double _perfDrawMs;
 
     /// <summary>
+    /// Stores dynamic snapshot source-copy bytes for the current command list.
+    /// </summary>
+    private ulong _perfDynamicSnapshotCopyBytes;
+
+    /// <summary>
+    /// Stores dynamic snapshot prefix-copy bytes for the current command list.
+    /// </summary>
+    private ulong _perfDynamicSnapshotPrefixCopyBytes;
+
+    /// <summary>
+    /// Stores dynamic snapshot slot rotations for the current command list.
+    /// </summary>
+    private ulong _perfDynamicSnapshotRotations;
+
+    /// <summary>
     /// Stores the timestamp captured at the beginning of the current command list recording.
     /// </summary>
     private long _perfFrameStartTicks;
+
+    /// <summary>
+    /// Stores the managed allocated byte counter captured at the beginning of the current command list recording.
+    /// </summary>
+    private long _perfFrameStartAllocatedBytes;
+
+    /// <summary>
+    /// Stores managed bytes allocated while recording the current command list.
+    /// </summary>
+    private ulong _perfAllocatedBytes;
 
     /// <summary>
     /// Stores the Gen0 collection count captured at the beginning of the current command list recording.
@@ -763,9 +926,24 @@ internal sealed class D3D12CommandList : CommandList {
     private ulong _perfResourceSetChanges;
 
     /// <summary>
+    /// Stores resource set dirty slots scanned for the current command list.
+    /// </summary>
+    private ulong _perfResourceSetScanSlots;
+
+    /// <summary>
+    /// Stores resource sets rebound for the current command list.
+    /// </summary>
+    private ulong _perfResourceSetBinds;
+
+    /// <summary>
     /// Stores the perf root table sets state used by this instance.
     /// </summary>
     private ulong _perfRootTableSets;
+
+    /// <summary>
+    /// Stores root buffer view bindings for the current command list.
+    /// </summary>
+    private ulong _perfRootBufferSets;
 
     /// <summary>
     /// Stores the perf subresource transitions state used by this instance.
@@ -796,6 +974,31 @@ internal sealed class D3D12CommandList : CommandList {
     /// Stores the transitioned back buffer index value used during command execution.
     /// </summary>
     private int _transitionedBackBufferIndex = -1;
+
+    /// <summary>
+    /// Stores the swapchain framebuffer currently cached for this command list.
+    /// </summary>
+    private D3D12SwapchainFramebuffer _cachedSwapchainFramebuffer;
+
+    /// <summary>
+    /// Stores the cached current swapchain back buffer resource.
+    /// </summary>
+    private ID3D12Resource _cachedSwapchainBackBuffer;
+
+    /// <summary>
+    /// Stores the cached current swapchain render-target view.
+    /// </summary>
+    private CpuDescriptorHandle _cachedSwapchainRtv;
+
+    /// <summary>
+    /// Stores the cached current swapchain back-buffer index.
+    /// </summary>
+    private int _cachedSwapchainBackBufferIndex = -1;
+
+    /// <summary>
+    /// Stores the cached current swapchain back-buffer state.
+    /// </summary>
+    private ResourceStates _cachedSwapchainBackBufferState;
 
     /// <summary>
     /// Stores the uav barrier pending state used by this instance.
@@ -912,6 +1115,12 @@ internal sealed class D3D12CommandList : CommandList {
         this.NativeCommandList = gd.Device.CreateCommandList<ID3D12GraphicsCommandList>(0, CommandListType.Direct, this._commandAllocators[0]);
         this._srvUavDescriptorSize = (int)gd.Device.GetDescriptorHandleIncrementSize(DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView);
         this._samplerDescriptorSize = (int)gd.Device.GetDescriptorHandleIncrementSize(DescriptorHeapType.Sampler);
+        this._srvUavDescriptorLimit = this._maxSrvUavDescriptors;
+        this._samplerDescriptorLimit = this._maxSamplerDescriptors;
+        this._srvUavHeapCpuStart = this._shaderVisibleSrvUavHeap.GetCPUDescriptorHandleForHeapStart();
+        this._srvUavHeapGpuStart = this._shaderVisibleSrvUavHeap.GetGPUDescriptorHandleForHeapStart();
+        this._samplerHeapCpuStart = this._shaderVisibleSamplerHeap.GetCPUDescriptorHandleForHeapStart();
+        this._samplerHeapGpuStart = this._shaderVisibleSamplerHeap.GetGPUDescriptorHandleForHeapStart();
         this._beginEventMethod = this.GetDebugMarkerMethod("BeginEvent");
         this._setMarkerMethod = this.GetDebugMarkerMethod("SetMarker");
         this._endEventMethod = this.NativeCommandList.GetType().GetMethod("EndEvent", Type.EmptyTypes);
@@ -969,9 +1178,11 @@ internal sealed class D3D12CommandList : CommandList {
 
         if (_perfLogEnabled) {
             this._perfFrameStartTicks = Stopwatch.GetTimestamp();
+            this._perfFrameStartAllocatedBytes = GC.GetAllocatedBytesForCurrentThread();
             this._perfGc0Start = GC.CollectionCount(0);
             this._perfGc1Start = GC.CollectionCount(1);
             this._perfGc2Start = GC.CollectionCount(2);
+            this._perfAllocatedBytes = 0;
             this._perfBarrierMs = 0;
             this._perfBeginWaitCount = 0;
             this._perfBeginWaitMs = 0;
@@ -986,31 +1197,35 @@ internal sealed class D3D12CommandList : CommandList {
             this._perfUavBarriers = 0;
             this._perfPipelineChanges = 0;
             this._perfResourceSetChanges = 0;
+            this._perfResourceSetScanSlots = 0;
+            this._perfResourceSetBinds = 0;
             this._perfDescriptorCopies = 0;
             this._perfRootTableSets = 0;
+            this._perfRootBufferSets = 0;
             this._perfVertexBufferBinds = 0;
             this._perfIndexBufferBinds = 0;
+            this._perfDynamicSnapshotCopyBytes = 0;
+            this._perfDynamicSnapshotPrefixCopyBytes = 0;
+            this._perfDynamicSnapshotRotations = 0;
             this._perfDrawCalls = 0;
             this._perfDispatchCalls = 0;
         }
 
         this._currentFrameSlot = (this._currentFrameSlot + 1) % FramesInFlight;
         this.WaitForFrameSlot(this._currentFrameSlot);
-        this._commandAllocators[this._currentFrameSlot].Reset();
-        this.NativeCommandList.Reset(this._commandAllocators[this._currentFrameSlot]);
-        this.ResetDescriptorAllocatorsForFrameSlot(this._currentFrameSlot);
+        ResetCommandAllocatorNoAlloc(this._commandAllocators[this._currentFrameSlot]);
+        this.ResetCommandListNoAlloc(this._commandAllocators[this._currentFrameSlot]);
+        this.UpdateDescriptorAllocatorLimits();
+        this._pendingBarrierCount = 0;
         this._begun = true;
         this._ended = false;
         this._transitionedBackBufferIndex = -1;
+        this.ClearCachedSwapchainBackBuffer();
         this._descriptorHeapsBound = false;
-        this._descriptorTableCache.Clear();
         this._activeViewportCount = 0;
         this._activeScissorRectCount = 0;
         this._uavBarrierPending = false;
-        Array.Clear(this._boundVertexBuffers, 0, this._boundVertexBuffers.Length);
-        Array.Clear(this._boundVertexBufferOffsets, 0, this._boundVertexBufferOffsets.Length);
-        Array.Clear(this._boundVertexBufferStrides, 0, this._boundVertexBufferStrides.Length);
-        Array.Clear(this._boundVertexBufferVersions, 0, this._boundVertexBufferVersions.Length);
+        this.ClearBoundVertexBuffers();
         this._boundIndexBuffer = null;
         this._boundIndexBufferOffset = 0;
         this._boundIndexBufferVersion = 0;
@@ -1022,6 +1237,8 @@ internal sealed class D3D12CommandList : CommandList {
         ClearChangedResourceSets(this._computeResourceSetsChanged);
         this._graphicsResourceSetsDirty = false;
         this._computeResourceSetsDirty = false;
+        this.ResetGraphicsResourceSetChangeRange();
+        this.ResetComputeResourceSetChangeRange();
         this.InvalidateGraphicsRootCaches();
         this.InvalidateComputeRootCaches();
         this._maxBoundVertexBufferSlot = 0;
@@ -1030,6 +1247,8 @@ internal sealed class D3D12CommandList : CommandList {
         this.ClearCachedState();
         this._currentGraphicsPipeline = null;
         this._currentComputePipeline = null;
+        this._graphicsBindingPlanCachePipeline = null;
+        this._computeBindingPlanCachePipeline = null;
 
         if (_perfLogEnabled) {
             this.BeginPerfCommandGapTracking();
@@ -1044,14 +1263,16 @@ internal sealed class D3D12CommandList : CommandList {
             throw new VeldridException("CommandList.End cannot be called before Begin.");
         }
 
-        using PerfCommandApiScope perfCommandApiScope = this.TrackPerfCommandApi(nameof(this.End));
         this.FlushPendingUavBarrier();
         this.TransitionSwapchainBackBuffersToPresent();
-        this.NativeCommandList.Close();
+        this.FlushPendingBarriers();
+        this.CloseNoAlloc();
         this._ended = true;
 
         if (_perfLogEnabled) {
             double recordMs = TicksToMilliseconds(Stopwatch.GetTimestamp() - this._perfFrameStartTicks);
+            long allocatedDelta = GC.GetAllocatedBytesForCurrentThread() - this._perfFrameStartAllocatedBytes;
+            this._perfAllocatedBytes = (ulong)Math.Max(allocatedDelta, 0);
             int gc0Delta = GC.CollectionCount(0) - this._perfGc0Start;
             int gc1Delta = GC.CollectionCount(1) - this._perfGc1Start;
             int gc2Delta = GC.CollectionCount(2) - this._perfGc2Start;
@@ -1070,6 +1291,7 @@ internal sealed class D3D12CommandList : CommandList {
             this._perfAccumGc0Collections += (ulong)Math.Max(gc0Delta, 0);
             this._perfAccumGc1Collections += (ulong)Math.Max(gc1Delta, 0);
             this._perfAccumGc2Collections += (ulong)Math.Max(gc2Delta, 0);
+            this._perfAccumAllocatedBytes += this._perfAllocatedBytes;
             this._perfMaxBeginWaitMs = Math.Max(this._perfMaxBeginWaitMs, this._perfBeginWaitMs);
             this._perfMaxPipelineSetMs = Math.Max(this._perfMaxPipelineSetMs, this._perfPipelineSetMs);
             this._perfMaxResourceSetFlushMs = Math.Max(this._perfMaxResourceSetFlushMs, this._perfResourceSetFlushMs);
@@ -1092,16 +1314,23 @@ internal sealed class D3D12CommandList : CommandList {
             this._perfAccumUavBarriers += this._perfUavBarriers;
             this._perfAccumPipelineChanges += this._perfPipelineChanges;
             this._perfAccumResourceSetChanges += this._perfResourceSetChanges;
+            this._perfAccumResourceSetScanSlots += this._perfResourceSetScanSlots;
+            this._perfAccumResourceSetBinds += this._perfResourceSetBinds;
             this._perfAccumDescriptorCopies += this._perfDescriptorCopies;
             this._perfAccumRootTableSets += this._perfRootTableSets;
+            this._perfAccumRootBufferSets += this._perfRootBufferSets;
             this._perfAccumVertexBufferBinds += this._perfVertexBufferBinds;
             this._perfAccumIndexBufferBinds += this._perfIndexBufferBinds;
+            this._perfAccumDynamicSnapshotCopyBytes += this._perfDynamicSnapshotCopyBytes;
+            this._perfAccumDynamicSnapshotPrefixCopyBytes += this._perfDynamicSnapshotPrefixCopyBytes;
+            this._perfAccumDynamicSnapshotRotations += this._perfDynamicSnapshotRotations;
             this._perfAccumDrawCalls += this._perfDrawCalls;
             this._perfAccumDispatchCalls += this._perfDispatchCalls;
             this.AccumulatePerfCommandGapReport();
 
             if (untrackedMs >= PerfRecordSpikeThresholdMs) {
-                Console.WriteLine($"[D3D12 PERF SPIKE] recordMs={recordMs:F3}, trackedMs={trackedMs:F3}, untrackedMs={untrackedMs:F3}, " + $"wait={this._perfBeginWaitMs:F3}, pso={this._perfPipelineSetMs:F3}, rs={this._perfResourceSetFlushMs:F3}, barrier={this._perfBarrierMs:F3}, " + $"upload={this._perfUploadRecordMs:F3}, draw={this._perfDrawMs:F3}, dispatch={this._perfDispatchMs:F3}, " + $"gc={Math.Max(gc0Delta, 0)}/{Math.Max(gc1Delta, 0)}/{Math.Max(gc2Delta, 0)}, psoCount={this._perfPipelineChanges}, rsCount={this._perfResourceSetChanges}, drawCount={this._perfDrawCalls}");
+                Console.WriteLine($"[D3D12 PERF SPIKE] recordMs={recordMs:F3}, trackedMs={trackedMs:F3}, untrackedMs={untrackedMs:F3}, " + $"wait={this._perfBeginWaitMs:F3}, pso={this._perfPipelineSetMs:F3}, rs={this._perfResourceSetFlushMs:F3}, barrier={this._perfBarrierMs:F3}, " + $"upload={this._perfUploadRecordMs:F3}, draw={this._perfDrawMs:F3}, dispatch={this._perfDispatchMs:F3}, " + $"allocKB={this._perfAllocatedBytes / 1024.0:F1}, gc={Math.Max(gc0Delta, 0)}/{Math.Max(gc1Delta, 0)}/{Math.Max(gc2Delta, 0)}, psoCount={this._perfPipelineChanges}, rsCount={this._perfResourceSetChanges}, drawCount={this._perfDrawCalls}");
+                Console.WriteLine($"[D3D12 PERF UPLOAD] dynCopyKB={this._perfDynamicSnapshotCopyBytes / 1024.0:F1}, dynPrefixKB={this._perfDynamicSnapshotPrefixCopyBytes / 1024.0:F1}, dynRot={this._perfDynamicSnapshotRotations}, vb={this._perfVertexBufferBinds}, ib={this._perfIndexBufferBinds}");
                 Console.WriteLine($"[D3D12 PERF GAP] maxGapMs={this._perfMaxExternalGapMs:F3}, transition={this._perfMaxExternalGapBefore}->{this._perfMaxExternalGapAfter}, scope={this._perfMaxExternalGapScope}");
                 if (!string.IsNullOrEmpty(this._perfMaxExternalGapStack)) {
                     Console.WriteLine($"[D3D12 PERF GAP STACK]\n{this._perfMaxExternalGapStack}");
@@ -1113,7 +1342,7 @@ internal sealed class D3D12CommandList : CommandList {
                 double reportWindowMs = elapsedMs - this._perfLastReportMs;
                 this._perfLastReportMs = elapsedMs;
                 double invFrames = 1.0 / PerfReportIntervalFrames;
-                Console.WriteLine($"[D3D12 PERF] {PerfReportIntervalFrames}f/{reportWindowMs:F0}ms avg: " + $"wait={this._perfAccumBeginWaitMs * invFrames:F3}ms ({this._perfAccumBeginWaitCount * invFrames:F2}x), " + $"psoMs={this._perfAccumPipelineSetMs * invFrames:F3}, rsMs={this._perfAccumResourceSetFlushMs * invFrames:F3}, " + $"barrierMs={this._perfAccumBarrierMs * invFrames:F3}, descCopyMs={this._perfAccumDescriptorCopyMs * invFrames:F3}, uploadMs={this._perfAccumUploadRecordMs * invFrames:F3}, " + $"drawMs={this._perfAccumDrawMs * invFrames:F3}, dispatchMs={this._perfAccumDispatchMs * invFrames:F3}, " + $"maxRecordMs={this._perfMaxRecordMs:F3}, maxUntrackedMs={this._perfMaxUntrackedRecordMs:F3}, maxWaitMs={this._perfMaxBeginWaitMs:F3}, maxPsoMs={this._perfMaxPipelineSetMs:F3}, maxRsMs={this._perfMaxResourceSetFlushMs:F3}, " + $"maxBarrierMs={this._perfMaxBarrierMs:F3}, maxUploadMs={this._perfMaxUploadRecordMs:F3}, maxDrawMs={this._perfMaxDrawMs:F3}, " + $"gc={this._perfAccumGc0Collections}/{this._perfAccumGc1Collections}/{this._perfAccumGc2Collections}, " + $"trans={this._perfAccumTransitions * invFrames:F1}, subTrans={this._perfAccumSubresourceTransitions * invFrames:F1}, uavB={this._perfAccumUavBarriers * invFrames:F1}, " + $"pso={this._perfAccumPipelineChanges * invFrames:F1}, rs={this._perfAccumResourceSetChanges * invFrames:F1}, " + $"descCopy={this._perfAccumDescriptorCopies * invFrames:F1}, rootTbl={this._perfAccumRootTableSets * invFrames:F1}, " + $"vb={this._perfAccumVertexBufferBinds * invFrames:F1}, ib={this._perfAccumIndexBufferBinds * invFrames:F1}, " + $"draw={this._perfAccumDrawCalls * invFrames:F1}, dispatch={this._perfAccumDispatchCalls * invFrames:F1}");
+                Console.WriteLine($"[D3D12 PERF] {PerfReportIntervalFrames}f/{reportWindowMs:F0}ms avg: " + $"wait={this._perfAccumBeginWaitMs * invFrames:F3}ms ({this._perfAccumBeginWaitCount * invFrames:F2}x), " + $"psoMs={this._perfAccumPipelineSetMs * invFrames:F3}, rsMs={this._perfAccumResourceSetFlushMs * invFrames:F3}, " + $"barrierMs={this._perfAccumBarrierMs * invFrames:F3}, descCopyMs={this._perfAccumDescriptorCopyMs * invFrames:F3}, uploadMs={this._perfAccumUploadRecordMs * invFrames:F3}, " + $"drawMs={this._perfAccumDrawMs * invFrames:F3}, dispatchMs={this._perfAccumDispatchMs * invFrames:F3}, " + $"maxRecordMs={this._perfMaxRecordMs:F3}, maxUntrackedMs={this._perfMaxUntrackedRecordMs:F3}, maxWaitMs={this._perfMaxBeginWaitMs:F3}, maxPsoMs={this._perfMaxPipelineSetMs:F3}, maxRsMs={this._perfMaxResourceSetFlushMs:F3}, " + $"maxBarrierMs={this._perfMaxBarrierMs:F3}, maxUploadMs={this._perfMaxUploadRecordMs:F3}, maxDrawMs={this._perfMaxDrawMs:F3}, " + $"allocKB={this._perfAccumAllocatedBytes * invFrames / 1024.0:F1}, gc={this._perfAccumGc0Collections}/{this._perfAccumGc1Collections}/{this._perfAccumGc2Collections}, " + $"trans={this._perfAccumTransitions * invFrames:F1}, subTrans={this._perfAccumSubresourceTransitions * invFrames:F1}, uavB={this._perfAccumUavBarriers * invFrames:F1}, " + $"pso={this._perfAccumPipelineChanges * invFrames:F1}, rs={this._perfAccumResourceSetChanges * invFrames:F1}, rsScan={this._perfAccumResourceSetScanSlots * invFrames:F1}, rsBind={this._perfAccumResourceSetBinds * invFrames:F1}, " + $"descCopy={this._perfAccumDescriptorCopies * invFrames:F1}, rootTbl={this._perfAccumRootTableSets * invFrames:F1}, rootBuf={this._perfAccumRootBufferSets * invFrames:F1}, " + $"vb={this._perfAccumVertexBufferBinds * invFrames:F1}, ib={this._perfAccumIndexBufferBinds * invFrames:F1}, " + $"dynCopyKB={this._perfAccumDynamicSnapshotCopyBytes * invFrames / 1024.0:F1}, dynPrefixKB={this._perfAccumDynamicSnapshotPrefixCopyBytes * invFrames / 1024.0:F1}, dynRot={this._perfAccumDynamicSnapshotRotations * invFrames:F1}, " + $"draw={this._perfAccumDrawCalls * invFrames:F1}, dispatch={this._perfAccumDispatchCalls * invFrames:F1}");
                 Console.WriteLine($"[D3D12 PERF GAP] windowMaxGapMs={this._perfReportMaxExternalGapMs:F3}, transition={this._perfReportMaxExternalGapTransition}, scope={this._perfReportMaxExternalGapScope}");
 
                 this._perfAccumBarrierMs = 0;
@@ -1130,15 +1359,22 @@ internal sealed class D3D12CommandList : CommandList {
                 this._perfAccumUavBarriers = 0;
                 this._perfAccumPipelineChanges = 0;
                 this._perfAccumResourceSetChanges = 0;
+                this._perfAccumResourceSetScanSlots = 0;
+                this._perfAccumResourceSetBinds = 0;
                 this._perfAccumDescriptorCopies = 0;
                 this._perfAccumRootTableSets = 0;
+                this._perfAccumRootBufferSets = 0;
                 this._perfAccumVertexBufferBinds = 0;
                 this._perfAccumIndexBufferBinds = 0;
+                this._perfAccumDynamicSnapshotCopyBytes = 0;
+                this._perfAccumDynamicSnapshotPrefixCopyBytes = 0;
+                this._perfAccumDynamicSnapshotRotations = 0;
                 this._perfAccumDrawCalls = 0;
                 this._perfAccumDispatchCalls = 0;
                 this._perfAccumGc0Collections = 0;
                 this._perfAccumGc1Collections = 0;
                 this._perfAccumGc2Collections = 0;
+                this._perfAccumAllocatedBytes = 0;
                 this._perfMaxBarrierMs = 0;
                 this._perfMaxBeginWaitMs = 0;
                 this._perfMaxDescriptorCopyMs = 0;
@@ -1165,18 +1401,22 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="index">The zero-based index of the target item.</param>
     /// <param name="viewport">The viewport value used by this operation.</param>
     public override void SetViewport(uint index, ref Viewport viewport) {
-        using PerfCommandApiScope perfCommandApiScope = this.TrackPerfCommandApi(nameof(this.SetViewport));
         if (index >= this._activeViewports.Length) {
             return;
         }
 
-        this._activeViewports[index] = new Vortice.Mathematics.Viewport(viewport.X, viewport.Y, viewport.Width, viewport.Height, viewport.MinDepth, viewport.MaxDepth);
+        Vortice.Mathematics.Viewport d3D12Viewport = new(viewport.X, viewport.Y, viewport.Width, viewport.Height, viewport.MinDepth, viewport.MaxDepth);
+        if (index + 1 <= this._activeViewportCount && this._activeViewports[index] == d3D12Viewport) {
+            return;
+        }
+
+        this._activeViewports[index] = d3D12Viewport;
 
         if (index + 1 > this._activeViewportCount) {
             this._activeViewportCount = index + 1;
         }
 
-        this.NativeCommandList.RSSetViewports(this._activeViewportCount, this._activeViewports);
+        this.RSSetViewportsNoAlloc(this._activeViewportCount, this._activeViewports);
     }
 
     /// <summary>
@@ -1188,18 +1428,22 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="width">The width value.</param>
     /// <param name="height">The height value.</param>
     public override void SetScissorRect(uint index, uint x, uint y, uint width, uint height) {
-        using PerfCommandApiScope perfCommandApiScope = this.TrackPerfCommandApi(nameof(this.SetScissorRect));
         if (index >= this._activeScissorRects.Length) {
             return;
         }
 
-        this._activeScissorRects[index] = new RawRect((int)x, (int)y, (int)(x + width), (int)(y + height));
+        RawRect scissorRect = new((int)x, (int)y, (int)(x + width), (int)(y + height));
+        if (index + 1 <= this._activeScissorRectCount && this._activeScissorRects[index] == scissorRect) {
+            return;
+        }
+
+        this._activeScissorRects[index] = scissorRect;
 
         if (index + 1 > this._activeScissorRectCount) {
             this._activeScissorRectCount = index + 1;
         }
 
-        this.NativeCommandList.RSSetScissorRects(this._activeScissorRectCount, this._activeScissorRects);
+        this.RSSetScissorRectsNoAlloc(this._activeScissorRectCount, this._activeScissorRects);
     }
 
     /// <summary>
@@ -1209,11 +1453,11 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="groupCountY">The group count y value used by this operation.</param>
     /// <param name="groupCountZ">The group count z value used by this operation.</param>
     public override void Dispatch(uint groupCountX, uint groupCountY, uint groupCountZ) {
-        using PerfCommandApiScope perfCommandApiScope = this.TrackPerfCommandApi(nameof(this.Dispatch));
         long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
         this.FlushComputeResourceSets();
         this.FlushPendingUavBarrier();
-        this.NativeCommandList.Dispatch(groupCountX, groupCountY, groupCountZ);
+        this.FlushPendingBarriers();
+        this.DispatchNoAlloc(groupCountX, groupCountY, groupCountZ);
         if (_perfLogEnabled) {
             this._perfDispatchCalls++;
             this._perfDispatchMs += TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
@@ -1230,7 +1474,7 @@ internal sealed class D3D12CommandList : CommandList {
             throw new VeldridException("CommandList must be ended before submit.");
         }
 
-        this.gd.CommandQueue.ExecuteCommandList(this.NativeCommandList);
+        this.gd.ExecuteCommandListNoAlloc(this.NativeCommandList);
     }
 
     /// <summary>
@@ -1261,15 +1505,11 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="dynamicOffsetsCount">The dynamic offsets count value used by this operation.</param>
     /// <param name="dynamicOffsets">The dynamic offsets value used by this operation.</param>
     protected override void SetGraphicsResourceSetCore(uint slot, ResourceSet rs, uint dynamicOffsetsCount, ref uint dynamicOffsets) {
-        using PerfCommandApiScope perfCommandApiScope = this.TrackPerfCommandApi(nameof(this.SetGraphicsResourceSet));
         if (this._currentGraphicsPipeline == null) {
             return;
         }
 
-        if (slot >= this._boundGraphicsResourceSets.Length) {
-            Util.EnsureArrayMinimumSize(ref this._boundGraphicsResourceSets, slot + 1);
-            Util.EnsureArrayMinimumSize(ref this._graphicsResourceSetsChanged, slot + 1);
-        }
+        this.EnsureGraphicsResourceSetCapacity(slot + 1);
 
         BoundResourceSetInfo previousBinding = this._boundGraphicsResourceSets[slot];
         if (previousBinding.Equals(rs, dynamicOffsetsCount, ref dynamicOffsets)) {
@@ -1283,8 +1523,7 @@ internal sealed class D3D12CommandList : CommandList {
         }
 
         Util.AssertSubtype<ResourceSet, D3D12ResourceSet>(rs);
-        this._graphicsResourceSetsChanged[slot] = true;
-        this._graphicsResourceSetsDirty = true;
+        this.MarkGraphicsResourceSetChanged(slot);
     }
 
     /// <summary>
@@ -1295,15 +1534,11 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="dynamicOffsetsCount">The dynamic offsets count value used by this operation.</param>
     /// <param name="dynamicOffsets">The dynamic offsets value used by this operation.</param>
     protected override void SetComputeResourceSetCore(uint slot, ResourceSet set, uint dynamicOffsetsCount, ref uint dynamicOffsets) {
-        using PerfCommandApiScope perfCommandApiScope = this.TrackPerfCommandApi(nameof(this.SetComputeResourceSet));
         if (this._currentComputePipeline == null) {
             return;
         }
 
-        if (slot >= this._boundComputeResourceSets.Length) {
-            Util.EnsureArrayMinimumSize(ref this._boundComputeResourceSets, slot + 1);
-            Util.EnsureArrayMinimumSize(ref this._computeResourceSetsChanged, slot + 1);
-        }
+        this.EnsureComputeResourceSetCapacity(slot + 1);
 
         BoundResourceSetInfo previousBinding = this._boundComputeResourceSets[slot];
         if (previousBinding.Equals(set, dynamicOffsetsCount, ref dynamicOffsets)) {
@@ -1317,8 +1552,7 @@ internal sealed class D3D12CommandList : CommandList {
         }
 
         Util.AssertSubtype<ResourceSet, D3D12ResourceSet>(set);
-        this._computeResourceSetsChanged[slot] = true;
-        this._computeResourceSetsDirty = true;
+        this.MarkComputeResourceSetChanged(slot);
     }
 
     /// <summary>
@@ -1326,20 +1560,20 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     /// <param name="fb">The fb value used by this operation.</param>
     protected override void SetFramebufferCore(Framebuffer fb) {
-        using PerfCommandApiScope perfCommandApiScope = this.TrackPerfCommandApi(nameof(this.SetFramebuffer));
-        if (fb is D3D12SwapchainFramebuffer swapchainFramebuffer && swapchainFramebuffer.Swapchain.TryGetCurrentBackBuffer(out ID3D12Resource backBuffer, out CpuDescriptorHandle rtv, out int backBufferIndex, out ResourceStates currentState)) {
+        if (fb is D3D12SwapchainFramebuffer swapchainFramebuffer && this.TryGetSwapchainBackBuffer(swapchainFramebuffer, out ID3D12Resource backBuffer, out CpuDescriptorHandle rtv, out int backBufferIndex, out ResourceStates currentState)) {
             this.Transition(backBuffer, currentState, ResourceStates.RenderTarget);
             swapchainFramebuffer.Swapchain.SetBackBufferState(backBufferIndex, ResourceStates.RenderTarget);
+            this._cachedSwapchainBackBufferState = ResourceStates.RenderTarget;
             this._transitionedBackBufferIndex = backBufferIndex;
             if (swapchainFramebuffer.DepthTargetTexture != null) {
                 this.TransitionTexture(swapchainFramebuffer.DepthTargetTexture, ResourceStates.DepthWrite);
             }
 
             if (swapchainFramebuffer.TryGetDepthStencilView(out CpuDescriptorHandle swapchainDsv)) {
-                this.NativeCommandList.OMSetRenderTargets(rtv, swapchainDsv);
+                this.OMSetRenderTargetsNoAlloc(1, rtv, true, swapchainDsv);
             }
             else {
-                this.NativeCommandList.OMSetRenderTargets(rtv);
+                this.OMSetRenderTargetsNoAlloc(1, rtv, false, default);
             }
 
             return;
@@ -1358,17 +1592,17 @@ internal sealed class D3D12CommandList : CommandList {
 
         if (!d3D12Framebuffer.TryGetColorTargetViews(out CpuDescriptorHandle[] rtvs)) {
             if (d3D12Framebuffer.TryGetDepthStencilView(out CpuDescriptorHandle depthOnlyDsv)) {
-                this.NativeCommandList.OMSetRenderTargets(Array.Empty<CpuDescriptorHandle>(), depthOnlyDsv);
+                this.OMSetRenderTargetsNoAlloc(0, default, true, depthOnlyDsv);
             }
 
             return;
         }
 
         if (d3D12Framebuffer.TryGetDepthStencilView(out CpuDescriptorHandle dsv)) {
-            this.NativeCommandList.OMSetRenderTargets(rtvs, dsv);
+            this.OMSetRenderTargetsArrayNoAlloc(rtvs, true, dsv);
         }
         else {
-            this.NativeCommandList.OMSetRenderTargets(rtvs);
+            this.OMSetRenderTargetsArrayNoAlloc(rtvs, false, default);
         }
     }
 
@@ -1380,7 +1614,6 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="drawCount">The draw count value used by this operation.</param>
     /// <param name="stride">The stride value used by this operation.</param>
     protected override void DrawIndirectCore(DeviceBuffer indirectBuffer, uint offset, uint drawCount, uint stride) {
-        using PerfCommandApiScope perfCommandApiScope = this.TrackPerfCommandApi(nameof(this.DrawIndirect));
         long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
         this.FlushGraphicsResourceSets();
         D3D12DeviceBuffer d3D12Buffer = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(indirectBuffer);
@@ -1429,7 +1662,6 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="drawCount">The draw count value used by this operation.</param>
     /// <param name="stride">The stride value used by this operation.</param>
     protected override void DrawIndexedIndirectCore(DeviceBuffer indirectBuffer, uint offset, uint drawCount, uint stride) {
-        using PerfCommandApiScope perfCommandApiScope = this.TrackPerfCommandApi(nameof(this.DrawIndexedIndirect));
         long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
         this.FlushGraphicsResourceSets();
         D3D12DeviceBuffer d3D12Buffer = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(indirectBuffer);
@@ -1460,7 +1692,7 @@ internal sealed class D3D12CommandList : CommandList {
             byte* basePtr = (byte*)mappedPointer + offset;
             for (uint i = 0; i < drawCount; i++) {
                 IndirectDrawIndexedArguments arguments = *(IndirectDrawIndexedArguments*)(basePtr + i * stride);
-                this.NativeCommandList.DrawIndexedInstanced(arguments.IndexCount, arguments.InstanceCount, arguments.FirstIndex, arguments.VertexOffset, arguments.FirstInstance);
+                            this.DrawIndexedInstancedNoAlloc(arguments.IndexCount, arguments.InstanceCount, arguments.FirstIndex, arguments.VertexOffset, arguments.FirstInstance);
             }
         }
 
@@ -1476,7 +1708,6 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="indirectBuffer">The indirect buffer value used by this operation.</param>
     /// <param name="offset">The byte offset used by this operation.</param>
     protected override void DispatchIndirectCore(DeviceBuffer indirectBuffer, uint offset) {
-        using PerfCommandApiScope perfCommandApiScope = this.TrackPerfCommandApi(nameof(this.DispatchIndirect));
         long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
         this.FlushComputeResourceSets();
         D3D12DeviceBuffer d3d12Buffer = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(indirectBuffer);
@@ -1503,7 +1734,7 @@ internal sealed class D3D12CommandList : CommandList {
             }
 
             IndirectDispatchArguments arguments = *(IndirectDispatchArguments*)((byte*)mappedPointer + offset);
-            this.NativeCommandList.Dispatch(arguments.GroupCountX, arguments.GroupCountY, arguments.GroupCountZ);
+            this.DispatchNoAlloc(arguments.GroupCountX, arguments.GroupCountY, arguments.GroupCountZ);
         }
 
         if (_perfLogEnabled) {
@@ -1518,7 +1749,6 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="source">The source value or resource.</param>
     /// <param name="destination">The destination value or resource.</param>
     protected override void ResolveTextureCore(Texture source, Texture destination) {
-        using PerfCommandApiScope perfCommandApiScope = this.TrackPerfCommandApi(nameof(this.ResolveTexture));
         this.FlushPendingUavBarrier();
         D3D12Texture src = Util.AssertSubtype<Texture, D3D12Texture>(source);
         D3D12Texture dst = Util.AssertSubtype<Texture, D3D12Texture>(destination);
@@ -1528,10 +1758,11 @@ internal sealed class D3D12CommandList : CommandList {
             return;
         }
 
-        ResourceStates[] srcPreviousStates = CaptureTextureStates(src);
-        ResourceStates[] dstPreviousStates = CaptureTextureStates(dst);
+        CaptureTextureStatesInto(src, this._srcCaptureStates);
+        CaptureTextureStatesInto(dst, this._dstCaptureStates);
         this.TransitionTexture(src, ResourceStates.ResolveSource);
         this.TransitionTexture(dst, ResourceStates.ResolveDest);
+        this.FlushPendingBarriers();
 
         Format resolveFormat = D3D12Formats.ToDxgiFormat(source.Format);
         uint mipLevels = Math.Min(source.MipLevels, destination.MipLevels);
@@ -1544,8 +1775,8 @@ internal sealed class D3D12CommandList : CommandList {
             }
         }
 
-        this.RestoreTextureStates(src, srcPreviousStates);
-        this.RestoreTextureStates(dst, dstPreviousStates);
+        this.RestoreTextureStates(src, this._srcCaptureStates);
+        this.RestoreTextureStates(dst, this._dstCaptureStates);
     }
 
     /// <summary>
@@ -1557,7 +1788,6 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="destinationOffset">The destination offset value used by this operation.</param>
     /// <param name="sizeInBytes">The size, in bytes, used by this operation.</param>
     protected override void CopyBufferCore(DeviceBuffer source, uint sourceOffset, DeviceBuffer destination, uint destinationOffset, uint sizeInBytes) {
-        using PerfCommandApiScope perfCommandApiScope = this.TrackPerfCommandApi(nameof(this.CopyBuffer));
         this.FlushPendingUavBarrier();
         D3D12DeviceBuffer src = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(source);
         D3D12DeviceBuffer dst = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(destination);
@@ -1584,16 +1814,16 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="depth">The depth value.</param>
     /// <param name="layerCount">The layer count value used by this operation.</param>
     protected override void CopyTextureCore(Texture source, uint srcX, uint srcY, uint srcZ, uint srcMipLevel, uint srcBaseArrayLayer, Texture destination, uint dstX, uint dstY, uint dstZ, uint dstMipLevel, uint dstBaseArrayLayer, uint width, uint height, uint depth, uint layerCount) {
-        using PerfCommandApiScope perfCommandApiScope = this.TrackPerfCommandApi(nameof(this.CopyTexture));
         this.FlushPendingUavBarrier();
         D3D12Texture src = Util.AssertSubtype<Texture, D3D12Texture>(source);
         D3D12Texture dst = Util.AssertSubtype<Texture, D3D12Texture>(destination);
 
         if (src.NativeTexture != null && dst.NativeTexture != null) {
-            ResourceStates[] srcPreviousStates = CaptureTextureStates(src);
-            ResourceStates[] dstPreviousStates = CaptureTextureStates(dst);
+            CaptureTextureStatesInto(src, this._srcCaptureStates);
+            CaptureTextureStatesInto(dst, this._dstCaptureStates);
             this.TransitionTexture(src, ResourceStates.CopySource);
             this.TransitionTexture(dst, ResourceStates.CopyDest);
+            this.FlushPendingBarriers();
 
             for (uint layer = 0; layer < layerCount; layer++) {
                 uint srcSubresource = source.CalculateSubresource(srcMipLevel, srcBaseArrayLayer + layer);
@@ -1604,8 +1834,8 @@ internal sealed class D3D12CommandList : CommandList {
                 this.NativeCommandList.CopyTextureRegion(dstLocation, dstX, dstY, dstZ, srcLocation, srcBox);
             }
 
-            this.RestoreTextureStates(src, srcPreviousStates);
-            this.RestoreTextureStates(dst, dstPreviousStates);
+            this.RestoreTextureStates(src, this._srcCaptureStates);
+            this.RestoreTextureStates(dst, this._dstCaptureStates);
             return;
         }
 
@@ -1617,7 +1847,6 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     /// <param name="pipeline">The pipeline value used by this operation.</param>
     private protected override void SetPipelineCore(Pipeline pipeline) {
-        using PerfCommandApiScope perfCommandApiScope = this.TrackPerfCommandApi(nameof(this.SetPipeline));
         if (pipeline.IsComputePipeline) {
             D3D12Pipeline d3D12ComputePipeline = Util.AssertSubtype<Pipeline, D3D12Pipeline>(pipeline);
             if (ReferenceEquals(this._currentComputePipeline, d3D12ComputePipeline)) {
@@ -1625,6 +1854,7 @@ internal sealed class D3D12CommandList : CommandList {
             }
 
             long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
+            this.EnsureComputeResourceSetCapacity(d3D12ComputePipeline.ResourceSetCount);
             bool computeRootSignatureChanged = !ReferenceEquals(this._currentComputePipeline?.RootSignature, d3D12ComputePipeline.RootSignature);
             this._currentComputePipeline = d3D12ComputePipeline;
             this._currentGraphicsPipeline = null;
@@ -1633,13 +1863,14 @@ internal sealed class D3D12CommandList : CommandList {
                 this._perfPipelineChanges++;
             }
 
-            this.NativeCommandList.SetPipelineState(d3D12ComputePipeline.PipelineState);
+            this.SetPipelineStateNoAlloc(d3D12ComputePipeline.PipelineState);
             if (computeRootSignatureChanged) {
                 ClearBoundResourceSets(this._boundComputeResourceSets);
                 ClearChangedResourceSets(this._computeResourceSetsChanged);
                 this._computeResourceSetsDirty = false;
+                this.ResetComputeResourceSetChangeRange();
                 this.InvalidateComputeRootCaches();
-                this.NativeCommandList.SetComputeRootSignature(d3D12ComputePipeline.RootSignature);
+                this.SetComputeRootSignatureNoAlloc(d3D12ComputePipeline.RootSignature);
             }
 
             if (_perfLogEnabled) {
@@ -1655,6 +1886,7 @@ internal sealed class D3D12CommandList : CommandList {
         }
 
         long graphicsStartTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
+        this.EnsureGraphicsResourceSetCapacity(d3D12Pipeline.ResourceSetCount);
         bool rootSignatureChanged = !ReferenceEquals(this._currentGraphicsPipeline?.RootSignature, d3D12Pipeline.RootSignature);
         this._currentGraphicsPipeline = d3D12Pipeline;
         this._currentComputePipeline = null;
@@ -1662,14 +1894,18 @@ internal sealed class D3D12CommandList : CommandList {
             this._perfPipelineChanges++;
         }
 
-        this.NativeCommandList.SetPipelineState(d3D12Pipeline.PipelineState);
-        this.SetStencilReference(d3D12Pipeline.StencilReference);
+        this.SetPipelineStateNoAlloc(d3D12Pipeline.PipelineState);
+        if (d3D12Pipeline.UsesStencilReference) {
+            this.SetStencilReference(d3D12Pipeline.StencilReference);
+        }
+
         if (rootSignatureChanged) {
             ClearBoundResourceSets(this._boundGraphicsResourceSets);
             ClearChangedResourceSets(this._graphicsResourceSetsChanged);
             this._graphicsResourceSetsDirty = false;
+            this.ResetGraphicsResourceSetChangeRange();
             this.InvalidateGraphicsRootCaches();
-            this.NativeCommandList.SetGraphicsRootSignature(d3D12Pipeline.RootSignature);
+            this.SetGraphicsRootSignatureNoAlloc(d3D12Pipeline.RootSignature);
         }
 
         this.SetPrimitiveTopology(d3D12Pipeline.PrimitiveTopology);
@@ -1686,7 +1922,6 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="buffer">The buffer resource involved in this operation.</param>
     /// <param name="offset">The byte offset used by this operation.</param>
     private protected override void SetVertexBufferCore(uint index, DeviceBuffer buffer, uint offset) {
-        using PerfCommandApiScope perfCommandApiScope = this.TrackPerfCommandApi(nameof(this.SetVertexBuffer));
         if (index >= this._boundVertexBuffers.Length) {
             return;
         }
@@ -1720,7 +1955,6 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="format">The format used by this operation.</param>
     /// <param name="offset">The byte offset used by this operation.</param>
     private protected override void SetIndexBufferCore(DeviceBuffer buffer, IndexFormat format, uint offset) {
-        using PerfCommandApiScope perfCommandApiScope = this.TrackPerfCommandApi(nameof(this.SetIndexBuffer));
         D3D12DeviceBuffer d3D12Buffer = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(buffer);
         bool isDynamicBuffer = (d3D12Buffer.Usage & BufferUsage.Dynamic) == BufferUsage.Dynamic;
         ulong bindVersion = d3D12Buffer.BindVersion;
@@ -1735,7 +1969,7 @@ internal sealed class D3D12CommandList : CommandList {
         this.TransitionBuffer(d3D12Buffer, ResourceStates.IndexBuffer);
         uint viewSize = d3D12Buffer.GetBindableSize(offset);
         IndexBufferView indexView = new(d3D12Buffer.GetGpuVirtualAddress(offset), viewSize, D3D12Formats.ToDxgiFormat(format));
-        this.NativeCommandList.IASetIndexBuffer(indexView);
+        this.SetIndexBufferNoAlloc(ref indexView);
         this._boundIndexBuffer = d3D12Buffer;
         this._boundIndexBufferOffset = offset;
         this._boundIndexBufferVersion = bindVersion;
@@ -1752,20 +1986,14 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="index">The zero-based index of the target item.</param>
     /// <param name="clearColor">The clear color value used by this operation.</param>
     private protected override void ClearColorTargetCore(uint index, RgbaFloat clearColor) {
-        using PerfCommandApiScope perfCommandApiScope = this.TrackPerfCommandApi(nameof(this.ClearColorTarget));
         this.FlushPendingUavBarrier();
-        if (this.Framebuffer is D3D12SwapchainFramebuffer swapchainFramebuffer && swapchainFramebuffer.Swapchain.TryGetCurrentBackBuffer(out ID3D12Resource backBuffer, out CpuDescriptorHandle rtv, out int backBufferIndex, out ResourceStates currentState)) {
+        if (this.Framebuffer is D3D12SwapchainFramebuffer swapchainFramebuffer && this.TryGetSwapchainBackBuffer(swapchainFramebuffer, out ID3D12Resource backBuffer, out CpuDescriptorHandle rtv, out int backBufferIndex, out ResourceStates currentState)) {
             this.Transition(backBuffer, currentState, ResourceStates.RenderTarget);
             swapchainFramebuffer.Swapchain.SetBackBufferState(backBufferIndex, ResourceStates.RenderTarget);
+            this._cachedSwapchainBackBufferState = ResourceStates.RenderTarget;
             this._transitionedBackBufferIndex = backBufferIndex;
-            if (swapchainFramebuffer.TryGetDepthStencilView(out CpuDescriptorHandle swapchainDsv)) {
-                this.NativeCommandList.OMSetRenderTargets(rtv, swapchainDsv);
-            }
-            else {
-                this.NativeCommandList.OMSetRenderTargets(rtv);
-            }
-
-            this.NativeCommandList.ClearRenderTargetView(rtv, new Color4(clearColor.R, clearColor.G, clearColor.B, clearColor.A), 0, null);
+            this.FlushPendingBarriers();
+            this.ClearRenderTargetViewNoAlloc(rtv, clearColor.R, clearColor.G, clearColor.B, clearColor.A);
             return;
         }
 
@@ -1778,7 +2006,8 @@ internal sealed class D3D12CommandList : CommandList {
                 }
             }
 
-            this.NativeCommandList.ClearRenderTargetView(offscreenRtv, new Color4(clearColor.R, clearColor.G, clearColor.B, clearColor.A), 0, null);
+            this.FlushPendingBarriers();
+            this.ClearRenderTargetViewNoAlloc(offscreenRtv, clearColor.R, clearColor.G, clearColor.B, clearColor.A);
         }
     }
 
@@ -1788,7 +2017,6 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="depth">The depth value.</param>
     /// <param name="stencil">The stencil value used by this operation.</param>
     private protected override void ClearDepthStencilCore(float depth, byte stencil) {
-        using PerfCommandApiScope perfCommandApiScope = this.TrackPerfCommandApi(nameof(this.ClearDepthStencil));
         this.FlushPendingUavBarrier();
         if (this.Framebuffer is D3D12SwapchainFramebuffer swapchainFramebuffer) {
             if (swapchainFramebuffer.DepthTargetTexture == null) {
@@ -1802,7 +2030,8 @@ internal sealed class D3D12CommandList : CommandList {
                     swapchainClearFlags |= ClearFlags.Stencil;
                 }
 
-                this.NativeCommandList.ClearDepthStencilView(swapchainDsv, swapchainClearFlags, depth, stencil, 0, null!);
+                this.FlushPendingBarriers();
+                this.ClearDepthStencilViewNoAlloc(swapchainDsv, (uint)swapchainClearFlags, depth, stencil);
             }
 
             return;
@@ -1823,7 +2052,8 @@ internal sealed class D3D12CommandList : CommandList {
                 clearFlags |= ClearFlags.Stencil;
             }
 
-            this.NativeCommandList.ClearDepthStencilView(dsv, clearFlags, depth, stencil, 0, null!);
+            this.FlushPendingBarriers();
+            this.ClearDepthStencilViewNoAlloc(dsv, (uint)clearFlags, depth, stencil);
         }
     }
 
@@ -1835,11 +2065,11 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="vertexStart">The vertex start value used by this operation.</param>
     /// <param name="instanceStart">The instance start value used by this operation.</param>
     private protected override void DrawCore(uint vertexCount, uint instanceCount, uint vertexStart, uint instanceStart) {
-        using PerfCommandApiScope perfCommandApiScope = this.TrackPerfCommandApi(nameof(this.Draw));
         long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
         this.FlushGraphicsResourceSets();
         this.FlushPendingUavBarrier();
-        this.NativeCommandList.DrawInstanced(vertexCount, instanceCount, vertexStart, instanceStart);
+        this.FlushPendingBarriers();
+        this.DrawInstancedNoAlloc(vertexCount, instanceCount, vertexStart, instanceStart);
         if (_perfLogEnabled) {
             this._perfDrawCalls++;
             this._perfDrawMs += TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
@@ -1855,11 +2085,11 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="vertexOffset">The vertex offset value used by this operation.</param>
     /// <param name="instanceStart">The instance start value used by this operation.</param>
     private protected override void DrawIndexedCore(uint indexCount, uint instanceCount, uint indexStart, int vertexOffset, uint instanceStart) {
-        using PerfCommandApiScope perfCommandApiScope = this.TrackPerfCommandApi(nameof(this.DrawIndexed));
         long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
         this.FlushGraphicsResourceSets();
         this.FlushPendingUavBarrier();
-        this.NativeCommandList.DrawIndexedInstanced(indexCount, instanceCount, indexStart, vertexOffset, instanceStart);
+        this.FlushPendingBarriers();
+        this.DrawIndexedInstancedNoAlloc(indexCount, instanceCount, indexStart, vertexOffset, instanceStart);
         if (_perfLogEnabled) {
             this._perfDrawCalls++;
             this._perfDrawMs += TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
@@ -1874,14 +2104,24 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="source">The source value or resource.</param>
     /// <param name="sizeInBytes">The size, in bytes, used by this operation.</param>
     private protected override void UpdateBufferCore(DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes) {
-        using PerfCommandApiScope perfCommandApiScope = this.TrackPerfCommandApi(nameof(this.UpdateBuffer));
         long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
         this.FlushPendingUavBarrier();
         D3D12DeviceBuffer d3D12Buffer = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(buffer);
         ulong previousBindVersion = d3D12Buffer.BindVersion;
         D3D12ResourceAllocation temporaryUpload = d3D12Buffer.Update(this.NativeCommandList, source, bufferOffsetInBytes, sizeInBytes);
+        if (_perfLogEnabled) {
+            this._perfDynamicSnapshotCopyBytes += d3D12Buffer.LastDynamicSnapshotCopyBytes;
+            this._perfDynamicSnapshotPrefixCopyBytes += d3D12Buffer.LastDynamicSnapshotPrefixCopyBytes;
+            if (d3D12Buffer.LastDynamicSnapshotRotated) {
+                this._perfDynamicSnapshotRotations++;
+            }
+        }
+
         if (d3D12Buffer.BindVersion != previousBindVersion) {
-            this.MarkResourceSetsReferencingBufferDirty(d3D12Buffer);
+            if (CanBeResourceSetBuffer(d3D12Buffer)) {
+                this.MarkResourceSetsReferencingBufferDirty(d3D12Buffer);
+            }
+
             this.RefreshDynamicBufferBindings(d3D12Buffer);
         }
 
@@ -1901,7 +2141,6 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     /// <param name="texture">The texture resource involved in this operation.</param>
     private protected override void GenerateMipmapsCore(Texture texture) {
-        using PerfCommandApiScope perfCommandApiScope = this.TrackPerfCommandApi(nameof(this.GenerateMipmaps));
         D3D12Texture d3D12Texture = Util.AssertSubtype<Texture, D3D12Texture>(texture);
         if (texture.MipLevels <= 1 || d3D12Texture.NativeTexture == null) {
             return;
@@ -1928,7 +2167,6 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     /// <param name="name">The name used by this operation.</param>
     private protected override void PushDebugGroupCore(string name) {
-        using PerfCommandApiScope perfCommandApiScope = this.TrackPerfCommandApi(nameof(this.PushDebugGroup));
         if (_perfLogEnabled && this._perfRecordingCommandGaps) {
             this._perfDebugGroupStack.Add(name);
             this._perfLastDebugMarker = name;
@@ -1941,7 +2179,6 @@ internal sealed class D3D12CommandList : CommandList {
     /// Executes the pop debug group core logic for this backend.
     /// </summary>
     private protected override void PopDebugGroupCore() {
-        using PerfCommandApiScope perfCommandApiScope = this.TrackPerfCommandApi(nameof(this.PopDebugGroup));
         this._endEventMethod?.Invoke(this.NativeCommandList, null);
         if (_perfLogEnabled && this._perfRecordingCommandGaps && this._perfDebugGroupStack.Count > 0) {
             this._perfDebugGroupStack.RemoveAt(this._perfDebugGroupStack.Count - 1);
@@ -1953,7 +2190,6 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     /// <param name="name">The name used by this operation.</param>
     private protected override void InsertDebugMarkerCore(string name) {
-        using PerfCommandApiScope perfCommandApiScope = this.TrackPerfCommandApi(nameof(this.InsertDebugMarker));
         if (_perfLogEnabled && this._perfRecordingCommandGaps) {
             this._perfLastDebugMarker = name;
         }
@@ -1968,7 +2204,6 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="data">A pointer to source data.</param>
     /// <param name="sizeInBytes">The number of bytes to upload.</param>
     private protected override unsafe void PushConstantsCore(uint offset, IntPtr data, uint sizeInBytes) {
-        using PerfCommandApiScope perfCommandApiScope = this.TrackPerfCommandApi(nameof(this.PushConstants));
         D3D12Pipeline pipeline = this._currentComputePipeline ?? this._currentGraphicsPipeline;
         if (pipeline == null) {
             throw new VeldridException("A Direct3D12 pipeline must be bound before push constants can be set.");
@@ -1985,10 +2220,10 @@ internal sealed class D3D12CommandList : CommandList {
         uint dwordOffset = offset / 4;
         uint dwordCount = sizeInBytes / 4;
         if (this._currentComputePipeline != null) {
-            this.NativeCommandList.SetComputeRoot32BitConstants(pipeline.PushConstantRootParameterIndex, dwordCount, (void*)data, dwordOffset);
+            this.SetComputeRoot32BitConstantsNoAlloc(pipeline.PushConstantRootParameterIndex, dwordCount, (void*)data, dwordOffset);
         }
         else {
-            this.NativeCommandList.SetGraphicsRoot32BitConstants(pipeline.PushConstantRootParameterIndex, dwordCount, (void*)data, dwordOffset);
+            this.SetGraphicsRoot32BitConstantsNoAlloc(pipeline.PushConstantRootParameterIndex, dwordCount, (void*)data, dwordOffset);
         }
     }
 
@@ -2003,13 +2238,13 @@ internal sealed class D3D12CommandList : CommandList {
             return;
         }
 
-        long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
-        ResourceBarrier barrier = ResourceBarrier.BarrierTransition(resource, from, to);
-        this._singleBarrier[0] = barrier;
-        this.NativeCommandList.ResourceBarrier(this._singleBarrier);
+        if (this._pendingBarrierCount == (uint)this._barrierBatch.Length) {
+            this.FlushPendingBarriers();
+        }
+
+        this._barrierBatch[this._pendingBarrierCount++] = ResourceBarrier.BarrierTransition(resource, from, to);
         if (_perfLogEnabled) {
             this._perfTransitions++;
-            this._perfBarrierMs += TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
         }
     }
 
@@ -2029,7 +2264,7 @@ internal sealed class D3D12CommandList : CommandList {
 
         uint viewSize = buffer.GetBindableSize(offset);
         VertexBufferView view = new(buffer.GetGpuVirtualAddress(offset), viewSize, stride);
-        this.NativeCommandList.IASetVertexBuffers(index, view);
+        this.SetVertexBufferNoAlloc(index, ref view);
         this._boundVertexBufferStrides[index] = stride;
     }
 
@@ -2081,7 +2316,7 @@ internal sealed class D3D12CommandList : CommandList {
         this.TransitionBuffer(buffer, ResourceStates.IndexBuffer);
         uint viewSize = buffer.GetBindableSize(this._boundIndexBufferOffset);
         IndexBufferView indexView = new(buffer.GetGpuVirtualAddress(this._boundIndexBufferOffset), viewSize, D3D12Formats.ToDxgiFormat(this._boundIndexFormat));
-        this.NativeCommandList.IASetIndexBuffer(indexView);
+        this.SetIndexBufferNoAlloc(ref indexView);
         this._boundIndexBufferVersion = bindVersion;
         if (_perfLogEnabled) {
             this._perfIndexBufferBinds++;
@@ -2097,7 +2332,7 @@ internal sealed class D3D12CommandList : CommandList {
             return;
         }
 
-        this.NativeCommandList.IASetPrimitiveTopology(topology);
+        this.IASetPrimitiveTopologyNoAlloc(topology);
         this._currentPrimitiveTopology = topology;
         this._currentPrimitiveTopologyValid = true;
     }
@@ -2111,7 +2346,7 @@ internal sealed class D3D12CommandList : CommandList {
             return;
         }
 
-        this.NativeCommandList.OMSetStencilRef(stencilReference);
+        this.OMSetStencilRefNoAlloc(stencilReference);
         this._currentStencilReference = stencilReference;
         this._currentStencilReferenceValid = true;
     }
@@ -2128,13 +2363,13 @@ internal sealed class D3D12CommandList : CommandList {
             return;
         }
 
-        long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
-        ResourceBarrier barrier = ResourceBarrier.BarrierTransition(resource, from, to, subresource);
-        this._singleBarrier[0] = barrier;
-        this.NativeCommandList.ResourceBarrier(this._singleBarrier);
+        if (this._pendingBarrierCount == (uint)this._barrierBatch.Length) {
+            this.FlushPendingBarriers();
+        }
+
+        this._barrierBatch[this._pendingBarrierCount++] = ResourceBarrier.BarrierTransition(resource, from, to, subresource);
         if (_perfLogEnabled) {
             this._perfSubresourceTransitions++;
-            this._perfBarrierMs += TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
         }
     }
 
@@ -2149,13 +2384,30 @@ internal sealed class D3D12CommandList : CommandList {
         long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
         ResourceBarrier barrier = ResourceBarrier.BarrierUnorderedAccessView(null);
         this._singleBarrier[0] = barrier;
-        this.NativeCommandList.ResourceBarrier(this._singleBarrier);
+        this.ResourceBarrierNoAlloc(ref this._singleBarrier[0]);
         if (_perfLogEnabled) {
             this._perfUavBarriers++;
             this._perfBarrierMs += TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
         }
 
         this._uavBarrierPending = false;
+    }
+
+    /// <summary>
+    /// Flushes all accumulated pending resource-barrier transitions as a single batched D3D12 call.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void FlushPendingBarriers() {
+        if (this._pendingBarrierCount == 0) {
+            return;
+        }
+
+        long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
+        this.ResourceBarrierBatchNoAlloc(this._barrierBatch, this._pendingBarrierCount);
+        this._pendingBarrierCount = 0;
+        if (_perfLogEnabled) {
+            this._perfBarrierMs += TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
+        }
     }
 
     /// <summary>
@@ -2169,6 +2421,7 @@ internal sealed class D3D12CommandList : CommandList {
         }
 
         if (this.gd.IsSubmissionFenceComplete(fenceValue)) {
+            this._frameSlotFenceValues[frameSlot] = 0;
             return;
         }
 
@@ -2178,6 +2431,7 @@ internal sealed class D3D12CommandList : CommandList {
         }
 
         this.gd.WaitForSubmissionFence(fenceValue);
+        this._frameSlotFenceValues[frameSlot] = 0;
         if (_perfLogEnabled) {
             long elapsedTicks = Stopwatch.GetTimestamp() - startTicks;
             this._perfBeginWaitMs += TicksToMilliseconds(elapsedTicks);
@@ -2186,18 +2440,11 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Resets shader-visible descriptor allocation to the range owned by the active frame slot.
+    /// Updates shader-visible descriptor allocator limits for the persistent command-list heaps.
     /// </summary>
-    /// <param name="frameSlot">The frame slot that has been waited before reuse.</param>
-    private void ResetDescriptorAllocatorsForFrameSlot(int frameSlot) {
-        uint srvUavDescriptorsPerSlot = this._maxSrvUavDescriptors / FramesInFlight;
-        uint samplerDescriptorsPerSlot = this._maxSamplerDescriptors / FramesInFlight;
-
-        this._nextSrvUavDescriptor = (uint)frameSlot * srvUavDescriptorsPerSlot;
-        this._srvUavDescriptorLimit = this._nextSrvUavDescriptor + srvUavDescriptorsPerSlot;
-
-        this._nextSamplerDescriptor = (uint)frameSlot * samplerDescriptorsPerSlot;
-        this._samplerDescriptorLimit = this._nextSamplerDescriptor + samplerDescriptorsPerSlot;
+    private void UpdateDescriptorAllocatorLimits() {
+        this._srvUavDescriptorLimit = this._maxSrvUavDescriptors;
+        this._samplerDescriptorLimit = this._maxSamplerDescriptors;
     }
 
     /// <summary>
@@ -2217,6 +2464,7 @@ internal sealed class D3D12CommandList : CommandList {
         this.FlushPendingUavBarrier();
         ResourceStates previousState = argumentBuffer.CurrentState;
         this.TransitionBuffer(argumentBuffer, ResourceStates.IndirectArgument);
+        this.FlushPendingBarriers();
 
         if (stride == argumentSize) {
             this.NativeCommandList.ExecuteIndirect(signature, drawCount, argumentBuffer.NativeBuffer, offset, null, 0);
@@ -2315,7 +2563,7 @@ internal sealed class D3D12CommandList : CommandList {
         D3D12Pipeline previousCompute = this._currentComputePipeline;
 
         this.NativeCommandList.SetPipelineState(this._gpuMipPipeline.PipelineState);
-        this.NativeCommandList.SetComputeRootSignature(this._gpuMipPipeline.RootSignature);
+        this.SetComputeRootSignatureNoAlloc(this._gpuMipPipeline.RootSignature);
         this._currentGraphicsPipeline = null;
         this._currentComputePipeline = this._gpuMipPipeline;
 
@@ -2352,7 +2600,7 @@ internal sealed class D3D12CommandList : CommandList {
                     uint groupCountX = (mipWidth + 7) / 8;
                     uint groupCountY = (mipHeight + 7) / 8;
                     this.FlushComputeResourceSets();
-                    this.NativeCommandList.Dispatch(groupCountX, groupCountY, 1);
+                    this.DispatchNoAlloc(groupCountX, groupCountY, 1);
                 }
             }
 
@@ -2370,23 +2618,23 @@ internal sealed class D3D12CommandList : CommandList {
         finally {
             if (previousCompute != null) {
                 this.NativeCommandList.SetPipelineState(previousCompute.PipelineState);
-                this.NativeCommandList.SetComputeRootSignature(previousCompute.RootSignature);
+                this.SetComputeRootSignatureNoAlloc(previousCompute.RootSignature);
                 this._currentComputePipeline = previousCompute;
                 this._currentGraphicsPipeline = null;
                 this.InvalidateComputeRootCaches();
-                MarkChangedResourceSets(this._computeResourceSetsChanged);
-                this._computeResourceSetsDirty = this._computeResourceSetsChanged.Length > 0;
+                this.EnsureComputeResourceSetCapacity(previousCompute.ResourceSetCount);
+                this.MarkBoundComputeResourceSetsChanged(previousCompute.ResourceSetCount);
             }
             else if (previousGraphics != null) {
                 this.NativeCommandList.SetPipelineState(previousGraphics.PipelineState);
-                this.NativeCommandList.SetGraphicsRootSignature(previousGraphics.RootSignature);
+                this.SetGraphicsRootSignatureNoAlloc(previousGraphics.RootSignature);
                 this.SetPrimitiveTopology(previousGraphics.PrimitiveTopology);
                 this.SetStencilReference(previousGraphics.StencilReference);
                 this._currentGraphicsPipeline = previousGraphics;
                 this._currentComputePipeline = null;
                 this.InvalidateGraphicsRootCaches();
-                MarkChangedResourceSets(this._graphicsResourceSetsChanged);
-                this._graphicsResourceSetsDirty = this._graphicsResourceSetsChanged.Length > 0;
+                this.EnsureGraphicsResourceSetCapacity(previousGraphics.ResourceSetCount);
+                this.MarkBoundGraphicsResourceSetsChanged(previousGraphics.ResourceSetCount);
             }
             else {
                 this._currentComputePipeline = null;
@@ -2585,6 +2833,16 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
+    /// Captures current per-subresource states into a pre-allocated buffer without heap allocation.
+    /// </summary>
+    private static void CaptureTextureStatesInto(D3D12Texture texture, ResourceStates[] buffer) {
+        uint subresourceCount = texture.SubresourceCount;
+        for (uint subresource = 0; subresource < subresourceCount; subresource++) {
+            buffer[subresource] = texture.GetSubresourceState(subresource);
+        }
+    }
+
+    /// <summary>
     /// Executes the restore texture states logic for this backend.
     /// </summary>
     /// <param name="texture">The texture resource involved in this operation.</param>
@@ -2694,33 +2952,31 @@ internal sealed class D3D12CommandList : CommandList {
             return;
         }
 
-        if (!Util.GetDeviceBuffer(resource, out DeviceBuffer _)) {
-            throw new PlatformNotSupportedException("D3D12 ResourceSet currently supports buffer resources only for non-table root bindings.");
-        }
-
-        DeviceBufferRange range = Util.GetBufferRange(resource, dynamicOffset);
-        D3D12DeviceBuffer d3D12Buffer = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(range.Buffer);
+        D3D12DeviceBuffer d3D12Buffer = GetD3D12BufferRange(resource, dynamicOffset, out uint rangeOffset);
         this.TransitionBuffer(d3D12Buffer, GetGraphicsBufferState(bindingInfo.Kind));
-        ulong gpuAddress = d3D12Buffer.GetGpuVirtualAddress(range.Offset);
+        ulong gpuAddress = d3D12Buffer.GetGpuVirtualAddress(rangeOffset);
         if (this.IsSameGraphicsRootBuffer(bindingInfo.RootParameterIndex, gpuAddress)) {
             return;
         }
 
         switch (bindingInfo.Kind) {
             case ResourceKind.UniformBuffer:
-                this.NativeCommandList.SetGraphicsRootConstantBufferView(bindingInfo.RootParameterIndex, gpuAddress);
+                this.SetGraphicsRootConstantBufferViewNoAlloc(bindingInfo.RootParameterIndex, gpuAddress);
                 break;
             case ResourceKind.StructuredBufferReadOnly:
-                this.NativeCommandList.SetGraphicsRootShaderResourceView(bindingInfo.RootParameterIndex, gpuAddress);
+                this.SetGraphicsRootShaderResourceViewNoAlloc(bindingInfo.RootParameterIndex, gpuAddress);
                 break;
             case ResourceKind.StructuredBufferReadWrite:
-                this.NativeCommandList.SetGraphicsRootUnorderedAccessView(bindingInfo.RootParameterIndex, gpuAddress);
+                this.SetGraphicsRootUnorderedAccessViewNoAlloc(bindingInfo.RootParameterIndex, gpuAddress);
                 break;
             case ResourceKind.TextureReadOnly: case ResourceKind.TextureReadWrite: case ResourceKind.Sampler: throw new VeldridException("Texture and sampler root bindings must use descriptor tables.");
             default: throw Illegal.Value<ResourceKind>();
         }
 
         this.SetGraphicsRootBufferCache(bindingInfo.RootParameterIndex, gpuAddress);
+        if (_perfLogEnabled) {
+            this._perfRootBufferSets++;
+        }
     }
 
     /// <summary>
@@ -2734,14 +2990,9 @@ internal sealed class D3D12CommandList : CommandList {
             return;
         }
 
-        if (!Util.GetDeviceBuffer(resource, out DeviceBuffer _)) {
-            throw new PlatformNotSupportedException("D3D12 ResourceSet currently supports buffer resources only for non-table root bindings.");
-        }
-
-        DeviceBufferRange range = Util.GetBufferRange(resource, dynamicOffset);
-        D3D12DeviceBuffer d3D12Buffer = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(range.Buffer);
+        D3D12DeviceBuffer d3D12Buffer = GetD3D12BufferRange(resource, dynamicOffset, out uint rangeOffset);
         this.TransitionBuffer(d3D12Buffer, GetComputeBufferState(bindingInfo.Kind));
-        ulong gpuAddress = d3D12Buffer.GetGpuVirtualAddress(range.Offset);
+        ulong gpuAddress = d3D12Buffer.GetGpuVirtualAddress(rangeOffset);
 
         if (this.IsSameComputeRootBuffer(bindingInfo.RootParameterIndex, gpuAddress)) {
             return;
@@ -2749,19 +3000,356 @@ internal sealed class D3D12CommandList : CommandList {
 
         switch (bindingInfo.Kind) {
             case ResourceKind.UniformBuffer:
-                this.NativeCommandList.SetComputeRootConstantBufferView(bindingInfo.RootParameterIndex, gpuAddress);
+                this.SetComputeRootConstantBufferViewNoAlloc(bindingInfo.RootParameterIndex, gpuAddress);
                 break;
             case ResourceKind.StructuredBufferReadOnly:
-                this.NativeCommandList.SetComputeRootShaderResourceView(bindingInfo.RootParameterIndex, gpuAddress);
+                this.SetComputeRootShaderResourceViewNoAlloc(bindingInfo.RootParameterIndex, gpuAddress);
                 break;
             case ResourceKind.StructuredBufferReadWrite:
-                this.NativeCommandList.SetComputeRootUnorderedAccessView(bindingInfo.RootParameterIndex, gpuAddress);
+                this.SetComputeRootUnorderedAccessViewNoAlloc(bindingInfo.RootParameterIndex, gpuAddress);
                 break;
             case ResourceKind.TextureReadOnly: case ResourceKind.TextureReadWrite: case ResourceKind.Sampler: throw new VeldridException("Texture and sampler root bindings must use descriptor tables.");
             default: throw Illegal.Value<ResourceKind>();
         }
 
         this.SetComputeRootBufferCache(bindingInfo.RootParameterIndex, gpuAddress);
+        if (_perfLogEnabled) {
+            this._perfRootBufferSets++;
+        }
+    }
+
+    /// <summary>
+    /// Binds a graphics root constant buffer view without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void SetGraphicsRootConstantBufferViewNoAlloc(uint rootParameterIndex, ulong gpuAddress) {
+        this.SetRootBufferViewNoAlloc(38, rootParameterIndex, gpuAddress);
+    }
+
+    /// <summary>
+    /// Binds a graphics root shader resource view without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void SetGraphicsRootShaderResourceViewNoAlloc(uint rootParameterIndex, ulong gpuAddress) {
+        this.SetRootBufferViewNoAlloc(40, rootParameterIndex, gpuAddress);
+    }
+
+    /// <summary>
+    /// Binds a graphics root unordered access view without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void SetGraphicsRootUnorderedAccessViewNoAlloc(uint rootParameterIndex, ulong gpuAddress) {
+        this.SetRootBufferViewNoAlloc(42, rootParameterIndex, gpuAddress);
+    }
+
+    /// <summary>
+    /// Binds a compute root constant buffer view without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void SetComputeRootConstantBufferViewNoAlloc(uint rootParameterIndex, ulong gpuAddress) {
+        this.SetRootBufferViewNoAlloc(37, rootParameterIndex, gpuAddress);
+    }
+
+    /// <summary>
+    /// Binds a compute root shader resource view without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void SetComputeRootShaderResourceViewNoAlloc(uint rootParameterIndex, ulong gpuAddress) {
+        this.SetRootBufferViewNoAlloc(39, rootParameterIndex, gpuAddress);
+    }
+
+    /// <summary>
+    /// Binds a compute root unordered access view without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void SetComputeRootUnorderedAccessViewNoAlloc(uint rootParameterIndex, ulong gpuAddress) {
+        this.SetRootBufferViewNoAlloc(41, rootParameterIndex, gpuAddress);
+    }
+
+    /// <summary>
+    /// Invokes an ID3D12GraphicsCommandList root buffer binding method directly.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe void SetRootBufferViewNoAlloc(int vtableIndex, uint rootParameterIndex, ulong gpuAddress) {
+        void** vtbl = *(void***)this.NativeCommandList.NativePointer;
+        delegate* unmanaged[Stdcall]<void*, uint, ulong, void> setRootBufferView = (delegate* unmanaged[Stdcall]<void*, uint, ulong, void>)vtbl[vtableIndex];
+        setRootBufferView((void*)this.NativeCommandList.NativePointer, rootParameterIndex, gpuAddress);
+    }
+
+    /// <summary>
+    /// Sets viewports without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe void RSSetViewportsNoAlloc(uint count, Vortice.Mathematics.Viewport[] viewports) {
+        void** vtbl = *(void***)this.NativeCommandList.NativePointer;
+        delegate* unmanaged[Stdcall]<void*, uint, void*, void> rsSetViewports = (delegate* unmanaged[Stdcall]<void*, uint, void*, void>)vtbl[21];
+        fixed (Vortice.Mathematics.Viewport* pViewports = viewports) {
+            rsSetViewports((void*)this.NativeCommandList.NativePointer, count, pViewports);
+        }
+    }
+
+    /// <summary>
+    /// Sets scissor rects without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe void RSSetScissorRectsNoAlloc(uint count, RawRect[] rects) {
+        void** vtbl = *(void***)this.NativeCommandList.NativePointer;
+        delegate* unmanaged[Stdcall]<void*, uint, void*, void> rsSetScissorRects = (delegate* unmanaged[Stdcall]<void*, uint, void*, void>)vtbl[22];
+        fixed (RawRect* pRects = rects) {
+            rsSetScissorRects((void*)this.NativeCommandList.NativePointer, count, pRects);
+        }
+    }
+
+    /// <summary>
+    /// Closes the command list without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe void CloseNoAlloc() {
+        void** vtbl = *(void***)this.NativeCommandList.NativePointer;
+        delegate* unmanaged[Stdcall]<void*, int> close = (delegate* unmanaged[Stdcall]<void*, int>)vtbl[9];
+        Result result = new(close((void*)this.NativeCommandList.NativePointer));
+        result.CheckError();
+    }
+
+    /// <summary>
+    /// Resets the command list without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe void ResetCommandListNoAlloc(ID3D12CommandAllocator allocator) {
+        void** vtbl = *(void***)this.NativeCommandList.NativePointer;
+        delegate* unmanaged[Stdcall]<void*, void*, void*, int> reset = (delegate* unmanaged[Stdcall]<void*, void*, void*, int>)vtbl[10];
+        Result result = new(reset((void*)this.NativeCommandList.NativePointer, (void*)allocator.NativePointer, null));
+        result.CheckError();
+    }
+
+    /// <summary>
+    /// Resets a command allocator without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static unsafe void ResetCommandAllocatorNoAlloc(ID3D12CommandAllocator allocator) {
+        void** vtbl = *(void***)allocator.NativePointer;
+        delegate* unmanaged[Stdcall]<void*, int> reset = (delegate* unmanaged[Stdcall]<void*, int>)vtbl[8];
+        Result result = new(reset((void*)allocator.NativePointer));
+        result.CheckError();
+    }
+
+    /// <summary>
+    /// Records DrawInstanced without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe void DrawInstancedNoAlloc(uint vertexCount, uint instanceCount, uint startVertexLocation, uint startInstanceLocation) {
+        void** vtbl = *(void***)this.NativeCommandList.NativePointer;
+        delegate* unmanaged[Stdcall]<void*, uint, uint, uint, uint, void> drawInstanced = (delegate* unmanaged[Stdcall]<void*, uint, uint, uint, uint, void>)vtbl[12];
+        drawInstanced((void*)this.NativeCommandList.NativePointer, vertexCount, instanceCount, startVertexLocation, startInstanceLocation);
+    }
+
+    /// <summary>
+    /// Records DrawIndexedInstanced without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe void DrawIndexedInstancedNoAlloc(uint indexCount, uint instanceCount, uint startIndexLocation, int baseVertexLocation, uint startInstanceLocation) {
+        void** vtbl = *(void***)this.NativeCommandList.NativePointer;
+        delegate* unmanaged[Stdcall]<void*, uint, uint, uint, int, uint, void> drawIndexedInstanced = (delegate* unmanaged[Stdcall]<void*, uint, uint, uint, int, uint, void>)vtbl[13];
+        drawIndexedInstanced((void*)this.NativeCommandList.NativePointer, indexCount, instanceCount, startIndexLocation, baseVertexLocation, startInstanceLocation);
+    }
+
+    /// <summary>
+    /// Binds pipeline state without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe void SetPipelineStateNoAlloc(ID3D12PipelineState pipelineState) {
+        void** vtbl = *(void***)this.NativeCommandList.NativePointer;
+        delegate* unmanaged[Stdcall]<void*, void*, void> setPipelineState = (delegate* unmanaged[Stdcall]<void*, void*, void>)vtbl[25];
+        setPipelineState((void*)this.NativeCommandList.NativePointer, (void*)pipelineState.NativePointer);
+    }
+
+    /// <summary>
+    /// Records a resource barrier without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe void ResourceBarrierNoAlloc(ref ResourceBarrier barrier) {
+        void** vtbl = *(void***)this.NativeCommandList.NativePointer;
+        delegate* unmanaged[Stdcall]<void*, uint, void*, void> resourceBarrier = (delegate* unmanaged[Stdcall]<void*, uint, void*, void>)vtbl[26];
+        resourceBarrier((void*)this.NativeCommandList.NativePointer, 1u, Unsafe.AsPointer(ref barrier));
+    }
+
+    /// <summary>
+    /// Records a batch of resource barriers without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe void ResourceBarrierBatchNoAlloc(ResourceBarrier[] barriers, uint count) {
+        if (count == 0) {
+            return;
+        }
+
+        void** vtbl = *(void***)this.NativeCommandList.NativePointer;
+        delegate* unmanaged[Stdcall]<void*, uint, void*, void> resourceBarrier = (delegate* unmanaged[Stdcall]<void*, uint, void*, void>)vtbl[26];
+        resourceBarrier((void*)this.NativeCommandList.NativePointer, count, Unsafe.AsPointer(ref barriers[0]));
+    }
+
+    /// <summary>
+    /// Binds one index-buffer view without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe void SetIndexBufferNoAlloc(ref IndexBufferView view) {
+        void** vtbl = *(void***)this.NativeCommandList.NativePointer;
+        delegate* unmanaged[Stdcall]<void*, void*, void> setIndexBuffer = (delegate* unmanaged[Stdcall]<void*, void*, void>)vtbl[43];
+        setIndexBuffer((void*)this.NativeCommandList.NativePointer, Unsafe.AsPointer(ref view));
+    }
+
+    /// <summary>
+    /// Sets render targets without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe void OMSetRenderTargetsNoAlloc(uint numRenderTargetDescriptors, CpuDescriptorHandle rtvHandle, bool hasDepthStencil, CpuDescriptorHandle dsvHandle) {
+        void** vtbl = *(void***)this.NativeCommandList.NativePointer;
+        delegate* unmanaged[Stdcall]<void*, uint, void*, int, void*, void> omSetRenderTargets = (delegate* unmanaged[Stdcall]<void*, uint, void*, int, void*, void>)vtbl[46];
+        omSetRenderTargets((void*)this.NativeCommandList.NativePointer, numRenderTargetDescriptors, Unsafe.AsPointer(ref rtvHandle), 1, hasDepthStencil ? Unsafe.AsPointer(ref dsvHandle) : null);
+    }
+
+    /// <summary>
+    /// Sets descriptor heaps without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe void SetDescriptorHeapsNoAlloc(ID3D12DescriptorHeap[] heaps) {
+        void** vtbl = *(void***)this.NativeCommandList.NativePointer;
+        delegate* unmanaged[Stdcall]<void*, uint, void*, void> setDescriptorHeaps = (delegate* unmanaged[Stdcall]<void*, uint, void*, void>)vtbl[28];
+        void* heap0 = (void*)heaps[0].NativePointer;
+        void* heap1 = (void*)heaps[1].NativePointer;
+        void** heapPtrs = stackalloc void*[2] { heap0, heap1 };
+        setDescriptorHeaps((void*)this.NativeCommandList.NativePointer, 2u, heapPtrs);
+    }
+
+    /// <summary>
+    /// Sets stencil reference without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe void OMSetStencilRefNoAlloc(uint stencilRef) {
+        void** vtbl = *(void***)this.NativeCommandList.NativePointer;
+        delegate* unmanaged[Stdcall]<void*, uint, void> setStencilRef = (delegate* unmanaged[Stdcall]<void*, uint, void>)vtbl[24];
+        setStencilRef((void*)this.NativeCommandList.NativePointer, stencilRef);
+    }
+
+    /// <summary>
+    /// Sets primitive topology without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe void IASetPrimitiveTopologyNoAlloc(Vortice.Direct3D.PrimitiveTopology topology) {
+        void** vtbl = *(void***)this.NativeCommandList.NativePointer;
+        delegate* unmanaged[Stdcall]<void*, int, void> setPrimitiveTopology = (delegate* unmanaged[Stdcall]<void*, int, void>)vtbl[20];
+        setPrimitiveTopology((void*)this.NativeCommandList.NativePointer, (int)topology);
+    }
+
+    /// <summary>
+    /// Binds one vertex-buffer view without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe void SetVertexBufferNoAlloc(uint startSlot, ref VertexBufferView view) {
+        void** vtbl = *(void***)this.NativeCommandList.NativePointer;
+        delegate* unmanaged[Stdcall]<void*, uint, uint, void*, void> setVertexBuffers = (delegate* unmanaged[Stdcall]<void*, uint, uint, void*, void>)vtbl[44];
+        setVertexBuffers((void*)this.NativeCommandList.NativePointer, startSlot, 1u, Unsafe.AsPointer(ref view));
+    }
+
+    /// <summary>
+    /// Dispatches a compute shader without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe void DispatchNoAlloc(uint groupCountX, uint groupCountY, uint groupCountZ) {
+        void** vtbl = *(void***)this.NativeCommandList.NativePointer;
+        delegate* unmanaged[Stdcall]<void*, uint, uint, uint, void> dispatch = (delegate* unmanaged[Stdcall]<void*, uint, uint, uint, void>)vtbl[14];
+        dispatch((void*)this.NativeCommandList.NativePointer, groupCountX, groupCountY, groupCountZ);
+    }
+
+    /// <summary>
+    /// Sets the compute root signature without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe void SetComputeRootSignatureNoAlloc(ID3D12RootSignature rootSignature) {
+        void** vtbl = *(void***)this.NativeCommandList.NativePointer;
+        delegate* unmanaged[Stdcall]<void*, void*, void> setRootSig = (delegate* unmanaged[Stdcall]<void*, void*, void>)vtbl[29];
+        setRootSig((void*)this.NativeCommandList.NativePointer, (void*)rootSignature.NativePointer);
+    }
+
+    /// <summary>
+    /// Sets the graphics root signature without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe void SetGraphicsRootSignatureNoAlloc(ID3D12RootSignature rootSignature) {
+        void** vtbl = *(void***)this.NativeCommandList.NativePointer;
+        delegate* unmanaged[Stdcall]<void*, void*, void> setRootSig = (delegate* unmanaged[Stdcall]<void*, void*, void>)vtbl[30];
+        setRootSig((void*)this.NativeCommandList.NativePointer, (void*)rootSignature.NativePointer);
+    }
+
+    /// <summary>
+    /// Sets compute root 32-bit constants without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe void SetComputeRoot32BitConstantsNoAlloc(uint rootParameterIndex, uint num32BitValues, void* srcData, uint destOffset) {
+        void** vtbl = *(void***)this.NativeCommandList.NativePointer;
+        delegate* unmanaged[Stdcall]<void*, uint, uint, void*, uint, void> setConstants = (delegate* unmanaged[Stdcall]<void*, uint, uint, void*, uint, void>)vtbl[35];
+        setConstants((void*)this.NativeCommandList.NativePointer, rootParameterIndex, num32BitValues, srcData, destOffset);
+    }
+
+    /// <summary>
+    /// Sets graphics root 32-bit constants without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe void SetGraphicsRoot32BitConstantsNoAlloc(uint rootParameterIndex, uint num32BitValues, void* srcData, uint destOffset) {
+        void** vtbl = *(void***)this.NativeCommandList.NativePointer;
+        delegate* unmanaged[Stdcall]<void*, uint, uint, void*, uint, void> setConstants = (delegate* unmanaged[Stdcall]<void*, uint, uint, void*, uint, void>)vtbl[36];
+        setConstants((void*)this.NativeCommandList.NativePointer, rootParameterIndex, num32BitValues, srcData, destOffset);
+    }
+
+    /// <summary>
+    /// Sets multiple render targets without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe void OMSetRenderTargetsArrayNoAlloc(CpuDescriptorHandle[] rtvs, bool hasDepthStencil, CpuDescriptorHandle dsv) {
+        void** vtbl = *(void***)this.NativeCommandList.NativePointer;
+        delegate* unmanaged[Stdcall]<void*, uint, void*, int, void*, void> omSetRenderTargets = (delegate* unmanaged[Stdcall]<void*, uint, void*, int, void*, void>)vtbl[46];
+        fixed (CpuDescriptorHandle* rtvPtr = rtvs) {
+            omSetRenderTargets((void*)this.NativeCommandList.NativePointer, (uint)rtvs.Length, rtvPtr, 0, hasDepthStencil ? Unsafe.AsPointer(ref dsv) : null);
+        }
+    }
+
+    /// <summary>
+    /// Clears a render target view without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe void ClearRenderTargetViewNoAlloc(CpuDescriptorHandle rtv, float r, float g, float b, float a) {
+        void** vtbl = *(void***)this.NativeCommandList.NativePointer;
+        delegate* unmanaged[Stdcall]<void*, CpuDescriptorHandle, float*, uint, void*, void> fn =
+            (delegate* unmanaged[Stdcall]<void*, CpuDescriptorHandle, float*, uint, void*, void>)vtbl[48];
+        float* color = stackalloc float[4] { r, g, b, a };
+        fn((void*)this.NativeCommandList.NativePointer, rtv, color, 0u, null);
+    }
+
+    /// <summary>
+    /// Clears a depth/stencil view without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe void ClearDepthStencilViewNoAlloc(CpuDescriptorHandle dsv, uint clearFlags, float depth, byte stencil) {
+        void** vtbl = *(void***)this.NativeCommandList.NativePointer;
+        delegate* unmanaged[Stdcall]<void*, CpuDescriptorHandle, uint, float, byte, uint, void*, void> fn =
+            (delegate* unmanaged[Stdcall]<void*, CpuDescriptorHandle, uint, float, byte, uint, void*, void>)vtbl[47];
+        fn((void*)this.NativeCommandList.NativePointer, dsv, clearFlags, depth, stencil, 0u, null);
+    }
+
+    /// <summary>
+    /// Resolves a bindable buffer resource and its dynamic offset for a D3D12 root-buffer binding.
+    /// </summary>
+    private static D3D12DeviceBuffer GetD3D12BufferRange(IBindableResource resource, uint dynamicOffset, out uint offset) {
+        if (resource is DeviceBufferRange range) {
+            offset = range.Offset + dynamicOffset;
+            return Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(range.Buffer);
+        }
+
+        if (resource is DeviceBuffer buffer) {
+            offset = dynamicOffset;
+            return Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(buffer);
+        }
+
+        throw new PlatformNotSupportedException("D3D12 ResourceSet currently supports buffer resources only for non-table root bindings.");
     }
 
     /// <summary>
@@ -2773,8 +3361,19 @@ internal sealed class D3D12CommandList : CommandList {
         }
 
         long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
-        int count = Math.Min(this._boundGraphicsResourceSets.Length, this._graphicsResourceSetsChanged.Length);
-        for (int slot = 0; slot < count; slot++) {
+        int start = this._graphicsResourceSetsChangedStart;
+        int end = Math.Min(this._graphicsResourceSetsChangedEnd, this.GetGraphicsResourceSetFlushEnd());
+        if (start < 0 || end < start) {
+            this._graphicsResourceSetsDirty = false;
+            this.ResetGraphicsResourceSetChangeRange();
+            return;
+        }
+
+        if (_perfLogEnabled) {
+            this._perfResourceSetScanSlots += (ulong)(end - start + 1);
+        }
+
+        for (int slot = start; slot <= end; slot++) {
             if (!this._graphicsResourceSetsChanged[slot]) {
                 continue;
             }
@@ -2784,6 +3383,7 @@ internal sealed class D3D12CommandList : CommandList {
         }
 
         this._graphicsResourceSetsDirty = false;
+        this.ResetGraphicsResourceSetChangeRange();
         if (_perfLogEnabled) {
             this._perfResourceSetFlushMs += TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
         }
@@ -2798,8 +3398,19 @@ internal sealed class D3D12CommandList : CommandList {
         }
 
         long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
-        int count = Math.Min(this._boundComputeResourceSets.Length, this._computeResourceSetsChanged.Length);
-        for (int slot = 0; slot < count; slot++) {
+        int start = this._computeResourceSetsChangedStart;
+        int end = Math.Min(this._computeResourceSetsChangedEnd, this.GetComputeResourceSetFlushEnd());
+        if (start < 0 || end < start) {
+            this._computeResourceSetsDirty = false;
+            this.ResetComputeResourceSetChangeRange();
+            return;
+        }
+
+        if (_perfLogEnabled) {
+            this._perfResourceSetScanSlots += (ulong)(end - start + 1);
+        }
+
+        for (int slot = start; slot <= end; slot++) {
             if (!this._computeResourceSetsChanged[slot]) {
                 continue;
             }
@@ -2809,6 +3420,7 @@ internal sealed class D3D12CommandList : CommandList {
         }
 
         this._computeResourceSetsDirty = false;
+        this.ResetComputeResourceSetChangeRange();
         if (_perfLogEnabled) {
             this._perfResourceSetFlushMs += TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
         }
@@ -2822,20 +3434,23 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="boundSet">The bound resource set information.</param>
     /// <param name="compute">Whether the active pipeline is a compute pipeline.</param>
     private void BindResourceSet(D3D12Pipeline pipeline, uint slot, ref BoundResourceSetInfo boundSet, bool compute) {
-        if (boundSet.Set == null) {
+        if (slot >= pipeline.ResourceSetCount || boundSet.Set == null) {
             return;
+        }
+
+        if (_perfLogEnabled) {
+            this._perfResourceSetBinds++;
         }
 
         D3D12ResourceSet d3d12Set = Util.AssertSubtype<ResourceSet, D3D12ResourceSet>(boundSet.Set);
         IBindableResource[] resources = d3d12Set.BoundResources;
-        ResourceSetBindingPlanEntry[] bindingPlan = compute
-            ? this.GetComputeResourceSetBindingPlan(pipeline, slot, d3d12Set.ResourceLayoutInfo)
-            : this.GetGraphicsResourceSetBindingPlan(pipeline, slot, d3d12Set.ResourceLayoutInfo);
+        ResourceSetBindingPlan bindingPlan = compute ? this.GetComputeResourceSetBindingPlan(pipeline, slot, d3d12Set.ResourceLayoutInfo) : this.GetGraphicsResourceSetBindingPlan(pipeline, slot, d3d12Set.ResourceLayoutInfo);
         uint dynamicOffsetIndex = 0;
         bool descriptorTablesChanged = false;
+        ResourceSetBindingPlanEntry[] entries = bindingPlan.Entries;
 
-        for (int i = 0; i < bindingPlan.Length; i++) {
-            ref readonly ResourceSetBindingPlanEntry bindingEntry = ref bindingPlan[i];
+        for (int i = 0; i < entries.Length; i++) {
+            ref readonly ResourceSetBindingPlanEntry bindingEntry = ref entries[i];
             uint dynamicOffset = 0;
             if (bindingEntry.IsDynamicBinding) {
                 if (dynamicOffsetIndex >= boundSet.Offsets.Count) {
@@ -2871,16 +3486,14 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     /// <param name="buffer">The buffer whose native binding address changed.</param>
     private void MarkResourceSetsReferencingBufferDirty(D3D12DeviceBuffer buffer) {
-        bool graphicsChanged = this.MarkResourceSetsReferencingBufferDirty(this._boundGraphicsResourceSets, this._graphicsResourceSetsChanged, buffer);
-        bool computeChanged = this.MarkResourceSetsReferencingBufferDirty(this._boundComputeResourceSets, this._computeResourceSetsChanged, buffer);
+        bool graphicsChanged = this.MarkResourceSetsReferencingBufferDirty(this._boundGraphicsResourceSets, this._graphicsResourceSetsChanged, this._currentGraphicsPipeline?.ResourceSetCount ?? 0u, buffer, true);
+        bool computeChanged = this.MarkResourceSetsReferencingBufferDirty(this._boundComputeResourceSets, this._computeResourceSetsChanged, this._currentComputePipeline?.ResourceSetCount ?? 0u, buffer, false);
         if (graphicsChanged) {
             this._graphicsResourceSetsDirty = true;
-            this.InvalidateGraphicsRootCaches();
         }
 
         if (computeChanged) {
             this._computeResourceSetsDirty = true;
-            this.InvalidateComputeRootCaches();
         }
     }
 
@@ -2889,10 +3502,12 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     /// <param name="resourceSets">The bound resource set collection.</param>
     /// <param name="changed">The dirty flag collection.</param>
+    /// <param name="resourceSetCount">The number of slots used by the active pipeline.</param>
     /// <param name="buffer">The buffer whose native binding address changed.</param>
+    /// <param name="graphics">Whether the graphics or compute range should be updated.</param>
     /// <returns><see langword="true" /> when at least one resource set was marked dirty.</returns>
-    private bool MarkResourceSetsReferencingBufferDirty(BoundResourceSetInfo[] resourceSets, bool[] changed, D3D12DeviceBuffer buffer) {
-        int count = Math.Min(resourceSets.Length, changed.Length);
+    private bool MarkResourceSetsReferencingBufferDirty(BoundResourceSetInfo[] resourceSets, bool[] changed, uint resourceSetCount, D3D12DeviceBuffer buffer, bool graphics) {
+        int count = Math.Min(Math.Min(resourceSets.Length, changed.Length), GetClampedResourceSetCount(resourceSetCount));
         bool anyChanged = false;
         for (int slot = 0; slot < count; slot++) {
             if (resourceSets[slot].Set is not D3D12ResourceSet resourceSet) {
@@ -2903,7 +3518,13 @@ internal sealed class D3D12CommandList : CommandList {
                 continue;
             }
 
-            changed[slot] = true;
+            if (graphics) {
+                this.MarkGraphicsResourceSetChanged((uint)slot);
+            }
+            else {
+                this.MarkComputeResourceSetChanged((uint)slot);
+            }
+
             anyChanged = true;
         }
 
@@ -2917,13 +3538,9 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="buffer">The buffer to find.</param>
     /// <returns><see langword="true" /> when the resource set references the buffer.</returns>
     private static bool ResourceSetReferencesBuffer(D3D12ResourceSet resourceSet, D3D12DeviceBuffer buffer) {
-        IBindableResource[] resources = resourceSet.BoundResources;
-        for (int i = 0; i < resources.Length; i++) {
-            if (!Util.GetDeviceBuffer(resources[i], out DeviceBuffer boundBuffer)) {
-                continue;
-            }
-
-            if (ReferenceEquals(boundBuffer, buffer)) {
+        D3D12DeviceBuffer[] referencedBuffers = resourceSet.ReferencedBuffers;
+        for (int i = 0; i < referencedBuffers.Length; i++) {
+            if (ReferenceEquals(referencedBuffers[i], buffer)) {
                 return true;
             }
         }
@@ -2965,10 +3582,10 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="set">The resource set being bound.</param>
     /// <param name="bindingPlan">The binding plan for the active pipeline and set slot.</param>
     /// <param name="compute">Whether the active pipeline is a compute pipeline.</param>
-    private void BindResourceSetDescriptorTables(D3D12ResourceSet set, ResourceSetBindingPlanEntry[] bindingPlan, bool compute) {
+    private void BindResourceSetDescriptorTables(D3D12ResourceSet set, ResourceSetBindingPlan bindingPlan, bool compute) {
         this.BindDescriptorHeaps();
-        this.BindResourceSetDescriptorTable(set, bindingPlan, compute, D3D12Pipeline.DescriptorTableKind.SrvUav);
-        this.BindResourceSetDescriptorTable(set, bindingPlan, compute, D3D12Pipeline.DescriptorTableKind.Sampler);
+        this.BindResourceSetDescriptorTable(set, bindingPlan.Entries, bindingPlan.SrvUavTable, compute);
+        this.BindResourceSetDescriptorTable(set, bindingPlan.Entries, bindingPlan.SamplerTable, compute);
     }
 
     /// <summary>
@@ -2977,39 +3594,28 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="set">The resource set being bound.</param>
     /// <param name="bindingPlan">The binding plan for the active pipeline and set slot.</param>
     /// <param name="compute">Whether the active pipeline is a compute pipeline.</param>
-    /// <param name="tableKind">The table kind to bind.</param>
-    private void BindResourceSetDescriptorTable(D3D12ResourceSet set, ResourceSetBindingPlanEntry[] bindingPlan, bool compute, D3D12Pipeline.DescriptorTableKind tableKind) {
-        uint descriptorCount = 0;
-        uint rootParameterIndex = 0;
-        bool hasTable = false;
-        for (int i = 0; i < bindingPlan.Length; i++) {
-            D3D12Pipeline.RootBindingInfo bindingInfo = bindingPlan[i].BindingInfo;
-            if (!bindingInfo.DescriptorTable || bindingInfo.DescriptorTableKind != tableKind) {
-                continue;
-            }
-
-            hasTable = true;
-            rootParameterIndex = bindingInfo.RootParameterIndex;
-            descriptorCount = Math.Max(descriptorCount, bindingInfo.DescriptorTableOffset + 1);
-        }
-
-        if (!hasTable) {
+    /// <param name="tableInfo">The descriptor table metadata.</param>
+    private void BindResourceSetDescriptorTable(D3D12ResourceSet set, ResourceSetBindingPlanEntry[] bindingPlan, DescriptorTableBindingInfo tableInfo, bool compute) {
+        if (!tableInfo.HasTable) {
             return;
         }
 
-        if (!this.TryGetDescriptorTableHandle(set, tableKind, out GpuDescriptorHandle gpuHandle)) {
+        D3D12Pipeline.DescriptorTableKind tableKind = tableInfo.TableKind;
+        if (!TryGetDescriptorTableHandle(set, tableKind, tableInfo.Signature, out GpuDescriptorHandle gpuHandle)) {
             DescriptorHeapType heapType;
             CpuDescriptorHandle cpuHandle;
             if (tableKind == D3D12Pipeline.DescriptorTableKind.Sampler) {
                 heapType = DescriptorHeapType.Sampler;
-                this.AllocateSamplerDescriptors(descriptorCount, out cpuHandle, out gpuHandle);
+                this.AllocateSamplerDescriptors(tableInfo.DescriptorCount, out cpuHandle, out gpuHandle);
             }
             else {
                 heapType = DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView;
-                this.AllocateSrvUavDescriptors(descriptorCount, out cpuHandle, out gpuHandle);
+                this.AllocateSrvUavDescriptors(tableInfo.DescriptorCount, out cpuHandle, out gpuHandle);
             }
 
             long descriptorCopyStartTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
+            int descriptorSize = tableKind == D3D12Pipeline.DescriptorTableKind.Sampler ? this._samplerDescriptorSize : this._srvUavDescriptorSize;
+            uint batchCount = 0;
             for (int i = 0; i < bindingPlan.Length; i++) {
                 ResourceSetBindingPlanEntry entry = bindingPlan[i];
                 D3D12Pipeline.RootBindingInfo bindingInfo = entry.BindingInfo;
@@ -3017,35 +3623,65 @@ internal sealed class D3D12CommandList : CommandList {
                     continue;
                 }
 
-                CpuDescriptorHandle destination = cpuHandle + (int)(bindingInfo.DescriptorTableOffset * (uint)(tableKind == D3D12Pipeline.DescriptorTableKind.Sampler ? this._samplerDescriptorSize : this._srvUavDescriptorSize));
-                CpuDescriptorHandle source = this.GetSourceDescriptor(set.BoundResources[entry.ElementIndex], bindingInfo.Kind);
-                this.gd.Device.CopyDescriptorsSimple(1u, destination, source, heapType);
+                this._descriptorCopyDests[batchCount] = cpuHandle + (int)(bindingInfo.DescriptorTableOffset * (uint)descriptorSize);
+                this._descriptorCopySources[batchCount] = this.GetSourceDescriptor(set.BoundResources[entry.ElementIndex], bindingInfo.Kind);
+                batchCount++;
+            }
+
+            if (batchCount > 0) {
+                this.gd.Device.CopyDescriptors(batchCount, this._descriptorCopyDests, _descriptorCopyRangeSizes, batchCount, this._descriptorCopySources, _descriptorCopyRangeSizes, heapType);
             }
 
             if (_perfLogEnabled) {
                 this._perfDescriptorCopyMs += TicksToMilliseconds(Stopwatch.GetTimestamp() - descriptorCopyStartTicks);
             }
 
-            this.CacheDescriptorTableHandle(set, tableKind, gpuHandle);
+            CacheDescriptorTableHandle(set, tableKind, tableInfo.Signature, gpuHandle);
         }
 
-        if ((compute && this.IsSameComputeRootTable(rootParameterIndex, gpuHandle.Ptr))
-            || (!compute && this.IsSameGraphicsRootTable(rootParameterIndex, gpuHandle.Ptr))) {
+        if ((compute && this.IsSameComputeRootTable(tableInfo.RootParameterIndex, gpuHandle.Ptr))
+            || (!compute && this.IsSameGraphicsRootTable(tableInfo.RootParameterIndex, gpuHandle.Ptr))) {
             return;
         }
 
         if (compute) {
-            this.NativeCommandList.SetComputeRootDescriptorTable(rootParameterIndex, gpuHandle);
-            this.SetComputeRootTableCache(rootParameterIndex, gpuHandle.Ptr);
+            this.SetComputeRootDescriptorTableNoAlloc(tableInfo.RootParameterIndex, gpuHandle);
+            this.SetComputeRootTableCache(tableInfo.RootParameterIndex, gpuHandle.Ptr);
         }
         else {
-            this.NativeCommandList.SetGraphicsRootDescriptorTable(rootParameterIndex, gpuHandle);
-            this.SetGraphicsRootTableCache(rootParameterIndex, gpuHandle.Ptr);
+            this.SetGraphicsRootDescriptorTableNoAlloc(tableInfo.RootParameterIndex, gpuHandle);
+            this.SetGraphicsRootTableCache(tableInfo.RootParameterIndex, gpuHandle.Ptr);
         }
 
         if (_perfLogEnabled) {
             this._perfRootTableSets++;
         }
+    }
+
+    /// <summary>
+    /// Binds a compute descriptor table without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe void SetComputeRootDescriptorTableNoAlloc(uint rootParameterIndex, GpuDescriptorHandle gpuHandle) {
+        this.SetRootDescriptorTableNoAlloc(31, rootParameterIndex, gpuHandle);
+    }
+
+    /// <summary>
+    /// Binds a graphics descriptor table without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe void SetGraphicsRootDescriptorTableNoAlloc(uint rootParameterIndex, GpuDescriptorHandle gpuHandle) {
+        this.SetRootDescriptorTableNoAlloc(32, rootParameterIndex, gpuHandle);
+    }
+
+    /// <summary>
+    /// Invokes an ID3D12GraphicsCommandList root descriptor-table binding method directly.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe void SetRootDescriptorTableNoAlloc(int vtableIndex, uint rootParameterIndex, GpuDescriptorHandle gpuHandle) {
+        void** vtbl = *(void***)this.NativeCommandList.NativePointer;
+        delegate* unmanaged[Stdcall]<void*, uint, ulong, void> setRootDescriptorTable = (delegate* unmanaged[Stdcall]<void*, uint, ulong, void>)vtbl[vtableIndex];
+        setRootDescriptorTable((void*)this.NativeCommandList.NativePointer, rootParameterIndex, gpuHandle.Ptr);
     }
 
     /// <summary>
@@ -3084,7 +3720,7 @@ internal sealed class D3D12CommandList : CommandList {
 
         this._boundDescriptorHeaps[0] = this._shaderVisibleSrvUavHeap;
         this._boundDescriptorHeaps[1] = this._shaderVisibleSamplerHeap;
-        this.NativeCommandList.SetDescriptorHeaps(this._boundDescriptorHeaps);
+        this.SetDescriptorHeapsNoAlloc(this._boundDescriptorHeaps);
         this._descriptorHeapsBound = true;
     }
 
@@ -3095,13 +3731,11 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="gpuHandle">The gpu handle value used by this operation.</param>
     private void AllocateSrvUavDescriptors(uint count, out CpuDescriptorHandle cpuHandle, out GpuDescriptorHandle gpuHandle) {
         if (this._nextSrvUavDescriptor + count > this._srvUavDescriptorLimit) {
-            throw new VeldridException("D3D12 SRV/UAV descriptor heap exhausted for this CommandList frame slot.");
+            throw new VeldridException("D3D12 SRV/UAV descriptor heap exhausted for this CommandList. Create fewer unique ResourceSets or increase the persistent descriptor heap size.");
         }
 
-        CpuDescriptorHandle cpuStart = this._shaderVisibleSrvUavHeap.GetCPUDescriptorHandleForHeapStart();
-        GpuDescriptorHandle gpuStart = this._shaderVisibleSrvUavHeap.GetGPUDescriptorHandleForHeapStart();
-        cpuHandle = new CpuDescriptorHandle(cpuStart, (int)this._nextSrvUavDescriptor, (uint)this._srvUavDescriptorSize);
-        gpuHandle = new GpuDescriptorHandle(gpuStart, (int)this._nextSrvUavDescriptor, (uint)this._srvUavDescriptorSize);
+        cpuHandle = new CpuDescriptorHandle(this._srvUavHeapCpuStart, (int)this._nextSrvUavDescriptor, (uint)this._srvUavDescriptorSize);
+        gpuHandle = new GpuDescriptorHandle(this._srvUavHeapGpuStart, (int)this._nextSrvUavDescriptor, (uint)this._srvUavDescriptorSize);
         this._nextSrvUavDescriptor += count;
     }
 
@@ -3112,13 +3746,11 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="gpuHandle">The gpu handle value used by this operation.</param>
     private void AllocateSamplerDescriptors(uint count, out CpuDescriptorHandle cpuHandle, out GpuDescriptorHandle gpuHandle) {
         if (this._nextSamplerDescriptor + count > this._samplerDescriptorLimit) {
-            throw new VeldridException("D3D12 sampler descriptor heap exhausted for this CommandList frame slot.");
+            throw new VeldridException("D3D12 sampler descriptor heap exhausted for this CommandList. Create fewer unique ResourceSets or increase the persistent sampler descriptor heap size.");
         }
 
-        CpuDescriptorHandle cpuStart = this._shaderVisibleSamplerHeap.GetCPUDescriptorHandleForHeapStart();
-        GpuDescriptorHandle gpuStart = this._shaderVisibleSamplerHeap.GetGPUDescriptorHandleForHeapStart();
-        cpuHandle = new CpuDescriptorHandle(cpuStart, (int)this._nextSamplerDescriptor, (uint)this._samplerDescriptorSize);
-        gpuHandle = new GpuDescriptorHandle(gpuStart, (int)this._nextSamplerDescriptor, (uint)this._samplerDescriptorSize);
+        cpuHandle = new CpuDescriptorHandle(this._samplerHeapCpuStart, (int)this._nextSamplerDescriptor, (uint)this._samplerDescriptorSize);
+        gpuHandle = new GpuDescriptorHandle(this._samplerHeapGpuStart, (int)this._nextSamplerDescriptor, (uint)this._samplerDescriptorSize);
         this._nextSamplerDescriptor += count;
     }
 
@@ -3129,9 +3761,23 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="kind">The descriptor-table resource kind.</param>
     /// <param name="handle">The cached GPU descriptor handle, when available.</param>
     /// <returns><see langword="true" /> when a cached handle was found.</returns>
-    private bool TryGetDescriptorTableHandle(D3D12ResourceSet set, D3D12Pipeline.DescriptorTableKind kind, out GpuDescriptorHandle handle) {
-        DescriptorCacheKey key = new(set, kind);
-        return this._descriptorTableCache.TryGetValue(key, out handle);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool TryGetDescriptorTableHandle(D3D12ResourceSet set, D3D12Pipeline.DescriptorTableKind kind, uint tableSignature, out GpuDescriptorHandle handle) {
+        if (kind == D3D12Pipeline.DescriptorTableKind.Sampler) {
+            if (set.HasCachedSamplerHandle && set.CachedSamplerSignature == tableSignature) {
+                handle = set.CachedSamplerHandle;
+                return true;
+            }
+        }
+        else {
+            if (set.HasCachedSrvUavHandle && set.CachedSrvUavSignature == tableSignature) {
+                handle = set.CachedSrvUavHandle;
+                return true;
+            }
+        }
+
+        handle = default;
+        return false;
     }
 
     /// <summary>
@@ -3140,11 +3786,17 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="resource">The resource involved in this operation.</param>
     /// <param name="kind">The descriptor-table resource kind.</param>
     /// <param name="handle">The GPU descriptor handle to cache.</param>
-    private void CacheDescriptorTableHandle(D3D12ResourceSet set, D3D12Pipeline.DescriptorTableKind kind, GpuDescriptorHandle handle) {
-        DescriptorCacheKey key = new(set, kind);
-        this._descriptorTableCache.Add(key, handle);
-        if (_perfLogEnabled) {
-            this._perfDescriptorCopies++;
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void CacheDescriptorTableHandle(D3D12ResourceSet set, D3D12Pipeline.DescriptorTableKind kind, uint tableSignature, GpuDescriptorHandle handle) {
+        if (kind == D3D12Pipeline.DescriptorTableKind.Sampler) {
+            set.CachedSamplerHandle = handle;
+            set.CachedSamplerSignature = tableSignature;
+            set.HasCachedSamplerHandle = true;
+        }
+        else {
+            set.CachedSrvUavHandle = handle;
+            set.CachedSrvUavSignature = tableSignature;
+            set.HasCachedSrvUavHandle = true;
         }
     }
 
@@ -3155,15 +3807,32 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="slot">The slot value used by this operation.</param>
     /// <param name="layout">The resource layout used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    private ResourceSetBindingPlanEntry[] GetGraphicsResourceSetBindingPlan(D3D12Pipeline pipeline, uint slot, D3D12ResourceLayout layout) {
-        ResourceSetBindingPlanKey key = new(pipeline, layout, slot);
-        if (this._graphicsResourceSetBindingPlans.TryGetValue(key, out ResourceSetBindingPlanEntry[] existingPlan)) {
-            return existingPlan;
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private ResourceSetBindingPlan GetGraphicsResourceSetBindingPlan(D3D12Pipeline pipeline, uint slot, D3D12ResourceLayout layout) {
+        if (ReferenceEquals(this._graphicsBindingPlanCachePipeline, pipeline)
+            && slot < (uint)this._graphicsBindingPlanCache.Length
+            && this._graphicsBindingPlanCache[slot].Entries != null) {
+            return this._graphicsBindingPlanCache[slot];
         }
 
-        ResourceSetBindingPlanEntry[] createdPlan = CreateGraphicsResourceSetBindingPlan(pipeline, slot, layout.Elements);
-        this._graphicsResourceSetBindingPlans.Add(key, createdPlan);
-        return createdPlan;
+        return this.GetGraphicsResourceSetBindingPlanSlow(pipeline, slot, layout);
+    }
+
+    private ResourceSetBindingPlan GetGraphicsResourceSetBindingPlanSlow(D3D12Pipeline pipeline, uint slot, D3D12ResourceLayout layout) {
+        ResourceSetBindingPlanKey key = new(pipeline, layout, slot);
+        if (!this._graphicsResourceSetBindingPlans.TryGetValue(key, out ResourceSetBindingPlan existingPlan)) {
+            existingPlan = CreateGraphicsResourceSetBindingPlan(pipeline, slot, layout.Elements);
+            this._graphicsResourceSetBindingPlans.Add(key, existingPlan);
+        }
+
+        if (!ReferenceEquals(this._graphicsBindingPlanCachePipeline, pipeline)) {
+            this._graphicsBindingPlanCachePipeline = pipeline;
+            Array.Clear(this._graphicsBindingPlanCache, 0, this._graphicsBindingPlanCache.Length);
+        }
+
+        Util.EnsureArrayMinimumSize(ref this._graphicsBindingPlanCache, slot + 1);
+        this._graphicsBindingPlanCache[slot] = existingPlan;
+        return existingPlan;
     }
 
     /// <summary>
@@ -3173,16 +3842,32 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="slot">The slot value used by this operation.</param>
     /// <param name="layout">The resource layout used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    private ResourceSetBindingPlanEntry[] GetComputeResourceSetBindingPlan(D3D12Pipeline pipeline, uint slot, D3D12ResourceLayout layout) {
-        ResourceSetBindingPlanKey key = new(pipeline, layout, slot);
-        if (this._computeResourceSetBindingPlans.TryGetValue(key, out ResourceSetBindingPlanEntry[] existingPlan)) {
-            return existingPlan;
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private ResourceSetBindingPlan GetComputeResourceSetBindingPlan(D3D12Pipeline pipeline, uint slot, D3D12ResourceLayout layout) {
+        if (ReferenceEquals(this._computeBindingPlanCachePipeline, pipeline)
+            && slot < (uint)this._computeBindingPlanCache.Length
+            && this._computeBindingPlanCache[slot].Entries != null) {
+            return this._computeBindingPlanCache[slot];
         }
 
-        ResourceSetBindingPlanEntry[]
-            createdPlan = CreateComputeResourceSetBindingPlan(pipeline, slot, layout.Elements);
-        this._computeResourceSetBindingPlans.Add(key, createdPlan);
-        return createdPlan;
+        return this.GetComputeResourceSetBindingPlanSlow(pipeline, slot, layout);
+    }
+
+    private ResourceSetBindingPlan GetComputeResourceSetBindingPlanSlow(D3D12Pipeline pipeline, uint slot, D3D12ResourceLayout layout) {
+        ResourceSetBindingPlanKey key = new(pipeline, layout, slot);
+        if (!this._computeResourceSetBindingPlans.TryGetValue(key, out ResourceSetBindingPlan existingPlan)) {
+            existingPlan = CreateComputeResourceSetBindingPlan(pipeline, slot, layout.Elements);
+            this._computeResourceSetBindingPlans.Add(key, existingPlan);
+        }
+
+        if (!ReferenceEquals(this._computeBindingPlanCachePipeline, pipeline)) {
+            this._computeBindingPlanCachePipeline = pipeline;
+            Array.Clear(this._computeBindingPlanCache, 0, this._computeBindingPlanCache.Length);
+        }
+
+        Util.EnsureArrayMinimumSize(ref this._computeBindingPlanCache, slot + 1);
+        this._computeBindingPlanCache[slot] = existingPlan;
+        return existingPlan;
     }
 
     /// <summary>
@@ -3192,7 +3877,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="slot">The slot value used by this operation.</param>
     /// <param name="elements">The elements value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    private static ResourceSetBindingPlanEntry[] CreateGraphicsResourceSetBindingPlan(D3D12Pipeline pipeline, uint slot, ResourceLayoutElementDescription[] elements) {
+    private static ResourceSetBindingPlan CreateGraphicsResourceSetBindingPlan(D3D12Pipeline pipeline, uint slot, ResourceLayoutElementDescription[] elements) {
         List<ResourceSetBindingPlanEntry> plan = new(elements.Length);
         for (uint elementIndex = 0; elementIndex < elements.Length; elementIndex++) {
             if (!pipeline.TryGetGraphicsRootBinding(slot, elementIndex, out D3D12Pipeline.RootBindingInfo bindingInfo)) {
@@ -3203,7 +3888,7 @@ internal sealed class D3D12CommandList : CommandList {
             plan.Add(new ResourceSetBindingPlanEntry(elementIndex, bindingInfo, isDynamicBinding));
         }
 
-        return plan.ToArray();
+        return new ResourceSetBindingPlan(plan.ToArray());
     }
 
     /// <summary>
@@ -3213,7 +3898,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="slot">The slot value used by this operation.</param>
     /// <param name="elements">The elements value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    private static ResourceSetBindingPlanEntry[] CreateComputeResourceSetBindingPlan(D3D12Pipeline pipeline, uint slot, ResourceLayoutElementDescription[] elements) {
+    private static ResourceSetBindingPlan CreateComputeResourceSetBindingPlan(D3D12Pipeline pipeline, uint slot, ResourceLayoutElementDescription[] elements) {
         List<ResourceSetBindingPlanEntry> plan = new(elements.Length);
 
         for (uint elementIndex = 0; elementIndex < elements.Length; elementIndex++) {
@@ -3225,7 +3910,51 @@ internal sealed class D3D12CommandList : CommandList {
             plan.Add(new ResourceSetBindingPlanEntry(elementIndex, bindingInfo, isDynamicBinding));
         }
 
-        return plan.ToArray();
+        return new ResourceSetBindingPlan(plan.ToArray());
+    }
+
+    /// <summary>
+    /// Checks whether the buffer usage allows binding through a resource set.
+    /// </summary>
+    /// <param name="buffer">The buffer to inspect.</param>
+    /// <returns><see langword="true" /> when a bound resource set may reference the buffer.</returns>
+    private static bool CanBeResourceSetBuffer(D3D12DeviceBuffer buffer) {
+        const BufferUsage resourceSetUsages = BufferUsage.UniformBuffer | BufferUsage.StructuredBufferReadOnly | BufferUsage.StructuredBufferReadWrite;
+        return (buffer.Usage & resourceSetUsages) != 0;
+    }
+
+    /// <summary>
+    /// Builds descriptor-table metadata for a cached binding plan.
+    /// </summary>
+    /// <param name="bindingPlan">The binding plan to inspect.</param>
+    /// <param name="tableKind">The descriptor table kind.</param>
+    /// <returns>The descriptor table metadata.</returns>
+    private static DescriptorTableBindingInfo CreateDescriptorTableBindingInfo(ResourceSetBindingPlanEntry[] bindingPlan, D3D12Pipeline.DescriptorTableKind tableKind) {
+        uint descriptorCount = 0;
+        uint rootParameterIndex = 0;
+        bool hasTable = false;
+        uint hash = 2166136261u;
+
+        for (int i = 0; i < bindingPlan.Length; i++) {
+            D3D12Pipeline.RootBindingInfo bindingInfo = bindingPlan[i].BindingInfo;
+            if (!bindingInfo.DescriptorTable || bindingInfo.DescriptorTableKind != tableKind) {
+                continue;
+            }
+
+            hasTable = true;
+            rootParameterIndex = bindingInfo.RootParameterIndex;
+            descriptorCount = Math.Max(descriptorCount, bindingInfo.DescriptorTableOffset + 1);
+            hash = (hash ^ bindingPlan[i].ElementIndex) * 16777619u;
+            hash = (hash ^ bindingInfo.DescriptorTableOffset) * 16777619u;
+            hash = (hash ^ (uint)bindingInfo.Kind) * 16777619u;
+        }
+
+        if (!hasTable) {
+            return default;
+        }
+
+        hash = (hash ^ descriptorCount) * 16777619u;
+        return new DescriptorTableBindingInfo(tableKind, descriptorCount, rootParameterIndex, hash);
     }
 
     /// <summary>
@@ -3401,6 +4130,166 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
+    /// Marks a graphics resource set slot dirty.
+    /// </summary>
+    /// <param name="slot">The slot to mark.</param>
+    private void MarkGraphicsResourceSetChanged(uint slot) {
+        this.MarkResourceSetChanged(this._graphicsResourceSetsChanged, slot, ref this._graphicsResourceSetsDirty, ref this._graphicsResourceSetsChangedStart, ref this._graphicsResourceSetsChangedEnd);
+    }
+
+    /// <summary>
+    /// Marks a compute resource set slot dirty.
+    /// </summary>
+    /// <param name="slot">The slot to mark.</param>
+    private void MarkComputeResourceSetChanged(uint slot) {
+        this.MarkResourceSetChanged(this._computeResourceSetsChanged, slot, ref this._computeResourceSetsDirty, ref this._computeResourceSetsChangedStart, ref this._computeResourceSetsChangedEnd);
+    }
+
+    /// <summary>
+    /// Marks currently bound graphics resource sets dirty.
+    /// </summary>
+    /// <param name="resourceSetCount">The number of slots used by the active graphics pipeline.</param>
+    private void MarkBoundGraphicsResourceSetsChanged(uint resourceSetCount) {
+        this.MarkBoundResourceSetsChanged(this._boundGraphicsResourceSets, resourceSetCount, true);
+    }
+
+    /// <summary>
+    /// Marks currently bound compute resource sets dirty.
+    /// </summary>
+    /// <param name="resourceSetCount">The number of slots used by the active compute pipeline.</param>
+    private void MarkBoundComputeResourceSetsChanged(uint resourceSetCount) {
+        this.MarkBoundResourceSetsChanged(this._boundComputeResourceSets, resourceSetCount, false);
+    }
+
+    /// <summary>
+    /// Marks currently bound resource sets dirty.
+    /// </summary>
+    /// <param name="resourceSets">The bound resource set collection.</param>
+    /// <param name="resourceSetCount">The number of slots used by the active pipeline.</param>
+    /// <param name="graphics">Whether the graphics or compute range should be updated.</param>
+    private void MarkBoundResourceSetsChanged(BoundResourceSetInfo[] resourceSets, uint resourceSetCount, bool graphics) {
+        int changedLength = graphics ? this._graphicsResourceSetsChanged.Length : this._computeResourceSetsChanged.Length;
+        int count = Math.Min(Math.Min(resourceSets.Length, changedLength), GetClampedResourceSetCount(resourceSetCount));
+        for (uint slot = 0; slot < count; slot++) {
+            if (resourceSets[slot].Set == null) {
+                continue;
+            }
+
+            if (graphics) {
+                this.MarkGraphicsResourceSetChanged(slot);
+            }
+            else {
+                this.MarkComputeResourceSetChanged(slot);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Ensures graphics resource set arrays can hold the requested slot count.
+    /// </summary>
+    /// <param name="count">The minimum slot count.</param>
+    private void EnsureGraphicsResourceSetCapacity(uint count) {
+        Util.EnsureArrayMinimumSize(ref this._boundGraphicsResourceSets, count);
+        Util.EnsureArrayMinimumSize(ref this._graphicsResourceSetsChanged, count);
+    }
+
+    /// <summary>
+    /// Ensures compute resource set arrays can hold the requested slot count.
+    /// </summary>
+    /// <param name="count">The minimum slot count.</param>
+    private void EnsureComputeResourceSetCapacity(uint count) {
+        Util.EnsureArrayMinimumSize(ref this._boundComputeResourceSets, count);
+        Util.EnsureArrayMinimumSize(ref this._computeResourceSetsChanged, count);
+    }
+
+    /// <summary>
+    /// Gets the final graphics resource set slot that can be flushed for the active pipeline.
+    /// </summary>
+    /// <returns>The final slot index, or -1 when no slot can be flushed.</returns>
+    private int GetGraphicsResourceSetFlushEnd() {
+        if (this._currentGraphicsPipeline == null) {
+            return -1;
+        }
+
+        int count = Math.Min(Math.Min(this._boundGraphicsResourceSets.Length, this._graphicsResourceSetsChanged.Length), GetClampedResourceSetCount(this._currentGraphicsPipeline.ResourceSetCount));
+        return count - 1;
+    }
+
+    /// <summary>
+    /// Gets the final compute resource set slot that can be flushed for the active pipeline.
+    /// </summary>
+    /// <returns>The final slot index, or -1 when no slot can be flushed.</returns>
+    private int GetComputeResourceSetFlushEnd() {
+        if (this._currentComputePipeline == null) {
+            return -1;
+        }
+
+        int count = Math.Min(Math.Min(this._boundComputeResourceSets.Length, this._computeResourceSetsChanged.Length), GetClampedResourceSetCount(this._currentComputePipeline.ResourceSetCount));
+        return count - 1;
+    }
+
+    /// <summary>
+    /// Converts a pipeline resource set count to an array indexable count.
+    /// </summary>
+    /// <param name="count">The pipeline resource set count.</param>
+    /// <returns>The count clamped to the maximum managed array length.</returns>
+    private static int GetClampedResourceSetCount(uint count) {
+        return count > int.MaxValue ? int.MaxValue : (int)count;
+    }
+
+    /// <summary>
+    /// Marks a resource set slot dirty and expands the dirty range.
+    /// </summary>
+    /// <param name="changed">The dirty flag collection.</param>
+    /// <param name="slot">The slot to mark.</param>
+    /// <param name="dirty">The dirty state to update.</param>
+    /// <param name="start">The first dirty slot.</param>
+    /// <param name="end">The last dirty slot.</param>
+    private void MarkResourceSetChanged(bool[] changed, uint slot, ref bool dirty, ref int start, ref int end) {
+        int index = (int)slot;
+        changed[index] = true;
+        dirty = true;
+        if (start < 0 || index < start) {
+            start = index;
+        }
+
+        if (index > end) {
+            end = index;
+        }
+    }
+
+    /// <summary>
+    /// Resets the graphics resource set dirty range.
+    /// </summary>
+    private void ResetGraphicsResourceSetChangeRange() {
+        this._graphicsResourceSetsChangedStart = -1;
+        this._graphicsResourceSetsChangedEnd = -1;
+    }
+
+    /// <summary>
+    /// Resets the compute resource set dirty range.
+    /// </summary>
+    private void ResetComputeResourceSetChangeRange() {
+        this._computeResourceSetsChangedStart = -1;
+        this._computeResourceSetsChangedEnd = -1;
+    }
+
+    /// <summary>
+    /// Clears cached vertex-buffer bindings from the previous recording.
+    /// </summary>
+    private void ClearBoundVertexBuffers() {
+        int count = Math.Min((int)this._maxBoundVertexBufferSlot, this._boundVertexBuffers.Length);
+        if (count <= 0) {
+            return;
+        }
+
+        Array.Clear(this._boundVertexBuffers, 0, count);
+        Array.Clear(this._boundVertexBufferOffsets, 0, count);
+        Array.Clear(this._boundVertexBufferStrides, 0, count);
+        Array.Clear(this._boundVertexBufferVersions, 0, count);
+    }
+
+    /// <summary>
     /// Executes the clear bound resource sets logic for this backend.
     /// </summary>
     /// <param name="infos">The infos value used by this operation.</param>
@@ -3429,20 +4318,6 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
-    /// Marks currently tracked resource sets as dirty after a compatible pipeline change.
-    /// </summary>
-    /// <param name="changed">The dirty flag array to update.</param>
-    private static void MarkChangedResourceSets(bool[] changed) {
-        if (changed == null) {
-            return;
-        }
-
-        for (int i = 0; i < changed.Length; i++) {
-            changed[i] = true;
-        }
-    }
-
-    /// <summary>
     /// Executes the transition swapchain back buffers to present logic for this backend.
     /// </summary>
     private void TransitionSwapchainBackBuffersToPresent() {
@@ -3454,10 +4329,65 @@ internal sealed class D3D12CommandList : CommandList {
             return;
         }
 
-        if (swapchainFramebuffer.Swapchain.TryGetCurrentBackBuffer(out ID3D12Resource backBuffer, out _, out int currentIndex, out ResourceStates state) && currentIndex == this._transitionedBackBufferIndex) {
+        if (ReferenceEquals(this._cachedSwapchainFramebuffer, swapchainFramebuffer)
+            && this._cachedSwapchainBackBuffer != null
+            && this._cachedSwapchainBackBufferIndex == this._transitionedBackBufferIndex) {
+            this.Transition(this._cachedSwapchainBackBuffer, this._cachedSwapchainBackBufferState, ResourceStates.Present);
+            swapchainFramebuffer.Swapchain.SetBackBufferState(this._cachedSwapchainBackBufferIndex, ResourceStates.Present);
+            this._cachedSwapchainBackBufferState = ResourceStates.Present;
+            return;
+        }
+
+        if (swapchainFramebuffer.Swapchain.TryGetCurrentBackBuffer(out ID3D12Resource backBuffer, out CpuDescriptorHandle rtv, out int currentIndex, out ResourceStates state) && currentIndex == this._transitionedBackBufferIndex) {
+            this.CacheSwapchainBackBuffer(swapchainFramebuffer, backBuffer, rtv, currentIndex, state);
             this.Transition(backBuffer, state, ResourceStates.Present);
             swapchainFramebuffer.Swapchain.SetBackBufferState(currentIndex, ResourceStates.Present);
+            this._cachedSwapchainBackBufferState = ResourceStates.Present;
         }
+    }
+
+    /// <summary>
+    /// Gets the current swapchain back buffer, reusing the command-list cache when possible.
+    /// </summary>
+    private bool TryGetSwapchainBackBuffer(D3D12SwapchainFramebuffer swapchainFramebuffer, out ID3D12Resource backBuffer, out CpuDescriptorHandle rtv, out int index, out ResourceStates state) {
+        if (ReferenceEquals(this._cachedSwapchainFramebuffer, swapchainFramebuffer)
+            && this._cachedSwapchainBackBuffer != null
+            && this._cachedSwapchainBackBufferIndex >= 0) {
+            backBuffer = this._cachedSwapchainBackBuffer;
+            rtv = this._cachedSwapchainRtv;
+            index = this._cachedSwapchainBackBufferIndex;
+            state = this._cachedSwapchainBackBufferState;
+            return true;
+        }
+
+        if (!swapchainFramebuffer.Swapchain.TryGetCurrentBackBuffer(out backBuffer, out rtv, out index, out state)) {
+            return false;
+        }
+
+        this.CacheSwapchainBackBuffer(swapchainFramebuffer, backBuffer, rtv, index, state);
+        return true;
+    }
+
+    /// <summary>
+    /// Stores the current swapchain back buffer for the active command-list recording.
+    /// </summary>
+    private void CacheSwapchainBackBuffer(D3D12SwapchainFramebuffer swapchainFramebuffer, ID3D12Resource backBuffer, CpuDescriptorHandle rtv, int index, ResourceStates state) {
+        this._cachedSwapchainFramebuffer = swapchainFramebuffer;
+        this._cachedSwapchainBackBuffer = backBuffer;
+        this._cachedSwapchainRtv = rtv;
+        this._cachedSwapchainBackBufferIndex = index;
+        this._cachedSwapchainBackBufferState = state;
+    }
+
+    /// <summary>
+    /// Clears cached swapchain back-buffer state for a new command-list recording.
+    /// </summary>
+    private void ClearCachedSwapchainBackBuffer() {
+        this._cachedSwapchainFramebuffer = null;
+        this._cachedSwapchainBackBuffer = null;
+        this._cachedSwapchainRtv = default;
+        this._cachedSwapchainBackBufferIndex = -1;
+        this._cachedSwapchainBackBufferState = ResourceStates.Common;
     }
 
     /// <summary>
@@ -3495,47 +4425,20 @@ internal sealed class D3D12CommandList : CommandList {
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     [Guid("8BA5FB08-5195-40E2-AC58-0D989C3A0102")]
     private interface ID3DBlob {
-        [PreserveSig]
 
         /// <summary>
         /// Gets the buffer pointer value.
         /// </summary>
         /// <returns>The value produced by this operation.</returns>
-        IntPtr GetBufferPointer();
-
         [PreserveSig]
-
+        IntPtr GetBufferPointer();
+        
         /// <summary>
         /// Gets the buffer size value.
         /// </summary>
         /// <returns>The value produced by this operation.</returns>
+        [PreserveSig]
         nuint GetBufferSize();
-    }
-
-    /// <summary>
-    /// Represents the DescriptorCacheKey data structure used by the graphics runtime.
-    /// </summary>
-    private readonly struct DescriptorCacheKey {
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="DescriptorCacheKey" /> type.
-        /// </summary>
-        /// <param name="set">The resource set that owns the grouped descriptor table.</param>
-        /// <param name="kind">The kind value used by this operation.</param>
-        public DescriptorCacheKey(D3D12ResourceSet set, D3D12Pipeline.DescriptorTableKind kind) {
-            this.Set = set;
-            this.Kind = kind;
-        }
-
-        /// <summary>
-        /// Gets or sets Set.
-        /// </summary>
-        public D3D12ResourceSet Set { get; }
-
-        /// <summary>
-        /// Gets or sets Kind.
-        /// </summary>
-        public D3D12Pipeline.DescriptorTableKind Kind { get; }
     }
 
     /// <summary>
@@ -3572,6 +4475,83 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
+    /// Represents a cached resource set binding plan and its descriptor-table metadata.
+    /// </summary>
+    private readonly struct ResourceSetBindingPlan {
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ResourceSetBindingPlan" /> type.
+        /// </summary>
+        /// <param name="entries">The binding entries used by this plan.</param>
+        public ResourceSetBindingPlan(ResourceSetBindingPlanEntry[] entries) {
+            this.Entries = entries;
+            this.SrvUavTable = CreateDescriptorTableBindingInfo(entries, D3D12Pipeline.DescriptorTableKind.SrvUav);
+            this.SamplerTable = CreateDescriptorTableBindingInfo(entries, D3D12Pipeline.DescriptorTableKind.Sampler);
+        }
+
+        /// <summary>
+        /// Gets or sets Entries.
+        /// </summary>
+        public ResourceSetBindingPlanEntry[] Entries { get; }
+
+        /// <summary>
+        /// Gets or sets SrvUavTable.
+        /// </summary>
+        public DescriptorTableBindingInfo SrvUavTable { get; }
+
+        /// <summary>
+        /// Gets or sets SamplerTable.
+        /// </summary>
+        public DescriptorTableBindingInfo SamplerTable { get; }
+    }
+
+    /// <summary>
+    /// Represents cached metadata for one descriptor table in a resource set binding plan.
+    /// </summary>
+    private readonly struct DescriptorTableBindingInfo {
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DescriptorTableBindingInfo" /> type.
+        /// </summary>
+        /// <param name="tableKind">The descriptor table kind.</param>
+        /// <param name="descriptorCount">The descriptor count required by the table.</param>
+        /// <param name="rootParameterIndex">The root parameter index that owns the table.</param>
+        /// <param name="signature">The descriptor table shape identifier.</param>
+        public DescriptorTableBindingInfo(D3D12Pipeline.DescriptorTableKind tableKind, uint descriptorCount, uint rootParameterIndex, uint signature) {
+            this.HasTable = true;
+            this.TableKind = tableKind;
+            this.DescriptorCount = descriptorCount;
+            this.RootParameterIndex = rootParameterIndex;
+            this.Signature = signature;
+        }
+
+        /// <summary>
+        /// Gets or sets HasTable.
+        /// </summary>
+        public bool HasTable { get; }
+
+        /// <summary>
+        /// Gets or sets TableKind.
+        /// </summary>
+        public D3D12Pipeline.DescriptorTableKind TableKind { get; }
+
+        /// <summary>
+        /// Gets or sets DescriptorCount.
+        /// </summary>
+        public uint DescriptorCount { get; }
+
+        /// <summary>
+        /// Gets or sets RootParameterIndex.
+        /// </summary>
+        public uint RootParameterIndex { get; }
+
+        /// <summary>
+        /// Gets or sets Signature.
+        /// </summary>
+        public uint Signature { get; }
+    }
+
+    /// <summary>
     /// Represents the ResourceSetBindingPlanEntry data structure used by the graphics runtime.
     /// </summary>
     private readonly struct ResourceSetBindingPlanEntry {
@@ -3602,36 +4582,6 @@ internal sealed class D3D12CommandList : CommandList {
         /// Gets or sets IsDynamicBinding.
         /// </summary>
         public bool IsDynamicBinding { get; }
-    }
-
-    /// <summary>
-    /// Represents the DescriptorCacheKeyComparer type used by the graphics runtime.
-    /// </summary>
-    private sealed class DescriptorCacheKeyComparer : IEqualityComparer<DescriptorCacheKey> {
-
-        /// <summary>
-        /// Stores the instance state used by this instance.
-        /// </summary>
-        public static readonly DescriptorCacheKeyComparer Instance = new();
-
-        /// <summary>
-        /// Determines whether this instance is equal to the specified value.
-        /// </summary>
-        /// <param name="x">The X coordinate.</param>
-        /// <param name="y">The Y coordinate.</param>
-        /// <returns><see langword="true" /> if the operation succeeds; otherwise, <see langword="false" />.</returns>
-        public bool Equals(DescriptorCacheKey x, DescriptorCacheKey y) {
-            return x.Kind == y.Kind && ReferenceEquals(x.Set, y.Set);
-        }
-
-        /// <summary>
-        /// Computes a hash code for this instance.
-        /// </summary>
-        /// <param name="obj">The object instance to evaluate.</param>
-        /// <returns>The value produced by this operation.</returns>
-        public int GetHashCode(DescriptorCacheKey obj) {
-            return HashCode.Combine((int)obj.Kind, RuntimeHelpers.GetHashCode(obj.Set));
-        }
     }
 
     /// <summary>
@@ -3693,7 +4643,12 @@ internal sealed class D3D12CommandList : CommandList {
         /// <param name="obj">The object instance to evaluate.</param>
         /// <returns>The value produced by this operation.</returns>
         public int GetHashCode(ResourceSetBindingPlanKey obj) {
-            return HashCode.Combine((int)obj.Slot, RuntimeHelpers.GetHashCode(obj.Pipeline), RuntimeHelpers.GetHashCode(obj.Layout));
+            unchecked {
+                int hash = RuntimeHelpers.GetHashCode(obj.Pipeline);
+                hash = (hash * 397) ^ RuntimeHelpers.GetHashCode(obj.Layout);
+                hash = (hash * 397) ^ (int)obj.Slot;
+                return hash;
+            }
         }
     }
 }
