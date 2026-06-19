@@ -194,6 +194,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// Stores the set marker method state used by this instance.
     /// </summary>
     private readonly MethodInfo _setMarkerMethod;
+    private readonly object[] _debugMarkerArgs = new object[3];
 
     /// <summary>
     /// Stores the persistent shader-visible sampler descriptor heap used by this command list.
@@ -2569,10 +2570,32 @@ internal sealed class D3D12CommandList : CommandList {
 
         uint layerCount = texture.ArrayLayers;
         uint subresourceCount = texture.MipLevels * layerCount;
-        ResourceStates[] previousStates = CaptureTextureStates(texture);
-        ResourceStates[] subresourceStates = new ResourceStates[subresourceCount];
-        for (uint subresource = 0; subresource < subresourceCount; subresource++) {
-            subresourceStates[subresource] = previousStates[subresource];
+
+        // Try to use preallocated buffers to avoid per-call allocations for common sizes.
+        ResourceStates[] previousStates;
+        ResourceStates[] subresourceStates;
+        bool previousStatesTemp = false;
+        bool subStatesTemp = false;
+
+        if (subresourceCount <= (uint)this._srcCaptureStates.Length) {
+            CaptureTextureStatesInto(texture, this._srcCaptureStates);
+            previousStates = this._srcCaptureStates;
+        }
+        else {
+            previousStates = CaptureTextureStates(texture);
+            previousStatesTemp = true;
+        }
+
+        if (subresourceCount <= (uint)this._dstCaptureStates.Length) {
+            subresourceStates = this._dstCaptureStates;
+        }
+        else {
+            subresourceStates = new ResourceStates[subresourceCount];
+            subStatesTemp = true;
+        }
+
+        for (uint i = 0; i < subresourceCount; i++) {
+            subresourceStates[i] = previousStates[i];
         }
 
         try {
@@ -2889,11 +2912,14 @@ internal sealed class D3D12CommandList : CommandList {
             ParameterInfo[] parameters = markerMethod.GetParameters();
             object metadata = parameters[0].ParameterType == typeof(int) ? 0 : 0u;
             object sizeValue = parameters[2].ParameterType == typeof(int) ? size : (uint)size;
+            this._debugMarkerArgs[0] = metadata;
+            this._debugMarkerArgs[1] = dataPtr;
+            this._debugMarkerArgs[2] = sizeValue;
             if (beginEvent) {
-                markerMethod.Invoke(this.NativeCommandList, new[] { metadata, dataPtr, sizeValue });
+                markerMethod.Invoke(this.NativeCommandList, this._debugMarkerArgs);
             }
             else if (setMarker) {
-                markerMethod.Invoke(this.NativeCommandList, new[] { metadata, dataPtr, sizeValue });
+                markerMethod.Invoke(this.NativeCommandList, this._debugMarkerArgs);
             }
         }
     }
