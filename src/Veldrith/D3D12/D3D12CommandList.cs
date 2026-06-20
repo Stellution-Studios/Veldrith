@@ -784,11 +784,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="instanceStart">The instance start value used by this operation.</param>
     private protected override void DrawCore(uint vertexCount, uint instanceCount, uint vertexStart, uint instanceStart) {
         long startTicks = D3D12CommandListPerfTracker.Enabled ? Stopwatch.GetTimestamp() : 0;
-        this.FlushPendingBufferUploads();
-        this.FlushGraphicsResourceSets();
-        this.FlushPendingUavBarrier();
-        this.FlushPendingBarriers();
-        this.BeginRenderPassForDraw();
+        this.PreDrawCommand();
         this.DrawInstancedNoAlloc(vertexCount, instanceCount, vertexStart, instanceStart);
         if (D3D12CommandListPerfTracker.Enabled) {
             this._perf.DrawCalls++;
@@ -806,11 +802,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="instanceStart">The instance start value used by this operation.</param>
     private protected override void DrawIndexedCore(uint indexCount, uint instanceCount, uint indexStart, int vertexOffset, uint instanceStart) {
         long startTicks = D3D12CommandListPerfTracker.Enabled ? Stopwatch.GetTimestamp() : 0;
-        this.FlushPendingBufferUploads();
-        this.FlushGraphicsResourceSets();
-        this.FlushPendingUavBarrier();
-        this.FlushPendingBarriers();
-        this.BeginRenderPassForDraw();
+        this.PreDrawCommand();
         this.DrawIndexedInstancedNoAlloc(indexCount, instanceCount, indexStart, vertexOffset, instanceStart);
         if (D3D12CommandListPerfTracker.Enabled) {
             this._perf.DrawCalls++;
@@ -1167,6 +1159,34 @@ internal sealed class D3D12CommandList : CommandList {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void FlushPendingBarriersForInternalUse() {
         this.FlushPendingBarriers();
+    }
+
+    /// <summary>
+    /// Flushes dirty graphics state required before a direct draw command.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void PreDrawCommand() {
+        if (this._bufferUpdatePlanner.HasPendingUploads) {
+            this._bufferUpdatePlanner.Flush();
+        }
+
+        D3D12Pipeline pipeline = this.CurrentGraphicsPipeline;
+        if (this._graphicsResourceSets.Dirty && pipeline != null) {
+            this.EndRenderPassForInternalUse();
+            this._descriptorSetBinder.FlushGraphicsResourceSets(this._graphicsResourceSets, pipeline);
+        }
+
+        if (this._barriers.UavBarrierPending) {
+            this.FlushPendingUavBarrier();
+        }
+
+        if (this._barriers.HasQueuedBarriers) {
+            this.FlushPendingBarriers();
+        }
+
+        if (this.NativeCommandList4 != null) {
+            this._renderPassTracker.BeginDrawPass(this.Framebuffer);
+        }
     }
 
     /// <summary>

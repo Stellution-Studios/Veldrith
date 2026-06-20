@@ -15,7 +15,9 @@
         <AssemblyName>Veldrith</AssemblyName>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <LangVersion>14</LangVersion>
-        <DefineConstants>$(DefineConstants);VALIDATE_USAGE</DefineConstants>
+        <ValidateUsage Condition="'$(ValidateUsage)' == '' and '$(Configuration)' == 'Debug'">true</ValidateUsage>
+        <ValidateUsage Condition="'$(ValidateUsage)' == ''">false</ValidateUsage>
+        <DefineConstants Condition="'$(ValidateUsage)' == 'true'">$(DefineConstants);VALIDATE_USAGE</DefineConstants>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
