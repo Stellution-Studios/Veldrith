@@ -30,6 +30,21 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     private const int _perfReportIntervalSubmissions = 240;
 
     /// <summary>
+    /// Stores the default number of submits between deferred-disposal fence polls.
+    /// </summary>
+    private const int DefaultDeferredDisposalPumpInterval = 4;
+
+    /// <summary>
+    /// Stores the maximum number of pending deferred-disposal batches before throttling is bypassed.
+    /// </summary>
+    private const int DeferredDisposalPumpHighWatermark = 64;
+
+    /// <summary>
+    /// Stores the number of submits between deferred-disposal fence polls.
+    /// </summary>
+    private static readonly int _deferredDisposalPumpInterval = ReadDeferredDisposalPumpInterval();
+
+    /// <summary>
     /// Stores the d3d12 features state used by this instance.
     /// </summary>
     private static readonly GraphicsDeviceFeatures _d3D12Features = new(true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, false);
@@ -53,9 +68,28 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     #endif
 
     /// <summary>
+    /// Reads the deferred-disposal pump interval from the environment.
+    /// </summary>
+    /// <returns>The configured pump interval clamped to the supported range.</returns>
+    private static int ReadDeferredDisposalPumpInterval() {
+        string value = Environment.GetEnvironmentVariable("VELDRID_D3D12_DEFERRED_DISPOSAL_PUMP_INTERVAL");
+
+        if (int.TryParse(value, out int parsed)) {
+            return Math.Clamp(parsed, 1, 64);
+        }
+
+        return DefaultDeferredDisposalPumpInterval;
+    }
+
+    /// <summary>
     /// Gets whether small immediate buffer updates should use the experimental shared-page batcher.
     /// </summary>
     private static readonly bool _immediateBufferUpdateBatcherEnabled = string.Equals(Environment.GetEnvironmentVariable("VELDRID_D3D12_IMMEDIATE_BUFFER_BATCHER"), "1", StringComparison.Ordinal);
+
+    /// <summary>
+    /// Tracks submit calls for deferred-disposal pump throttling.
+    /// </summary>
+    private int _deferredDisposalPumpSubmitCounter;
 
     /// <summary>
     /// Stores the d3d12 info state used by this instance.
