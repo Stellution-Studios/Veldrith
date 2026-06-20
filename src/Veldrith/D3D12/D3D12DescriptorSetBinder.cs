@@ -14,11 +14,6 @@ namespace Veldrith.D3D12;
 internal sealed class D3D12DescriptorSetBinder : IDisposable {
 
     /// <summary>
-    /// Stores the graphics device used to resolve default texture views and descriptor sources.
-    /// </summary>
-    private readonly D3D12GraphicsDevice _gd;
-
-    /// <summary>
     /// Stores the command list that receives D3D12 binding and transition commands.
     /// </summary>
     private readonly D3D12CommandList _commandList;
@@ -51,7 +46,6 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
     /// <param name="rootBindingCache">The root binding cache used to skip redundant root updates.</param>
     /// <param name="perf">The optional performance tracker updated by the binder.</param>
     internal D3D12DescriptorSetBinder(D3D12GraphicsDevice gd, D3D12CommandList commandList, D3D12RootBindingCache rootBindingCache, D3D12CommandListPerfTracker perf) {
-        this._gd = gd;
         this._commandList = commandList;
         this._rootBindingCache = rootBindingCache;
         this._perf = perf;
@@ -159,7 +153,7 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
         }
 
         D3D12ResourceSet d3d12Set = Util.AssertSubtype<ResourceSet, D3D12ResourceSet>(boundSet.Set);
-        IBindableResource[] resources = d3d12Set.BoundResources;
+        D3D12ResourceSetElementCache[] elementCaches = d3d12Set.ElementCaches;
         D3D12ResourceSetBindingPlan bindingPlan = compute
             ? this._bindingPlans.GetCompute(pipeline, slot, d3d12Set.ResourceLayoutInfo)
             : this._bindingPlans.GetGraphics(pipeline, slot, d3d12Set.ResourceLayoutInfo);
@@ -179,18 +173,18 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
                 dynamicOffsetIndex++;
             }
 
-            IBindableResource resource = resources[bindingEntry.ElementIndex];
+            D3D12ResourceSetElementCache elementCache = elementCaches[bindingEntry.ElementIndex];
             if (bindingEntry.BindingInfo.DescriptorTable) {
-                this.PrepareDescriptorTableResource(bindingEntry.BindingInfo.Kind, resource, compute);
+                this.PrepareDescriptorTableResource(bindingEntry.BindingInfo.Kind, elementCache, compute);
                 descriptorTablesChanged = true;
                 continue;
             }
 
             if (compute) {
-                this.BindComputeResource(bindingEntry.BindingInfo, resource, dynamicOffset);
+                this.BindComputeResource(bindingEntry.BindingInfo, elementCache, dynamicOffset);
             }
             else {
-                this.BindGraphicsResource(bindingEntry.BindingInfo, resource, dynamicOffset);
+                this.BindGraphicsResource(bindingEntry.BindingInfo, elementCache, dynamicOffset);
             }
         }
 
@@ -203,14 +197,16 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
     /// Binds a graphics root resource for subsequent draw commands.
     /// </summary>
     /// <param name="bindingInfo">The root binding metadata.</param>
-    /// <param name="resource">The resource to bind.</param>
+    /// <param name="elementCache">The pre-resolved resource-set element cache.</param>
     /// <param name="dynamicOffset">The dynamic offset applied to buffer bindings.</param>
-    private void BindGraphicsResource(D3D12Pipeline.RootBindingInfo bindingInfo, IBindableResource resource, uint dynamicOffset) {
+    private void BindGraphicsResource(D3D12Pipeline.RootBindingInfo bindingInfo, D3D12ResourceSetElementCache elementCache, uint dynamicOffset) {
         if (bindingInfo.DescriptorTable) {
             return;
         }
 
-        D3D12DeviceBuffer d3D12Buffer = GetD3D12BufferRange(resource, dynamicOffset, out uint rangeOffset);
+        D3D12DeviceBuffer d3D12Buffer = elementCache.Buffer
+                                        ?? throw new VeldridException("D3D12 root binding requires a buffer resource.");
+        uint rangeOffset = elementCache.BufferOffset + dynamicOffset;
         this._commandList.TransitionBufferForInternalUse(d3D12Buffer, GetGraphicsBufferState(bindingInfo.Kind));
         ulong gpuAddress = d3D12Buffer.GetGpuVirtualAddress(rangeOffset);
         if (this._rootBindingCache.IsSameGraphicsRootBuffer(bindingInfo.RootParameterIndex, gpuAddress)) {
@@ -241,14 +237,16 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
     /// Binds a compute root resource for subsequent dispatch commands.
     /// </summary>
     /// <param name="bindingInfo">The root binding metadata.</param>
-    /// <param name="resource">The resource to bind.</param>
+    /// <param name="elementCache">The pre-resolved resource-set element cache.</param>
     /// <param name="dynamicOffset">The dynamic offset applied to buffer bindings.</param>
-    private void BindComputeResource(D3D12Pipeline.RootBindingInfo bindingInfo, IBindableResource resource, uint dynamicOffset) {
+    private void BindComputeResource(D3D12Pipeline.RootBindingInfo bindingInfo, D3D12ResourceSetElementCache elementCache, uint dynamicOffset) {
         if (bindingInfo.DescriptorTable) {
             return;
         }
 
-        D3D12DeviceBuffer d3D12Buffer = GetD3D12BufferRange(resource, dynamicOffset, out uint rangeOffset);
+        D3D12DeviceBuffer d3D12Buffer = elementCache.Buffer
+                                        ?? throw new VeldridException("D3D12 root binding requires a buffer resource.");
+        uint rangeOffset = elementCache.BufferOffset + dynamicOffset;
         this._commandList.TransitionBufferForInternalUse(d3D12Buffer, GetComputeBufferState(bindingInfo.Kind));
         ulong gpuAddress = d3D12Buffer.GetGpuVirtualAddress(rangeOffset);
 
@@ -280,22 +278,20 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
     /// Prepares a descriptor-table resource for binding by validating and transitioning it.
     /// </summary>
     /// <param name="kind">The resource kind.</param>
-    /// <param name="resource">The resource to prepare.</param>
+    /// <param name="elementCache">The pre-resolved resource-set element cache.</param>
     /// <param name="compute">Whether the resource is being used by a compute pipeline.</param>
-    private void PrepareDescriptorTableResource(ResourceKind kind, IBindableResource resource, bool compute) {
+    private void PrepareDescriptorTableResource(ResourceKind kind, D3D12ResourceSetElementCache elementCache, bool compute) {
         switch (kind) {
             case ResourceKind.TextureReadOnly: {
-                    TextureView textureView = Util.GetTextureView(this._gd, resource);
-                    D3D12TextureView d3d12TextureView = Util.AssertSubtype<TextureView, D3D12TextureView>(textureView);
-                    d3d12TextureView.EnsureBindingSupport(TextureUsage.Sampled, "sampled");
+                    D3D12TextureView d3d12TextureView = elementCache.TextureView
+                                                        ?? throw new VeldridException("D3D12 sampled descriptor-table binding requires a texture view.");
                     ResourceStates readState = compute ? ResourceStates.NonPixelShaderResource : ResourceStates.PixelShaderResource | ResourceStates.NonPixelShaderResource;
                     this._commandList.TransitionTextureViewForInternalUse(d3d12TextureView, readState);
                     break;
                 }
             case ResourceKind.TextureReadWrite: {
-                    TextureView textureView = Util.GetTextureView(this._gd, resource);
-                    D3D12TextureView d3D12TextureView = Util.AssertSubtype<TextureView, D3D12TextureView>(textureView);
-                    d3D12TextureView.EnsureBindingSupport(TextureUsage.Storage, "storage");
+                    D3D12TextureView d3D12TextureView = elementCache.TextureView
+                                                        ?? throw new VeldridException("D3D12 storage descriptor-table binding requires a texture view.");
                     this._commandList.TransitionTextureViewForInternalUse(d3D12TextureView, ResourceStates.UnorderedAccess);
                     break;
                 }
@@ -352,27 +348,6 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
         if (D3D12CommandListPerfTracker.Enabled) {
             this._perf.RootTableSets++;
         }
-    }
-
-    /// <summary>
-    /// Resolves a bindable buffer resource and its dynamic offset for a D3D12 root-buffer binding.
-    /// </summary>
-    /// <param name="resource">The bindable resource to resolve.</param>
-    /// <param name="dynamicOffset">The dynamic offset applied to the resource.</param>
-    /// <param name="offset">The resolved byte offset into the buffer.</param>
-    /// <returns>The D3D12 buffer backing the binding.</returns>
-    private static D3D12DeviceBuffer GetD3D12BufferRange(IBindableResource resource, uint dynamicOffset, out uint offset) {
-        if (resource is DeviceBufferRange range) {
-            offset = range.Offset + dynamicOffset;
-            return Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(range.Buffer);
-        }
-
-        if (resource is DeviceBuffer buffer) {
-            offset = dynamicOffset;
-            return Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(buffer);
-        }
-
-        throw new PlatformNotSupportedException("D3D12 ResourceSet currently supports buffer resources only for non-table root bindings.");
     }
 
     /// <summary>

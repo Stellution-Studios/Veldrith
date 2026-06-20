@@ -202,7 +202,7 @@ internal sealed class D3D12DescriptorHeapState : IDisposable {
             }
 
             this._descriptorCopyDests[batchCount] = cpuHandle + (int)(bindingInfo.DescriptorTableOffset * (uint)descriptorSize);
-            this._descriptorCopySources[batchCount] = this.GetSourceDescriptor(set, entry.ElementIndex, bindingInfo.Kind);
+            this._descriptorCopySources[batchCount] = GetSourceDescriptor(set.ElementCaches[entry.ElementIndex], bindingInfo.Kind);
             batchCount++;
         }
 
@@ -257,26 +257,14 @@ internal sealed class D3D12DescriptorHeapState : IDisposable {
     /// <summary>
     /// Gets the persistent CPU descriptor for a descriptor-table resource.
     /// </summary>
-    /// <param name="resource">The resource to resolve.</param>
+    /// <param name="elementCache">The pre-resolved resource-set element cache.</param>
     /// <param name="kind">The resource binding kind.</param>
     /// <returns>The CPU descriptor handle.</returns>
-    private CpuDescriptorHandle GetSourceDescriptor(D3D12ResourceSet set, uint elementIndex, ResourceKind kind) {
-        IBindableResource resource = set.BoundResources[elementIndex];
+    private static CpuDescriptorHandle GetSourceDescriptor(D3D12ResourceSetElementCache elementCache, ResourceKind kind) {
         switch (kind) {
-            case ResourceKind.TextureReadOnly: {
-                    TextureView textureView = Util.GetTextureView(this._gd, resource);
-                    D3D12TextureView d3d12TextureView = Util.AssertSubtype<TextureView, D3D12TextureView>(textureView);
-                    return d3d12TextureView.GetOrCreateShaderResourceViewDescriptor();
-                }
-            case ResourceKind.TextureReadWrite: {
-                    TextureView textureView = Util.GetTextureView(this._gd, resource);
-                    D3D12TextureView d3d12TextureView = Util.AssertSubtype<TextureView, D3D12TextureView>(textureView);
-                    return d3d12TextureView.GetOrCreateUnorderedAccessViewDescriptor();
-                }
-            case ResourceKind.Sampler: {
-                    D3D12Sampler d3d12Sampler = Util.AssertSubtype<IBindableResource, D3D12Sampler>(resource);
-                    return d3d12Sampler.GetOrCreateDescriptor();
-                }
+            case ResourceKind.TextureReadOnly: return elementCache.SrvDescriptor;
+            case ResourceKind.TextureReadWrite: return elementCache.UavDescriptor;
+            case ResourceKind.Sampler: return elementCache.SamplerDescriptor;
             default: throw new VeldridException("Invalid descriptor-table binding kind.");
         }
     }

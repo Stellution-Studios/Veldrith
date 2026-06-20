@@ -72,6 +72,16 @@ internal sealed class D3D12CommandList : CommandList {
     private readonly D3D12RenderTargetBinder _renderTargetBinder;
 
     /// <summary>
+    /// Plans and records D3D12 framebuffer clear operations.
+    /// </summary>
+    private readonly D3D12ClearPlanner _clearPlanner;
+
+    /// <summary>
+    /// Plans and records D3D12 buffer update operations.
+    /// </summary>
+    private readonly D3D12BufferUpdatePlanner _bufferUpdatePlanner;
+
+    /// <summary>
     /// Tracks dynamic viewport and scissor state to avoid redundant D3D12 calls.
     /// </summary>
     private readonly D3D12ViewportScissorState _viewportScissor = new();
@@ -100,7 +110,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// <summary>
     /// Stores the gd state used by this instance.
     /// </summary>
-    private readonly D3D12GraphicsDevice gd;
+    private readonly D3D12GraphicsDevice _gd;
 
     /// <summary>
     /// Stores upload resources recorded on this command list until submission assigns a fence value.
@@ -146,7 +156,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="uniformAlignment">The uniform alignment value used by this operation.</param>
     /// <param name="structuredAlignment">The structured alignment value used by this operation.</param>
     public D3D12CommandList(D3D12GraphicsDevice gd, ref CommandListDescription description, GraphicsDeviceFeatures features, uint uniformAlignment, uint structuredAlignment) : base(ref description, features, uniformAlignment, structuredAlignment) {
-        this.gd = gd;
+        this._gd = gd;
 
         this._frameState = new D3D12CommandListFrameState(gd);
         this._descriptorSetBinder = new D3D12DescriptorSetBinder(gd, this, this._rootBindingCache, this._perf);
@@ -155,6 +165,8 @@ internal sealed class D3D12CommandList : CommandList {
         this._textureCopyPlanner = new D3D12TextureCopyPlanner(this);
         this._pipelineStateBinder = new D3D12PipelineStateBinder(this, this._graphicsResourceSets, this._computeResourceSets, this._rootBindingCache, this._perf);
         this._renderTargetBinder = new D3D12RenderTargetBinder(this, this._swapchainBackBuffer, this._perf);
+        this._clearPlanner = new D3D12ClearPlanner(this, this._swapchainBackBuffer);
+        this._bufferUpdatePlanner = new D3D12BufferUpdatePlanner(gd, this, this._perf);
         this.NativeCommandList = gd.Device.CreateCommandList<ID3D12GraphicsCommandList>(0, CommandListType.Direct, this._frameState.InitialAllocator);
         this._beginEventMethod = this.GetDebugMarkerMethod("BeginEvent");
         this._setMarkerMethod = this.GetDebugMarkerMethod("SetMarker");
@@ -269,6 +281,11 @@ internal sealed class D3D12CommandList : CommandList {
         this.FlushPendingBarriers();
         this.CloseNoAlloc();
         this._ended = true;
+        if (D3D12CommandListPerfTracker.Enabled) {
+            this._perf.BarrierCoalescedTransitions = this._barriers.CoalescedTransitions;
+            this._perf.BarrierRemovedTransitions = this._barriers.RemovedTransitions;
+        }
+
         this._perf.EndRecording();
     }
 
@@ -321,7 +338,7 @@ internal sealed class D3D12CommandList : CommandList {
             throw new VeldridException("CommandList must be ended before submit.");
         }
 
-        this.gd.ExecuteCommandListNoAlloc(this.NativeCommandList);
+        this._gd.ExecuteCommandListNoAlloc(this.NativeCommandList);
     }
 
     /// <summary>
@@ -336,7 +353,7 @@ internal sealed class D3D12CommandList : CommandList {
         }
 
         for (int i = 0; i < this._pendingSubmissionUploadBuffers.Count; i++) {
-            this.gd.EnqueueSubmissionUploadBuffer(this._pendingSubmissionUploadBuffers[i], signalValue);
+            this._gd.EnqueueSubmissionUploadBuffer(this._pendingSubmissionUploadBuffers[i], signalValue);
         }
 
         this._pendingSubmissionUploadBuffers.Clear();
@@ -552,6 +569,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="sizeInBytes">The size, in bytes, used by this operation.</param>
     protected override void CopyBufferCore(DeviceBuffer source, uint sourceOffset, DeviceBuffer destination, uint destinationOffset, uint sizeInBytes) {
         this.FlushPendingUavBarrier();
+        this.FlushPendingBarriers();
         D3D12DeviceBuffer src = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(source);
         D3D12DeviceBuffer dst = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(destination);
         src.CopyTo(this.NativeCommandList, dst, sourceOffset, destinationOffset, sizeInBytes);
@@ -638,28 +656,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="index">The zero-based index of the target item.</param>
     /// <param name="clearColor">The clear color value used by this operation.</param>
     private protected override void ClearColorTargetCore(uint index, RgbaFloat clearColor) {
-        this.FlushPendingUavBarrier();
-        if (this.Framebuffer is D3D12SwapchainFramebuffer swapchainFramebuffer && this._swapchainBackBuffer.TryGetBackBuffer(swapchainFramebuffer, out ID3D12Resource backBuffer, out CpuDescriptorHandle rtv, out int backBufferIndex, out ResourceStates currentState)) {
-            this.Transition(backBuffer, currentState, ResourceStates.RenderTarget);
-            swapchainFramebuffer.Swapchain.SetBackBufferState(backBufferIndex, ResourceStates.RenderTarget);
-            this._swapchainBackBuffer.MarkBackBufferState(backBufferIndex, ResourceStates.RenderTarget);
-            this.FlushPendingBarriers();
-            this.ClearRenderTargetViewNoAlloc(rtv, clearColor.R, clearColor.G, clearColor.B, clearColor.A);
-            return;
-        }
-
-        if (this.Framebuffer is D3D12Framebuffer d3D12Framebuffer
-            && d3D12Framebuffer.TryGetColorTargetView(index, out CpuDescriptorHandle offscreenRtv)) {
-            if (index < d3D12Framebuffer.ColorTargetTextures.Length) {
-                D3D12Texture colorTexture = d3D12Framebuffer.ColorTargetTextures[(int)index];
-                if (colorTexture != null) {
-                    this.TransitionTexture(colorTexture, ResourceStates.RenderTarget);
-                }
-            }
-
-            this.FlushPendingBarriers();
-            this.ClearRenderTargetViewNoAlloc(offscreenRtv, clearColor.R, clearColor.G, clearColor.B, clearColor.A);
-        }
+        this._clearPlanner.ClearColorTarget(this.Framebuffer, index, clearColor);
     }
 
     /// <summary>
@@ -668,44 +665,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="depth">The depth value.</param>
     /// <param name="stencil">The stencil value used by this operation.</param>
     private protected override void ClearDepthStencilCore(float depth, byte stencil) {
-        this.FlushPendingUavBarrier();
-        if (this.Framebuffer is D3D12SwapchainFramebuffer swapchainFramebuffer) {
-            if (swapchainFramebuffer.DepthTargetTexture == null) {
-                return;
-            }
-
-            this.TransitionTexture(swapchainFramebuffer.DepthTargetTexture, ResourceStates.DepthWrite);
-            if (swapchainFramebuffer.TryGetDepthStencilView(out CpuDescriptorHandle swapchainDsv)) {
-                ClearFlags swapchainClearFlags = ClearFlags.Depth;
-                if (FormatHelpers.IsStencilFormat(swapchainFramebuffer.DepthTargetTexture.Format)) {
-                    swapchainClearFlags |= ClearFlags.Stencil;
-                }
-
-                this.FlushPendingBarriers();
-                this.ClearDepthStencilViewNoAlloc(swapchainDsv, (uint)swapchainClearFlags, depth, stencil);
-            }
-
-            return;
-        }
-
-        if (this.Framebuffer is not D3D12Framebuffer d3D12Framebuffer) {
-            return;
-        }
-
-        if (d3D12Framebuffer.DepthTargetTexture == null) {
-            return;
-        }
-
-        this.TransitionTexture(d3D12Framebuffer.DepthTargetTexture, ResourceStates.DepthWrite);
-        if (d3D12Framebuffer.TryGetDepthStencilView(out CpuDescriptorHandle dsv)) {
-            ClearFlags clearFlags = ClearFlags.Depth;
-            if (FormatHelpers.IsStencilFormat(d3D12Framebuffer.DepthTargetTexture.Format)) {
-                clearFlags |= ClearFlags.Stencil;
-            }
-
-            this.FlushPendingBarriers();
-            this.ClearDepthStencilViewNoAlloc(dsv, (uint)clearFlags, depth, stencil);
-        }
+        this._clearPlanner.ClearDepthStencil(this.Framebuffer, depth, stencil);
     }
 
     /// <summary>
@@ -755,34 +715,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="source">The source value or resource.</param>
     /// <param name="sizeInBytes">The size, in bytes, used by this operation.</param>
     private protected override void UpdateBufferCore(DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes) {
-        long startTicks = D3D12CommandListPerfTracker.Enabled ? Stopwatch.GetTimestamp() : 0;
-        this.FlushPendingUavBarrier();
-        D3D12DeviceBuffer d3D12Buffer = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(buffer);
-        ulong previousBindVersion = d3D12Buffer.BindVersion;
-        D3D12ResourceAllocation temporaryUpload = d3D12Buffer.Update(this.NativeCommandList, source, bufferOffsetInBytes, sizeInBytes);
-        if (D3D12CommandListPerfTracker.Enabled) {
-            this._perf.DynamicSnapshotCopyBytes += d3D12Buffer.LastDynamicSnapshotCopyBytes;
-            this._perf.DynamicSnapshotPrefixCopyBytes += d3D12Buffer.LastDynamicSnapshotPrefixCopyBytes;
-            if (d3D12Buffer.LastDynamicSnapshotRotated) {
-                this._perf.DynamicSnapshotRotations++;
-            }
-        }
-
-        if (d3D12Buffer.BindVersion != previousBindVersion) {
-            if (CanBeResourceSetBuffer(d3D12Buffer)) {
-                this.MarkResourceSetsReferencingBufferDirty(d3D12Buffer);
-            }
-
-            this.RefreshDynamicBufferBindings(d3D12Buffer);
-        }
-
-        if (temporaryUpload != null) {
-            this._pendingSubmissionUploadBuffers.Add(temporaryUpload);
-        }
-
-        if (D3D12CommandListPerfTracker.Enabled) {
-            this._perf.UploadRecordMs += D3D12CommandListPerfTracker.TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
-        }
+        this._bufferUpdatePlanner.Update(buffer, bufferOffsetInBytes, source, sizeInBytes);
     }
 
     [SupportedOSPlatform("windows")]
@@ -797,7 +730,7 @@ internal sealed class D3D12CommandList : CommandList {
             return;
         }
 
-        if (!this.gd.GetPixelFormatSupport(texture.Format, texture.Type, texture.Usage)) {
+        if (!this._gd.GetPixelFormatSupport(texture.Format, texture.Type, texture.Usage)) {
             throw new PlatformNotSupportedException("GenerateMipmaps is not supported for this D3D12 texture format/type/usage combination.");
         }
 
@@ -879,11 +812,12 @@ internal sealed class D3D12CommandList : CommandList {
             return;
         }
 
-        if (this._barriers.IsFull) {
+        D3D12BarrierQueueResult result = this._barriers.QueueTransition(resource, from, to);
+        if (result == D3D12BarrierQueueResult.Full) {
             this.FlushPendingBarriers();
+            this._barriers.QueueTransition(resource, from, to);
         }
 
-        this._barriers.QueueTransition(resource, from, to);
         if (D3D12CommandListPerfTracker.Enabled) {
             this._perf.Transitions++;
         }
@@ -988,6 +922,14 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
+    /// Refreshes input-assembler views for an internal D3D12 helper after a dynamic buffer native address change.
+    /// </summary>
+    /// <param name="buffer">The dynamic buffer whose binding version changed.</param>
+    internal void RefreshDynamicBufferBindingsForInternalUse(D3D12DeviceBuffer buffer) {
+        this.RefreshDynamicBufferBindings(buffer);
+    }
+
+    /// <summary>
     /// Records primitive topology only when the requested topology differs from command-list state.
     /// </summary>
     /// <param name="topology">The primitive topology required by the active graphics pipeline.</param>
@@ -1039,11 +981,12 @@ internal sealed class D3D12CommandList : CommandList {
             return;
         }
 
-        if (this._barriers.IsFull) {
+        D3D12BarrierQueueResult result = this._barriers.QueueSubresourceTransition(resource, from, to, subresource);
+        if (result == D3D12BarrierQueueResult.Full) {
             this.FlushPendingBarriers();
+            this._barriers.QueueSubresourceTransition(resource, from, to, subresource);
         }
 
-        this._barriers.QueueSubresourceTransition(resource, from, to, subresource);
         if (D3D12CommandListPerfTracker.Enabled) {
             this._perf.SubresourceTransitions++;
         }
@@ -1588,6 +1531,18 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
+    /// Clears a render target view for an internal D3D12 helper without going through the managed COM wrapper.
+    /// </summary>
+    /// <param name="rtv">The render-target view to clear.</param>
+    /// <param name="r">The red clear value.</param>
+    /// <param name="g">The green clear value.</param>
+    /// <param name="b">The blue clear value.</param>
+    /// <param name="a">The alpha clear value.</param>
+    internal void ClearRenderTargetViewNoAllocForInternalUse(CpuDescriptorHandle rtv, float r, float g, float b, float a) {
+        this.ClearRenderTargetViewNoAlloc(rtv, r, g, b, a);
+    }
+
+    /// <summary>
     /// Clears a depth/stencil view without going through the managed COM wrapper.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1596,6 +1551,17 @@ internal sealed class D3D12CommandList : CommandList {
         delegate* unmanaged[Stdcall]<void*, CpuDescriptorHandle, uint, float, byte, uint, void*, void> fn =
             (delegate* unmanaged[Stdcall]<void*, CpuDescriptorHandle, uint, float, byte, uint, void*, void>)vtbl[47];
         fn((void*)this.NativeCommandList.NativePointer, dsv, clearFlags, depth, stencil, 0u, null);
+    }
+
+    /// <summary>
+    /// Clears a depth/stencil view for an internal D3D12 helper without going through the managed COM wrapper.
+    /// </summary>
+    /// <param name="dsv">The depth/stencil view to clear.</param>
+    /// <param name="clearFlags">The native D3D12 clear flags.</param>
+    /// <param name="depth">The depth clear value.</param>
+    /// <param name="stencil">The stencil clear value.</param>
+    internal void ClearDepthStencilViewNoAllocForInternalUse(CpuDescriptorHandle dsv, uint clearFlags, float depth, byte stencil) {
+        this.ClearDepthStencilViewNoAlloc(dsv, clearFlags, depth, stencil);
     }
 
     /// <summary>
@@ -1628,6 +1594,24 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
+    /// Marks currently bound resource sets dirty for an internal D3D12 helper.
+    /// </summary>
+    /// <param name="buffer">The buffer whose native binding address changed.</param>
+    internal void MarkResourceSetsReferencingBufferDirtyForInternalUse(D3D12DeviceBuffer buffer) {
+        this.MarkResourceSetsReferencingBufferDirty(buffer);
+    }
+
+    /// <summary>
+    /// Keeps an upload allocation alive until the current command-list submission fence completes.
+    /// </summary>
+    /// <param name="uploadBuffer">The upload allocation referenced by recorded copy commands.</param>
+    internal void TrackPendingSubmissionUploadBufferForInternalUse(D3D12ResourceAllocation uploadBuffer) {
+        if (uploadBuffer != null) {
+            this._pendingSubmissionUploadBuffers.Add(uploadBuffer);
+        }
+    }
+
+    /// <summary>
     /// Binds a compute descriptor table without going through the managed COM wrapper.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1653,17 +1637,6 @@ internal sealed class D3D12CommandList : CommandList {
         setRootDescriptorTable((void*)this.NativeCommandList.NativePointer, rootParameterIndex, gpuHandle.Ptr);
     }
 
-    /// <summary>
-    /// Checks whether the buffer usage allows binding through a resource set.
-    /// </summary>
-    /// <param name="buffer">The buffer to inspect.</param>
-    /// <returns><see langword="true" /> when a bound resource set may reference the buffer.</returns>
-    private static bool CanBeResourceSetBuffer(D3D12DeviceBuffer buffer) {
-        const BufferUsage resourceSetUsages = BufferUsage.UniformBuffer | BufferUsage.StructuredBufferReadOnly | BufferUsage.StructuredBufferReadWrite;
-        return (buffer.Usage & resourceSetUsages) != 0;
-    }
-
-    /// <summary>
     /// Disposes upload resources that were recorded but not submitted.
     /// </summary>
     private void DisposePendingSubmissionDisposals() {
@@ -1672,7 +1645,7 @@ internal sealed class D3D12CommandList : CommandList {
         }
 
         for (int i = 0; i < this._pendingSubmissionUploadBuffers.Count; i++) {
-            this.gd.ReturnUploadBuffer(this._pendingSubmissionUploadBuffers[i]);
+            this._gd.ReturnUploadBuffer(this._pendingSubmissionUploadBuffers[i]);
         }
 
         this._pendingSubmissionUploadBuffers.Clear();

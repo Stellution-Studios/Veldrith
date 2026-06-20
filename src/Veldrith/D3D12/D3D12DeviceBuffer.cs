@@ -256,6 +256,25 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     }
 
     /// <summary>
+    /// Creates an upload allocation containing source data for an externally planned command-list buffer update.
+    /// </summary>
+    /// <param name="source">The source data pointer.</param>
+    /// <param name="destinationOffset">The destination offset validated against this buffer.</param>
+    /// <param name="sizeInBytes">The number of bytes to copy.</param>
+    /// <returns>The upload allocation containing the copied source data.</returns>
+    internal D3D12ResourceAllocation CreateUploadBufferForCommandListUpdate(IntPtr source, uint destinationOffset, uint sizeInBytes) {
+        if (destinationOffset + sizeInBytes > this.SizeInBytes) {
+            throw new VeldridException("Buffer update range exceeds the destination buffer size.");
+        }
+
+        if (!this.CanTransitionState) {
+            throw new VeldridException("CPU-visible D3D12 buffers do not require an upload allocation.");
+        }
+
+        return this.CreateUploadBuffer(source, sizeInBytes);
+    }
+
+    /// <summary>
     /// Copies to data between resources.
     /// </summary>
     /// <param name="commandList">The command list used by this operation.</param>

@@ -679,8 +679,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// <param name="value">The fence value to signal.</param>
     internal unsafe void SignalQueueFenceNoAlloc(ID3D12Fence fence, ulong value) {
         void** vtbl = *(void***)this.CommandQueue.NativePointer;
-        delegate* unmanaged[Stdcall]<void*, void*, ulong, int> signal =
-            (delegate* unmanaged[Stdcall]<void*, void*, ulong, int>)vtbl[14];
+        delegate* unmanaged[Stdcall]<void*, void*, ulong, int> signal = (delegate* unmanaged[Stdcall]<void*, void*, ulong, int>)vtbl[14];
         Result result = new(signal((void*)this.CommandQueue.NativePointer, (void*)fence.NativePointer, value));
         result.CheckError();
     }
@@ -959,24 +958,22 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// <param name="retainedResource">An additional disposable resource reference to retain until the batch completes.</param>
     internal void RecordBatchedImmediateCommand(Action<ID3D12GraphicsCommandList> recordCommands, D3D12ResourceAllocation uploadBuffer, IDisposable retainedResource) {
         long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
-        lock (this._commandQueueLock) {
-            lock (this._batchedImmediateCopyLock) {
-                if (this._batchedImmediateCopyContext == null) {
-                    this._batchedImmediateCopyContext = this.AcquireImmediateCopyContext();
-                    PrepareImmediateCopyContext(this._batchedImmediateCopyContext);
-                }
-
-                recordCommands(this._batchedImmediateCopyContext.CommandList);
-                if (uploadBuffer != null) {
-                    this._batchedImmediateUploadBuffers.Add(uploadBuffer);
-                }
-
-                if (retainedResource != null) {
-                    this._batchedImmediateRetainedResources.Add(retainedResource);
-                }
-
-                this._batchedImmediateCopyHasWork = true;
+        lock (this._batchedImmediateCopyLock) {
+            if (this._batchedImmediateCopyContext == null) {
+                this._batchedImmediateCopyContext = this.AcquireImmediateCopyContext();
+                PrepareImmediateCopyContext(this._batchedImmediateCopyContext);
             }
+
+            recordCommands(this._batchedImmediateCopyContext.CommandList);
+            if (uploadBuffer != null) {
+                this._batchedImmediateUploadBuffers.Add(uploadBuffer);
+            }
+
+            if (retainedResource != null) {
+                this._batchedImmediateRetainedResources.Add(retainedResource);
+            }
+
+            this._batchedImmediateCopyHasWork = true;
         }
 
         if (_perfLogEnabled) {

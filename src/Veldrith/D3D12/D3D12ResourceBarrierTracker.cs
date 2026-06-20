@@ -50,6 +50,16 @@ internal sealed class D3D12ResourceBarrierTracker {
     private uint _pendingBarrierCount;
 
     /// <summary>
+    /// Gets the number of pending transitions folded into an earlier pending transition since the last reset.
+    /// </summary>
+    internal ulong CoalescedTransitions { get; private set; }
+
+    /// <summary>
+    /// Gets the number of pending transitions removed because later work returned the resource to its original state.
+    /// </summary>
+    internal ulong RemovedTransitions { get; private set; }
+
+    /// <summary>
     /// Gets whether any transition barriers are queued.
     /// </summary>
     internal bool HasQueuedBarriers => this._pendingBarrierCount != 0;
@@ -70,6 +80,8 @@ internal sealed class D3D12ResourceBarrierTracker {
     internal void Reset() {
         this.ClearQueuedBarrierMetadata();
         this._pendingBarrierCount = 0;
+        this.CoalescedTransitions = 0;
+        this.RemovedTransitions = 0;
         this.UavBarrierPending = false;
     }
 
@@ -79,20 +91,25 @@ internal sealed class D3D12ResourceBarrierTracker {
     /// <param name="resource">The D3D12 resource to transition.</param>
     /// <param name="from">The previous resource state.</param>
     /// <param name="to">The target resource state.</param>
-    /// <returns><see langword="true" /> when a barrier was queued.</returns>
-    internal bool QueueTransition(ID3D12Resource resource, ResourceStates from, ResourceStates to) {
+    /// <returns>The queue result describing how the transition was handled.</returns>
+    internal D3D12BarrierQueueResult QueueTransition(ID3D12Resource resource, ResourceStates from, ResourceStates to) {
         if (from == to) {
-            return false;
+            return D3D12BarrierQueueResult.Skipped;
         }
 
-        if (this.TryCoalesceTransition(resource, from, to, 0, false)) {
-            return true;
+        D3D12BarrierQueueResult coalesceResult = this.TryCoalesceTransition(resource, from, to, 0, false);
+        if (coalesceResult != D3D12BarrierQueueResult.Skipped) {
+            return coalesceResult;
+        }
+
+        if (this.IsFull) {
+            return D3D12BarrierQueueResult.Full;
         }
 
         uint index = this._pendingBarrierCount++;
         this._barrierBatch[index] = ResourceBarrier.BarrierTransition(resource, from, to);
         this.StoreBarrierMetadata(index, resource, from, to, 0, false);
-        return true;
+        return D3D12BarrierQueueResult.Queued;
     }
 
     /// <summary>
@@ -102,20 +119,25 @@ internal sealed class D3D12ResourceBarrierTracker {
     /// <param name="from">The previous resource state.</param>
     /// <param name="to">The target resource state.</param>
     /// <param name="subresource">The subresource index to transition.</param>
-    /// <returns><see langword="true" /> when a barrier was queued.</returns>
-    internal bool QueueSubresourceTransition(ID3D12Resource resource, ResourceStates from, ResourceStates to, uint subresource) {
+    /// <returns>The queue result describing how the transition was handled.</returns>
+    internal D3D12BarrierQueueResult QueueSubresourceTransition(ID3D12Resource resource, ResourceStates from, ResourceStates to, uint subresource) {
         if (from == to) {
-            return false;
+            return D3D12BarrierQueueResult.Skipped;
         }
 
-        if (this.TryCoalesceTransition(resource, from, to, subresource, true)) {
-            return true;
+        D3D12BarrierQueueResult coalesceResult = this.TryCoalesceTransition(resource, from, to, subresource, true);
+        if (coalesceResult != D3D12BarrierQueueResult.Skipped) {
+            return coalesceResult;
+        }
+
+        if (this.IsFull) {
+            return D3D12BarrierQueueResult.Full;
         }
 
         uint index = this._pendingBarrierCount++;
         this._barrierBatch[index] = ResourceBarrier.BarrierTransition(resource, from, to, subresource);
         this.StoreBarrierMetadata(index, resource, from, to, subresource, true);
-        return true;
+        return D3D12BarrierQueueResult.Queued;
     }
 
     /// <summary>
@@ -143,8 +165,8 @@ internal sealed class D3D12ResourceBarrierTracker {
     /// <param name="to">The target resource state.</param>
     /// <param name="subresource">The subresource index, or zero for whole-resource transitions.</param>
     /// <param name="usesSubresource">Whether the transition targets one subresource.</param>
-    /// <returns><see langword="true" /> when the new transition was handled without appending a barrier.</returns>
-    private bool TryCoalesceTransition(ID3D12Resource resource, ResourceStates from, ResourceStates to, uint subresource, bool usesSubresource) {
+    /// <returns>The queue result when the transition was folded or removed; otherwise <see cref="D3D12BarrierQueueResult.Skipped" />.</returns>
+    private D3D12BarrierQueueResult TryCoalesceTransition(ID3D12Resource resource, ResourceStates from, ResourceStates to, uint subresource, bool usesSubresource) {
         for (uint i = 0; i < this._pendingBarrierCount; i++) {
             if (!ReferenceEquals(this._barrierResources[i], resource)
                 || this._barrierUsesSubresource[i] != usesSubresource
@@ -156,17 +178,19 @@ internal sealed class D3D12ResourceBarrierTracker {
             ResourceStates originalFrom = this._barrierFromStates[i];
             if (originalFrom == to) {
                 this.RemoveQueuedBarrier(i);
-                return true;
+                this.RemovedTransitions++;
+                return D3D12BarrierQueueResult.Removed;
             }
 
             this._barrierBatch[i] = usesSubresource
                 ? ResourceBarrier.BarrierTransition(resource, originalFrom, to, subresource)
                 : ResourceBarrier.BarrierTransition(resource, originalFrom, to);
             this._barrierToStates[i] = to;
-            return true;
+            this.CoalescedTransitions++;
+            return D3D12BarrierQueueResult.Coalesced;
         }
 
-        return false;
+        return D3D12BarrierQueueResult.Skipped;
     }
 
     /// <summary>
@@ -269,4 +293,35 @@ internal sealed class D3D12ResourceBarrierTracker {
             fn((void*)commandList.NativePointer, count, barriersPtr);
         }
     }
+}
+
+/// <summary>
+/// Describes how a pending D3D12 resource transition was handled by the barrier tracker.
+/// </summary>
+internal enum D3D12BarrierQueueResult {
+
+    /// <summary>
+    /// Indicates that no transition was needed or no pending transition matched.
+    /// </summary>
+    Skipped,
+
+    /// <summary>
+    /// Indicates that a new transition barrier was appended to the pending batch.
+    /// </summary>
+    Queued,
+
+    /// <summary>
+    /// Indicates that the transition was folded into an existing pending transition.
+    /// </summary>
+    Coalesced,
+
+    /// <summary>
+    /// Indicates that an existing pending transition was removed because the final state matched the original state.
+    /// </summary>
+    Removed,
+
+    /// <summary>
+    /// Indicates that the pending batch is full and must be flushed before appending this transition.
+    /// </summary>
+    Full
 }

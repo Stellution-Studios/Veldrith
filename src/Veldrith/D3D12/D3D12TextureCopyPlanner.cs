@@ -26,6 +26,16 @@ internal sealed class D3D12TextureCopyPlanner {
     private ResourceStates[] _dstCaptureStates = new ResourceStates[128];
 
     /// <summary>
+    /// Reusable subresource capture buffer for source texture copy/resolve transitions.
+    /// </summary>
+    private uint[] _srcCaptureSubresources = new uint[128];
+
+    /// <summary>
+    /// Reusable subresource capture buffer for destination texture copy/resolve transitions.
+    /// </summary>
+    private uint[] _dstCaptureSubresources = new uint[128];
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="D3D12TextureCopyPlanner" /> class.
     /// </summary>
     /// <param name="commandList">The command list that records D3D12 operations.</param>
@@ -48,15 +58,16 @@ internal sealed class D3D12TextureCopyPlanner {
             return;
         }
 
-        ResourceStates[] srcStates = this.CaptureSourceStates(src);
-        ResourceStates[] dstStates = this.CaptureDestinationStates(dst);
-        this._commandList.TransitionTextureForInternalUse(src, ResourceStates.ResolveSource);
-        this._commandList.TransitionTextureForInternalUse(dst, ResourceStates.ResolveDest);
+        uint mipLevels = Math.Min(source.MipLevels, destination.MipLevels);
+        uint arrayLayers = Math.Min(source.ArrayLayers, destination.ArrayLayers);
+        uint resolveSubresourceCount = mipLevels * arrayLayers;
+        ResourceStates[] srcStates = this.CaptureResolveStates(src, mipLevels, arrayLayers, ref this._srcCaptureStates, ref this._srcCaptureSubresources);
+        ResourceStates[] dstStates = this.CaptureResolveStates(dst, mipLevels, arrayLayers, ref this._dstCaptureStates, ref this._dstCaptureSubresources);
+        this.TransitionCapturedSubresources(src, this._srcCaptureSubresources, resolveSubresourceCount, ResourceStates.ResolveSource);
+        this.TransitionCapturedSubresources(dst, this._dstCaptureSubresources, resolveSubresourceCount, ResourceStates.ResolveDest);
         this._commandList.FlushPendingBarriersForInternalUse();
 
         Format resolveFormat = D3D12Formats.ToDxgiFormat(source.Format);
-        uint mipLevels = Math.Min(source.MipLevels, destination.MipLevels);
-        uint arrayLayers = Math.Min(source.ArrayLayers, destination.ArrayLayers);
         for (uint arrayLayer = 0; arrayLayer < arrayLayers; arrayLayer++) {
             for (uint mipLevel = 0; mipLevel < mipLevels; mipLevel++) {
                 uint srcSubresource = source.CalculateSubresource(mipLevel, arrayLayer);
@@ -65,8 +76,8 @@ internal sealed class D3D12TextureCopyPlanner {
             }
         }
 
-        this.RestoreTextureStates(src, srcStates);
-        this.RestoreTextureStates(dst, dstStates);
+        this.RestoreCapturedSubresourceStates(src, this._srcCaptureSubresources, srcStates, resolveSubresourceCount);
+        this.RestoreCapturedSubresourceStates(dst, this._dstCaptureSubresources, dstStates, resolveSubresourceCount);
     }
 
     /// <summary>
@@ -98,10 +109,10 @@ internal sealed class D3D12TextureCopyPlanner {
             return;
         }
 
-        ResourceStates[] srcStates = this.CaptureSourceStates(src);
-        ResourceStates[] dstStates = this.CaptureDestinationStates(dst);
-        this._commandList.TransitionTextureForInternalUse(src, ResourceStates.CopySource);
-        this._commandList.TransitionTextureForInternalUse(dst, ResourceStates.CopyDest);
+        ResourceStates[] srcStates = this.CaptureLayerStates(src, srcMipLevel, srcBaseArrayLayer, layerCount, ref this._srcCaptureStates, ref this._srcCaptureSubresources);
+        ResourceStates[] dstStates = this.CaptureLayerStates(dst, dstMipLevel, dstBaseArrayLayer, layerCount, ref this._dstCaptureStates, ref this._dstCaptureSubresources);
+        this.TransitionCapturedSubresources(src, this._srcCaptureSubresources, layerCount, ResourceStates.CopySource);
+        this.TransitionCapturedSubresources(dst, this._dstCaptureSubresources, layerCount, ResourceStates.CopyDest);
         this._commandList.FlushPendingBarriersForInternalUse();
 
         Box srcBox = new((int)srcX, (int)srcY, (int)srcZ, (int)(srcX + width), (int)(srcY + height), (int)(srcZ + depth));
@@ -113,30 +124,8 @@ internal sealed class D3D12TextureCopyPlanner {
             this._commandList.NativeCommandList.CopyTextureRegion(dstLocation, dstX, dstY, dstZ, srcLocation, srcBox);
         }
 
-        this.RestoreTextureStates(src, srcStates);
-        this.RestoreTextureStates(dst, dstStates);
-    }
-
-    /// <summary>
-    /// Captures source texture states into a reusable buffer.
-    /// </summary>
-    /// <param name="texture">The source texture to capture.</param>
-    /// <returns>The reusable state buffer containing current subresource states.</returns>
-    private ResourceStates[] CaptureSourceStates(D3D12Texture texture) {
-        this.EnsureCaptureCapacity(ref this._srcCaptureStates, texture.SubresourceCount);
-        CaptureTextureStatesInto(texture, this._srcCaptureStates);
-        return this._srcCaptureStates;
-    }
-
-    /// <summary>
-    /// Captures destination texture states into a reusable buffer.
-    /// </summary>
-    /// <param name="texture">The destination texture to capture.</param>
-    /// <returns>The reusable state buffer containing current subresource states.</returns>
-    private ResourceStates[] CaptureDestinationStates(D3D12Texture texture) {
-        this.EnsureCaptureCapacity(ref this._dstCaptureStates, texture.SubresourceCount);
-        CaptureTextureStatesInto(texture, this._dstCaptureStates);
-        return this._dstCaptureStates;
+        this.RestoreCapturedSubresourceStates(src, this._srcCaptureSubresources, srcStates, layerCount);
+        this.RestoreCapturedSubresourceStates(dst, this._dstCaptureSubresources, dstStates, layerCount);
     }
 
     /// <summary>
@@ -153,31 +142,111 @@ internal sealed class D3D12TextureCopyPlanner {
     }
 
     /// <summary>
-    /// Captures current per-subresource states into a pre-allocated buffer.
+    /// Ensures a reusable subresource buffer can hold the requested number of entries.
+    /// </summary>
+    /// <param name="buffer">The subresource buffer to grow.</param>
+    /// <param name="subresourceCount">The required subresource count.</param>
+    private void EnsureSubresourceCaptureCapacity(ref uint[] buffer, uint subresourceCount) {
+        if (subresourceCount <= (uint)buffer.Length) {
+            return;
+        }
+
+        Util.EnsureArrayMinimumSize(ref buffer, subresourceCount);
+    }
+
+    /// <summary>
+    /// Captures states for one mip level across a range of array layers.
     /// </summary>
     /// <param name="texture">The texture whose states are captured.</param>
-    /// <param name="buffer">The destination state buffer.</param>
-    private static void CaptureTextureStatesInto(D3D12Texture texture, ResourceStates[] buffer) {
-        uint subresourceCount = texture.SubresourceCount;
-        for (uint subresource = 0; subresource < subresourceCount; subresource++) {
-            buffer[subresource] = texture.GetSubresourceState(subresource);
+    /// <param name="mipLevel">The mip level to copy.</param>
+    /// <param name="baseArrayLayer">The first array layer to copy.</param>
+    /// <param name="layerCount">The number of array layers to copy.</param>
+    /// <param name="states">The reusable state buffer.</param>
+    /// <param name="subresources">The reusable subresource buffer.</param>
+    /// <returns>The reusable state buffer containing captured states.</returns>
+    private ResourceStates[] CaptureLayerStates(D3D12Texture texture, uint mipLevel, uint baseArrayLayer, uint layerCount, ref ResourceStates[] states, ref uint[] subresources) {
+        this.EnsureCaptureCapacity(ref states, layerCount);
+        this.EnsureSubresourceCaptureCapacity(ref subresources, layerCount);
+        for (uint layer = 0; layer < layerCount; layer++) {
+            uint subresource = texture.CalculateSubresource(mipLevel, baseArrayLayer + layer);
+            subresources[layer] = subresource;
+            states[layer] = texture.GetSubresourceState(subresource);
+        }
+
+        return states;
+    }
+
+    /// <summary>
+    /// Captures states for the mip and array-layer range used by a resolve.
+    /// </summary>
+    /// <param name="texture">The texture whose states are captured.</param>
+    /// <param name="mipLevels">The number of mip levels to resolve.</param>
+    /// <param name="arrayLayers">The number of array layers to resolve.</param>
+    /// <param name="states">The reusable state buffer.</param>
+    /// <param name="subresources">The reusable subresource buffer.</param>
+    /// <returns>The reusable state buffer containing captured states.</returns>
+    private ResourceStates[] CaptureResolveStates(D3D12Texture texture, uint mipLevels, uint arrayLayers, ref ResourceStates[] states, ref uint[] subresources) {
+        uint count = mipLevels * arrayLayers;
+        this.EnsureCaptureCapacity(ref states, count);
+        this.EnsureSubresourceCaptureCapacity(ref subresources, count);
+        uint index = 0;
+        for (uint arrayLayer = 0; arrayLayer < arrayLayers; arrayLayer++) {
+            for (uint mipLevel = 0; mipLevel < mipLevels; mipLevel++) {
+                uint subresource = texture.CalculateSubresource(mipLevel, arrayLayer);
+                subresources[index] = subresource;
+                states[index] = texture.GetSubresourceState(subresource);
+                index++;
+            }
+        }
+
+        return states;
+    }
+
+    /// <summary>
+    /// Transitions captured subresources to a copy or resolve state.
+    /// </summary>
+    /// <param name="texture">The texture to transition.</param>
+    /// <param name="subresources">The captured subresource indices.</param>
+    /// <param name="count">The number of captured entries.</param>
+    /// <param name="targetState">The required D3D12 state.</param>
+    private void TransitionCapturedSubresources(D3D12Texture texture, uint[] subresources, uint count, ResourceStates targetState) {
+        if (texture.NativeTexture == null || count == 0) {
+            return;
+        }
+
+        if (count == texture.SubresourceCount) {
+            this._commandList.TransitionTextureForInternalUse(texture, targetState);
+            return;
+        }
+
+        for (uint i = 0; i < count; i++) {
+            uint subresource = subresources[i];
+            ResourceStates current = texture.GetSubresourceState(subresource);
+            if (current == targetState) {
+                continue;
+            }
+
+            this._commandList.TransitionSubresourceForInternalUse(texture.NativeTexture, current, targetState, subresource);
+            texture.SetSubresourceState(subresource, targetState);
         }
     }
 
     /// <summary>
-    /// Restores a texture's subresource states after a temporary copy or resolve transition.
+    /// Restores captured subresource states after a copy or resolve operation.
     /// </summary>
     /// <param name="texture">The texture to restore.</param>
-    /// <param name="previousStates">The previously captured subresource states.</param>
-    private void RestoreTextureStates(D3D12Texture texture, ResourceStates[] previousStates) {
-        if (texture.NativeTexture == null || previousStates == null || previousStates.Length == 0) {
+    /// <param name="subresources">The captured subresource indices.</param>
+    /// <param name="previousStates">The previously captured states.</param>
+    /// <param name="count">The number of captured entries.</param>
+    private void RestoreCapturedSubresourceStates(D3D12Texture texture, uint[] subresources, ResourceStates[] previousStates, uint count) {
+        if (texture.NativeTexture == null || subresources == null || previousStates == null || count == 0) {
             return;
         }
 
-        uint subresourceCount = Math.Min(texture.SubresourceCount, (uint)previousStates.Length);
-        for (uint subresource = 0; subresource < subresourceCount; subresource++) {
+        for (uint i = 0; i < count; i++) {
+            uint subresource = subresources[i];
             ResourceStates current = texture.GetSubresourceState(subresource);
-            ResourceStates previous = previousStates[subresource];
+            ResourceStates previous = previousStates[i];
             if (current == previous) {
                 continue;
             }

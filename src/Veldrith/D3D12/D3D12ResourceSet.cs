@@ -22,8 +22,8 @@ internal sealed class D3D12ResourceSet : ResourceSet {
     public D3D12ResourceSet(D3D12GraphicsDevice gd, ref ResourceSetDescription description) : base(ref description) {
         this.ResourceLayoutInfo = Util.AssertSubtype<ResourceLayout, D3D12ResourceLayout>(description.Layout);
         this.BoundResources = Util.ShallowClone(description.BoundResources);
-        this.ReferencedBuffers = CollectReferencedBuffers(this.BoundResources);
-        this.PrepareDescriptors(gd);
+        this.ElementCaches = CreateElementCaches(gd, this.ResourceLayoutInfo.Elements, this.BoundResources);
+        this.ReferencedBuffers = CollectReferencedBuffers(this.ElementCaches);
     }
 
     /// <summary>
@@ -35,6 +35,11 @@ internal sealed class D3D12ResourceSet : ResourceSet {
     /// Gets or sets BoundResources.
     /// </summary>
     internal IBindableResource[] BoundResources { get; }
+
+    /// <summary>
+    /// Gets pre-resolved D3D12 resources and descriptors for each ResourceSet element.
+    /// </summary>
+    internal D3D12ResourceSetElementCache[] ElementCaches { get; }
 
     /// <summary>
     /// Gets buffers referenced by this resource set for fast dynamic snapshot dirty checks.
@@ -99,55 +104,80 @@ internal sealed class D3D12ResourceSet : ResourceSet {
     }
 
     /// <summary>
-    /// Creates persistent CPU descriptors when the resource set is built so first draw binding stays cheap.
+    /// Pre-resolves D3D12 resources and persistent CPU descriptors for ResourceSet hot-path binding.
     /// </summary>
     /// <param name="gd">The graphics device used to resolve full texture views.</param>
-    private void PrepareDescriptors(D3D12GraphicsDevice gd) {
-        ResourceLayoutElementDescription[] elements = this.ResourceLayoutInfo.Elements;
-        int count = Math.Min(elements.Length, this.BoundResources.Length);
+    /// <param name="elements">The resource layout elements.</param>
+    /// <param name="resources">The bound resources.</param>
+    /// <returns>The per-element D3D12 cache entries.</returns>
+    private static D3D12ResourceSetElementCache[] CreateElementCaches(D3D12GraphicsDevice gd, ResourceLayoutElementDescription[] elements, IBindableResource[] resources) {
+        D3D12ResourceSetElementCache[] caches = new D3D12ResourceSetElementCache[resources.Length];
+        int count = Math.Min(elements.Length, resources.Length);
         for (int i = 0; i < count; i++) {
-            IBindableResource resource = this.BoundResources[i];
+            IBindableResource resource = resources[i];
             if (resource == null) {
                 continue;
             }
 
             switch (elements[i].Kind) {
+                case ResourceKind.UniformBuffer:
+                case ResourceKind.StructuredBufferReadOnly:
+                case ResourceKind.StructuredBufferReadWrite: {
+                        D3D12DeviceBuffer buffer;
+                        uint bufferOffset;
+                        if (resource is DeviceBufferRange range) {
+                            buffer = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(range.Buffer);
+                            bufferOffset = range.Offset;
+                        }
+                        else {
+                            buffer = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>((DeviceBuffer)resource);
+                            bufferOffset = 0;
+                        }
+
+                        caches[i] = new D3D12ResourceSetElementCache(buffer, bufferOffset, null, null, default, default, default);
+                        break;
+                    }
                 case ResourceKind.TextureReadOnly: {
                         TextureView textureView = Util.GetTextureView(gd, resource);
                         D3D12TextureView d3D12TextureView = Util.AssertSubtype<TextureView, D3D12TextureView>(textureView);
                         d3D12TextureView.EnsureBindingSupport(TextureUsage.Sampled, "sampled");
-                        d3D12TextureView.GetOrCreateShaderResourceViewDescriptor();
+                        CpuDescriptorHandle descriptor = d3D12TextureView.GetOrCreateShaderResourceViewDescriptor();
+                        caches[i] = new D3D12ResourceSetElementCache(null, 0, d3D12TextureView, null, descriptor, default, default);
                         break;
                     }
                 case ResourceKind.TextureReadWrite: {
                         TextureView textureView = Util.GetTextureView(gd, resource);
                         D3D12TextureView d3D12TextureView = Util.AssertSubtype<TextureView, D3D12TextureView>(textureView);
                         d3D12TextureView.EnsureBindingSupport(TextureUsage.Storage, "storage");
-                        d3D12TextureView.GetOrCreateUnorderedAccessViewDescriptor();
+                        CpuDescriptorHandle descriptor = d3D12TextureView.GetOrCreateUnorderedAccessViewDescriptor();
+                        caches[i] = new D3D12ResourceSetElementCache(null, 0, d3D12TextureView, null, default, descriptor, default);
                         break;
                     }
                 case ResourceKind.Sampler: {
                         D3D12Sampler d3D12Sampler = Util.AssertSubtype<IBindableResource, D3D12Sampler>(resource);
-                        d3D12Sampler.GetOrCreateDescriptor();
+                        CpuDescriptorHandle descriptor = d3D12Sampler.GetOrCreateDescriptor();
+                        caches[i] = new D3D12ResourceSetElementCache(null, 0, null, d3D12Sampler, default, default, descriptor);
                         break;
                     }
             }
         }
+
+        return caches;
     }
 
     /// <summary>
     /// Collects unique D3D12 buffers referenced by a resource set.
     /// </summary>
-    /// <param name="resources">The resources to inspect.</param>
+    /// <param name="elementCaches">The resource caches to inspect.</param>
     /// <returns>The referenced D3D12 buffers.</returns>
-    private static D3D12DeviceBuffer[] CollectReferencedBuffers(IBindableResource[] resources) {
+    private static D3D12DeviceBuffer[] CollectReferencedBuffers(D3D12ResourceSetElementCache[] elementCaches) {
         List<D3D12DeviceBuffer> buffers = null;
-        for (int i = 0; i < resources.Length; i++) {
-            if (!Util.GetDeviceBuffer(resources[i], out DeviceBuffer buffer)) {
+        for (int i = 0; i < elementCaches.Length; i++) {
+            D3D12DeviceBuffer d3d12Buffer = elementCaches[i].Buffer;
+            if (d3d12Buffer == null) {
                 continue;
             }
 
-            D3D12DeviceBuffer d3d12Buffer = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(buffer);
             buffers ??= new List<D3D12DeviceBuffer>(1);
             bool alreadyAdded = false;
             for (int j = 0; j < buffers.Count; j++) {
