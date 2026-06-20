@@ -1,4 +1,5 @@
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
@@ -25,6 +26,16 @@ internal sealed class D3D12CommandList : CommandList {
     /// Stores the begin event method state used by this instance.
     /// </summary>
     private readonly MethodInfo _beginEventMethod;
+
+    /// <summary>
+    /// Stores whether the BeginEvent metadata parameter uses a signed integer.
+    /// </summary>
+    private readonly bool _beginEventMetadataIsInt;
+
+    /// <summary>
+    /// Stores whether the BeginEvent size parameter uses a signed integer.
+    /// </summary>
+    private readonly bool _beginEventSizeIsInt;
 
     /// <summary>
     /// Tracks input-assembler bindings and small cached graphics state.
@@ -100,6 +111,20 @@ internal sealed class D3D12CommandList : CommandList {
     /// Stores the set marker method state used by this instance.
     /// </summary>
     private readonly MethodInfo _setMarkerMethod;
+
+    /// <summary>
+    /// Stores whether the SetMarker metadata parameter uses a signed integer.
+    /// </summary>
+    private readonly bool _setMarkerMetadataIsInt;
+
+    /// <summary>
+    /// Stores whether the SetMarker size parameter uses a signed integer.
+    /// </summary>
+    private readonly bool _setMarkerSizeIsInt;
+
+    /// <summary>
+    /// Reuses reflection argument storage for debug marker calls.
+    /// </summary>
     private readonly object[] _debugMarkerArgs = new object[3];
 
     /// <summary>
@@ -195,6 +220,10 @@ internal sealed class D3D12CommandList : CommandList {
         this._beginEventMethod = this.GetDebugMarkerMethod("BeginEvent");
         this._setMarkerMethod = this.GetDebugMarkerMethod("SetMarker");
         this._endEventMethod = this.NativeCommandList.GetType().GetMethod("EndEvent", Type.EmptyTypes);
+        this._beginEventMetadataIsInt = IsDebugMarkerParameterInt(this._beginEventMethod, 0);
+        this._beginEventSizeIsInt = IsDebugMarkerParameterInt(this._beginEventMethod, 2);
+        this._setMarkerMetadataIsInt = IsDebugMarkerParameterInt(this._setMarkerMethod, 0);
+        this._setMarkerSizeIsInt = IsDebugMarkerParameterInt(this._setMarkerMethod, 2);
         this.NativeCommandList.Close();
     }
 
@@ -415,7 +444,6 @@ internal sealed class D3D12CommandList : CommandList {
             return;
         }
 
-        this.EndRenderPassForInternalUse();
         if (D3D12CommandListPerfTracker.Enabled) {
             this._perf.ResourceSetChanges++;
         }
@@ -435,11 +463,11 @@ internal sealed class D3D12CommandList : CommandList {
             return;
         }
 
-        this.EndRenderPassForInternalUse();
         if (!this._computeResourceSets.TrySet(slot, set, dynamicOffsetsCount, ref dynamicOffsets)) {
             return;
         }
 
+        this.EndRenderPassForInternalUse();
         if (D3D12CommandListPerfTracker.Enabled) {
             this._perf.ResourceSetChanges++;
         }
@@ -1083,6 +1111,10 @@ internal sealed class D3D12CommandList : CommandList {
     /// Executes the flush pending uav barrier logic for this backend.
     /// </summary>
     private void FlushPendingUavBarrier() {
+        if (!this._barriers.UavBarrierPending) {
+            return;
+        }
+
         long startTicks = D3D12CommandListPerfTracker.Enabled ? Stopwatch.GetTimestamp() : 0;
         bool flushed = this._barriers.FlushPendingUavBarrier(this.NativeCommandList);
         if (!flushed) {
@@ -1114,6 +1146,10 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void FlushPendingBarriers() {
+        if (!this._barriers.HasQueuedBarriers) {
+            return;
+        }
+
         long startTicks = D3D12CommandListPerfTracker.Enabled ? Stopwatch.GetTimestamp() : 0;
         bool flushed = this._barriers.FlushPendingBarriers(this.NativeCommandList);
         if (!flushed) {
@@ -1335,27 +1371,38 @@ internal sealed class D3D12CommandList : CommandList {
             return;
         }
 
-        byte[] utf8Bytes = Encoding.UTF8.GetBytes(name);
-        fixed (byte* bytesPtr = utf8Bytes) {
-            IntPtr dataPtr = (IntPtr)bytesPtr;
-            int size = utf8Bytes.Length;
+        MethodInfo markerMethod = beginEvent ? this._beginEventMethod : this._setMarkerMethod;
+        if (markerMethod == null) {
+            return;
+        }
 
-            MethodInfo markerMethod = beginEvent ? this._beginEventMethod : this._setMarkerMethod;
-            if (markerMethod == null) {
-                return;
-            }
+        int size = Encoding.UTF8.GetByteCount(name);
+        byte[] rentedBytes = null;
+        Span<byte> utf8Bytes = size <= 512
+            ? stackalloc byte[size]
+            : (rentedBytes = ArrayPool<byte>.Shared.Rent(size));
+        utf8Bytes = utf8Bytes[..size];
 
-            ParameterInfo[] parameters = markerMethod.GetParameters();
-            object metadata = parameters[0].ParameterType == typeof(int) ? 0 : 0u;
-            object sizeValue = parameters[2].ParameterType == typeof(int) ? size : (uint)size;
-            this._debugMarkerArgs[0] = metadata;
-            this._debugMarkerArgs[1] = dataPtr;
-            this._debugMarkerArgs[2] = sizeValue;
-            if (beginEvent) {
-                markerMethod.Invoke(this.NativeCommandList, this._debugMarkerArgs);
+        try {
+            Encoding.UTF8.GetBytes(name.AsSpan(), utf8Bytes);
+            fixed (byte* bytesPtr = utf8Bytes) {
+                IntPtr dataPtr = (IntPtr)bytesPtr;
+                bool metadataIsInt = beginEvent ? this._beginEventMetadataIsInt : this._setMarkerMetadataIsInt;
+                bool sizeIsInt = beginEvent ? this._beginEventSizeIsInt : this._setMarkerSizeIsInt;
+                this._debugMarkerArgs[0] = metadataIsInt ? 0 : 0u;
+                this._debugMarkerArgs[1] = dataPtr;
+                this._debugMarkerArgs[2] = sizeIsInt ? size : (uint)size;
+                if (beginEvent) {
+                    markerMethod.Invoke(this.NativeCommandList, this._debugMarkerArgs);
+                }
+                else if (setMarker) {
+                    markerMethod.Invoke(this.NativeCommandList, this._debugMarkerArgs);
+                }
             }
-            else if (setMarker) {
-                markerMethod.Invoke(this.NativeCommandList, this._debugMarkerArgs);
+        }
+        finally {
+            if (rentedBytes != null) {
+                ArrayPool<byte>.Shared.Return(rentedBytes);
             }
         }
     }
@@ -1383,6 +1430,16 @@ internal sealed class D3D12CommandList : CommandList {
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Checks whether a cached debug marker method uses a signed integer parameter at an index.
+    /// </summary>
+    /// <param name="method">The reflected marker method.</param>
+    /// <param name="index">The parameter index to inspect.</param>
+    /// <returns><see langword="true" /> when the parameter type is <see cref="int" />.</returns>
+    private static bool IsDebugMarkerParameterInt(MethodInfo method, int index) {
+        return method?.GetParameters()[index].ParameterType == typeof(int);
     }
 
     /// <summary>
@@ -1695,6 +1752,11 @@ internal sealed class D3D12CommandList : CommandList {
     /// Flushes graphics resource sets that were changed since the previous draw.
     /// </summary>
     private void FlushGraphicsResourceSets() {
+        if (!this._graphicsResourceSets.Dirty || this.CurrentGraphicsPipeline == null) {
+            return;
+        }
+
+        this.EndRenderPassForInternalUse();
         this._descriptorSetBinder.FlushGraphicsResourceSets(this._graphicsResourceSets, this.CurrentGraphicsPipeline);
     }
 
@@ -1702,6 +1764,10 @@ internal sealed class D3D12CommandList : CommandList {
     /// Flushes compute resource sets that were changed since the previous dispatch.
     /// </summary>
     private void FlushComputeResourceSets() {
+        if (!this._computeResourceSets.Dirty || this.CurrentComputePipeline == null) {
+            return;
+        }
+
         this._descriptorSetBinder.FlushComputeResourceSets(this._computeResourceSets, this.CurrentComputePipeline);
     }
 
@@ -1716,6 +1782,10 @@ internal sealed class D3D12CommandList : CommandList {
     /// Flushes command-list-local batched buffer updates before recording a GPU command.
     /// </summary>
     private void FlushPendingBufferUploads() {
+        if (!this._bufferUpdatePlanner.HasPendingUploads) {
+            return;
+        }
+
         this._bufferUpdatePlanner.Flush();
     }
 

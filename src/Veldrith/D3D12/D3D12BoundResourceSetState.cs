@@ -18,6 +18,11 @@ internal sealed class D3D12BoundResourceSetState {
     internal bool[] Changed = Array.Empty<bool>();
 
     /// <summary>
+    /// Tracks the required rebind scope for each changed resource set slot.
+    /// </summary>
+    internal D3D12ResourceSetChangeKind[] ChangeKinds = Array.Empty<D3D12ResourceSetChangeKind>();
+
+    /// <summary>
     /// Gets whether any resource set slot is dirty.
     /// </summary>
     internal bool Dirty { get; private set; }
@@ -31,6 +36,11 @@ internal sealed class D3D12BoundResourceSetState {
     /// Gets the last dirty slot, or -1 when no slot is dirty.
     /// </summary>
     internal int ChangedEnd { get; private set; } = -1;
+
+    /// <summary>
+    /// Stores the highest touched resource-set slot plus one.
+    /// </summary>
+    private int _maxTouchedSlot;
 
     /// <summary>
     /// Updates a resource set slot and marks it dirty when the binding changed.
@@ -47,9 +57,14 @@ internal sealed class D3D12BoundResourceSetState {
             return false;
         }
 
+        D3D12ResourceSetChangeKind changeKind = ReferenceEquals(previousBinding.Set, set)
+            ? D3D12ResourceSetChangeKind.RootBindingsOnly
+            : D3D12ResourceSetChangeKind.Full;
+
         this.BoundSets[slot].Offsets.Dispose();
         this.BoundSets[slot] = new BoundResourceSetInfo(set, dynamicOffsetsCount, ref dynamicOffsets);
-        this.MarkChanged(slot);
+        this.MarkTouched(slot);
+        this.MarkChanged(slot, changeKind);
         return true;
     }
 
@@ -60,6 +75,7 @@ internal sealed class D3D12BoundResourceSetState {
     internal void EnsureCapacity(uint count) {
         Util.EnsureArrayMinimumSize(ref this.BoundSets, count);
         Util.EnsureArrayMinimumSize(ref this.Changed, count);
+        Util.EnsureArrayMinimumSize(ref this.ChangeKinds, count);
     }
 
     /// <summary>
@@ -67,8 +83,21 @@ internal sealed class D3D12BoundResourceSetState {
     /// </summary>
     /// <param name="slot">The slot to mark.</param>
     internal void MarkChanged(uint slot) {
+        this.MarkChanged(slot, D3D12ResourceSetChangeKind.Full);
+    }
+
+    /// <summary>
+    /// Marks a single set slot dirty with the requested rebind scope.
+    /// </summary>
+    /// <param name="slot">The slot to mark.</param>
+    /// <param name="changeKind">The required rebind scope.</param>
+    internal void MarkChanged(uint slot, D3D12ResourceSetChangeKind changeKind) {
         int index = (int)slot;
         this.Changed[index] = true;
+        if (this.ChangeKinds[index] != D3D12ResourceSetChangeKind.Full) {
+            this.ChangeKinds[index] = changeKind;
+        }
+
         this.Dirty = true;
         if (this.ChangedStart < 0 || index < this.ChangedStart) {
             this.ChangedStart = index;
@@ -114,6 +143,7 @@ internal sealed class D3D12BoundResourceSetState {
         this.EnsureCapacity(slot + 1);
         this.BoundSets[slot].Offsets.Dispose();
         this.BoundSets[slot] = binding;
+        this.MarkTouched(slot);
         this.MarkChanged(slot);
     }
 
@@ -167,7 +197,7 @@ internal sealed class D3D12BoundResourceSetState {
                 continue;
             }
 
-            this.MarkChanged((uint)slot);
+            this.MarkChanged((uint)slot, D3D12ResourceSetChangeKind.RootBindingsOnly);
             anyChanged = true;
         }
 
@@ -178,16 +208,30 @@ internal sealed class D3D12BoundResourceSetState {
     /// Clears bound sets, dirty flags, and dirty range state.
     /// </summary>
     internal void Clear() {
-        for (int i = 0; i < this.BoundSets.Length; i++) {
+        int count = Math.Min(this._maxTouchedSlot, this.BoundSets.Length);
+        for (int i = 0; i < count; i++) {
             this.BoundSets[i].Offsets.Dispose();
         }
 
-        Util.ClearArray(this.BoundSets);
-        if (this.Changed.Length != 0) {
-            Array.Clear(this.Changed, 0, this.Changed.Length);
+        if (count != 0) {
+            Array.Clear(this.BoundSets, 0, count);
+            Array.Clear(this.Changed, 0, Math.Min(count, this.Changed.Length));
+            Array.Clear(this.ChangeKinds, 0, Math.Min(count, this.ChangeKinds.Length));
         }
 
+        this._maxTouchedSlot = 0;
         this.ResetDirtyRange();
+    }
+
+    /// <summary>
+    /// Tracks the highest resource-set slot that may need clearing later.
+    /// </summary>
+    /// <param name="slot">The touched resource-set slot.</param>
+    private void MarkTouched(uint slot) {
+        int count = (int)slot + 1;
+        if (count > this._maxTouchedSlot) {
+            this._maxTouchedSlot = count;
+        }
     }
 
     /// <summary>
@@ -215,4 +259,25 @@ internal sealed class D3D12BoundResourceSetState {
     private static int GetClampedResourceSetCount(uint count) {
         return count > int.MaxValue ? int.MaxValue : (int)count;
     }
+}
+
+/// <summary>
+/// Describes how much D3D12 state must be refreshed for a dirty resource-set slot.
+/// </summary>
+internal enum D3D12ResourceSetChangeKind {
+
+    /// <summary>
+    /// The slot is clean.
+    /// </summary>
+    None,
+
+    /// <summary>
+    /// Only root-buffer bindings can change; descriptor tables are reusable.
+    /// </summary>
+    RootBindingsOnly,
+
+    /// <summary>
+    /// The resource set or root-signature-sensitive state changed and all bindings must be refreshed.
+    /// </summary>
+    Full
 }

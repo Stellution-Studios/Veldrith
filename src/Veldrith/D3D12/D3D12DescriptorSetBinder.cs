@@ -127,7 +127,9 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
             }
 
             resourceSets.Changed[slot] = false;
-            this.BindResourceSet(pipeline, (uint)slot, ref resourceSets.BoundSets[slot], compute);
+            D3D12ResourceSetChangeKind changeKind = resourceSets.ChangeKinds[slot];
+            resourceSets.ChangeKinds[slot] = D3D12ResourceSetChangeKind.None;
+            this.BindResourceSet(pipeline, (uint)slot, ref resourceSets.BoundSets[slot], compute, changeKind);
         }
 
         resourceSets.ResetDirtyRange();
@@ -143,7 +145,7 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
     /// <param name="slot">The resource set slot.</param>
     /// <param name="boundSet">The bound resource set information.</param>
     /// <param name="compute">Whether the active pipeline is a compute pipeline.</param>
-    private void BindResourceSet(D3D12Pipeline pipeline, uint slot, ref BoundResourceSetInfo boundSet, bool compute) {
+    private void BindResourceSet(D3D12Pipeline pipeline, uint slot, ref BoundResourceSetInfo boundSet, bool compute, D3D12ResourceSetChangeKind changeKind) {
         if (slot >= pipeline.ResourceSetCount || boundSet.Set == null) {
             return;
         }
@@ -160,9 +162,11 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
         uint dynamicOffsetIndex = 0;
         bool descriptorTablesChanged = false;
         D3D12ResourceSetBindingPlanEntry[] entries = bindingPlan.Entries;
+        bool rootBindingsOnly = changeKind == D3D12ResourceSetChangeKind.RootBindingsOnly;
         bool hasSrvUavTable = bindingPlan.SrvUavTable.HasTable;
         bool skipSrvUavTableResourcePreparation = hasSrvUavTable
-                                                   && CanSkipDescriptorTableResourcePreparation(d3d12Set, entries, bindingPlan.SrvUavTable, compute);
+                                                   && (rootBindingsOnly
+                                                       || CanSkipDescriptorTableResourcePreparation(d3d12Set, entries, bindingPlan.SrvUavTable, compute));
 
         for (int i = 0; i < entries.Length; i++) {
             ref readonly D3D12ResourceSetBindingPlanEntry bindingEntry = ref entries[i];
@@ -178,6 +182,10 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
 
             D3D12ResourceSetElementCache elementCache = elementCaches[bindingEntry.ElementIndex];
             if (bindingEntry.BindingInfo.DescriptorTable) {
+                if (rootBindingsOnly) {
+                    continue;
+                }
+
                 if (!skipSrvUavTableResourcePreparation
                     && bindingEntry.BindingInfo.DescriptorTableKind == D3D12Pipeline.DescriptorTableKind.SrvUav) {
                     this.PrepareDescriptorTableResource(bindingEntry.BindingInfo.Kind, elementCache, compute);
@@ -195,7 +203,7 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
             }
         }
 
-        if (hasSrvUavTable && !skipSrvUavTableResourcePreparation) {
+        if (!rootBindingsOnly && hasSrvUavTable && !skipSrvUavTableResourcePreparation) {
             StoreDescriptorTableResourcePreparation(d3d12Set, entries, bindingPlan.SrvUavTable, compute);
         }
 

@@ -81,6 +81,11 @@ internal sealed class D3D12ImmediateBufferWriter {
     }
 
     /// <summary>
+    /// Gets whether any immediate writes are waiting to be recorded.
+    /// </summary>
+    internal bool HasPendingWrites => this._parameterCount != 0;
+
+    /// <summary>
     /// Queues one aligned update into the pending WriteBufferImmediate batch.
     /// </summary>
     /// <param name="buffer">The destination buffer.</param>

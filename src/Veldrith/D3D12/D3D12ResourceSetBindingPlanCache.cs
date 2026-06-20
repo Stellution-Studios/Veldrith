@@ -24,9 +24,19 @@ internal sealed class D3D12ResourceSetBindingPlanCache {
     private D3D12ResourceSetBindingPlan[] _computeSlotCache = new D3D12ResourceSetBindingPlan[8];
 
     /// <summary>
+    /// Stores validity generations for compute slot-cache entries.
+    /// </summary>
+    private uint[] _computeSlotCacheGenerations = new uint[8];
+
+    /// <summary>
     /// Stores the compute pipeline that owns the current per-slot compute cache.
     /// </summary>
     private D3D12Pipeline _computeSlotCachePipeline;
+
+    /// <summary>
+    /// Stores the active compute slot-cache generation.
+    /// </summary>
+    private uint _computeSlotCacheGeneration = 1;
 
     /// <summary>
     /// Stores a fast per-slot graphics cache for the last graphics pipeline.
@@ -34,9 +44,19 @@ internal sealed class D3D12ResourceSetBindingPlanCache {
     private D3D12ResourceSetBindingPlan[] _graphicsSlotCache = new D3D12ResourceSetBindingPlan[8];
 
     /// <summary>
+    /// Stores validity generations for graphics slot-cache entries.
+    /// </summary>
+    private uint[] _graphicsSlotCacheGenerations = new uint[8];
+
+    /// <summary>
     /// Stores the graphics pipeline that owns the current per-slot graphics cache.
     /// </summary>
     private D3D12Pipeline _graphicsSlotCachePipeline;
+
+    /// <summary>
+    /// Stores the active graphics slot-cache generation.
+    /// </summary>
+    private uint _graphicsSlotCacheGeneration = 1;
 
     /// <summary>
     /// Gets a graphics resource-set binding plan for a pipeline, slot, and layout.
@@ -49,6 +69,7 @@ internal sealed class D3D12ResourceSetBindingPlanCache {
     internal D3D12ResourceSetBindingPlan GetGraphics(D3D12Pipeline pipeline, uint slot, D3D12ResourceLayout layout) {
         if (ReferenceEquals(this._graphicsSlotCachePipeline, pipeline)
             && slot < (uint)this._graphicsSlotCache.Length
+            && this._graphicsSlotCacheGenerations[slot] == this._graphicsSlotCacheGeneration
             && this._graphicsSlotCache[slot].Entries != null) {
             return this._graphicsSlotCache[slot];
         }
@@ -67,6 +88,7 @@ internal sealed class D3D12ResourceSetBindingPlanCache {
     internal D3D12ResourceSetBindingPlan GetCompute(D3D12Pipeline pipeline, uint slot, D3D12ResourceLayout layout) {
         if (ReferenceEquals(this._computeSlotCachePipeline, pipeline)
             && slot < (uint)this._computeSlotCache.Length
+            && this._computeSlotCacheGenerations[slot] == this._computeSlotCacheGeneration
             && this._computeSlotCache[slot].Entries != null) {
             return this._computeSlotCache[slot];
         }
@@ -98,11 +120,13 @@ internal sealed class D3D12ResourceSetBindingPlanCache {
 
         if (!ReferenceEquals(this._graphicsSlotCachePipeline, pipeline)) {
             this._graphicsSlotCachePipeline = pipeline;
-            System.Array.Clear(this._graphicsSlotCache, 0, this._graphicsSlotCache.Length);
+            this.AdvanceGraphicsSlotCacheGeneration();
         }
 
         Util.EnsureArrayMinimumSize(ref this._graphicsSlotCache, slot + 1);
+        Util.EnsureArrayMinimumSize(ref this._graphicsSlotCacheGenerations, slot + 1);
         this._graphicsSlotCache[slot] = existingPlan;
+        this._graphicsSlotCacheGenerations[slot] = this._graphicsSlotCacheGeneration;
         return existingPlan;
     }
 
@@ -122,12 +146,40 @@ internal sealed class D3D12ResourceSetBindingPlanCache {
 
         if (!ReferenceEquals(this._computeSlotCachePipeline, pipeline)) {
             this._computeSlotCachePipeline = pipeline;
-            System.Array.Clear(this._computeSlotCache, 0, this._computeSlotCache.Length);
+            this.AdvanceComputeSlotCacheGeneration();
         }
 
         Util.EnsureArrayMinimumSize(ref this._computeSlotCache, slot + 1);
+        Util.EnsureArrayMinimumSize(ref this._computeSlotCacheGenerations, slot + 1);
         this._computeSlotCache[slot] = existingPlan;
+        this._computeSlotCacheGenerations[slot] = this._computeSlotCacheGeneration;
         return existingPlan;
+    }
+
+    /// <summary>
+    /// Invalidates graphics slot-cache entries without clearing the plan array.
+    /// </summary>
+    private void AdvanceGraphicsSlotCacheGeneration() {
+        this._graphicsSlotCacheGeneration++;
+        if (this._graphicsSlotCacheGeneration != 0) {
+            return;
+        }
+
+        System.Array.Clear(this._graphicsSlotCacheGenerations, 0, this._graphicsSlotCacheGenerations.Length);
+        this._graphicsSlotCacheGeneration = 1;
+    }
+
+    /// <summary>
+    /// Invalidates compute slot-cache entries without clearing the plan array.
+    /// </summary>
+    private void AdvanceComputeSlotCacheGeneration() {
+        this._computeSlotCacheGeneration++;
+        if (this._computeSlotCacheGeneration != 0) {
+            return;
+        }
+
+        System.Array.Clear(this._computeSlotCacheGenerations, 0, this._computeSlotCacheGenerations.Length);
+        this._computeSlotCacheGeneration = 1;
     }
 
     /// <summary>

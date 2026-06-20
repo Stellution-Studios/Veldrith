@@ -102,9 +102,6 @@ internal sealed class D3D12InputAssemblerState {
         int count = System.Math.Min((int)this.MaxBoundVertexBufferSlot, this._vertexBuffers.Length);
         if (count > 0) {
             System.Array.Clear(this._vertexBuffers, 0, count);
-            System.Array.Clear(this._vertexBufferOffsets, 0, count);
-            System.Array.Clear(this._vertexBufferStrides, 0, count);
-            System.Array.Clear(this._vertexBufferVersions, 0, count);
         }
 
         this._indexBuffer = null;

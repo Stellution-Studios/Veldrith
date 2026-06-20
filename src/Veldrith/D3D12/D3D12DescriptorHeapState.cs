@@ -107,19 +107,9 @@ internal sealed class D3D12DescriptorHeapState : IDisposable {
     private uint _nextSamplerDescriptor;
 
     /// <summary>
-    /// Stores the exclusive sampler descriptor limit.
-    /// </summary>
-    private uint _samplerDescriptorLimit;
-
-    /// <summary>
     /// Stores the next free SRV/UAV descriptor in the persistent heap.
     /// </summary>
     private uint _nextSrvUavDescriptor;
-
-    /// <summary>
-    /// Stores the exclusive SRV/UAV descriptor limit.
-    /// </summary>
-    private uint _srvUavDescriptorLimit;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="D3D12DescriptorHeapState" /> class.
@@ -132,12 +122,12 @@ internal sealed class D3D12DescriptorHeapState : IDisposable {
         this._shaderVisibleSamplerHeap = gd.Device.CreateDescriptorHeap(new DescriptorHeapDescription(DescriptorHeapType.Sampler, MaxSamplerDescriptors, DescriptorHeapFlags.ShaderVisible));
         this._srvUavDescriptorSize = (int)gd.Device.GetDescriptorHandleIncrementSize(DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView);
         this._samplerDescriptorSize = (int)gd.Device.GetDescriptorHandleIncrementSize(DescriptorHeapType.Sampler);
-        this._srvUavDescriptorLimit = MaxSrvUavDescriptors;
-        this._samplerDescriptorLimit = MaxSamplerDescriptors;
         this._srvUavHeapCpuStart = this._shaderVisibleSrvUavHeap.GetCPUDescriptorHandleForHeapStart();
         this._srvUavHeapGpuStart = this._shaderVisibleSrvUavHeap.GetGPUDescriptorHandleForHeapStart();
         this._samplerHeapCpuStart = this._shaderVisibleSamplerHeap.GetCPUDescriptorHandleForHeapStart();
         this._samplerHeapGpuStart = this._shaderVisibleSamplerHeap.GetGPUDescriptorHandleForHeapStart();
+        this._boundDescriptorHeaps[0] = this._shaderVisibleSrvUavHeap;
+        this._boundDescriptorHeaps[1] = this._shaderVisibleSamplerHeap;
     }
 
     /// <summary>
@@ -145,8 +135,6 @@ internal sealed class D3D12DescriptorHeapState : IDisposable {
     /// </summary>
     internal void BeginRecording() {
         this._descriptorHeapsBound = false;
-        this._srvUavDescriptorLimit = MaxSrvUavDescriptors;
-        this._samplerDescriptorLimit = MaxSamplerDescriptors;
     }
 
     /// <summary>
@@ -158,8 +146,6 @@ internal sealed class D3D12DescriptorHeapState : IDisposable {
             return;
         }
 
-        this._boundDescriptorHeaps[0] = this._shaderVisibleSrvUavHeap;
-        this._boundDescriptorHeaps[1] = this._shaderVisibleSamplerHeap;
         SetDescriptorHeapsNoAlloc(commandList, this._boundDescriptorHeaps);
         this._descriptorHeapsBound = true;
     }
@@ -229,7 +215,7 @@ internal sealed class D3D12DescriptorHeapState : IDisposable {
     /// <param name="cpuHandle">The first CPU descriptor handle in the allocation.</param>
     /// <param name="gpuHandle">The first GPU descriptor handle in the allocation.</param>
     private void AllocateSrvUavDescriptors(uint count, out CpuDescriptorHandle cpuHandle, out GpuDescriptorHandle gpuHandle) {
-        if (this._nextSrvUavDescriptor + count > this._srvUavDescriptorLimit) {
+        if (this._nextSrvUavDescriptor + count > MaxSrvUavDescriptors) {
             throw new VeldridException("D3D12 SRV/UAV descriptor heap exhausted for this CommandList. Create fewer unique ResourceSets or increase the persistent descriptor heap size.");
         }
 
@@ -245,7 +231,7 @@ internal sealed class D3D12DescriptorHeapState : IDisposable {
     /// <param name="cpuHandle">The first CPU descriptor handle in the allocation.</param>
     /// <param name="gpuHandle">The first GPU descriptor handle in the allocation.</param>
     private void AllocateSamplerDescriptors(uint count, out CpuDescriptorHandle cpuHandle, out GpuDescriptorHandle gpuHandle) {
-        if (this._nextSamplerDescriptor + count > this._samplerDescriptorLimit) {
+        if (this._nextSamplerDescriptor + count > MaxSamplerDescriptors) {
             throw new VeldridException("D3D12 sampler descriptor heap exhausted for this CommandList. Create fewer unique ResourceSets or increase the persistent sampler descriptor heap size.");
         }
 

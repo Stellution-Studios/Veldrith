@@ -22,6 +22,21 @@ internal sealed class D3D12Texture : Texture {
     private readonly ResourceBarrier[] _singleBarrier = new ResourceBarrier[1];
 
     /// <summary>
+    /// Reuses a single footprint result for D3D12 copyable-footprint queries.
+    /// </summary>
+    private readonly PlacedSubresourceFootPrint[] _singleFootprintScratch = new PlacedSubresourceFootPrint[1];
+
+    /// <summary>
+    /// Reuses a single row-count result for D3D12 copyable-footprint queries.
+    /// </summary>
+    private readonly uint[] _singleRowCountScratch = new uint[1];
+
+    /// <summary>
+    /// Reuses a single row-size result for D3D12 copyable-footprint queries.
+    /// </summary>
+    private readonly ulong[] _singleRowSizeScratch = new ulong[1];
+
+    /// <summary>
     /// Stores the owns native texture state used by this instance.
     /// </summary>
     private readonly bool _ownsNativeTexture;
@@ -854,10 +869,7 @@ internal sealed class D3D12Texture : Texture {
     private void SyncSubresourceToNative(uint subresource) {
         byte[] data = this.RequireCpuStorage();
         ResourceDescription textureDescription = this.NativeTexture.Description;
-        PlacedSubresourceFootPrint[] layouts = new PlacedSubresourceFootPrint[1];
-        uint[] rowCounts = new uint[1];
-        ulong[] rowSizesInBytes = new ulong[1];
-        this.gd.Device.GetCopyableFootprints(textureDescription, subresource, 1, 0, layouts, rowCounts, rowSizesInBytes, out ulong totalBytes);
+        this.GetSingleCopyableFootprint(textureDescription, subresource, out PlacedSubresourceFootPrint layout, out uint rowCount, out ulong totalBytes);
 
         D3D12ResourceAllocation uploadBuffer = this.gd.RentUploadBuffer(totalBytes, Vortice.Direct3D12.D3D12.TextureDataPlacementAlignment);
         bool uploadEnqueuedForDeferredDisposal = false;
@@ -870,16 +882,16 @@ internal sealed class D3D12Texture : Texture {
             unsafe {
                 fixed (byte* srcBase = data) {
                     byte* srcSubresource = srcBase + srcOffset;
-                    byte* dstUpload = (byte*)uploadBuffer.MappedPointer.ToPointer() + layouts[0].Offset;
-                    uint dstRowPitch = layouts[0].Footprint.RowPitch;
-                    uint dstDepthPitch = dstRowPitch * rowCounts[0];
+                    byte* dstUpload = (byte*)uploadBuffer.MappedPointer.ToPointer() + layout.Offset;
+                    uint dstRowPitch = layout.Footprint.RowPitch;
+                    uint dstDepthPitch = dstRowPitch * rowCount;
                     Util.CopyTextureRegion(srcSubresource, 0, 0, 0, srcRowPitch, srcDepthPitch, dstUpload, 0, 0, 0, dstRowPitch, dstDepthPitch, mipWidth, mipHeight, mipDepth, this.Format);
                 }
             }
 
             ulong signalValue = this.ExecuteTextureBufferCopy(subresource, ResourceStates.CopyDest, previousState => {
                 TextureCopyLocation destination = new(this.NativeTexture, subresource);
-                PlacedSubresourceFootPrint sourceFootprint = layouts[0];
+                PlacedSubresourceFootPrint sourceFootprint = layout;
                 sourceFootprint.Offset += uploadBuffer.Offset;
                 TextureCopyLocation sourceLocation = new(uploadBuffer.Resource, sourceFootprint);
                 return (destination, sourceLocation, sourceBox: null, previousState);
@@ -908,10 +920,7 @@ internal sealed class D3D12Texture : Texture {
     private void SyncSubresourceFromNative(uint subresource) {
         byte[] data = this.RequireCpuStorage();
         ResourceDescription textureDescription = this.NativeTexture.Description;
-        PlacedSubresourceFootPrint[] layouts = new PlacedSubresourceFootPrint[1];
-        uint[] rowCounts = new uint[1];
-        ulong[] rowSizesInBytes = new ulong[1];
-        this.gd.Device.GetCopyableFootprints(textureDescription, subresource, 1, 0, layouts, rowCounts, rowSizesInBytes, out ulong totalBytes);
+        this.GetSingleCopyableFootprint(textureDescription, subresource, out PlacedSubresourceFootPrint layout, out uint rowCount, out ulong totalBytes);
 
         ResourceDescription readbackDescription = ResourceDescription.Buffer(totalBytes);
         D3D12ResourceAllocation readbackAllocation = this.gd.MemoryManager.CreateResource(ref readbackDescription, ResourceStates.CopyDest, HeapType.Readback, HeapFlags.AllowOnlyBuffers);
@@ -923,7 +932,7 @@ internal sealed class D3D12Texture : Texture {
             Util.GetMipDimensions(this, mipLevel, out uint mipWidth, out uint mipHeight, out uint mipDepth);
 
             _ = this.ExecuteTextureBufferCopy(subresource, ResourceStates.CopySource, previousState => {
-                TextureCopyLocation destination = new(readbackBuffer, layouts[0]);
+                TextureCopyLocation destination = new(readbackBuffer, layout);
                 TextureCopyLocation sourceLocation = new(this.NativeTexture, subresource);
                 Box sourceBox = new(0, 0, 0, (int)mipWidth, (int)mipHeight, (int)mipDepth);
                 return (destination, sourceLocation, sourceBox, previousState);
@@ -931,10 +940,10 @@ internal sealed class D3D12Texture : Texture {
 
             unsafe {
                 fixed (byte* dstBase = data) {
-                    byte* srcReadback = (byte*)readbackAllocation.MappedPointer.ToPointer() + layouts[0].Offset;
+                    byte* srcReadback = (byte*)readbackAllocation.MappedPointer.ToPointer() + layout.Offset;
                     byte* dstSubresource = dstBase + dstOffset;
-                    uint srcRowPitch = layouts[0].Footprint.RowPitch;
-                    uint srcDepthPitch = srcRowPitch * rowCounts[0];
+                    uint srcRowPitch = layout.Footprint.RowPitch;
+                    uint srcDepthPitch = srcRowPitch * rowCount;
                     Util.CopyTextureRegion(srcReadback, 0, 0, 0, srcRowPitch, srcDepthPitch, dstSubresource, 0, 0, 0, dstRowPitch, dstDepthPitch, mipWidth, mipHeight, mipDepth, this.Format);
                 }
             }
@@ -942,6 +951,20 @@ internal sealed class D3D12Texture : Texture {
         finally {
             readbackAllocation.Dispose();
         }
+    }
+
+    /// <summary>
+    /// Queries one copyable footprint without allocating temporary result arrays.
+    /// </summary>
+    /// <param name="textureDescription">The native texture description.</param>
+    /// <param name="subresource">The subresource index.</param>
+    /// <param name="layout">The copyable footprint returned by D3D12.</param>
+    /// <param name="rowCount">The number of rows in the footprint.</param>
+    /// <param name="totalBytes">The required copy buffer size.</param>
+    private void GetSingleCopyableFootprint(ResourceDescription textureDescription, uint subresource, out PlacedSubresourceFootPrint layout, out uint rowCount, out ulong totalBytes) {
+        this.gd.Device.GetCopyableFootprints(textureDescription, subresource, 1, 0, this._singleFootprintScratch, this._singleRowCountScratch, this._singleRowSizeScratch, out totalBytes);
+        layout = this._singleFootprintScratch[0];
+        rowCount = this._singleRowCountScratch[0];
     }
 
     /// <summary>

@@ -86,6 +86,11 @@ internal sealed class D3D12BufferUpdatePlanner {
     }
 
     /// <summary>
+    /// Gets whether any command-list-local buffer update work is waiting to be flushed.
+    /// </summary>
+    internal bool HasPendingUploads => this._immediateWriter.HasPendingWrites || this._pendingUpdates.Count != 0;
+
+    /// <summary>
     /// Discards queued updates that were not recorded into the native command list.
     /// </summary>
     internal void DiscardPendingUploads() {
