@@ -22,6 +22,12 @@ namespace Veldrith.D3D12;
 /// </summary>
 internal sealed class D3D12CommandList : CommandList {
 
+    private const int DrawDirtyPendingBufferUploads = 1 << 0;
+    private const int DrawDirtyGraphicsResourceSets = 1 << 1;
+    private const int DrawDirtyUavBarrier = 1 << 2;
+    private const int DrawDirtyResourceBarriers = 1 << 3;
+    private const int DrawDirtyDynamicInputAssembler = 1 << 4;
+
     /// <summary>
     /// Stores the begin event method state used by this instance.
     /// </summary>
@@ -178,6 +184,11 @@ internal sealed class D3D12CommandList : CommandList {
     private bool _ended;
 
     /// <summary>
+    /// Tracks draw pre-work that is known to be pending.
+    /// </summary>
+    private int _drawDirtyFlags;
+
+    /// <summary>
     /// Caches swapchain back-buffer state for the current command-list recording.
     /// </summary>
     private readonly D3D12SwapchainBackBufferTracker _swapchainBackBuffer = new();
@@ -331,6 +342,7 @@ internal sealed class D3D12CommandList : CommandList {
         this._viewportScissor.Reset();
         this._inputAssembler.Reset();
         this._dynamicBindingRefreshBuffers.Clear();
+        this._drawDirtyFlags = 0;
         this._graphicsResourceSets.Clear();
         this._computeResourceSets.Clear();
         this._rootBindingCache.InvalidateGraphics();
@@ -406,6 +418,7 @@ internal sealed class D3D12CommandList : CommandList {
         }
 
         this._barriers.UavBarrierPending = true;
+        this.MarkDrawDirty(DrawDirtyUavBarrier);
     }
 
     /// <summary>
@@ -454,6 +467,7 @@ internal sealed class D3D12CommandList : CommandList {
             this._perf.ResourceSetChanges++;
         }
 
+        this.MarkDrawDirty(DrawDirtyGraphicsResourceSets);
         Util.AssertSubtype<ResourceSet, D3D12ResourceSet>(rs);
     }
 
@@ -703,6 +717,9 @@ internal sealed class D3D12CommandList : CommandList {
         }
 
         this._pipelineStateBinder.SetPipeline(pipeline);
+        if (!pipeline.IsComputePipeline && this._graphicsResourceSets.Dirty) {
+            this.MarkDrawDirty(DrawDirtyGraphicsResourceSets);
+        }
     }
 
     /// <summary>
@@ -714,8 +731,8 @@ internal sealed class D3D12CommandList : CommandList {
     private protected override void SetVertexBufferCore(uint index, DeviceBuffer buffer, uint offset) {
         D3D12DeviceBuffer d3D12Buffer = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(buffer);
         bool isDynamicBuffer = (d3D12Buffer.Usage & BufferUsage.Dynamic) == BufferUsage.Dynamic;
-        ulong bindVersion = this.GetBufferBindVersion(d3D12Buffer);
-        if (!this._inputAssembler.TrySetVertexBuffer(index, d3D12Buffer, offset, bindVersion, isDynamicBuffer)) {
+        D3D12BufferBindingInfo bindingInfo = this.GetBufferBindingInfo(d3D12Buffer, offset);
+        if (!this._inputAssembler.TrySetVertexBuffer(index, d3D12Buffer, offset, bindingInfo.BindVersion, isDynamicBuffer)) {
             return;
         }
 
@@ -723,7 +740,7 @@ internal sealed class D3D12CommandList : CommandList {
             this.EndRenderPassForInternalUse();
         }
 
-        this.BindVertexBuffer(index, d3D12Buffer, offset);
+        this.BindVertexBuffer(index, d3D12Buffer, offset, in bindingInfo);
         this.ClearDynamicBindingRefreshIfCurrent(d3D12Buffer);
         if (D3D12CommandListPerfTracker.Enabled) {
             this._perf.VertexBufferBinds++;
@@ -739,8 +756,8 @@ internal sealed class D3D12CommandList : CommandList {
     private protected override void SetIndexBufferCore(DeviceBuffer buffer, IndexFormat format, uint offset) {
         D3D12DeviceBuffer d3D12Buffer = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(buffer);
         bool isDynamicBuffer = (d3D12Buffer.Usage & BufferUsage.Dynamic) == BufferUsage.Dynamic;
-        ulong bindVersion = this.GetBufferBindVersion(d3D12Buffer);
-        if (!this._inputAssembler.NeedsIndexBufferBind(d3D12Buffer, format, offset, bindVersion, isDynamicBuffer)) {
+        D3D12BufferBindingInfo bindingInfo = this.GetBufferBindingInfo(d3D12Buffer, offset);
+        if (!this._inputAssembler.NeedsIndexBufferBind(d3D12Buffer, format, offset, bindingInfo.BindVersion, isDynamicBuffer)) {
             return;
         }
 
@@ -749,10 +766,9 @@ internal sealed class D3D12CommandList : CommandList {
         }
 
         this.TransitionBuffer(d3D12Buffer, ResourceStates.IndexBuffer);
-        uint viewSize = this.GetBufferBindableSize(d3D12Buffer, offset);
-        IndexBufferView indexView = new(this.GetBufferGpuVirtualAddress(d3D12Buffer, offset), viewSize, D3D12Formats.ToDxgiFormat(format));
+        IndexBufferView indexView = new(bindingInfo.GpuVirtualAddress, bindingInfo.BindableSize, D3D12Formats.ToDxgiFormat(format));
         this.SetIndexBufferNoAlloc(ref indexView);
-        this._inputAssembler.SetIndexBuffer(d3D12Buffer, format, offset, bindVersion);
+        this._inputAssembler.SetIndexBuffer(d3D12Buffer, format, offset, bindingInfo.BindVersion);
         this.ClearDynamicBindingRefreshIfCurrent(d3D12Buffer);
         if (D3D12CommandListPerfTracker.Enabled) {
             this._perf.IndexBufferBinds++;
@@ -837,7 +853,9 @@ internal sealed class D3D12CommandList : CommandList {
             this.EndRenderPassForInternalUse();
         }
 
-        this._bufferUpdatePlanner.Update(d3D12Buffer, bufferOffsetInBytes, source, sizeInBytes);
+        if (this._bufferUpdatePlanner.Update(d3D12Buffer, bufferOffsetInBytes, source, sizeInBytes)) {
+            this.UpdatePendingBufferUploadDirtyFlag();
+        }
     }
 
     [SupportedOSPlatform("windows")]
@@ -939,9 +957,11 @@ internal sealed class D3D12CommandList : CommandList {
 
         this.EndRenderPassForInternalUse();
         D3D12BarrierQueueResult result = this._barriers.QueueTransition(resource, from, to);
+        this.MarkDrawDirty(DrawDirtyResourceBarriers);
         if (result == D3D12BarrierQueueResult.Full) {
             this.FlushPendingBarriers();
             this._barriers.QueueTransition(resource, from, to);
+            this.MarkDrawDirty(DrawDirtyResourceBarriers);
         }
 
         if (D3D12CommandListPerfTracker.Enabled) {
@@ -977,6 +997,18 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="buffer">The buffer resource involved in this operation.</param>
     /// <param name="offset">The byte offset used by this operation.</param>
     private void BindVertexBuffer(uint index, D3D12DeviceBuffer buffer, uint offset) {
+        D3D12BufferBindingInfo bindingInfo = this.GetBufferBindingInfo(buffer, offset);
+        this.BindVertexBuffer(index, buffer, offset, in bindingInfo);
+    }
+
+    /// <summary>
+    /// Binds the vertex buffer resources for subsequent commands.
+    /// </summary>
+    /// <param name="index">The zero-based index of the target item.</param>
+    /// <param name="buffer">The buffer resource involved in this operation.</param>
+    /// <param name="offset">The byte offset used by this operation.</param>
+    /// <param name="bindingInfo">The resolved command-list-local binding information.</param>
+    private void BindVertexBuffer(uint index, D3D12DeviceBuffer buffer, uint offset, in D3D12BufferBindingInfo bindingInfo) {
         this.TransitionBuffer(buffer, ResourceStates.VertexAndConstantBuffer);
 
         uint stride = 0;
@@ -985,8 +1017,7 @@ internal sealed class D3D12CommandList : CommandList {
             stride = currentGraphicsPipeline.VertexStrides[index];
         }
 
-        uint viewSize = this.GetBufferBindableSize(buffer, offset);
-        VertexBufferView view = new(this.GetBufferGpuVirtualAddress(buffer, offset), viewSize, stride);
+        VertexBufferView view = new(bindingInfo.GpuVirtualAddress, bindingInfo.BindableSize, stride);
         this.SetVertexBufferNoAlloc(index, ref view);
         this._inputAssembler.SetVertexBufferStride(index, stride);
     }
@@ -1011,7 +1042,8 @@ internal sealed class D3D12CommandList : CommandList {
                 continue;
             }
 
-            this.BindVertexBuffer(index, buffer, this._inputAssembler.GetVertexBufferOffset(index));
+            uint offset = this._inputAssembler.GetVertexBufferOffset(index);
+            this.BindVertexBuffer(index, buffer, offset);
         }
     }
 
@@ -1030,8 +1062,10 @@ internal sealed class D3D12CommandList : CommandList {
                 continue;
             }
 
-            this.BindVertexBuffer(index, buffer, this._inputAssembler.GetVertexBufferOffset(index));
-            this._inputAssembler.SetVertexBufferVersion(index, bindVersion);
+            uint offset = this._inputAssembler.GetVertexBufferOffset(index);
+            D3D12BufferBindingInfo bindingInfo = this.GetBufferBindingInfo(buffer, offset);
+            this.BindVertexBuffer(index, buffer, offset, in bindingInfo);
+            this._inputAssembler.SetVertexBufferVersion(index, bindingInfo.BindVersion);
             if (D3D12CommandListPerfTracker.Enabled) {
                 this._perf.VertexBufferBinds++;
             }
@@ -1046,10 +1080,10 @@ internal sealed class D3D12CommandList : CommandList {
         }
 
         this.TransitionBuffer(buffer, ResourceStates.IndexBuffer);
-        uint viewSize = this.GetBufferBindableSize(buffer, this._inputAssembler.IndexBufferOffset);
-        IndexBufferView indexView = new(this.GetBufferGpuVirtualAddress(buffer, this._inputAssembler.IndexBufferOffset), viewSize, D3D12Formats.ToDxgiFormat(this._inputAssembler.IndexFormat));
+        D3D12BufferBindingInfo indexBindingInfo = this.GetBufferBindingInfo(buffer, this._inputAssembler.IndexBufferOffset);
+        IndexBufferView indexView = new(indexBindingInfo.GpuVirtualAddress, indexBindingInfo.BindableSize, D3D12Formats.ToDxgiFormat(this._inputAssembler.IndexFormat));
         this.SetIndexBufferNoAlloc(ref indexView);
-        this._inputAssembler.SetIndexBufferVersion(bindVersion);
+        this._inputAssembler.SetIndexBufferVersion(indexBindingInfo.BindVersion);
         if (D3D12CommandListPerfTracker.Enabled) {
             this._perf.IndexBufferBinds++;
         }
@@ -1079,6 +1113,7 @@ internal sealed class D3D12CommandList : CommandList {
         }
 
         this._dynamicBindingRefreshBuffers.Add(buffer);
+        this.MarkDrawDirty(DrawDirtyDynamicInputAssembler);
     }
 
     /// <summary>
@@ -1098,6 +1133,10 @@ internal sealed class D3D12CommandList : CommandList {
             int lastIndex = this._dynamicBindingRefreshBuffers.Count - 1;
             this._dynamicBindingRefreshBuffers[i] = this._dynamicBindingRefreshBuffers[lastIndex];
             this._dynamicBindingRefreshBuffers.RemoveAt(lastIndex);
+            if (this._dynamicBindingRefreshBuffers.Count == 0) {
+                this.ClearDrawDirty(DrawDirtyDynamicInputAssembler);
+            }
+
             return;
         }
     }
@@ -1126,6 +1165,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     private void RefreshDirtyDynamicBufferBindings() {
         if (this._dynamicBindingRefreshBuffers.Count == 0) {
+            this.ClearDrawDirty(DrawDirtyDynamicInputAssembler);
             return;
         }
 
@@ -1134,6 +1174,7 @@ internal sealed class D3D12CommandList : CommandList {
         }
 
         this._dynamicBindingRefreshBuffers.Clear();
+        this.ClearDrawDirty(DrawDirtyDynamicInputAssembler);
     }
 
     /// <summary>
@@ -1142,6 +1183,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="buffer">The buffer to bind.</param>
     /// <param name="offset">The byte offset into the buffer.</param>
     /// <returns>The GPU virtual address visible to this command list.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal ulong GetBufferGpuVirtualAddressForInternalUse(D3D12DeviceBuffer buffer, uint offset) {
         return this.GetBufferGpuVirtualAddress(buffer, offset);
     }
@@ -1151,6 +1193,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     /// <param name="buffer">The buffer to inspect.</param>
     /// <returns>The bind version visible to this command list.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private ulong GetBufferBindVersion(D3D12DeviceBuffer buffer) {
         return this._bufferUpdatePlanner.GetBindVersion(buffer);
     }
@@ -1161,6 +1204,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="buffer">The buffer to bind.</param>
     /// <param name="offset">The byte offset into the buffer.</param>
     /// <returns>The GPU virtual address visible to this command list.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private ulong GetBufferGpuVirtualAddress(D3D12DeviceBuffer buffer, uint offset) {
         return this._bufferUpdatePlanner.GetGpuVirtualAddress(buffer, offset);
     }
@@ -1171,8 +1215,20 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="buffer">The buffer to bind.</param>
     /// <param name="offset">The byte offset into the buffer.</param>
     /// <returns>The bindable size visible to this command list.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private uint GetBufferBindableSize(D3D12DeviceBuffer buffer, uint offset) {
         return this._bufferUpdatePlanner.GetBindableSize(buffer, offset);
+    }
+
+    /// <summary>
+    /// Gets the command-list-local binding information for a buffer range.
+    /// </summary>
+    /// <param name="buffer">The buffer to bind.</param>
+    /// <param name="offset">The byte offset into the buffer.</param>
+    /// <returns>The resolved binding information.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private D3D12BufferBindingInfo GetBufferBindingInfo(D3D12DeviceBuffer buffer, uint offset) {
+        return this._bufferUpdatePlanner.GetBindingInfo(buffer, offset);
     }
 
     /// <summary>
@@ -1229,9 +1285,11 @@ internal sealed class D3D12CommandList : CommandList {
 
         this.EndRenderPassForInternalUse();
         D3D12BarrierQueueResult result = this._barriers.QueueSubresourceTransition(resource, from, to, subresource);
+        this.MarkDrawDirty(DrawDirtyResourceBarriers);
         if (result == D3D12BarrierQueueResult.Full) {
             this.FlushPendingBarriers();
             this._barriers.QueueSubresourceTransition(resource, from, to, subresource);
+            this.MarkDrawDirty(DrawDirtyResourceBarriers);
         }
 
         if (D3D12CommandListPerfTracker.Enabled) {
@@ -1244,6 +1302,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     private void FlushPendingUavBarrier() {
         if (!this._barriers.UavBarrierPending) {
+            this.ClearDrawDirty(DrawDirtyUavBarrier);
             return;
         }
 
@@ -1251,8 +1310,11 @@ internal sealed class D3D12CommandList : CommandList {
         long startTicks = D3D12CommandListPerfTracker.Enabled ? Stopwatch.GetTimestamp() : 0;
         bool flushed = this._barriers.FlushPendingUavBarrier(this.NativeCommandList);
         if (!flushed) {
+            this.UpdateUavBarrierDrawDirtyFlag();
             return;
         }
+
+        this.ClearDrawDirty(DrawDirtyUavBarrier);
 
         if (D3D12CommandListPerfTracker.Enabled) {
             this._perf.UavBarriers++;
@@ -1272,6 +1334,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     internal void MarkUavBarrierPendingForInternalUse() {
         this._barriers.UavBarrierPending = true;
+        this.MarkDrawDirty(DrawDirtyUavBarrier);
     }
 
     /// <summary>
@@ -1280,6 +1343,7 @@ internal sealed class D3D12CommandList : CommandList {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void FlushPendingBarriers() {
         if (!this._barriers.HasQueuedBarriers) {
+            this.ClearDrawDirty(DrawDirtyResourceBarriers);
             return;
         }
 
@@ -1287,8 +1351,11 @@ internal sealed class D3D12CommandList : CommandList {
         long startTicks = D3D12CommandListPerfTracker.Enabled ? Stopwatch.GetTimestamp() : 0;
         bool flushed = this._barriers.FlushPendingBarriers(this.NativeCommandList);
         if (!flushed) {
+            this.UpdateResourceBarrierDrawDirtyFlag();
             return;
         }
+
+        this.ClearDrawDirty(DrawDirtyResourceBarriers);
 
         if (D3D12CommandListPerfTracker.Enabled) {
             this._perf.BarrierMs += D3D12CommandListPerfTracker.TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
@@ -1308,24 +1375,36 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void PreDrawCommand() {
-        if (this._bufferUpdatePlanner.HasPendingUploads) {
-            this._bufferUpdatePlanner.Flush();
+        if (this._drawDirtyFlags == 0 && this.NativeCommandList4 == null) {
+            return;
         }
 
-        D3D12Pipeline pipeline = this.CurrentGraphicsPipeline;
-        if (this._graphicsResourceSets.Dirty && pipeline != null) {
-            this._descriptorSetBinder.FlushGraphicsResourceSets(this._graphicsResourceSets, pipeline);
+        this.PreDrawCommandSlow();
+    }
+
+    /// <summary>
+    /// Flushes dirty graphics state before a draw when at least one dirty bit is set.
+    /// </summary>
+    private void PreDrawCommandSlow() {
+        if ((this._drawDirtyFlags & DrawDirtyPendingBufferUploads) != 0) {
+            this.FlushPendingBufferUploads();
         }
 
-        if (this._barriers.UavBarrierPending) {
+        if ((this._drawDirtyFlags & DrawDirtyGraphicsResourceSets) != 0) {
+            this.FlushGraphicsResourceSets();
+        }
+
+        if ((this._drawDirtyFlags & DrawDirtyUavBarrier) != 0) {
             this.FlushPendingUavBarrier();
         }
 
-        if (this._barriers.HasQueuedBarriers) {
+        if ((this._drawDirtyFlags & DrawDirtyResourceBarriers) != 0) {
             this.FlushPendingBarriers();
         }
 
-        this.RefreshDirtyDynamicBufferBindings();
+        if ((this._drawDirtyFlags & DrawDirtyDynamicInputAssembler) != 0) {
+            this.RefreshDirtyDynamicBufferBindings();
+        }
 
         if (this.NativeCommandList4 != null) {
             this._renderPassTracker.BeginDrawPass(this.Framebuffer);
@@ -1397,6 +1476,7 @@ internal sealed class D3D12CommandList : CommandList {
 
         this.TransitionBuffer(argumentBuffer, previousState);
         this._barriers.UavBarrierPending = true;
+        this.MarkDrawDirty(DrawDirtyUavBarrier);
     }
 
     /// <summary>
@@ -1925,11 +2005,19 @@ internal sealed class D3D12CommandList : CommandList {
     /// Flushes graphics resource sets that were changed since the previous draw.
     /// </summary>
     private void FlushGraphicsResourceSets() {
-        if (!this._graphicsResourceSets.Dirty || this.CurrentGraphicsPipeline == null) {
+        if (!this._graphicsResourceSets.Dirty) {
+            this.ClearDrawDirty(DrawDirtyGraphicsResourceSets);
+            return;
+        }
+
+        if (this.CurrentGraphicsPipeline == null) {
             return;
         }
 
         this._descriptorSetBinder.FlushGraphicsResourceSets(this._graphicsResourceSets, this.CurrentGraphicsPipeline);
+        if (!this._graphicsResourceSets.Dirty) {
+            this.ClearDrawDirty(DrawDirtyGraphicsResourceSets);
+        }
     }
 
     /// <summary>
@@ -1955,10 +2043,12 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     private void FlushPendingBufferUploads() {
         if (!this._bufferUpdatePlanner.HasPendingUploads) {
+            this.ClearDrawDirty(DrawDirtyPendingBufferUploads);
             return;
         }
 
         this._bufferUpdatePlanner.Flush();
+        this.UpdatePendingBufferUploadDirtyFlag();
     }
 
     /// <summary>
@@ -1967,6 +2057,9 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="buffer">The buffer whose native binding address changed.</param>
     private void MarkResourceSetsReferencingBufferDirty(D3D12DeviceBuffer buffer) {
         this._descriptorSetBinder.MarkResourceSetsReferencingBufferDirty(this._graphicsResourceSets, this.CurrentGraphicsPipeline, this._computeResourceSets, this.CurrentComputePipeline, buffer);
+        if (this._graphicsResourceSets.Dirty) {
+            this.MarkDrawDirty(DrawDirtyGraphicsResourceSets);
+        }
     }
 
     /// <summary>
@@ -1975,6 +2068,72 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="buffer">The buffer whose native binding address changed.</param>
     internal void MarkResourceSetsReferencingBufferDirtyForInternalUse(D3D12DeviceBuffer buffer) {
         this.MarkResourceSetsReferencingBufferDirty(buffer);
+    }
+
+    /// <summary>
+    /// Marks graphics resource sets dirty after an internal helper restored graphics bindings.
+    /// </summary>
+    internal void MarkGraphicsResourceSetsDirtyForInternalUse() {
+        if (this._graphicsResourceSets.Dirty) {
+            this.MarkDrawDirty(DrawDirtyGraphicsResourceSets);
+        }
+    }
+
+    /// <summary>
+    /// Marks draw pre-work as pending.
+    /// </summary>
+    /// <param name="flags">The flags to mark.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void MarkDrawDirty(int flags) {
+        this._drawDirtyFlags |= flags;
+    }
+
+    /// <summary>
+    /// Clears draw pre-work flags that are no longer pending.
+    /// </summary>
+    /// <param name="flags">The flags to clear.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ClearDrawDirty(int flags) {
+        this._drawDirtyFlags &= ~flags;
+    }
+
+    /// <summary>
+    /// Syncs the draw dirty bit for pending buffer uploads.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void UpdatePendingBufferUploadDirtyFlag() {
+        if (this._bufferUpdatePlanner.HasPendingUploads) {
+            this.MarkDrawDirty(DrawDirtyPendingBufferUploads);
+        }
+        else {
+            this.ClearDrawDirty(DrawDirtyPendingBufferUploads);
+        }
+    }
+
+    /// <summary>
+    /// Syncs the draw dirty bit for queued resource barriers.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void UpdateResourceBarrierDrawDirtyFlag() {
+        if (this._barriers.HasQueuedBarriers) {
+            this.MarkDrawDirty(DrawDirtyResourceBarriers);
+        }
+        else {
+            this.ClearDrawDirty(DrawDirtyResourceBarriers);
+        }
+    }
+
+    /// <summary>
+    /// Syncs the draw dirty bit for a pending UAV barrier.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void UpdateUavBarrierDrawDirtyFlag() {
+        if (this._barriers.UavBarrierPending) {
+            this.MarkDrawDirty(DrawDirtyUavBarrier);
+        }
+        else {
+            this.ClearDrawDirty(DrawDirtyUavBarrier);
+        }
     }
 
     /// <summary>

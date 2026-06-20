@@ -306,6 +306,16 @@ internal readonly struct D3D12ResourceSetBindingPlan {
         this.Entries = entries;
         this.SrvUavTable = CreateDescriptorTableBindingInfo(entries, D3D12Pipeline.DescriptorTableKind.SrvUav);
         this.SamplerTable = CreateDescriptorTableBindingInfo(entries, D3D12Pipeline.DescriptorTableKind.Sampler);
+        this.SingleRootBindingOnly = entries.Length == 1 && !entries[0].BindingInfo.DescriptorTable;
+        this.SingleRootBinding = this.SingleRootBindingOnly ? entries[0] : default;
+        this.SingleUniformRootBindingOnly = this.SingleRootBindingOnly && entries[0].BindingInfo.Kind == ResourceKind.UniformBuffer;
+        this.DescriptorTablesOnly = entries.Length != 0;
+        for (int i = 0; i < entries.Length; i++) {
+            if (!entries[i].BindingInfo.DescriptorTable) {
+                this.DescriptorTablesOnly = false;
+                break;
+            }
+        }
     }
 
     /// <summary>
@@ -324,6 +334,26 @@ internal readonly struct D3D12ResourceSetBindingPlan {
     public D3D12DescriptorTableBindingInfo SamplerTable { get; }
 
     /// <summary>
+    /// Gets whether this plan contains exactly one root buffer binding and no descriptor tables.
+    /// </summary>
+    public bool SingleRootBindingOnly { get; }
+
+    /// <summary>
+    /// Gets the single root buffer binding when <see cref="SingleRootBindingOnly"/> is true.
+    /// </summary>
+    public D3D12ResourceSetBindingPlanEntry SingleRootBinding { get; }
+
+    /// <summary>
+    /// Gets whether this plan contains exactly one uniform-buffer root binding.
+    /// </summary>
+    public bool SingleUniformRootBindingOnly { get; }
+
+    /// <summary>
+    /// Gets whether this plan contains descriptor-table bindings and no root-buffer bindings.
+    /// </summary>
+    public bool DescriptorTablesOnly { get; }
+
+    /// <summary>
     /// Creates descriptor-table metadata for one descriptor table kind.
     /// </summary>
     /// <param name="bindingPlan">The binding plan entries to scan.</param>
@@ -332,8 +362,7 @@ internal readonly struct D3D12ResourceSetBindingPlan {
     private static D3D12DescriptorTableBindingInfo CreateDescriptorTableBindingInfo(D3D12ResourceSetBindingPlanEntry[] bindingPlan, D3D12Pipeline.DescriptorTableKind tableKind) {
         uint descriptorCount = 0;
         uint rootParameterIndex = 0;
-        bool hasTable = false;
-        uint hash = 2166136261u;
+        uint tableEntryCount = 0;
 
         for (int i = 0; i < bindingPlan.Length; i++) {
             D3D12Pipeline.RootBindingInfo bindingInfo = bindingPlan[i].BindingInfo;
@@ -341,21 +370,128 @@ internal readonly struct D3D12ResourceSetBindingPlan {
                 continue;
             }
 
-            hasTable = true;
+            tableEntryCount++;
             rootParameterIndex = bindingInfo.RootParameterIndex;
             descriptorCount = System.Math.Max(descriptorCount, bindingInfo.DescriptorTableOffset + 1);
-            hash = (hash ^ bindingPlan[i].ElementIndex) * 16777619u;
-            hash = (hash ^ bindingInfo.DescriptorTableOffset) * 16777619u;
-            hash = (hash ^ (uint)bindingInfo.Kind) * 16777619u;
         }
 
-        if (!hasTable) {
+        if (tableEntryCount == 0) {
             return default;
         }
 
-        hash = (hash ^ descriptorCount) * 16777619u;
-        return new D3D12DescriptorTableBindingInfo(tableKind, descriptorCount, rootParameterIndex, hash);
+        D3D12DescriptorTableBindingEntry[] tableEntries = new D3D12DescriptorTableBindingEntry[tableEntryCount];
+        uint tableEntryIndex = 0;
+        for (int i = 0; i < bindingPlan.Length; i++) {
+            D3D12Pipeline.RootBindingInfo bindingInfo = bindingPlan[i].BindingInfo;
+            if (!bindingInfo.DescriptorTable || bindingInfo.DescriptorTableKind != tableKind) {
+                continue;
+            }
+
+            tableEntries[tableEntryIndex++] = new D3D12DescriptorTableBindingEntry(bindingPlan[i].ElementIndex, bindingInfo.Kind, bindingInfo.DescriptorTableOffset);
+        }
+
+        uint hash = ComputeDescriptorTableSignature(tableEntries, descriptorCount);
+        return new D3D12DescriptorTableBindingInfo(tableKind, descriptorCount, rootParameterIndex, hash, tableEntries);
     }
+
+    /// <summary>
+    /// Creates descriptor-table metadata directly from a resource layout.
+    /// </summary>
+    /// <param name="elements">The resource-layout elements.</param>
+    /// <param name="tableKind">The descriptor table kind to describe.</param>
+    /// <returns>The descriptor-table metadata.</returns>
+    internal static D3D12DescriptorTableBindingInfo CreateLayoutDescriptorTableBindingInfo(ResourceLayoutElementDescription[] elements, D3D12Pipeline.DescriptorTableKind tableKind) {
+        uint tableEntryCount = 0;
+        for (uint elementIndex = 0; elementIndex < (uint)elements.Length; elementIndex++) {
+            if (GetDescriptorTableKind(elements[elementIndex].Kind) == tableKind) {
+                tableEntryCount++;
+            }
+        }
+
+        if (tableEntryCount == 0) {
+            return default;
+        }
+
+        D3D12DescriptorTableBindingEntry[] tableEntries = new D3D12DescriptorTableBindingEntry[tableEntryCount];
+        uint tableEntryIndex = 0;
+        for (uint elementIndex = 0; elementIndex < (uint)elements.Length; elementIndex++) {
+            ResourceKind kind = elements[elementIndex].Kind;
+            if (GetDescriptorTableKind(kind) != tableKind) {
+                continue;
+            }
+
+            tableEntries[tableEntryIndex] = new D3D12DescriptorTableBindingEntry(elementIndex, kind, tableEntryIndex);
+            tableEntryIndex++;
+        }
+
+        uint hash = ComputeDescriptorTableSignature(tableEntries, tableEntryCount);
+        return new D3D12DescriptorTableBindingInfo(tableKind, tableEntryCount, 0, hash, tableEntries);
+    }
+
+    /// <summary>
+    /// Computes the descriptor-table cache signature from table entries.
+    /// </summary>
+    /// <param name="entries">The descriptor-table entries.</param>
+    /// <param name="descriptorCount">The number of descriptors in the table.</param>
+    /// <returns>The descriptor-table signature.</returns>
+    private static uint ComputeDescriptorTableSignature(D3D12DescriptorTableBindingEntry[] entries, uint descriptorCount) {
+        uint hash = 2166136261u;
+        for (int i = 0; i < entries.Length; i++) {
+            D3D12DescriptorTableBindingEntry entry = entries[i];
+            hash = (hash ^ entry.ElementIndex) * 16777619u;
+            hash = (hash ^ entry.DescriptorTableOffset) * 16777619u;
+            hash = (hash ^ (uint)entry.Kind) * 16777619u;
+        }
+
+        hash = (hash ^ descriptorCount) * 16777619u;
+        return hash;
+    }
+
+    /// <summary>
+    /// Gets the descriptor-table kind used by a resource kind, or None for root-buffer resources.
+    /// </summary>
+    /// <param name="kind">The resource kind.</param>
+    /// <returns>The descriptor-table kind.</returns>
+    private static D3D12Pipeline.DescriptorTableKind GetDescriptorTableKind(ResourceKind kind) {
+        return kind switch {
+            ResourceKind.TextureReadOnly or ResourceKind.TextureReadWrite => D3D12Pipeline.DescriptorTableKind.SrvUav,
+            ResourceKind.Sampler => D3D12Pipeline.DescriptorTableKind.Sampler,
+            _ => D3D12Pipeline.DescriptorTableKind.None
+        };
+    }
+}
+
+/// <summary>
+/// Represents one descriptor-table entry in a cached D3D12 resource-set binding plan.
+/// </summary>
+internal readonly struct D3D12DescriptorTableBindingEntry {
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="D3D12DescriptorTableBindingEntry" /> struct.
+    /// </summary>
+    /// <param name="elementIndex">The resource-set element index.</param>
+    /// <param name="kind">The resource kind.</param>
+    /// <param name="descriptorTableOffset">The descriptor offset inside the table.</param>
+    public D3D12DescriptorTableBindingEntry(uint elementIndex, ResourceKind kind, uint descriptorTableOffset) {
+        this.ElementIndex = elementIndex;
+        this.Kind = kind;
+        this.DescriptorTableOffset = descriptorTableOffset;
+    }
+
+    /// <summary>
+    /// Gets the resource-set element index.
+    /// </summary>
+    public uint ElementIndex { get; }
+
+    /// <summary>
+    /// Gets the resource kind.
+    /// </summary>
+    public ResourceKind Kind { get; }
+
+    /// <summary>
+    /// Gets the descriptor offset inside the table.
+    /// </summary>
+    public uint DescriptorTableOffset { get; }
 }
 
 /// <summary>
@@ -370,12 +506,14 @@ internal readonly struct D3D12DescriptorTableBindingInfo {
     /// <param name="descriptorCount">The number of descriptors in the table.</param>
     /// <param name="rootParameterIndex">The root parameter index used by the table.</param>
     /// <param name="signature">The descriptor table signature used for cache validation.</param>
-    public D3D12DescriptorTableBindingInfo(D3D12Pipeline.DescriptorTableKind tableKind, uint descriptorCount, uint rootParameterIndex, uint signature) {
+    /// <param name="entries">The descriptor entries included in this table.</param>
+    public D3D12DescriptorTableBindingInfo(D3D12Pipeline.DescriptorTableKind tableKind, uint descriptorCount, uint rootParameterIndex, uint signature, D3D12DescriptorTableBindingEntry[] entries) {
         this.HasTable = true;
         this.TableKind = tableKind;
         this.DescriptorCount = descriptorCount;
         this.RootParameterIndex = rootParameterIndex;
         this.Signature = signature;
+        this.Entries = entries;
     }
 
     /// <summary>
@@ -402,6 +540,11 @@ internal readonly struct D3D12DescriptorTableBindingInfo {
     /// Gets the descriptor table signature used for cache validation.
     /// </summary>
     public uint Signature { get; }
+
+    /// <summary>
+    /// Gets the descriptor entries included in this table.
+    /// </summary>
+    public D3D12DescriptorTableBindingEntry[] Entries { get; }
 }
 
 /// <summary>

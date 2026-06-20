@@ -24,6 +24,8 @@ internal sealed class D3D12ResourceSet : ResourceSet {
         this.BoundResources = Util.ShallowClone(description.BoundResources);
         this.ElementCaches = CreateElementCaches(gd, this.ResourceLayoutInfo.Elements, this.BoundResources);
         this.ReferencedBuffers = CollectReferencedBuffers(this.ElementCaches);
+        this.SingleReferencedBuffer = this.ReferencedBuffers.Length == 1 ? this.ReferencedBuffers[0] : null;
+        gd.DescriptorHeapState.PrepopulateDescriptorTables(this);
     }
 
     /// <summary>
@@ -45,6 +47,11 @@ internal sealed class D3D12ResourceSet : ResourceSet {
     /// Gets buffers referenced by this resource set for fast dynamic snapshot dirty checks.
     /// </summary>
     internal D3D12DeviceBuffer[] ReferencedBuffers { get; }
+
+    /// <summary>
+    /// Gets the only buffer referenced by this resource set, or null when the set references zero or multiple buffers.
+    /// </summary>
+    internal D3D12DeviceBuffer SingleReferencedBuffer { get; }
 
     /// <summary>
     /// Cached GPU descriptor table handle for the SRV/UAV descriptor table. Valid when the heap cache id and <see cref="CachedSrvUavSignature"/> match.

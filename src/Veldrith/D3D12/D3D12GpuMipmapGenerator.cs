@@ -328,6 +328,7 @@ internal sealed class D3D12GpuMipmapGenerator : IDisposable {
             this._commandList.RootBindingCache.InvalidateGraphics();
             this._commandList.GraphicsResourceSets.EnsureCapacity(previousGraphics.ResourceSetCount);
             this._commandList.GraphicsResourceSets.MarkBoundChanged(previousGraphics.ResourceSetCount);
+            this._commandList.MarkGraphicsResourceSetsDirtyForInternalUse();
         }
         else {
             this._commandList.CurrentComputePipeline = null;

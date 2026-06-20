@@ -147,6 +147,11 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     private readonly Dictionary<string, ID3D12PipelineState> _pipelineStateCache = new(StringComparer.Ordinal);
 
     /// <summary>
+    /// Owns device-global shader-visible descriptor heaps used by D3D12 ResourceSets.
+    /// </summary>
+    private readonly D3D12DescriptorHeapState _descriptorHeapState;
+
+    /// <summary>
     /// Protects native pipeline state cache access.
     /// </summary>
     private readonly object _pipelineStateCacheLock = new();
@@ -597,6 +602,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         this.SamplerDescriptorAllocator = new D3D12CpuDescriptorAllocator(this._device, DescriptorHeapType.Sampler, 1024);
         this.RtvDescriptorAllocator = new D3D12CpuDescriptorAllocator(this._device, DescriptorHeapType.RenderTargetView, 1024);
         this.DsvDescriptorAllocator = new D3D12CpuDescriptorAllocator(this._device, DescriptorHeapType.DepthStencilView, 1024);
+        this._descriptorHeapState = new D3D12DescriptorHeapState(this);
         this._supportsDirectWriteBufferImmediate = this.CheckDirectWriteBufferImmediateSupport();
         this._supportsRenderPasses = this.CheckRenderPassSupport();
         this._resourceFactory = new D3D12ResourceFactory(this, this.Features);
@@ -756,6 +762,11 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// Gets the CPU DSV descriptor allocator.
     /// </summary>
     internal D3D12CpuDescriptorAllocator DsvDescriptorAllocator { get; }
+
+    /// <summary>
+    /// Gets the device-global shader-visible descriptor heap state.
+    /// </summary>
+    internal D3D12DescriptorHeapState DescriptorHeapState => this._descriptorHeapState;
 
     /// <summary>
     /// Emits a periodic device-level performance report when D3D12 performance logging is enabled.
@@ -1573,6 +1584,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         }
 
         this.MainSwapchain?.Dispose();
+        this._descriptorHeapState?.Dispose();
         this.SrvUavDescriptorAllocator?.Dispose();
         this.SamplerDescriptorAllocator?.Dispose();
         this.RtvDescriptorAllocator?.Dispose();
@@ -1596,12 +1608,13 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
 
         long pumpStartTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
-        this.PumpSubmissionDeferredDisposals();
-        this.PumpImmediateDeferredDisposals();
+        bool pumpedDeferredDisposals = this.TryPumpDeferredDisposalsForSubmit();
         if (_perfLogEnabled) {
-            double pumpMs = TicksToMilliseconds(Stopwatch.GetTimestamp() - pumpStartTicks);
-            this._perfAccumSubmitDisposalPumpMs += pumpMs;
-            this._perfMaxSubmitDisposalPumpMs = Math.Max(this._perfMaxSubmitDisposalPumpMs, pumpMs);
+            double pumpMs = pumpedDeferredDisposals ? TicksToMilliseconds(Stopwatch.GetTimestamp() - pumpStartTicks) : 0;
+            if (pumpedDeferredDisposals) {
+                this._perfAccumSubmitDisposalPumpMs += pumpMs;
+                this._perfMaxSubmitDisposalPumpMs = Math.Max(this._perfMaxSubmitDisposalPumpMs, pumpMs);
+            }
         }
 
         long lockWaitStartTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
@@ -1657,6 +1670,32 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         if (_perfLogEnabled) {
             this.ReportDevicePerfIfNeeded(TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks));
         }
+    }
+
+    /// <summary>
+    /// Pumps deferred-disposal queues from the submit hot path only when enough work has accumulated.
+    /// </summary>
+    /// <returns><see langword="true" /> when a fence poll was performed.</returns>
+    private bool TryPumpDeferredDisposalsForSubmit() {
+        int pendingSubmissionDisposals = Volatile.Read(ref this._submissionDeferredDisposalCount);
+        int pendingImmediateDisposals = Volatile.Read(ref this._immediateDeferredDisposalCount);
+        if (pendingSubmissionDisposals == 0 && pendingImmediateDisposals == 0) {
+            this._deferredDisposalPumpSubmitCounter = 0;
+            return false;
+        }
+
+        int submitCounter = this._deferredDisposalPumpSubmitCounter + 1;
+        bool highWatermark = pendingSubmissionDisposals >= DeferredDisposalPumpHighWatermark
+                             || pendingImmediateDisposals >= DeferredDisposalPumpHighWatermark;
+        if (!highWatermark && submitCounter < _deferredDisposalPumpInterval) {
+            this._deferredDisposalPumpSubmitCounter = submitCounter;
+            return false;
+        }
+
+        this._deferredDisposalPumpSubmitCounter = 0;
+        this.PumpSubmissionDeferredDisposals();
+        this.PumpImmediateDeferredDisposals();
+        return true;
     }
 
     /// <summary>
@@ -2177,7 +2216,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// </summary>
     /// <returns><see langword="true" /> when render passes are supported and enabled.</returns>
     private bool CheckRenderPassSupport() {
-        if (string.Equals(Environment.GetEnvironmentVariable("VELDRID_D3D12_RENDERPASS"), "0", StringComparison.Ordinal)) {
+        if (!string.Equals(Environment.GetEnvironmentVariable("VELDRID_D3D12_RENDERPASS"), "1", StringComparison.Ordinal)) {
             return false;
         }
 

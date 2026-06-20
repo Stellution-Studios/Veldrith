@@ -43,6 +43,16 @@ internal sealed class D3D12BoundResourceSetState {
     private int _maxTouchedSlot;
 
     /// <summary>
+    /// Stores bound set slots whose current resource set references at least one buffer.
+    /// </summary>
+    private int[] _bufferSetSlots = Array.Empty<int>();
+
+    /// <summary>
+    /// Gets the number of active entries in <see cref="_bufferSetSlots"/>.
+    /// </summary>
+    private int _bufferSetSlotCount;
+
+    /// <summary>
     /// Updates a resource set slot and marks it dirty when the binding changed.
     /// </summary>
     /// <param name="slot">The resource set slot.</param>
@@ -51,7 +61,10 @@ internal sealed class D3D12BoundResourceSetState {
     /// <param name="dynamicOffsets">The first dynamic offset value.</param>
     /// <returns><see langword="true" /> when the slot changed.</returns>
     internal bool TrySet(uint slot, ResourceSet set, uint dynamicOffsetsCount, ref uint dynamicOffsets) {
-        this.EnsureCapacity(slot + 1);
+        if (slot >= (uint)this.BoundSets.Length) {
+            this.EnsureCapacity(slot + 1);
+        }
+
         BoundResourceSetInfo previousBinding = this.BoundSets[slot];
         if (previousBinding.Equals(set, dynamicOffsetsCount, ref dynamicOffsets)) {
             return false;
@@ -63,6 +76,7 @@ internal sealed class D3D12BoundResourceSetState {
 
         this.BoundSets[slot].Offsets.Dispose();
         this.BoundSets[slot] = new BoundResourceSetInfo(set, dynamicOffsetsCount, ref dynamicOffsets);
+        this.UpdateBufferSetSlot(slot, previousBinding.Set, set);
         this.MarkTouched(slot);
         this.MarkChanged(slot, changeKind);
         return true;
@@ -141,8 +155,10 @@ internal sealed class D3D12BoundResourceSetState {
     /// <param name="binding">The binding captured by <see cref="CaptureSlot" />.</param>
     internal void RestoreSlot(uint slot, BoundResourceSetInfo binding) {
         this.EnsureCapacity(slot + 1);
+        ResourceSet previousSet = this.BoundSets[slot].Set;
         this.BoundSets[slot].Offsets.Dispose();
         this.BoundSets[slot] = binding;
+        this.UpdateBufferSetSlot(slot, previousSet, binding.Set);
         this.MarkTouched(slot);
         this.MarkChanged(slot);
     }
@@ -187,8 +203,17 @@ internal sealed class D3D12BoundResourceSetState {
     /// <returns><see langword="true" /> when at least one set was marked dirty.</returns>
     internal bool MarkSetsReferencingBufferDirty(uint resourceSetCount, D3D12DeviceBuffer buffer) {
         int count = Math.Min(Math.Min(this.BoundSets.Length, this.Changed.Length), GetClampedResourceSetCount(resourceSetCount));
+        if (count == 0 || this._bufferSetSlotCount == 0) {
+            return false;
+        }
+
         bool anyChanged = false;
-        for (int slot = 0; slot < count; slot++) {
+        for (int i = 0; i < this._bufferSetSlotCount; i++) {
+            int slot = this._bufferSetSlots[i];
+            if (slot >= count) {
+                continue;
+            }
+
             if (this.BoundSets[slot].Set is not D3D12ResourceSet resourceSet) {
                 continue;
             }
@@ -220,6 +245,7 @@ internal sealed class D3D12BoundResourceSetState {
         }
 
         this._maxTouchedSlot = 0;
+        this._bufferSetSlotCount = 0;
         this.ResetDirtyRange();
     }
 
@@ -235,12 +261,74 @@ internal sealed class D3D12BoundResourceSetState {
     }
 
     /// <summary>
+    /// Updates the compact list of currently bound slots that reference buffers.
+    /// </summary>
+    /// <param name="slot">The resource-set slot being updated.</param>
+    /// <param name="previousSet">The previously bound resource set.</param>
+    /// <param name="nextSet">The newly bound resource set.</param>
+    private void UpdateBufferSetSlot(uint slot, ResourceSet previousSet, ResourceSet nextSet) {
+        bool previousHadBuffers = ResourceSetHasBuffers(previousSet);
+        bool nextHasBuffers = ResourceSetHasBuffers(nextSet);
+        if (previousHadBuffers == nextHasBuffers) {
+            return;
+        }
+
+        if (nextHasBuffers) {
+            this.AddBufferSetSlot(slot);
+        }
+        else {
+            this.RemoveBufferSetSlot(slot);
+        }
+    }
+
+    /// <summary>
+    /// Adds a resource-set slot to the compact buffer-set list.
+    /// </summary>
+    /// <param name="slot">The resource-set slot to add.</param>
+    private void AddBufferSetSlot(uint slot) {
+        Util.EnsureArrayMinimumSize(ref this._bufferSetSlots, (uint)this._bufferSetSlotCount + 1);
+        this._bufferSetSlots[this._bufferSetSlotCount++] = (int)slot;
+    }
+
+    /// <summary>
+    /// Removes a resource-set slot from the compact buffer-set list.
+    /// </summary>
+    /// <param name="slot">The resource-set slot to remove.</param>
+    private void RemoveBufferSetSlot(uint slot) {
+        int slotIndex = (int)slot;
+        for (int i = 0; i < this._bufferSetSlotCount; i++) {
+            if (this._bufferSetSlots[i] != slotIndex) {
+                continue;
+            }
+
+            int lastIndex = this._bufferSetSlotCount - 1;
+            this._bufferSetSlots[i] = this._bufferSetSlots[lastIndex];
+            this._bufferSetSlotCount = lastIndex;
+            return;
+        }
+    }
+
+    /// <summary>
+    /// Checks whether a resource set has at least one buffer binding.
+    /// </summary>
+    /// <param name="set">The resource set to inspect.</param>
+    /// <returns><see langword="true" /> when the set references at least one buffer.</returns>
+    private static bool ResourceSetHasBuffers(ResourceSet set) {
+        return set is D3D12ResourceSet resourceSet && resourceSet.ReferencedBuffers.Length != 0;
+    }
+
+    /// <summary>
     /// Checks whether a resource set references a specific buffer.
     /// </summary>
     /// <param name="resourceSet">The resource set to inspect.</param>
     /// <param name="buffer">The buffer to find.</param>
     /// <returns><see langword="true" /> when the set references the buffer.</returns>
     private static bool ResourceSetReferencesBuffer(D3D12ResourceSet resourceSet, D3D12DeviceBuffer buffer) {
+        D3D12DeviceBuffer singleBuffer = resourceSet.SingleReferencedBuffer;
+        if (singleBuffer != null) {
+            return ReferenceEquals(singleBuffer, buffer);
+        }
+
         D3D12DeviceBuffer[] referencedBuffers = resourceSet.ReferencedBuffers;
         for (int i = 0; i < referencedBuffers.Length; i++) {
             if (ReferenceEquals(referencedBuffers[i], buffer)) {

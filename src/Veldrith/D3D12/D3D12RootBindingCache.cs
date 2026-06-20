@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 
 namespace Veldrith.D3D12;
 
@@ -58,95 +59,95 @@ internal sealed class D3D12RootBindingCache {
     private uint _computeGeneration = 1;
 
     /// <summary>
-    /// Checks whether a graphics root-buffer binding already matches the requested GPU address.
+    /// Updates a graphics root-buffer cache entry and reports whether D3D12 state must be changed.
     /// </summary>
     /// <param name="rootParameterIndex">The root parameter index.</param>
-    /// <param name="gpuAddress">The GPU virtual address to compare.</param>
-    /// <returns><see langword="true" /> when the cached graphics binding matches.</returns>
-    internal bool IsSameGraphicsRootBuffer(uint rootParameterIndex, ulong gpuAddress) {
-        int index = this.EnsureGraphicsRootBufferCapacity(rootParameterIndex);
-        return this._graphicsRootBufferAddressGenerations[index] == this._graphicsGeneration
-               && this._graphicsRootBufferAddresses[index] == gpuAddress;
-    }
+    /// <param name="gpuAddress">The GPU virtual address to bind.</param>
+    /// <returns><see langword="true" /> when the command list must receive a root-buffer update.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal bool TryUpdateGraphicsRootBuffer(uint rootParameterIndex, ulong gpuAddress) {
+        if (rootParameterIndex >= (uint)this._graphicsRootBufferAddresses.Length) {
+            return this.TryUpdateGraphicsRootBufferSlow(rootParameterIndex, gpuAddress);
+        }
 
-    /// <summary>
-    /// Stores a graphics root-buffer GPU address in the cache.
-    /// </summary>
-    /// <param name="rootParameterIndex">The root parameter index.</param>
-    /// <param name="gpuAddress">The GPU virtual address that was bound.</param>
-    internal void SetGraphicsRootBuffer(uint rootParameterIndex, ulong gpuAddress) {
-        int index = this.EnsureGraphicsRootBufferCapacity(rootParameterIndex);
+        int index = (int)rootParameterIndex;
+        if (this._graphicsRootBufferAddressGenerations[index] == this._graphicsGeneration
+            && this._graphicsRootBufferAddresses[index] == gpuAddress) {
+            return false;
+        }
+
         this._graphicsRootBufferAddresses[index] = gpuAddress;
         this._graphicsRootBufferAddressGenerations[index] = this._graphicsGeneration;
+        return true;
     }
 
     /// <summary>
-    /// Checks whether a compute root-buffer binding already matches the requested GPU address.
+    /// Updates a compute root-buffer cache entry and reports whether D3D12 state must be changed.
     /// </summary>
     /// <param name="rootParameterIndex">The root parameter index.</param>
-    /// <param name="gpuAddress">The GPU virtual address to compare.</param>
-    /// <returns><see langword="true" /> when the cached compute binding matches.</returns>
-    internal bool IsSameComputeRootBuffer(uint rootParameterIndex, ulong gpuAddress) {
-        int index = this.EnsureComputeRootBufferCapacity(rootParameterIndex);
-        return this._computeRootBufferAddressGenerations[index] == this._computeGeneration
-               && this._computeRootBufferAddresses[index] == gpuAddress;
-    }
+    /// <param name="gpuAddress">The GPU virtual address to bind.</param>
+    /// <returns><see langword="true" /> when the command list must receive a root-buffer update.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal bool TryUpdateComputeRootBuffer(uint rootParameterIndex, ulong gpuAddress) {
+        if (rootParameterIndex >= (uint)this._computeRootBufferAddresses.Length) {
+            return this.TryUpdateComputeRootBufferSlow(rootParameterIndex, gpuAddress);
+        }
 
-    /// <summary>
-    /// Stores a compute root-buffer GPU address in the cache.
-    /// </summary>
-    /// <param name="rootParameterIndex">The root parameter index.</param>
-    /// <param name="gpuAddress">The GPU virtual address that was bound.</param>
-    internal void SetComputeRootBuffer(uint rootParameterIndex, ulong gpuAddress) {
-        int index = this.EnsureComputeRootBufferCapacity(rootParameterIndex);
+        int index = (int)rootParameterIndex;
+        if (this._computeRootBufferAddressGenerations[index] == this._computeGeneration
+            && this._computeRootBufferAddresses[index] == gpuAddress) {
+            return false;
+        }
+
         this._computeRootBufferAddresses[index] = gpuAddress;
         this._computeRootBufferAddressGenerations[index] = this._computeGeneration;
+        return true;
     }
 
     /// <summary>
-    /// Checks whether a graphics root descriptor-table binding already matches the requested GPU handle.
+    /// Updates a graphics root-table cache entry and reports whether D3D12 state must be changed.
     /// </summary>
     /// <param name="rootParameterIndex">The root parameter index.</param>
-    /// <param name="tablePtr">The descriptor table GPU pointer to compare.</param>
-    /// <returns><see langword="true" /> when the cached graphics table matches.</returns>
-    internal bool IsSameGraphicsRootTable(uint rootParameterIndex, ulong tablePtr) {
-        int index = this.EnsureGraphicsRootTableCapacity(rootParameterIndex);
-        return this._graphicsRootTablePointerGenerations[index] == this._graphicsGeneration
-               && this._graphicsRootTablePointers[index] == tablePtr;
-    }
+    /// <param name="tablePtr">The descriptor table GPU pointer to bind.</param>
+    /// <returns><see langword="true" /> when the command list must receive a root-table update.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal bool TryUpdateGraphicsRootTable(uint rootParameterIndex, ulong tablePtr) {
+        if (rootParameterIndex >= (uint)this._graphicsRootTablePointers.Length) {
+            return this.TryUpdateGraphicsRootTableSlow(rootParameterIndex, tablePtr);
+        }
 
-    /// <summary>
-    /// Stores a graphics root descriptor-table GPU pointer in the cache.
-    /// </summary>
-    /// <param name="rootParameterIndex">The root parameter index.</param>
-    /// <param name="tablePtr">The descriptor table GPU pointer that was bound.</param>
-    internal void SetGraphicsRootTable(uint rootParameterIndex, ulong tablePtr) {
-        int index = this.EnsureGraphicsRootTableCapacity(rootParameterIndex);
+        int index = (int)rootParameterIndex;
+        if (this._graphicsRootTablePointerGenerations[index] == this._graphicsGeneration
+            && this._graphicsRootTablePointers[index] == tablePtr) {
+            return false;
+        }
+
         this._graphicsRootTablePointers[index] = tablePtr;
         this._graphicsRootTablePointerGenerations[index] = this._graphicsGeneration;
+        return true;
     }
 
     /// <summary>
-    /// Checks whether a compute root descriptor-table binding already matches the requested GPU handle.
+    /// Updates a compute root-table cache entry and reports whether D3D12 state must be changed.
     /// </summary>
     /// <param name="rootParameterIndex">The root parameter index.</param>
-    /// <param name="tablePtr">The descriptor table GPU pointer to compare.</param>
-    /// <returns><see langword="true" /> when the cached compute table matches.</returns>
-    internal bool IsSameComputeRootTable(uint rootParameterIndex, ulong tablePtr) {
-        int index = this.EnsureComputeRootTableCapacity(rootParameterIndex);
-        return this._computeRootTablePointerGenerations[index] == this._computeGeneration
-               && this._computeRootTablePointers[index] == tablePtr;
-    }
+    /// <param name="tablePtr">The descriptor table GPU pointer to bind.</param>
+    /// <returns><see langword="true" /> when the command list must receive a root-table update.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal bool TryUpdateComputeRootTable(uint rootParameterIndex, ulong tablePtr) {
+        if (rootParameterIndex >= (uint)this._computeRootTablePointers.Length) {
+            return this.TryUpdateComputeRootTableSlow(rootParameterIndex, tablePtr);
+        }
 
-    /// <summary>
-    /// Stores a compute root descriptor-table GPU pointer in the cache.
-    /// </summary>
-    /// <param name="rootParameterIndex">The root parameter index.</param>
-    /// <param name="tablePtr">The descriptor table GPU pointer that was bound.</param>
-    internal void SetComputeRootTable(uint rootParameterIndex, ulong tablePtr) {
-        int index = this.EnsureComputeRootTableCapacity(rootParameterIndex);
+        int index = (int)rootParameterIndex;
+        if (this._computeRootTablePointerGenerations[index] == this._computeGeneration
+            && this._computeRootTablePointers[index] == tablePtr) {
+            return false;
+        }
+
         this._computeRootTablePointers[index] = tablePtr;
         this._computeRootTablePointerGenerations[index] = this._computeGeneration;
+        return true;
     }
 
     /// <summary>
@@ -193,6 +194,24 @@ internal sealed class D3D12RootBindingCache {
     }
 
     /// <summary>
+    /// Slow path for graphics root-buffer cache updates that need a larger cache array.
+    /// </summary>
+    /// <param name="rootParameterIndex">The root parameter index.</param>
+    /// <param name="gpuAddress">The GPU virtual address to bind.</param>
+    /// <returns><see langword="true" /> when the command list must receive a root-buffer update.</returns>
+    private bool TryUpdateGraphicsRootBufferSlow(uint rootParameterIndex, ulong gpuAddress) {
+        int index = this.EnsureGraphicsRootBufferCapacity(rootParameterIndex);
+        if (this._graphicsRootBufferAddressGenerations[index] == this._graphicsGeneration
+            && this._graphicsRootBufferAddresses[index] == gpuAddress) {
+            return false;
+        }
+
+        this._graphicsRootBufferAddresses[index] = gpuAddress;
+        this._graphicsRootBufferAddressGenerations[index] = this._graphicsGeneration;
+        return true;
+    }
+
+    /// <summary>
     /// Ensures compute root-buffer cache arrays can hold a root parameter index.
     /// </summary>
     /// <param name="rootParameterIndex">The root parameter index.</param>
@@ -205,6 +224,24 @@ internal sealed class D3D12RootBindingCache {
         }
 
         return index;
+    }
+
+    /// <summary>
+    /// Slow path for compute root-buffer cache updates that need a larger cache array.
+    /// </summary>
+    /// <param name="rootParameterIndex">The root parameter index.</param>
+    /// <param name="gpuAddress">The GPU virtual address to bind.</param>
+    /// <returns><see langword="true" /> when the command list must receive a root-buffer update.</returns>
+    private bool TryUpdateComputeRootBufferSlow(uint rootParameterIndex, ulong gpuAddress) {
+        int index = this.EnsureComputeRootBufferCapacity(rootParameterIndex);
+        if (this._computeRootBufferAddressGenerations[index] == this._computeGeneration
+            && this._computeRootBufferAddresses[index] == gpuAddress) {
+            return false;
+        }
+
+        this._computeRootBufferAddresses[index] = gpuAddress;
+        this._computeRootBufferAddressGenerations[index] = this._computeGeneration;
+        return true;
     }
 
     /// <summary>
@@ -223,6 +260,24 @@ internal sealed class D3D12RootBindingCache {
     }
 
     /// <summary>
+    /// Slow path for graphics root-table cache updates that need a larger cache array.
+    /// </summary>
+    /// <param name="rootParameterIndex">The root parameter index.</param>
+    /// <param name="tablePtr">The descriptor table GPU pointer to bind.</param>
+    /// <returns><see langword="true" /> when the command list must receive a root-table update.</returns>
+    private bool TryUpdateGraphicsRootTableSlow(uint rootParameterIndex, ulong tablePtr) {
+        int index = this.EnsureGraphicsRootTableCapacity(rootParameterIndex);
+        if (this._graphicsRootTablePointerGenerations[index] == this._graphicsGeneration
+            && this._graphicsRootTablePointers[index] == tablePtr) {
+            return false;
+        }
+
+        this._graphicsRootTablePointers[index] = tablePtr;
+        this._graphicsRootTablePointerGenerations[index] = this._graphicsGeneration;
+        return true;
+    }
+
+    /// <summary>
     /// Ensures compute root descriptor-table cache arrays can hold a root parameter index.
     /// </summary>
     /// <param name="rootParameterIndex">The root parameter index.</param>
@@ -235,5 +290,23 @@ internal sealed class D3D12RootBindingCache {
         }
 
         return index;
+    }
+
+    /// <summary>
+    /// Slow path for compute root-table cache updates that need a larger cache array.
+    /// </summary>
+    /// <param name="rootParameterIndex">The root parameter index.</param>
+    /// <param name="tablePtr">The descriptor table GPU pointer to bind.</param>
+    /// <returns><see langword="true" /> when the command list must receive a root-table update.</returns>
+    private bool TryUpdateComputeRootTableSlow(uint rootParameterIndex, ulong tablePtr) {
+        int index = this.EnsureComputeRootTableCapacity(rootParameterIndex);
+        if (this._computeRootTablePointerGenerations[index] == this._computeGeneration
+            && this._computeRootTablePointers[index] == tablePtr) {
+            return false;
+        }
+
+        this._computeRootTablePointers[index] = tablePtr;
+        this._computeRootTablePointerGenerations[index] = this._computeGeneration;
+        return true;
     }
 }

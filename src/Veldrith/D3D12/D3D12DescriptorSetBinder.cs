@@ -34,9 +34,14 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
     private readonly D3D12ResourceSetBindingPlanCache _bindingPlans = new();
 
     /// <summary>
-    /// Owns shader-visible descriptor heaps and descriptor table copies for this command list.
+    /// Owns device-global shader-visible descriptor heaps and descriptor table copies.
     /// </summary>
     private readonly D3D12DescriptorHeapState _descriptorHeapState;
+
+    /// <summary>
+    /// Tracks whether the global descriptor heaps have been bound for the current command-list recording.
+    /// </summary>
+    private bool _descriptorHeapsBound;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="D3D12DescriptorSetBinder" /> class.
@@ -49,14 +54,14 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
         this._commandList = commandList;
         this._rootBindingCache = rootBindingCache;
         this._perf = perf;
-        this._descriptorHeapState = new D3D12DescriptorHeapState(gd);
+        this._descriptorHeapState = gd.DescriptorHeapState;
     }
 
     /// <summary>
     /// Resets per-recording descriptor heap and fast binding-plan state.
     /// </summary>
     internal void BeginRecording() {
-        this._descriptorHeapState.BeginRecording();
+        this._descriptorHeapsBound = false;
         this._bindingPlans.ClearPipelineCaches();
     }
 
@@ -95,7 +100,6 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
     /// Releases descriptor heap resources held by this instance.
     /// </summary>
     public void Dispose() {
-        this._descriptorHeapState.Dispose();
     }
 
     /// <summary>
@@ -159,14 +163,33 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
         D3D12ResourceSetBindingPlan bindingPlan = compute
             ? this._bindingPlans.GetCompute(pipeline, slot, d3d12Set.ResourceLayoutInfo)
             : this._bindingPlans.GetGraphics(pipeline, slot, d3d12Set.ResourceLayoutInfo);
+
+        if (bindingPlan.SingleUniformRootBindingOnly) {
+            this.BindSingleUniformBufferResourceSet(ref boundSet, d3d12Set, bindingPlan.SingleRootBinding, compute);
+            return;
+        }
+
+        if (bindingPlan.SingleRootBindingOnly) {
+            this.BindSingleRootResourceSet(ref boundSet, d3d12Set, bindingPlan.SingleRootBinding, compute);
+            return;
+        }
+
+        bool rootBindingsOnly = changeKind == D3D12ResourceSetChangeKind.RootBindingsOnly;
+        if (bindingPlan.DescriptorTablesOnly) {
+            if (!rootBindingsOnly) {
+                this.BindDescriptorTableOnlyResourceSet(d3d12Set, bindingPlan, compute);
+            }
+
+            return;
+        }
+
         uint dynamicOffsetIndex = 0;
         bool descriptorTablesChanged = false;
         D3D12ResourceSetBindingPlanEntry[] entries = bindingPlan.Entries;
-        bool rootBindingsOnly = changeKind == D3D12ResourceSetChangeKind.RootBindingsOnly;
         bool hasSrvUavTable = bindingPlan.SrvUavTable.HasTable;
         bool skipSrvUavTableResourcePreparation = hasSrvUavTable
                                                    && (rootBindingsOnly
-                                                       || CanSkipDescriptorTableResourcePreparation(d3d12Set, entries, bindingPlan.SrvUavTable, compute));
+                                                       || CanSkipDescriptorTableResourcePreparation(d3d12Set, bindingPlan.SrvUavTable, compute));
 
         for (int i = 0; i < entries.Length; i++) {
             ref readonly D3D12ResourceSetBindingPlanEntry bindingEntry = ref entries[i];
@@ -204,12 +227,104 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
         }
 
         if (!rootBindingsOnly && hasSrvUavTable && !skipSrvUavTableResourcePreparation) {
-            StoreDescriptorTableResourcePreparation(d3d12Set, entries, bindingPlan.SrvUavTable, compute);
+            StoreDescriptorTableResourcePreparation(d3d12Set, bindingPlan.SrvUavTable, compute);
         }
 
         if (descriptorTablesChanged) {
             this.BindResourceSetDescriptorTables(d3d12Set, bindingPlan, compute);
         }
+    }
+
+    /// <summary>
+    /// Binds the common one-buffer ResourceSet path without the general descriptor-table loop.
+    /// </summary>
+    /// <param name="boundSet">The bound resource-set information.</param>
+    /// <param name="set">The D3D12 resource set.</param>
+    /// <param name="entry">The single root buffer binding entry.</param>
+    /// <param name="compute">Whether the active pipeline is compute.</param>
+    private void BindSingleRootResourceSet(ref BoundResourceSetInfo boundSet, D3D12ResourceSet set, D3D12ResourceSetBindingPlanEntry entry, bool compute) {
+        uint dynamicOffset = 0;
+        if (entry.IsDynamicBinding) {
+            if (boundSet.Offsets.Count == 0) {
+                throw new VeldridException("Insufficient dynamic offsets provided for ResourceSet binding.");
+            }
+
+            dynamicOffset = boundSet.Offsets.Get(0);
+        }
+
+        D3D12ResourceSetElementCache elementCache = set.ElementCaches[entry.ElementIndex];
+        if (compute) {
+            this.BindComputeResource(entry.BindingInfo, elementCache, dynamicOffset);
+        }
+        else {
+            this.BindGraphicsResource(entry.BindingInfo, elementCache, dynamicOffset);
+        }
+    }
+
+    /// <summary>
+    /// Binds the common one-uniform-buffer ResourceSet path without the generic root-resource switch.
+    /// </summary>
+    /// <param name="boundSet">The bound resource-set information.</param>
+    /// <param name="set">The D3D12 resource set.</param>
+    /// <param name="entry">The single uniform-buffer binding entry.</param>
+    /// <param name="compute">Whether the active pipeline is compute.</param>
+    private void BindSingleUniformBufferResourceSet(ref BoundResourceSetInfo boundSet, D3D12ResourceSet set, D3D12ResourceSetBindingPlanEntry entry, bool compute) {
+        uint dynamicOffset = 0;
+        if (entry.IsDynamicBinding) {
+            if (boundSet.Offsets.Count == 0) {
+                throw new VeldridException("Insufficient dynamic offsets provided for ResourceSet binding.");
+            }
+
+            dynamicOffset = boundSet.Offsets.Get(0);
+        }
+
+        D3D12ResourceSetElementCache elementCache = set.ElementCaches[entry.ElementIndex];
+        D3D12DeviceBuffer d3D12Buffer = elementCache.Buffer
+                                        ?? throw new VeldridException("D3D12 root binding requires a buffer resource.");
+        uint rangeOffset = elementCache.BufferOffset + dynamicOffset;
+        if (d3D12Buffer.CanTransitionState) {
+            this._commandList.TransitionBufferForInternalUse(d3D12Buffer, ResourceStates.VertexAndConstantBuffer);
+        }
+
+        ulong gpuAddress = this._commandList.GetBufferGpuVirtualAddressForInternalUse(d3D12Buffer, rangeOffset);
+        uint rootParameterIndex = entry.BindingInfo.RootParameterIndex;
+
+        if (compute) {
+            if (!this._rootBindingCache.TryUpdateComputeRootBuffer(rootParameterIndex, gpuAddress)) {
+                return;
+            }
+
+            this._commandList.SetComputeRootConstantBufferViewNoAlloc(rootParameterIndex, gpuAddress);
+        }
+        else {
+            if (!this._rootBindingCache.TryUpdateGraphicsRootBuffer(rootParameterIndex, gpuAddress)) {
+                return;
+            }
+
+            this._commandList.SetGraphicsRootConstantBufferViewNoAlloc(rootParameterIndex, gpuAddress);
+        }
+
+        if (D3D12CommandListPerfTracker.Enabled) {
+            this._perf.RootBufferSets++;
+        }
+    }
+
+    /// <summary>
+    /// Binds the common texture/sampler ResourceSet path without scanning root-buffer entries.
+    /// </summary>
+    /// <param name="set">The D3D12 resource set.</param>
+    /// <param name="bindingPlan">The cached descriptor-table-only binding plan.</param>
+    /// <param name="compute">Whether the active pipeline is compute.</param>
+    private void BindDescriptorTableOnlyResourceSet(D3D12ResourceSet set, D3D12ResourceSetBindingPlan bindingPlan, bool compute) {
+        bool hasSrvUavTable = bindingPlan.SrvUavTable.HasTable;
+        bool skipSrvUavTableResourcePreparation = hasSrvUavTable
+                                                   && CanSkipDescriptorTableResourcePreparation(set, bindingPlan.SrvUavTable, compute);
+        if (hasSrvUavTable && !skipSrvUavTableResourcePreparation) {
+            this.PrepareDescriptorTableResources(set, bindingPlan.SrvUavTable, compute);
+            StoreDescriptorTableResourcePreparation(set, bindingPlan.SrvUavTable, compute);
+        }
+
+        this.BindResourceSetDescriptorTables(set, bindingPlan, compute);
     }
 
     /// <summary>
@@ -226,9 +341,12 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
         D3D12DeviceBuffer d3D12Buffer = elementCache.Buffer
                                         ?? throw new VeldridException("D3D12 root binding requires a buffer resource.");
         uint rangeOffset = elementCache.BufferOffset + dynamicOffset;
-        this._commandList.TransitionBufferForInternalUse(d3D12Buffer, GetGraphicsBufferState(bindingInfo.Kind));
+        if (d3D12Buffer.CanTransitionState) {
+            this._commandList.TransitionBufferForInternalUse(d3D12Buffer, GetGraphicsBufferState(bindingInfo.Kind));
+        }
+
         ulong gpuAddress = this._commandList.GetBufferGpuVirtualAddressForInternalUse(d3D12Buffer, rangeOffset);
-        if (this._rootBindingCache.IsSameGraphicsRootBuffer(bindingInfo.RootParameterIndex, gpuAddress)) {
+        if (!this._rootBindingCache.TryUpdateGraphicsRootBuffer(bindingInfo.RootParameterIndex, gpuAddress)) {
             return;
         }
 
@@ -246,7 +364,6 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
             default: throw Illegal.Value<ResourceKind>();
         }
 
-        this._rootBindingCache.SetGraphicsRootBuffer(bindingInfo.RootParameterIndex, gpuAddress);
         if (D3D12CommandListPerfTracker.Enabled) {
             this._perf.RootBufferSets++;
         }
@@ -266,10 +383,13 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
         D3D12DeviceBuffer d3D12Buffer = elementCache.Buffer
                                         ?? throw new VeldridException("D3D12 root binding requires a buffer resource.");
         uint rangeOffset = elementCache.BufferOffset + dynamicOffset;
-        this._commandList.TransitionBufferForInternalUse(d3D12Buffer, GetComputeBufferState(bindingInfo.Kind));
+        if (d3D12Buffer.CanTransitionState) {
+            this._commandList.TransitionBufferForInternalUse(d3D12Buffer, GetComputeBufferState(bindingInfo.Kind));
+        }
+
         ulong gpuAddress = this._commandList.GetBufferGpuVirtualAddressForInternalUse(d3D12Buffer, rangeOffset);
 
-        if (this._rootBindingCache.IsSameComputeRootBuffer(bindingInfo.RootParameterIndex, gpuAddress)) {
+        if (!this._rootBindingCache.TryUpdateComputeRootBuffer(bindingInfo.RootParameterIndex, gpuAddress)) {
             return;
         }
 
@@ -287,7 +407,6 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
             default: throw Illegal.Value<ResourceKind>();
         }
 
-        this._rootBindingCache.SetComputeRootBuffer(bindingInfo.RootParameterIndex, gpuAddress);
         if (D3D12CommandListPerfTracker.Enabled) {
             this._perf.RootBufferSets++;
         }
@@ -319,48 +438,75 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
     }
 
     /// <summary>
+    /// Prepares all resources used by one descriptor table for binding.
+    /// </summary>
+    /// <param name="set">The D3D12 resource set.</param>
+    /// <param name="tableInfo">The descriptor table metadata.</param>
+    /// <param name="compute">Whether the resource is being used by a compute pipeline.</param>
+    private void PrepareDescriptorTableResources(D3D12ResourceSet set, D3D12DescriptorTableBindingInfo tableInfo, bool compute) {
+        D3D12DescriptorTableBindingEntry[] entries = tableInfo.Entries;
+        D3D12ResourceSetElementCache[] elementCaches = set.ElementCaches;
+        for (int i = 0; i < entries.Length; i++) {
+            D3D12DescriptorTableBindingEntry entry = entries[i];
+            this.PrepareDescriptorTableResource(entry.Kind, elementCaches[entry.ElementIndex], compute);
+        }
+    }
+
+    /// <summary>
     /// Binds grouped descriptor tables for a resource set.
     /// </summary>
     /// <param name="set">The resource set being bound.</param>
     /// <param name="bindingPlan">The binding plan for the active pipeline and set slot.</param>
     /// <param name="compute">Whether the active pipeline is a compute pipeline.</param>
     private void BindResourceSetDescriptorTables(D3D12ResourceSet set, D3D12ResourceSetBindingPlan bindingPlan, bool compute) {
+        this.BindDescriptorHeaps();
+        this.BindResourceSetDescriptorTable(set, bindingPlan.SrvUavTable, compute);
+        this.BindResourceSetDescriptorTable(set, bindingPlan.SamplerTable, compute);
+    }
+
+    /// <summary>
+    /// Binds the device-global shader-visible descriptor heaps once per command-list recording.
+    /// </summary>
+    private void BindDescriptorHeaps() {
+        if (this._descriptorHeapsBound) {
+            return;
+        }
+
         this._descriptorHeapState.BindDescriptorHeaps(this._commandList.NativeCommandList);
-        this.BindResourceSetDescriptorTable(set, bindingPlan.Entries, bindingPlan.SrvUavTable, compute);
-        this.BindResourceSetDescriptorTable(set, bindingPlan.Entries, bindingPlan.SamplerTable, compute);
+        this._descriptorHeapsBound = true;
     }
 
     /// <summary>
     /// Binds one grouped descriptor table for a resource set.
     /// </summary>
     /// <param name="set">The resource set being bound.</param>
-    /// <param name="bindingPlan">The binding plan for the active pipeline and set slot.</param>
     /// <param name="tableInfo">The descriptor table metadata.</param>
     /// <param name="compute">Whether the active pipeline is a compute pipeline.</param>
-    private void BindResourceSetDescriptorTable(D3D12ResourceSet set, D3D12ResourceSetBindingPlanEntry[] bindingPlan, D3D12DescriptorTableBindingInfo tableInfo, bool compute) {
+    private void BindResourceSetDescriptorTable(D3D12ResourceSet set, D3D12DescriptorTableBindingInfo tableInfo, bool compute) {
         if (!tableInfo.HasTable) {
             return;
         }
 
         long descriptorCopyStartTicks = D3D12CommandListPerfTracker.Enabled ? Stopwatch.GetTimestamp() : 0;
-        uint copiedDescriptors = this._descriptorHeapState.GetOrCreateDescriptorTable(set, bindingPlan, tableInfo, out GpuDescriptorHandle gpuHandle);
+        uint copiedDescriptors = this._descriptorHeapState.GetOrCreateDescriptorTable(set, tableInfo, out GpuDescriptorHandle gpuHandle);
         if (D3D12CommandListPerfTracker.Enabled && copiedDescriptors > 0) {
             this._perf.DescriptorCopyMs += D3D12CommandListPerfTracker.TicksToMilliseconds(Stopwatch.GetTimestamp() - descriptorCopyStartTicks);
             this._perf.DescriptorCopies += copiedDescriptors;
         }
 
-        if ((compute && this._rootBindingCache.IsSameComputeRootTable(tableInfo.RootParameterIndex, gpuHandle.Ptr))
-            || (!compute && this._rootBindingCache.IsSameGraphicsRootTable(tableInfo.RootParameterIndex, gpuHandle.Ptr))) {
-            return;
-        }
-
         if (compute) {
+            if (!this._rootBindingCache.TryUpdateComputeRootTable(tableInfo.RootParameterIndex, gpuHandle.Ptr)) {
+                return;
+            }
+
             this._commandList.SetComputeRootDescriptorTableNoAlloc(tableInfo.RootParameterIndex, gpuHandle);
-            this._rootBindingCache.SetComputeRootTable(tableInfo.RootParameterIndex, gpuHandle.Ptr);
         }
         else {
+            if (!this._rootBindingCache.TryUpdateGraphicsRootTable(tableInfo.RootParameterIndex, gpuHandle.Ptr)) {
+                return;
+            }
+
             this._commandList.SetGraphicsRootDescriptorTableNoAlloc(tableInfo.RootParameterIndex, gpuHandle);
-            this._rootBindingCache.SetGraphicsRootTable(tableInfo.RootParameterIndex, gpuHandle.Ptr);
         }
 
         if (D3D12CommandListPerfTracker.Enabled) {
@@ -400,12 +546,11 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
     /// Checks whether descriptor-table texture preparation can be skipped for a resource set.
     /// </summary>
     /// <param name="set">The resource set being bound.</param>
-    /// <param name="bindingPlan">The binding plan entries for the resource set slot.</param>
     /// <param name="tableInfo">The descriptor table metadata.</param>
     /// <param name="compute">Whether the active pipeline is a compute pipeline.</param>
     /// <returns><see langword="true" /> when all table textures are known to be in the required state.</returns>
-    private static bool CanSkipDescriptorTableResourcePreparation(D3D12ResourceSet set, D3D12ResourceSetBindingPlanEntry[] bindingPlan, D3D12DescriptorTableBindingInfo tableInfo, bool compute) {
-        ulong stateVersionHash = ComputeDescriptorTableStateVersionHash(set, bindingPlan, tableInfo, compute, out uint textureCount);
+    private static bool CanSkipDescriptorTableResourcePreparation(D3D12ResourceSet set, D3D12DescriptorTableBindingInfo tableInfo, bool compute) {
+        ulong stateVersionHash = ComputeDescriptorTableStateVersionHash(set, tableInfo, compute, out uint textureCount);
         if (textureCount == 0) {
             return true;
         }
@@ -418,11 +563,10 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
     /// Stores descriptor-table texture preparation state for later resource-set binds.
     /// </summary>
     /// <param name="set">The resource set being bound.</param>
-    /// <param name="bindingPlan">The binding plan entries for the resource set slot.</param>
     /// <param name="tableInfo">The descriptor table metadata.</param>
     /// <param name="compute">Whether the active pipeline is a compute pipeline.</param>
-    private static void StoreDescriptorTableResourcePreparation(D3D12ResourceSet set, D3D12ResourceSetBindingPlanEntry[] bindingPlan, D3D12DescriptorTableBindingInfo tableInfo, bool compute) {
-        ulong stateVersionHash = ComputeDescriptorTableStateVersionHash(set, bindingPlan, tableInfo, compute, out uint textureCount);
+    private static void StoreDescriptorTableResourcePreparation(D3D12ResourceSet set, D3D12DescriptorTableBindingInfo tableInfo, bool compute) {
+        ulong stateVersionHash = ComputeDescriptorTableStateVersionHash(set, tableInfo, compute, out uint textureCount);
         if (textureCount == 0) {
             return;
         }
@@ -435,26 +579,21 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
     /// Computes a stable hash of the texture state versions required by one descriptor table.
     /// </summary>
     /// <param name="set">The resource set being bound.</param>
-    /// <param name="bindingPlan">The binding plan entries for the resource set slot.</param>
     /// <param name="tableInfo">The descriptor table metadata.</param>
     /// <param name="compute">Whether the active pipeline is a compute pipeline.</param>
     /// <param name="textureCount">The number of texture descriptors included in the hash.</param>
     /// <returns>The combined state-version hash.</returns>
-    private static ulong ComputeDescriptorTableStateVersionHash(D3D12ResourceSet set, D3D12ResourceSetBindingPlanEntry[] bindingPlan, D3D12DescriptorTableBindingInfo tableInfo, bool compute, out uint textureCount) {
+    private static ulong ComputeDescriptorTableStateVersionHash(D3D12ResourceSet set, D3D12DescriptorTableBindingInfo tableInfo, bool compute, out uint textureCount) {
         const ulong fnvOffsetBasis = 14695981039346656037ul;
         const ulong fnvPrime = 1099511628211ul;
         ulong hash = fnvOffsetBasis;
         textureCount = 0;
 
-        for (int i = 0; i < bindingPlan.Length; i++) {
-            D3D12ResourceSetBindingPlanEntry entry = bindingPlan[i];
-            D3D12Pipeline.RootBindingInfo bindingInfo = entry.BindingInfo;
-            if (!bindingInfo.DescriptorTable || bindingInfo.DescriptorTableKind != tableInfo.TableKind) {
-                continue;
-            }
-
+        D3D12DescriptorTableBindingEntry[] entries = tableInfo.Entries;
+        for (int i = 0; i < entries.Length; i++) {
+            D3D12DescriptorTableBindingEntry entry = entries[i];
             ResourceStates requiredState;
-            switch (bindingInfo.Kind) {
+            switch (entry.Kind) {
                 case ResourceKind.TextureReadOnly:
                     requiredState = GetDescriptorTableTextureReadState(compute);
                     break;

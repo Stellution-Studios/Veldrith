@@ -11,6 +11,39 @@ using Vortice.Direct3D12;
 namespace Veldrith.D3D12;
 
 /// <summary>
+/// Describes the command-list-local binding address, size, and version for a buffer range.
+/// </summary>
+internal readonly struct D3D12BufferBindingInfo {
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="D3D12BufferBindingInfo" /> struct.
+    /// </summary>
+    /// <param name="gpuVirtualAddress">The GPU virtual address to bind.</param>
+    /// <param name="bindableSize">The number of bytes visible from the binding address.</param>
+    /// <param name="bindVersion">The command-list-local dynamic bind version.</param>
+    public D3D12BufferBindingInfo(ulong gpuVirtualAddress, uint bindableSize, ulong bindVersion) {
+        this.GpuVirtualAddress = gpuVirtualAddress;
+        this.BindableSize = bindableSize;
+        this.BindVersion = bindVersion;
+    }
+
+    /// <summary>
+    /// Gets the GPU virtual address to bind.
+    /// </summary>
+    internal ulong GpuVirtualAddress { get; }
+
+    /// <summary>
+    /// Gets the number of bytes visible from the binding address.
+    /// </summary>
+    internal uint BindableSize { get; }
+
+    /// <summary>
+    /// Gets the command-list-local dynamic bind version.
+    /// </summary>
+    internal ulong BindVersion { get; }
+}
+
+/// <summary>
 /// Plans D3D12 buffer updates and records the required upload copies and binding refreshes.
 /// </summary>
 internal sealed class D3D12BufferUpdatePlanner {
@@ -135,9 +168,35 @@ internal sealed class D3D12BufferUpdatePlanner {
     /// </summary>
     /// <param name="buffer">The buffer to inspect.</param>
     /// <returns>The command-list-local bind version.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal ulong GetBindVersion(D3D12DeviceBuffer buffer) {
         int index = this.FindDynamicSnapshot(buffer);
         return index >= 0 ? this._dynamicSnapshots[index].BindVersion : 0;
+    }
+
+    /// <summary>
+    /// Gets the command-list-local binding information for a buffer range.
+    /// </summary>
+    /// <param name="buffer">The buffer to bind.</param>
+    /// <param name="offset">The byte offset into the buffer.</param>
+    /// <returns>The resolved binding information.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal D3D12BufferBindingInfo GetBindingInfo(D3D12DeviceBuffer buffer, uint offset) {
+        int index = this.FindDynamicSnapshot(buffer);
+        if (index >= 0) {
+            DynamicSnapshotBinding snapshot = this._dynamicSnapshots[index];
+            if (snapshot.Contains(offset)) {
+                uint snapshotOffset = offset - snapshot.DestinationOffset;
+                return new D3D12BufferBindingInfo(
+                    snapshot.Resource.GPUVirtualAddress + snapshot.Offset + snapshotOffset,
+                    snapshot.SizeInBytes - snapshotOffset,
+                    snapshot.BindVersion);
+            }
+
+            return new D3D12BufferBindingInfo(buffer.GetGpuVirtualAddress(offset), buffer.GetBindableSize(offset), snapshot.BindVersion);
+        }
+
+        return new D3D12BufferBindingInfo(buffer.GetGpuVirtualAddress(offset), buffer.GetBindableSize(offset), 0);
     }
 
     /// <summary>
@@ -146,6 +205,7 @@ internal sealed class D3D12BufferUpdatePlanner {
     /// <param name="buffer">The buffer to bind.</param>
     /// <param name="offset">The byte offset into the buffer.</param>
     /// <returns>The command-list-local GPU virtual address.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal ulong GetGpuVirtualAddress(D3D12DeviceBuffer buffer, uint offset) {
         int index = this.FindDynamicSnapshot(buffer);
         if (index >= 0) {
@@ -164,6 +224,7 @@ internal sealed class D3D12BufferUpdatePlanner {
     /// <param name="buffer">The buffer to bind.</param>
     /// <param name="offset">The byte offset into the buffer.</param>
     /// <returns>The command-list-local bindable size.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal uint GetBindableSize(D3D12DeviceBuffer buffer, uint offset) {
         int index = this.FindDynamicSnapshot(buffer);
         if (index >= 0) {
@@ -197,15 +258,18 @@ internal sealed class D3D12BufferUpdatePlanner {
     /// <param name="bufferOffsetInBytes">The destination byte offset.</param>
     /// <param name="source">The source data pointer.</param>
     /// <param name="sizeInBytes">The number of bytes to update.</param>
-    internal void Update(D3D12DeviceBuffer d3D12Buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes) {
+    /// <returns><see langword="true" /> when pending GPU upload dirty state may have changed.</returns>
+    internal bool Update(D3D12DeviceBuffer d3D12Buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes) {
         if (sizeInBytes == 0) {
-            return;
+            return false;
         }
 
         long startTicks = D3D12CommandListPerfTracker.Enabled ? Stopwatch.GetTimestamp() : 0;
-        ulong previousBindVersion = this.GetBindVersion(d3D12Buffer);
+        bool bindingAddressChanged = false;
+        bool pendingUploadDirtyMayHaveChanged = false;
 
         if (d3D12Buffer.CanTransitionState) {
+            pendingUploadDirtyMayHaveChanged = true;
             if (this._immediateWriter.CanWrite(d3D12Buffer, bufferOffsetInBytes, sizeInBytes)) {
                 if (this._pendingUpdates.Count > 0) {
                     this.Flush();
@@ -233,6 +297,7 @@ internal sealed class D3D12BufferUpdatePlanner {
                 DynamicSnapshotUploadSlice snapshot = this.AllocateDynamicSnapshotUpload(sizeInBytes);
                 CopySnapshotPayload(source, snapshot.MappedPointer, sizeInBytes);
                 this.TrackDynamicSnapshot(d3D12Buffer, snapshot.Resource, snapshot.Offset, bufferOffsetInBytes, sizeInBytes);
+                bindingAddressChanged = true;
                 this.RecordDynamicSnapshotMetrics(sizeInBytes);
             }
             else {
@@ -240,11 +305,15 @@ internal sealed class D3D12BufferUpdatePlanner {
             }
         }
 
-        this.RefreshBindingsIfNeeded(d3D12Buffer, previousBindVersion);
+        if (bindingAddressChanged) {
+            this.RefreshBindingsForChangedSnapshot(d3D12Buffer);
+        }
 
         if (D3D12CommandListPerfTracker.Enabled) {
             this._perf.UploadRecordMs += D3D12CommandListPerfTracker.TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
         }
+
+        return pendingUploadDirtyMayHaveChanged;
     }
 
     /// <summary>
@@ -544,12 +613,7 @@ internal sealed class D3D12BufferUpdatePlanner {
     /// Refreshes currently bound views and resource sets when a dynamic buffer moved to a new native address.
     /// </summary>
     /// <param name="buffer">The updated buffer.</param>
-    /// <param name="previousBindVersion">The bind version observed before the update.</param>
-    private void RefreshBindingsIfNeeded(D3D12DeviceBuffer buffer, ulong previousBindVersion) {
-        if (this.GetBindVersion(buffer) == previousBindVersion) {
-            return;
-        }
-
+    private void RefreshBindingsForChangedSnapshot(D3D12DeviceBuffer buffer) {
         if (CanBeResourceSetBuffer(buffer)) {
             this._commandList.MarkResourceSetsReferencingBufferDirtyForInternalUse(buffer);
         }

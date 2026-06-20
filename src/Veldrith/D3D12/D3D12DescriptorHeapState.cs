@@ -7,7 +7,7 @@ using Vortice.Direct3D12;
 namespace Veldrith.D3D12;
 
 /// <summary>
-/// Owns the shader-visible descriptor heaps used while recording a D3D12 command list.
+/// Owns the device-global shader-visible descriptor heaps used by D3D12 command lists.
 /// </summary>
 internal sealed class D3D12DescriptorHeapState : IDisposable {
 
@@ -17,19 +17,24 @@ internal sealed class D3D12DescriptorHeapState : IDisposable {
     private static int s_nextCacheId;
 
     /// <summary>
-    /// Stores the default number of sampler descriptors retained by the command-list heap.
+    /// Stores the default number of sampler descriptors retained by the global shader-visible heap.
     /// </summary>
-    private const uint MaxSamplerDescriptors = 1536;
+    private const uint MaxSamplerDescriptors = 2048;
 
     /// <summary>
-    /// Stores the default number of SRV/UAV descriptors retained by the command-list heap.
+    /// Stores the default number of SRV/UAV descriptors retained by the global shader-visible heap.
     /// </summary>
-    private const uint MaxSrvUavDescriptors = 49152;
+    private const uint MaxSrvUavDescriptors = 262144;
 
     /// <summary>
     /// Stores the graphics device used to create descriptors and descriptor heaps.
     /// </summary>
     private readonly D3D12GraphicsDevice _gd;
+
+    /// <summary>
+    /// Serializes global descriptor-table allocation and descriptor-copy scratch storage.
+    /// </summary>
+    private readonly object _allocationLock = new();
 
     /// <summary>
     /// Identifies cached descriptor table handles that belong to this heap state.
@@ -97,10 +102,6 @@ internal sealed class D3D12DescriptorHeapState : IDisposable {
     private readonly int _samplerDescriptorSize;
 
     /// <summary>
-    /// Tracks whether the heaps have been bound for the current command-list recording.
-    /// </summary>
-    private bool _descriptorHeapsBound;
-
     /// <summary>
     /// Stores the next free sampler descriptor in the persistent heap.
     /// </summary>
@@ -131,73 +132,80 @@ internal sealed class D3D12DescriptorHeapState : IDisposable {
     }
 
     /// <summary>
-    /// Resets per-recording heap binding state.
-    /// </summary>
-    internal void BeginRecording() {
-        this._descriptorHeapsBound = false;
-    }
-
     /// <summary>
     /// Ensures the shader-visible descriptor heaps are bound on the command list.
     /// </summary>
     /// <param name="commandList">The native command list to bind heaps on.</param>
     internal void BindDescriptorHeaps(ID3D12GraphicsCommandList commandList) {
-        if (this._descriptorHeapsBound) {
-            return;
+        SetDescriptorHeapsNoAlloc(commandList, this._boundDescriptorHeaps);
+    }
+
+    /// <summary>
+    /// Prepopulates persistent descriptor tables for a resource set from its layout.
+    /// </summary>
+    /// <param name="set">The resource set whose descriptor tables should be copied.</param>
+    internal void PrepopulateDescriptorTables(D3D12ResourceSet set) {
+        ResourceLayoutElementDescription[] elements = set.ResourceLayoutInfo.Elements;
+        D3D12DescriptorTableBindingInfo srvUavTable = D3D12ResourceSetBindingPlan.CreateLayoutDescriptorTableBindingInfo(elements, D3D12Pipeline.DescriptorTableKind.SrvUav);
+        if (srvUavTable.HasTable) {
+            this.GetOrCreateDescriptorTable(set, srvUavTable, out _);
         }
 
-        SetDescriptorHeapsNoAlloc(commandList, this._boundDescriptorHeaps);
-        this._descriptorHeapsBound = true;
+        D3D12DescriptorTableBindingInfo samplerTable = D3D12ResourceSetBindingPlan.CreateLayoutDescriptorTableBindingInfo(elements, D3D12Pipeline.DescriptorTableKind.Sampler);
+        if (samplerTable.HasTable) {
+            this.GetOrCreateDescriptorTable(set, samplerTable, out _);
+        }
     }
 
     /// <summary>
     /// Gets or creates the shader-visible descriptor table for a resource set and binding plan.
     /// </summary>
     /// <param name="set">The resource set whose descriptors are being bound.</param>
-    /// <param name="bindingPlan">The binding plan entries for the resource set slot.</param>
     /// <param name="tableInfo">The descriptor table metadata.</param>
     /// <param name="gpuHandle">The shader-visible table handle.</param>
     /// <returns>The number of descriptors copied into the shader-visible heap.</returns>
-    internal uint GetOrCreateDescriptorTable(D3D12ResourceSet set, D3D12ResourceSetBindingPlanEntry[] bindingPlan, D3D12DescriptorTableBindingInfo tableInfo, out GpuDescriptorHandle gpuHandle) {
+    internal uint GetOrCreateDescriptorTable(D3D12ResourceSet set, D3D12DescriptorTableBindingInfo tableInfo, out GpuDescriptorHandle gpuHandle) {
         D3D12Pipeline.DescriptorTableKind tableKind = tableInfo.TableKind;
         if (this.TryGetDescriptorTableHandle(set, tableKind, tableInfo.Signature, out gpuHandle)) {
             return 0;
         }
 
-        DescriptorHeapType heapType;
-        CpuDescriptorHandle cpuHandle;
-        int descriptorSize;
-        if (tableKind == D3D12Pipeline.DescriptorTableKind.Sampler) {
-            heapType = DescriptorHeapType.Sampler;
-            descriptorSize = this._samplerDescriptorSize;
-            this.AllocateSamplerDescriptors(tableInfo.DescriptorCount, out cpuHandle, out gpuHandle);
-        }
-        else {
-            heapType = DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView;
-            descriptorSize = this._srvUavDescriptorSize;
-            this.AllocateSrvUavDescriptors(tableInfo.DescriptorCount, out cpuHandle, out gpuHandle);
-        }
-
-        this.EnsureDescriptorCopyCapacity(tableInfo.DescriptorCount);
-        uint batchCount = 0;
-        for (int i = 0; i < bindingPlan.Length; i++) {
-            D3D12ResourceSetBindingPlanEntry entry = bindingPlan[i];
-            D3D12Pipeline.RootBindingInfo bindingInfo = entry.BindingInfo;
-            if (!bindingInfo.DescriptorTable || bindingInfo.DescriptorTableKind != tableKind) {
-                continue;
+        lock (this._allocationLock) {
+            if (this.TryGetDescriptorTableHandle(set, tableKind, tableInfo.Signature, out gpuHandle)) {
+                return 0;
             }
 
-            this._descriptorCopyDests[batchCount] = cpuHandle + (int)(bindingInfo.DescriptorTableOffset * (uint)descriptorSize);
-            this._descriptorCopySources[batchCount] = GetSourceDescriptor(set.ElementCaches[entry.ElementIndex], bindingInfo.Kind);
-            batchCount++;
-        }
+            DescriptorHeapType heapType;
+            CpuDescriptorHandle cpuHandle;
+            int descriptorSize;
+            if (tableKind == D3D12Pipeline.DescriptorTableKind.Sampler) {
+                heapType = DescriptorHeapType.Sampler;
+                descriptorSize = this._samplerDescriptorSize;
+                this.AllocateSamplerDescriptors(tableInfo.DescriptorCount, out cpuHandle, out gpuHandle);
+            }
+            else {
+                heapType = DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView;
+                descriptorSize = this._srvUavDescriptorSize;
+                this.AllocateSrvUavDescriptors(tableInfo.DescriptorCount, out cpuHandle, out gpuHandle);
+            }
 
-        if (batchCount > 0) {
-            this._gd.Device.CopyDescriptors(batchCount, this._descriptorCopyDests, this._descriptorCopyRangeSizes, batchCount, this._descriptorCopySources, this._descriptorCopyRangeSizes, heapType);
-        }
+            this.EnsureDescriptorCopyCapacity(tableInfo.DescriptorCount);
+            uint batchCount = 0;
+            D3D12DescriptorTableBindingEntry[] entries = tableInfo.Entries;
+            for (int i = 0; i < entries.Length; i++) {
+                D3D12DescriptorTableBindingEntry entry = entries[i];
+                this._descriptorCopyDests[batchCount] = cpuHandle + (int)(entry.DescriptorTableOffset * (uint)descriptorSize);
+                this._descriptorCopySources[batchCount] = GetSourceDescriptor(set.ElementCaches[entry.ElementIndex], entry.Kind);
+                batchCount++;
+            }
 
-        this.CacheDescriptorTableHandle(set, tableKind, tableInfo.Signature, gpuHandle);
-        return batchCount;
+            if (batchCount > 0) {
+                this._gd.Device.CopyDescriptors(batchCount, this._descriptorCopyDests, this._descriptorCopyRangeSizes, batchCount, this._descriptorCopySources, this._descriptorCopyRangeSizes, heapType);
+            }
+
+            this.CacheDescriptorTableHandle(set, tableKind, tableInfo.Signature, gpuHandle);
+            return batchCount;
+        }
     }
 
     /// <summary>
@@ -216,7 +224,7 @@ internal sealed class D3D12DescriptorHeapState : IDisposable {
     /// <param name="gpuHandle">The first GPU descriptor handle in the allocation.</param>
     private void AllocateSrvUavDescriptors(uint count, out CpuDescriptorHandle cpuHandle, out GpuDescriptorHandle gpuHandle) {
         if (this._nextSrvUavDescriptor + count > MaxSrvUavDescriptors) {
-            throw new VeldridException("D3D12 SRV/UAV descriptor heap exhausted for this CommandList. Create fewer unique ResourceSets or increase the persistent descriptor heap size.");
+            throw new VeldridException("D3D12 global SRV/UAV descriptor heap exhausted. Create fewer unique ResourceSets or increase the persistent descriptor heap size.");
         }
 
         cpuHandle = new CpuDescriptorHandle(this._srvUavHeapCpuStart, (int)this._nextSrvUavDescriptor, (uint)this._srvUavDescriptorSize);
@@ -232,7 +240,7 @@ internal sealed class D3D12DescriptorHeapState : IDisposable {
     /// <param name="gpuHandle">The first GPU descriptor handle in the allocation.</param>
     private void AllocateSamplerDescriptors(uint count, out CpuDescriptorHandle cpuHandle, out GpuDescriptorHandle gpuHandle) {
         if (this._nextSamplerDescriptor + count > MaxSamplerDescriptors) {
-            throw new VeldridException("D3D12 sampler descriptor heap exhausted for this CommandList. Create fewer unique ResourceSets or increase the persistent sampler descriptor heap size.");
+            throw new VeldridException("D3D12 global sampler descriptor heap exhausted. Create fewer unique ResourceSets or increase the persistent sampler descriptor heap size.");
         }
 
         cpuHandle = new CpuDescriptorHandle(this._samplerHeapCpuStart, (int)this._nextSamplerDescriptor, (uint)this._samplerDescriptorSize);
