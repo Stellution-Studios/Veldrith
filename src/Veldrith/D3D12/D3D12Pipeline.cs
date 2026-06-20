@@ -729,7 +729,7 @@ internal sealed class D3D12Pipeline : Pipeline {
         };
 
         string cacheKey = BuildComputePipelineStateCacheKey(this._rootSignatureCacheKey, d3D12Shader.ShaderBytes);
-        this.PipelineState = this._gd.GetOrCreatePipelineState(cacheKey, () => this._gd.Device.CreateComputePipelineState(psoDescription));
+        this.PipelineState = this._gd.GetOrCreateComputePipelineState(cacheKey, in psoDescription);
     }
 
     /// <summary>
@@ -866,7 +866,7 @@ internal sealed class D3D12Pipeline : Pipeline {
 
         try {
             string cacheKey = BuildGraphicsPipelineStateCacheKey(ref description, this._rootSignatureCacheKey, vertexShader, pixelShader, geometryShader, hullShader, domainShader, inputElements, colorCount, psoDescription.DepthStencilFormat);
-            this.PipelineState = this._gd.GetOrCreatePipelineState(cacheKey, () => this._gd.Device.CreateGraphicsPipelineState(psoDescription));
+            this.PipelineState = this._gd.GetOrCreateGraphicsPipelineState(cacheKey, in psoDescription);
         }
         catch (Exception ex) {
             string removedReason = this._gd.GetDeviceRemovedReasonDescription();

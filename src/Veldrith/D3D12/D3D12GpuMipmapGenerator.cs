@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
@@ -61,6 +63,11 @@ internal sealed class D3D12GpuMipmapGenerator : IDisposable {
                                                            }";
 
     /// <summary>
+    /// Limits retained mipmap binding resources for long-lived command lists.
+    /// </summary>
+    private const int MaxCachedMipmapResourceSets = 256;
+
+    /// <summary>
     /// Stores the graphics device used to create pipeline resources and transient bindings.
     /// </summary>
     private readonly D3D12GraphicsDevice _gd;
@@ -79,6 +86,11 @@ internal sealed class D3D12GpuMipmapGenerator : IDisposable {
     /// Reusable buffer for tracked subresource states during mipmap generation.
     /// </summary>
     private readonly ResourceStates[] _subresourceStatesScratch = new ResourceStates[128];
+
+    /// <summary>
+    /// Reuses mipmap texture views and resource sets across repeated generation for the same texture.
+    /// </summary>
+    private readonly Dictionary<MipmapResourceSetCacheKey, MipmapResourceSetCacheEntry> _mipmapResourceSetCache = new();
 
     /// <summary>
     /// Stores the compute pipeline used to generate one destination mip from one source mip.
@@ -124,6 +136,7 @@ internal sealed class D3D12GpuMipmapGenerator : IDisposable {
     /// Releases lazily created pipeline resources.
     /// </summary>
     public void Dispose() {
+        this.ClearMipmapResourceSetCache();
         this._pipeline?.Dispose();
         this._arrayPipeline?.Dispose();
         this._resourceLayout?.Dispose();
@@ -175,6 +188,7 @@ internal sealed class D3D12GpuMipmapGenerator : IDisposable {
         ResourceStates[] previousStates = this.GetPreviousStateBuffer(texture, subresourceCount);
         ResourceStates[] subresourceStates = this.GetWorkingStateBuffer(subresourceCount);
         Array.Copy(previousStates, subresourceStates, (int)subresourceCount);
+        this.TrimDisposedMipmapResourceSets();
 
         try {
             this._commandList.SetPipelineStateNoAllocForInternalUse(mipPipeline.PipelineState);
@@ -223,9 +237,7 @@ internal sealed class D3D12GpuMipmapGenerator : IDisposable {
             texture.SetSubresourceState(dstSubresource, ResourceStates.UnorderedAccess);
         }
 
-        using TextureView srcView = this._gd.ResourceFactory.CreateTextureView(new TextureViewDescription(texture, mipLevel - 1, 1, layer, 1));
-        using TextureView dstView = this._gd.ResourceFactory.CreateTextureView(new TextureViewDescription(texture, mipLevel, 1, layer, 1));
-        using ResourceSet mipResourceSet = this._gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(this._resourceLayout, srcView, dstView, this._sampler));
+        ResourceSet mipResourceSet = this.GetOrCreateMipmapResourceSet(texture, mipLevel, layer, 1);
 
         this._commandList.SetComputeResourceSet(0, mipResourceSet);
         Util.GetMipDimensions(texture, mipLevel, out uint mipWidth, out uint mipHeight, out _);
@@ -263,9 +275,7 @@ internal sealed class D3D12GpuMipmapGenerator : IDisposable {
             }
         }
 
-        using TextureView srcView = this._gd.ResourceFactory.CreateTextureView(new TextureViewDescription(texture, mipLevel - 1, 1, 0, layerCount));
-        using TextureView dstView = this._gd.ResourceFactory.CreateTextureView(new TextureViewDescription(texture, mipLevel, 1, 0, layerCount));
-        using ResourceSet mipResourceSet = this._gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(this._resourceLayout, srcView, dstView, this._sampler));
+        ResourceSet mipResourceSet = this.GetOrCreateMipmapResourceSet(texture, mipLevel, 0, layerCount);
 
         this._commandList.SetComputeResourceSet(0, mipResourceSet);
         Util.GetMipDimensions(texture, mipLevel, out uint mipWidth, out uint mipHeight, out _);
@@ -363,6 +373,76 @@ internal sealed class D3D12GpuMipmapGenerator : IDisposable {
         return subresourceCount <= (uint)this._subresourceStatesScratch.Length
             ? this._subresourceStatesScratch
             : new ResourceStates[subresourceCount];
+    }
+
+    /// <summary>
+    /// Gets a cached resource set for one mipmap dispatch.
+    /// </summary>
+    /// <param name="texture">The texture being processed.</param>
+    /// <param name="mipLevel">The destination mip level.</param>
+    /// <param name="layer">The first array layer.</param>
+    /// <param name="layerCount">The number of array layers.</param>
+    /// <returns>The resource set used by the mipmap compute shader.</returns>
+    private ResourceSet GetOrCreateMipmapResourceSet(D3D12Texture texture, uint mipLevel, uint layer, uint layerCount) {
+        MipmapResourceSetCacheKey key = new(texture, mipLevel, layer, layerCount);
+        if (this._mipmapResourceSetCache.TryGetValue(key, out MipmapResourceSetCacheEntry entry)) {
+            return entry.ResourceSet;
+        }
+
+        if (this._mipmapResourceSetCache.Count >= MaxCachedMipmapResourceSets) {
+            this.TrimDisposedMipmapResourceSets();
+            if (this._mipmapResourceSetCache.Count >= MaxCachedMipmapResourceSets) {
+                this.ClearMipmapResourceSetCache();
+            }
+        }
+
+        TextureView srcView = this._gd.ResourceFactory.CreateTextureView(new TextureViewDescription(texture, mipLevel - 1, 1, layer, layerCount));
+        TextureView dstView = this._gd.ResourceFactory.CreateTextureView(new TextureViewDescription(texture, mipLevel, 1, layer, layerCount));
+        ResourceSet resourceSet = this._gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(this._resourceLayout, srcView, dstView, this._sampler));
+        entry = new MipmapResourceSetCacheEntry(texture, srcView, dstView, resourceSet);
+        this._mipmapResourceSetCache.Add(key, entry);
+        return resourceSet;
+    }
+
+    /// <summary>
+    /// Removes cached mipmap bindings for textures that have already been disposed.
+    /// </summary>
+    private void TrimDisposedMipmapResourceSets() {
+        if (this._mipmapResourceSetCache.Count == 0) {
+            return;
+        }
+
+        List<MipmapResourceSetCacheKey> keysToRemove = null;
+        foreach (KeyValuePair<MipmapResourceSetCacheKey, MipmapResourceSetCacheEntry> pair in this._mipmapResourceSetCache) {
+            if (!pair.Value.Texture.IsDisposed) {
+                continue;
+            }
+
+            keysToRemove ??= [];
+            keysToRemove.Add(pair.Key);
+        }
+
+        if (keysToRemove == null) {
+            return;
+        }
+
+        for (int i = 0; i < keysToRemove.Count; i++) {
+            MipmapResourceSetCacheKey key = keysToRemove[i];
+            if (this._mipmapResourceSetCache.Remove(key, out MipmapResourceSetCacheEntry entry)) {
+                entry.Dispose();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Releases all cached mipmap bindings.
+    /// </summary>
+    private void ClearMipmapResourceSetCache() {
+        foreach (MipmapResourceSetCacheEntry entry in this._mipmapResourceSetCache.Values) {
+            entry.Dispose();
+        }
+
+        this._mipmapResourceSetCache.Clear();
     }
 
     /// <summary>
@@ -492,5 +572,115 @@ internal sealed class D3D12GpuMipmapGenerator : IDisposable {
         /// <returns>The native buffer size.</returns>
         [PreserveSig]
         nuint GetBufferSize();
+    }
+
+    /// <summary>
+    /// Identifies cached mipmap binding resources.
+    /// </summary>
+    private readonly struct MipmapResourceSetCacheKey : IEquatable<MipmapResourceSetCacheKey> {
+
+        /// <summary>
+        /// Stores the texture reference used by the cached views.
+        /// </summary>
+        private readonly D3D12Texture _texture;
+
+        /// <summary>
+        /// Stores the destination mip level.
+        /// </summary>
+        private readonly uint _mipLevel;
+
+        /// <summary>
+        /// Stores the first array layer.
+        /// </summary>
+        private readonly uint _layer;
+
+        /// <summary>
+        /// Stores the number of array layers.
+        /// </summary>
+        private readonly uint _layerCount;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MipmapResourceSetCacheKey" /> struct.
+        /// </summary>
+        /// <param name="texture">The texture reference.</param>
+        /// <param name="mipLevel">The destination mip level.</param>
+        /// <param name="layer">The first array layer.</param>
+        /// <param name="layerCount">The number of array layers.</param>
+        public MipmapResourceSetCacheKey(D3D12Texture texture, uint mipLevel, uint layer, uint layerCount) {
+            this._texture = texture;
+            this._mipLevel = mipLevel;
+            this._layer = layer;
+            this._layerCount = layerCount;
+        }
+
+        /// <inheritdoc />
+        public bool Equals(MipmapResourceSetCacheKey other) {
+            return ReferenceEquals(this._texture, other._texture)
+                   && this._mipLevel == other._mipLevel
+                   && this._layer == other._layer
+                   && this._layerCount == other._layerCount;
+        }
+
+        /// <inheritdoc />
+        public override bool Equals(object obj) {
+            return obj is MipmapResourceSetCacheKey other && this.Equals(other);
+        }
+
+        /// <inheritdoc />
+        public override int GetHashCode() {
+            HashCode hash = new();
+            hash.Add(RuntimeHelpers.GetHashCode(this._texture));
+            hash.Add(this._mipLevel);
+            hash.Add(this._layer);
+            hash.Add(this._layerCount);
+            return hash.ToHashCode();
+        }
+    }
+
+    /// <summary>
+    /// Stores reusable resources for one mipmap binding.
+    /// </summary>
+    private sealed class MipmapResourceSetCacheEntry : IDisposable {
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MipmapResourceSetCacheEntry" /> class.
+        /// </summary>
+        /// <param name="texture">The texture owned by the cached views.</param>
+        /// <param name="srcView">The source mip texture view.</param>
+        /// <param name="dstView">The destination mip texture view.</param>
+        /// <param name="resourceSet">The shader resource set.</param>
+        public MipmapResourceSetCacheEntry(D3D12Texture texture, TextureView srcView, TextureView dstView, ResourceSet resourceSet) {
+            this.Texture = texture;
+            this.SrcView = srcView;
+            this.DstView = dstView;
+            this.ResourceSet = resourceSet;
+        }
+
+        /// <summary>
+        /// Gets the texture owned by the cached views.
+        /// </summary>
+        public D3D12Texture Texture { get; }
+
+        /// <summary>
+        /// Gets the source mip texture view.
+        /// </summary>
+        public TextureView SrcView { get; }
+
+        /// <summary>
+        /// Gets the destination mip texture view.
+        /// </summary>
+        public TextureView DstView { get; }
+
+        /// <summary>
+        /// Gets the shader resource set.
+        /// </summary>
+        public ResourceSet ResourceSet { get; }
+
+        /// <inheritdoc />
+        public void Dispose() {
+            this.ResourceSet.Dispose();
+            this.DstView.Dispose();
+            this.SrcView.Dispose();
+        }
     }
 }

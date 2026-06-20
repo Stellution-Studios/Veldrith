@@ -122,17 +122,22 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
         }
 
         if (D3D12CommandListPerfTracker.Enabled) {
-            this._perf.ResourceSetScanSlots += (ulong)(end - start + 1);
+            this._perf.ResourceSetScanSlots += (ulong)resourceSets.ChangedSlotCount;
         }
 
-        for (int slot = start; slot <= end; slot++) {
+        int changedSlotCount = resourceSets.ChangedSlotCount;
+        int[] changedSlots = resourceSets.ChangedSlots;
+        for (int changedSlotIndex = 0; changedSlotIndex < changedSlotCount; changedSlotIndex++) {
+            int slot = changedSlots[changedSlotIndex];
+            if (slot < start || slot > end) {
+                continue;
+            }
+
             if (!resourceSets.Changed[slot]) {
                 continue;
             }
 
-            resourceSets.Changed[slot] = false;
             D3D12ResourceSetChangeKind changeKind = resourceSets.ChangeKinds[slot];
-            resourceSets.ChangeKinds[slot] = D3D12ResourceSetChangeKind.None;
             this.BindResourceSet(pipeline, (uint)slot, ref resourceSets.BoundSets[slot], compute, changeKind);
         }
 
@@ -211,7 +216,7 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
 
                 if (!skipSrvUavTableResourcePreparation
                     && bindingEntry.BindingInfo.DescriptorTableKind == D3D12Pipeline.DescriptorTableKind.SrvUav) {
-                    this.PrepareDescriptorTableResource(bindingEntry.BindingInfo.Kind, elementCache, compute);
+                    this.PrepareDescriptorTableTextureResource(bindingEntry.BindingInfo.Kind, elementCache, compute);
                 }
 
                 descriptorTablesChanged = true;
@@ -413,28 +418,20 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
     }
 
     /// <summary>
-    /// Prepares a descriptor-table resource for binding by validating and transitioning it.
+    /// Prepares a descriptor-table texture resource for binding by validating and transitioning it.
     /// </summary>
     /// <param name="kind">The resource kind.</param>
     /// <param name="elementCache">The pre-resolved resource-set element cache.</param>
     /// <param name="compute">Whether the resource is being used by a compute pipeline.</param>
-    private void PrepareDescriptorTableResource(ResourceKind kind, D3D12ResourceSetElementCache elementCache, bool compute) {
-        switch (kind) {
-            case ResourceKind.TextureReadOnly: {
-                    D3D12TextureView d3d12TextureView = elementCache.TextureView
-                                                        ?? throw new VeldridException("D3D12 sampled descriptor-table binding requires a texture view.");
-                    this._commandList.TransitionTextureViewForInternalUse(d3d12TextureView, GetDescriptorTableTextureReadState(compute));
-                    break;
-                }
-            case ResourceKind.TextureReadWrite: {
-                    D3D12TextureView d3D12TextureView = elementCache.TextureView
-                                                        ?? throw new VeldridException("D3D12 storage descriptor-table binding requires a texture view.");
-                    this._commandList.TransitionTextureViewForInternalUse(d3D12TextureView, ResourceStates.UnorderedAccess);
-                    break;
-                }
-            case ResourceKind.Sampler: break;
-            default: throw new VeldridException("Invalid descriptor-table binding kind.");
+    private void PrepareDescriptorTableTextureResource(ResourceKind kind, D3D12ResourceSetElementCache elementCache, bool compute) {
+        D3D12TextureView textureView = elementCache.TextureView
+                                       ?? throw new VeldridException("D3D12 descriptor-table texture binding requires a texture view.");
+        if (kind == ResourceKind.TextureReadOnly) {
+            this._commandList.TransitionTextureViewForInternalUse(textureView, GetDescriptorTableTextureReadState(compute));
+            return;
         }
+
+        this._commandList.TransitionTextureViewForInternalUse(textureView, ResourceStates.UnorderedAccess);
     }
 
     /// <summary>
@@ -444,11 +441,11 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
     /// <param name="tableInfo">The descriptor table metadata.</param>
     /// <param name="compute">Whether the resource is being used by a compute pipeline.</param>
     private void PrepareDescriptorTableResources(D3D12ResourceSet set, D3D12DescriptorTableBindingInfo tableInfo, bool compute) {
-        D3D12DescriptorTableBindingEntry[] entries = tableInfo.Entries;
+        D3D12DescriptorTableTextureTransitionEntry[] entries = tableInfo.TextureTransitionEntries;
         D3D12ResourceSetElementCache[] elementCaches = set.ElementCaches;
         for (int i = 0; i < entries.Length; i++) {
-            D3D12DescriptorTableBindingEntry entry = entries[i];
-            this.PrepareDescriptorTableResource(entry.Kind, elementCaches[entry.ElementIndex], compute);
+            D3D12DescriptorTableTextureTransitionEntry entry = entries[i];
+            this.PrepareDescriptorTableTextureResource(entry.Kind, elementCaches[entry.ElementIndex], compute);
         }
     }
 
@@ -554,11 +551,11 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
     /// <param name="compute">Whether the active pipeline is a compute pipeline.</param>
     /// <returns><see langword="true" /> when all table textures are known to be in the required state.</returns>
     private static bool CanSkipDescriptorTableResourcePreparation(D3D12ResourceSet set, D3D12DescriptorTableBindingInfo tableInfo, bool compute) {
-        ulong stateVersionHash = ComputeDescriptorTableStateVersionHash(set, tableInfo, compute, out uint textureCount);
-        if (textureCount == 0) {
+        if (tableInfo.TextureTransitionEntries.Length == 0) {
             return true;
         }
 
+        ulong stateVersionHash = ComputeDescriptorTableStateVersionHash(set, tableInfo, compute, out uint textureCount);
         ref D3D12DescriptorTableTransitionCache cache = ref GetSrvUavTransitionCache(set, compute);
         return cache.Matches(tableInfo.Signature, stateVersionHash, textureCount);
     }
@@ -570,11 +567,11 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
     /// <param name="tableInfo">The descriptor table metadata.</param>
     /// <param name="compute">Whether the active pipeline is a compute pipeline.</param>
     private static void StoreDescriptorTableResourcePreparation(D3D12ResourceSet set, D3D12DescriptorTableBindingInfo tableInfo, bool compute) {
-        ulong stateVersionHash = ComputeDescriptorTableStateVersionHash(set, tableInfo, compute, out uint textureCount);
-        if (textureCount == 0) {
+        if (tableInfo.TextureTransitionEntries.Length == 0) {
             return;
         }
 
+        ulong stateVersionHash = ComputeDescriptorTableStateVersionHash(set, tableInfo, compute, out uint textureCount);
         ref D3D12DescriptorTableTransitionCache cache = ref GetSrvUavTransitionCache(set, compute);
         cache.Store(tableInfo.Signature, stateVersionHash, textureCount);
     }
@@ -593,22 +590,12 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
         ulong hash = fnvOffsetBasis;
         textureCount = 0;
 
-        D3D12DescriptorTableBindingEntry[] entries = tableInfo.Entries;
+        D3D12DescriptorTableTextureTransitionEntry[] entries = tableInfo.TextureTransitionEntries;
         for (int i = 0; i < entries.Length; i++) {
-            D3D12DescriptorTableBindingEntry entry = entries[i];
-            ResourceStates requiredState;
-            switch (entry.Kind) {
-                case ResourceKind.TextureReadOnly:
-                    requiredState = GetDescriptorTableTextureReadState(compute);
-                    break;
-                case ResourceKind.TextureReadWrite:
-                    requiredState = ResourceStates.UnorderedAccess;
-                    break;
-                case ResourceKind.Sampler:
-                    continue;
-                default:
-                    continue;
-            }
+            D3D12DescriptorTableTextureTransitionEntry entry = entries[i];
+            ResourceStates requiredState = entry.Kind == ResourceKind.TextureReadOnly
+                ? GetDescriptorTableTextureReadState(compute)
+                : ResourceStates.UnorderedAccess;
 
             D3D12TextureView textureView = set.ElementCaches[entry.ElementIndex].TextureView
                                            ?? throw new VeldridException("D3D12 descriptor-table texture binding requires a texture view.");

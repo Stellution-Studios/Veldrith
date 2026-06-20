@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -113,6 +114,16 @@ internal sealed class D3D12DescriptorHeapState : IDisposable {
     private uint _nextSrvUavDescriptor;
 
     /// <summary>
+    /// Stores reusable SRV/UAV descriptor ranges whose previous GPU users have completed.
+    /// </summary>
+    private readonly List<DescriptorRange> _freeSrvUavRanges = new();
+
+    /// <summary>
+    /// Stores reusable sampler descriptor ranges whose previous GPU users have completed.
+    /// </summary>
+    private readonly List<DescriptorRange> _freeSamplerRanges = new();
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="D3D12DescriptorHeapState" /> class.
     /// </summary>
     /// <param name="gd">The graphics device that owns the descriptor heaps.</param>
@@ -175,6 +186,8 @@ internal sealed class D3D12DescriptorHeapState : IDisposable {
             return 0;
         }
 
+        DescriptorRangeRelease staleRangeRelease;
+        uint copiedDescriptors;
         lock (this._allocationLock) {
             if (this.TryGetDescriptorTableHandle(set, tableKind, tableInfo.Signature, out gpuHandle)) {
                 return 0;
@@ -183,15 +196,16 @@ internal sealed class D3D12DescriptorHeapState : IDisposable {
             DescriptorHeapType heapType;
             CpuDescriptorHandle cpuHandle;
             int descriptorSize;
+            uint descriptorOffset;
             if (tableKind == D3D12Pipeline.DescriptorTableKind.Sampler) {
                 heapType = DescriptorHeapType.Sampler;
                 descriptorSize = this._samplerDescriptorSize;
-                this.AllocateSamplerDescriptors(tableInfo.DescriptorCount, out cpuHandle, out gpuHandle);
+                this.AllocateSamplerDescriptors(tableInfo.DescriptorCount, out descriptorOffset, out cpuHandle, out gpuHandle);
             }
             else {
                 heapType = DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView;
                 descriptorSize = this._srvUavDescriptorSize;
-                this.AllocateSrvUavDescriptors(tableInfo.DescriptorCount, out cpuHandle, out gpuHandle);
+                this.AllocateSrvUavDescriptors(tableInfo.DescriptorCount, out descriptorOffset, out cpuHandle, out gpuHandle);
             }
 
             this.EnsureDescriptorCopyCapacity(tableInfo.DescriptorCount);
@@ -208,9 +222,48 @@ internal sealed class D3D12DescriptorHeapState : IDisposable {
                 this._gd.Device.CopyDescriptors(batchCount, this._descriptorCopyDests, this._descriptorCopyRangeSizes, batchCount, this._descriptorCopySources, this._descriptorCopyRangeSizes, heapType);
             }
 
-            this.CacheDescriptorTableHandle(set, tableKind, tableInfo.Signature, gpuHandle);
-            return batchCount;
+            staleRangeRelease = this.CacheDescriptorTableHandle(set, tableKind, tableInfo.Signature, gpuHandle, descriptorOffset, tableInfo.DescriptorCount);
+            copiedDescriptors = batchCount;
         }
+
+        if (staleRangeRelease != null) {
+            this._gd.ReleaseAfterLastSubmission(staleRangeRelease);
+        }
+
+        return copiedDescriptors;
+    }
+
+    /// <summary>
+    /// Releases all shader-visible descriptor table ranges owned by a resource set after outstanding submissions complete.
+    /// </summary>
+    /// <param name="set">The resource set whose cached ranges should be released.</param>
+    internal void ReleaseDescriptorTables(D3D12ResourceSet set) {
+        DescriptorRange srvUavRange = default;
+        DescriptorRange samplerRange = default;
+        bool hasSrvUavRange = false;
+        bool hasSamplerRange = false;
+
+        lock (this._allocationLock) {
+            if (set.HasCachedSrvUavHandle) {
+                srvUavRange = new DescriptorRange(set.CachedSrvUavDescriptorOffset, set.CachedSrvUavDescriptorCount);
+                hasSrvUavRange = srvUavRange.Count != 0;
+                set.HasCachedSrvUavHandle = false;
+                set.CachedSrvUavDescriptorCount = 0;
+            }
+
+            if (set.HasCachedSamplerHandle) {
+                samplerRange = new DescriptorRange(set.CachedSamplerDescriptorOffset, set.CachedSamplerDescriptorCount);
+                hasSamplerRange = samplerRange.Count != 0;
+                set.HasCachedSamplerHandle = false;
+                set.CachedSamplerDescriptorCount = 0;
+            }
+        }
+
+        if (!hasSrvUavRange && !hasSamplerRange) {
+            return;
+        }
+
+        this._gd.ReleaseAfterLastSubmission(new DescriptorRangeRelease(this, srvUavRange, hasSrvUavRange, samplerRange, hasSamplerRange));
     }
 
     /// <summary>
@@ -225,32 +278,122 @@ internal sealed class D3D12DescriptorHeapState : IDisposable {
     /// Allocates a contiguous range in the SRV/UAV shader-visible heap.
     /// </summary>
     /// <param name="count">The number of descriptors to allocate.</param>
+    /// <param name="descriptorOffset">The first descriptor index in the allocation.</param>
     /// <param name="cpuHandle">The first CPU descriptor handle in the allocation.</param>
     /// <param name="gpuHandle">The first GPU descriptor handle in the allocation.</param>
-    private void AllocateSrvUavDescriptors(uint count, out CpuDescriptorHandle cpuHandle, out GpuDescriptorHandle gpuHandle) {
-        if (this._nextSrvUavDescriptor + count > MaxSrvUavDescriptors) {
-            throw new VeldridException("D3D12 global SRV/UAV descriptor heap exhausted. Create fewer unique ResourceSets or increase the persistent descriptor heap size.");
+    private void AllocateSrvUavDescriptors(uint count, out uint descriptorOffset, out CpuDescriptorHandle cpuHandle, out GpuDescriptorHandle gpuHandle) {
+        if (!TryRentDescriptorRange(this._freeSrvUavRanges, count, out descriptorOffset)) {
+            if (this._nextSrvUavDescriptor + count > MaxSrvUavDescriptors) {
+                throw new VeldridException("D3D12 global SRV/UAV descriptor heap exhausted. Create fewer unique ResourceSets or increase the persistent descriptor heap size.");
+            }
+
+            descriptorOffset = this._nextSrvUavDescriptor;
+            this._nextSrvUavDescriptor += count;
         }
 
-        cpuHandle = new CpuDescriptorHandle(this._srvUavHeapCpuStart, (int)this._nextSrvUavDescriptor, (uint)this._srvUavDescriptorSize);
-        gpuHandle = new GpuDescriptorHandle(this._srvUavHeapGpuStart, (int)this._nextSrvUavDescriptor, (uint)this._srvUavDescriptorSize);
-        this._nextSrvUavDescriptor += count;
+        cpuHandle = new CpuDescriptorHandle(this._srvUavHeapCpuStart, (int)descriptorOffset, (uint)this._srvUavDescriptorSize);
+        gpuHandle = new GpuDescriptorHandle(this._srvUavHeapGpuStart, (int)descriptorOffset, (uint)this._srvUavDescriptorSize);
     }
 
     /// <summary>
     /// Allocates a contiguous range in the sampler shader-visible heap.
     /// </summary>
     /// <param name="count">The number of descriptors to allocate.</param>
+    /// <param name="descriptorOffset">The first descriptor index in the allocation.</param>
     /// <param name="cpuHandle">The first CPU descriptor handle in the allocation.</param>
     /// <param name="gpuHandle">The first GPU descriptor handle in the allocation.</param>
-    private void AllocateSamplerDescriptors(uint count, out CpuDescriptorHandle cpuHandle, out GpuDescriptorHandle gpuHandle) {
-        if (this._nextSamplerDescriptor + count > MaxSamplerDescriptors) {
-            throw new VeldridException("D3D12 global sampler descriptor heap exhausted. Create fewer unique ResourceSets or increase the persistent sampler descriptor heap size.");
+    private void AllocateSamplerDescriptors(uint count, out uint descriptorOffset, out CpuDescriptorHandle cpuHandle, out GpuDescriptorHandle gpuHandle) {
+        if (!TryRentDescriptorRange(this._freeSamplerRanges, count, out descriptorOffset)) {
+            if (this._nextSamplerDescriptor + count > MaxSamplerDescriptors) {
+                throw new VeldridException("D3D12 global sampler descriptor heap exhausted. Create fewer unique ResourceSets or increase the persistent sampler descriptor heap size.");
+            }
+
+            descriptorOffset = this._nextSamplerDescriptor;
+            this._nextSamplerDescriptor += count;
         }
 
-        cpuHandle = new CpuDescriptorHandle(this._samplerHeapCpuStart, (int)this._nextSamplerDescriptor, (uint)this._samplerDescriptorSize);
-        gpuHandle = new GpuDescriptorHandle(this._samplerHeapGpuStart, (int)this._nextSamplerDescriptor, (uint)this._samplerDescriptorSize);
-        this._nextSamplerDescriptor += count;
+        cpuHandle = new CpuDescriptorHandle(this._samplerHeapCpuStart, (int)descriptorOffset, (uint)this._samplerDescriptorSize);
+        gpuHandle = new GpuDescriptorHandle(this._samplerHeapGpuStart, (int)descriptorOffset, (uint)this._samplerDescriptorSize);
+    }
+
+    /// <summary>
+    /// Returns descriptor ranges to their free lists after their guarding fence has completed.
+    /// </summary>
+    /// <param name="srvUavRange">The SRV/UAV descriptor range.</param>
+    /// <param name="hasSrvUavRange">Whether <paramref name="srvUavRange"/> is valid.</param>
+    /// <param name="samplerRange">The sampler descriptor range.</param>
+    /// <param name="hasSamplerRange">Whether <paramref name="samplerRange"/> is valid.</param>
+    private void ReturnDescriptorRanges(DescriptorRange srvUavRange, bool hasSrvUavRange, DescriptorRange samplerRange, bool hasSamplerRange) {
+        lock (this._allocationLock) {
+            if (hasSrvUavRange) {
+                AddFreeDescriptorRange(this._freeSrvUavRanges, srvUavRange);
+            }
+
+            if (hasSamplerRange) {
+                AddFreeDescriptorRange(this._freeSamplerRanges, samplerRange);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Attempts to rent a descriptor range from a free list.
+    /// </summary>
+    /// <param name="freeRanges">The free-list to rent from.</param>
+    /// <param name="count">The number of descriptors required.</param>
+    /// <param name="descriptorOffset">The first descriptor index in the allocation.</param>
+    /// <returns><see langword="true" /> when a free range was reused.</returns>
+    private static bool TryRentDescriptorRange(List<DescriptorRange> freeRanges, uint count, out uint descriptorOffset) {
+        for (int i = 0; i < freeRanges.Count; i++) {
+            DescriptorRange range = freeRanges[i];
+            if (range.Count < count) {
+                continue;
+            }
+
+            descriptorOffset = range.Offset;
+            if (range.Count == count) {
+                freeRanges.RemoveAt(i);
+            }
+            else {
+                freeRanges[i] = new DescriptorRange(range.Offset + count, range.Count - count);
+            }
+
+            return true;
+        }
+
+        descriptorOffset = 0;
+        return false;
+    }
+
+    /// <summary>
+    /// Adds a descriptor range back to a free-list and merges adjacent ranges.
+    /// </summary>
+    /// <param name="freeRanges">The target free-list.</param>
+    /// <param name="range">The range to add.</param>
+    private static void AddFreeDescriptorRange(List<DescriptorRange> freeRanges, DescriptorRange range) {
+        if (range.Count == 0) {
+            return;
+        }
+
+        int insertIndex = 0;
+        while (insertIndex < freeRanges.Count && freeRanges[insertIndex].Offset < range.Offset) {
+            insertIndex++;
+        }
+
+        freeRanges.Insert(insertIndex, range);
+        int mergeIndex = Math.Max(0, insertIndex - 1);
+        while (mergeIndex < freeRanges.Count - 1) {
+            DescriptorRange current = freeRanges[mergeIndex];
+            DescriptorRange next = freeRanges[mergeIndex + 1];
+            uint currentEnd = current.Offset + current.Count;
+            if (currentEnd < next.Offset) {
+                mergeIndex++;
+                continue;
+            }
+
+            uint nextEnd = Math.Max(currentEnd, next.Offset + next.Count);
+            freeRanges[mergeIndex] = new DescriptorRange(current.Offset, nextEnd - current.Offset);
+            freeRanges.RemoveAt(mergeIndex + 1);
+        }
     }
 
     /// <summary>
@@ -336,18 +479,30 @@ internal sealed class D3D12DescriptorHeapState : IDisposable {
     /// <param name="tableSignature">The binding-plan table signature.</param>
     /// <param name="handle">The GPU descriptor handle to cache.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void CacheDescriptorTableHandle(D3D12ResourceSet set, D3D12Pipeline.DescriptorTableKind kind, uint tableSignature, GpuDescriptorHandle handle) {
+    private DescriptorRangeRelease CacheDescriptorTableHandle(D3D12ResourceSet set, D3D12Pipeline.DescriptorTableKind kind, uint tableSignature, GpuDescriptorHandle handle, uint descriptorOffset, uint descriptorCount) {
         if (kind == D3D12Pipeline.DescriptorTableKind.Sampler) {
+            DescriptorRangeRelease staleRangeRelease = set.HasCachedSamplerHandle && set.CachedSamplerDescriptorCount != 0
+                ? new DescriptorRangeRelease(this, default, false, new DescriptorRange(set.CachedSamplerDescriptorOffset, set.CachedSamplerDescriptorCount), true)
+                : null;
             set.CachedSamplerHandle = handle;
             set.CachedSamplerHeapId = this._cacheId;
             set.CachedSamplerSignature = tableSignature;
+            set.CachedSamplerDescriptorOffset = descriptorOffset;
+            set.CachedSamplerDescriptorCount = descriptorCount;
             set.HasCachedSamplerHandle = true;
+            return staleRangeRelease;
         }
         else {
+            DescriptorRangeRelease staleRangeRelease = set.HasCachedSrvUavHandle && set.CachedSrvUavDescriptorCount != 0
+                ? new DescriptorRangeRelease(this, new DescriptorRange(set.CachedSrvUavDescriptorOffset, set.CachedSrvUavDescriptorCount), true, default, false)
+                : null;
             set.CachedSrvUavHandle = handle;
             set.CachedSrvUavHeapId = this._cacheId;
             set.CachedSrvUavSignature = tableSignature;
+            set.CachedSrvUavDescriptorOffset = descriptorOffset;
+            set.CachedSrvUavDescriptorCount = descriptorCount;
             set.HasCachedSrvUavHandle = true;
+            return staleRangeRelease;
         }
     }
 
@@ -364,5 +519,83 @@ internal sealed class D3D12DescriptorHeapState : IDisposable {
         void* heap1 = (void*)heaps[1].NativePointer;
         void** heapPtrs = stackalloc void*[2] { heap0, heap1 };
         setDescriptorHeaps((void*)commandList.NativePointer, 2u, heapPtrs);
+    }
+
+    /// <summary>
+    /// Represents one contiguous range in a shader-visible descriptor heap.
+    /// </summary>
+    private readonly struct DescriptorRange {
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DescriptorRange" /> struct.
+        /// </summary>
+        /// <param name="offset">The first descriptor index.</param>
+        /// <param name="count">The number of descriptors.</param>
+        public DescriptorRange(uint offset, uint count) {
+            this.Offset = offset;
+            this.Count = count;
+        }
+
+        /// <summary>
+        /// Gets the first descriptor index.
+        /// </summary>
+        public uint Offset { get; }
+
+        /// <summary>
+        /// Gets the number of descriptors.
+        /// </summary>
+        public uint Count { get; }
+    }
+
+    /// <summary>
+    /// Returns descriptor ranges after deferred disposal reaches their fence.
+    /// </summary>
+    private sealed class DescriptorRangeRelease : IDisposable {
+
+        /// <summary>
+        /// Stores the descriptor heap state that owns the ranges.
+        /// </summary>
+        private readonly D3D12DescriptorHeapState _owner;
+
+        /// <summary>
+        /// Stores the SRV/UAV descriptor range.
+        /// </summary>
+        private readonly DescriptorRange _srvUavRange;
+
+        /// <summary>
+        /// Stores whether the SRV/UAV range is valid.
+        /// </summary>
+        private readonly bool _hasSrvUavRange;
+
+        /// <summary>
+        /// Stores the sampler descriptor range.
+        /// </summary>
+        private readonly DescriptorRange _samplerRange;
+
+        /// <summary>
+        /// Stores whether the sampler range is valid.
+        /// </summary>
+        private readonly bool _hasSamplerRange;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DescriptorRangeRelease" /> class.
+        /// </summary>
+        /// <param name="owner">The descriptor heap state that owns the ranges.</param>
+        /// <param name="srvUavRange">The SRV/UAV descriptor range.</param>
+        /// <param name="hasSrvUavRange">Whether <paramref name="srvUavRange"/> is valid.</param>
+        /// <param name="samplerRange">The sampler descriptor range.</param>
+        /// <param name="hasSamplerRange">Whether <paramref name="samplerRange"/> is valid.</param>
+        public DescriptorRangeRelease(D3D12DescriptorHeapState owner, DescriptorRange srvUavRange, bool hasSrvUavRange, DescriptorRange samplerRange, bool hasSamplerRange) {
+            this._owner = owner;
+            this._srvUavRange = srvUavRange;
+            this._hasSrvUavRange = hasSrvUavRange;
+            this._samplerRange = samplerRange;
+            this._hasSamplerRange = hasSamplerRange;
+        }
+
+        /// <inheritdoc />
+        public void Dispose() {
+            this._owner.ReturnDescriptorRanges(this._srvUavRange, this._hasSrvUavRange, this._samplerRange, this._hasSamplerRange);
+        }
     }
 }

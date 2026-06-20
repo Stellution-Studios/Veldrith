@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using SharpGen.Runtime;
@@ -43,6 +45,19 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// Stores the number of submits between deferred-disposal fence polls.
     /// </summary>
     private static readonly int _deferredDisposalPumpInterval = ReadDeferredDisposalPumpInterval();
+
+    /// <summary>
+    /// Gets whether persistent D3D12 pipeline library caching is enabled.
+    /// </summary>
+    private static readonly bool _persistentPipelineLibraryEnabled = !string.Equals(Environment.GetEnvironmentVariable("VELDRID_D3D12_PIPELINE_LIBRARY"), "0", StringComparison.Ordinal);
+
+    /// <summary>
+    /// Stores the directory used for persistent D3D12 pipeline library blobs.
+    /// </summary>
+    private static readonly string _persistentPipelineLibraryDirectory = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "Veldrith",
+        "D3D12PipelineLibrary");
 
     /// <summary>
     /// Stores the d3d12 features state used by this instance.
@@ -155,6 +170,41 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// Protects native pipeline state cache access.
     /// </summary>
     private readonly object _pipelineStateCacheLock = new();
+
+    /// <summary>
+    /// Stores the optional device-level D3D12 pipeline library used to persist PSO data across runs.
+    /// </summary>
+    private ID3D12PipelineLibrary _pipelineLibrary;
+
+    /// <summary>
+    /// Stores the optional D3D12 device interface used to create pipeline libraries.
+    /// </summary>
+    private ID3D12Device1 _pipelineLibraryDevice;
+
+    /// <summary>
+    /// Stores the persistent pipeline library file path for this device, when enabled.
+    /// </summary>
+    private string _pipelineLibraryPath;
+
+    /// <summary>
+    /// Tracks whether the pipeline library changed and should be serialized on dispose.
+    /// </summary>
+    private bool _pipelineLibraryDirty;
+
+    /// <summary>
+    /// Tracks whether persistent pipeline library use failed and should stay disabled for this device.
+    /// </summary>
+    private bool _pipelineLibraryUnavailable;
+
+    /// <summary>
+    /// Keeps the loaded pipeline-library blob pinned for the lifetime of the native library object.
+    /// </summary>
+    private byte[] _pipelineLibraryBlob;
+
+    /// <summary>
+    /// Pins <see cref="_pipelineLibraryBlob"/> because D3D12 keeps the input blob pointer alive.
+    /// </summary>
+    private GCHandle _pipelineLibraryBlobHandle;
 
     /// <summary>
     /// Stores the submission fence state used by this instance.
@@ -603,6 +653,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         this.RtvDescriptorAllocator = new D3D12CpuDescriptorAllocator(this._device, DescriptorHeapType.RenderTargetView, 1024);
         this.DsvDescriptorAllocator = new D3D12CpuDescriptorAllocator(this._device, DescriptorHeapType.DepthStencilView, 1024);
         this._descriptorHeapState = new D3D12DescriptorHeapState(this);
+        this.InitializePipelineLibrary();
         this._supportsDirectWriteBufferImmediate = this.CheckDirectWriteBufferImmediateSupport();
         this._supportsRenderPasses = this.CheckRenderPassSupport();
         this._resourceFactory = new D3D12ResourceFactory(this, this.Features);
@@ -1345,6 +1396,231 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
+    /// Gets a cached D3D12 graphics pipeline state or creates and stores one when it is first requested.
+    /// </summary>
+    /// <param name="cacheKey">The stable pipeline-state key.</param>
+    /// <param name="description">The D3D12 graphics pipeline description.</param>
+    /// <returns>The cached or newly-created pipeline state.</returns>
+    internal ID3D12PipelineState GetOrCreateGraphicsPipelineState(string cacheKey, in GraphicsPipelineStateDescription description) {
+        lock (this._pipelineStateCacheLock) {
+            if (this._pipelineStateCache.TryGetValue(cacheKey, out ID3D12PipelineState cached)) {
+                return cached;
+            }
+
+            string libraryName = BuildPipelineLibraryEntryName(cacheKey);
+            ID3D12PipelineState created = this.TryLoadGraphicsPipelineStateFromLibrary(libraryName, in description)
+                                          ?? this._device.CreateGraphicsPipelineState(description);
+            this.TryStorePipelineStateInLibrary(libraryName, created);
+            this._pipelineStateCache.Add(cacheKey, created);
+            return created;
+        }
+    }
+
+    /// <summary>
+    /// Gets a cached D3D12 compute pipeline state or creates and stores one when it is first requested.
+    /// </summary>
+    /// <param name="cacheKey">The stable pipeline-state key.</param>
+    /// <param name="description">The D3D12 compute pipeline description.</param>
+    /// <returns>The cached or newly-created pipeline state.</returns>
+    internal ID3D12PipelineState GetOrCreateComputePipelineState(string cacheKey, in ComputePipelineStateDescription description) {
+        lock (this._pipelineStateCacheLock) {
+            if (this._pipelineStateCache.TryGetValue(cacheKey, out ID3D12PipelineState cached)) {
+                return cached;
+            }
+
+            string libraryName = BuildPipelineLibraryEntryName(cacheKey);
+            ID3D12PipelineState created = this.TryLoadComputePipelineStateFromLibrary(libraryName, in description)
+                                          ?? this._device.CreateComputePipelineState(description);
+            this.TryStorePipelineStateInLibrary(libraryName, created);
+            this._pipelineStateCache.Add(cacheKey, created);
+            return created;
+        }
+    }
+
+    /// <summary>
+    /// Initializes the optional persistent pipeline library for this device.
+    /// </summary>
+    private unsafe void InitializePipelineLibrary() {
+        if (!_persistentPipelineLibraryEnabled) {
+            this._pipelineLibraryUnavailable = true;
+            return;
+        }
+
+        ID3D12Device1 device1 = null;
+        try {
+            device1 = this._device.QueryInterface<ID3D12Device1>();
+            byte[] blob = this.ReadPipelineLibraryBlob();
+            this._pipelineLibraryPath = this.GetPipelineLibraryPath();
+            if (blob.Length != 0) {
+                this._pipelineLibraryBlob = blob;
+                this._pipelineLibraryBlobHandle = GCHandle.Alloc(this._pipelineLibraryBlob, GCHandleType.Pinned);
+            }
+
+            Span<byte> libraryBlob = blob.Length == 0
+                ? Span<byte>.Empty
+                : this._pipelineLibraryBlob.AsSpan();
+            device1.CreatePipelineLibrary(libraryBlob, out this._pipelineLibrary);
+            this._pipelineLibraryDevice = device1;
+            device1 = null;
+        }
+        catch {
+            this._pipelineLibraryUnavailable = true;
+            this._pipelineLibrary?.Dispose();
+            this._pipelineLibrary = null;
+            this.ReleasePipelineLibraryBlob();
+        }
+        finally {
+            device1?.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Attempts to load a graphics PSO from the persistent pipeline library.
+    /// </summary>
+    /// <param name="libraryName">The library entry name.</param>
+    /// <param name="description">The graphics pipeline description.</param>
+    /// <returns>The loaded pipeline state, or null when the library cannot satisfy the request.</returns>
+    private ID3D12PipelineState TryLoadGraphicsPipelineStateFromLibrary(string libraryName, in GraphicsPipelineStateDescription description) {
+        if (this._pipelineLibrary == null || this._pipelineLibraryUnavailable) {
+            return null;
+        }
+
+        try {
+            return this._pipelineLibrary.LoadGraphicsPipeline(libraryName, description);
+        }
+        catch {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Attempts to load a compute PSO from the persistent pipeline library.
+    /// </summary>
+    /// <param name="libraryName">The library entry name.</param>
+    /// <param name="description">The compute pipeline description.</param>
+    /// <returns>The loaded pipeline state, or null when the library cannot satisfy the request.</returns>
+    private ID3D12PipelineState TryLoadComputePipelineStateFromLibrary(string libraryName, in ComputePipelineStateDescription description) {
+        if (this._pipelineLibrary == null || this._pipelineLibraryUnavailable) {
+            return null;
+        }
+
+        try {
+            return this._pipelineLibrary.LoadComputePipeline(libraryName, description);
+        }
+        catch {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Stores a newly created PSO in the persistent pipeline library.
+    /// </summary>
+    /// <param name="libraryName">The library entry name.</param>
+    /// <param name="pipelineState">The pipeline state to store.</param>
+    private void TryStorePipelineStateInLibrary(string libraryName, ID3D12PipelineState pipelineState) {
+        if (this._pipelineLibrary == null || this._pipelineLibraryUnavailable || pipelineState == null) {
+            return;
+        }
+
+        try {
+            this._pipelineLibrary.StorePipeline(libraryName, pipelineState);
+            this._pipelineLibraryDirty = true;
+        }
+        catch {
+            // Duplicate names and unsupported libraries are non-fatal. The in-memory PSO cache remains authoritative.
+        }
+    }
+
+    /// <summary>
+    /// Serializes the persistent pipeline library to disk if it changed.
+    /// </summary>
+    private unsafe void StoreAndDestroyPipelineLibrary() {
+        ID3D12PipelineLibrary library = this._pipelineLibrary;
+        this._pipelineLibrary = null;
+        try {
+            if (library != null && this._pipelineLibraryDirty && !this._pipelineLibraryUnavailable && !string.IsNullOrEmpty(this._pipelineLibraryPath)) {
+                nuint serializedSize = (nuint)library.SerializedSize;
+                if (serializedSize != 0 && serializedSize <= int.MaxValue) {
+                    byte[] blob = new byte[(int)serializedSize];
+                    fixed (byte* blobPointer = blob) {
+                        library.Serialize((IntPtr)blobPointer, serializedSize);
+                    }
+
+                    Directory.CreateDirectory(Path.GetDirectoryName(this._pipelineLibraryPath)!);
+                    File.WriteAllBytes(this._pipelineLibraryPath, blob);
+                }
+            }
+        }
+        catch {
+            // Pipeline library cache persistence must never make device disposal fail.
+        }
+        finally {
+            library?.Dispose();
+            this._pipelineLibraryDevice?.Dispose();
+            this._pipelineLibraryDevice = null;
+            this.ReleasePipelineLibraryBlob();
+        }
+    }
+
+    /// <summary>
+    /// Reads the persistent pipeline library blob from disk.
+    /// </summary>
+    /// <returns>The loaded blob, or an empty array when none is available.</returns>
+    private byte[] ReadPipelineLibraryBlob() {
+        string path = this.GetPipelineLibraryPath();
+        if (string.IsNullOrEmpty(path) || !File.Exists(path)) {
+            return Array.Empty<byte>();
+        }
+
+        try {
+            return File.ReadAllBytes(path);
+        }
+        catch {
+            return Array.Empty<byte>();
+        }
+    }
+
+    /// <summary>
+    /// Gets the persistent pipeline library file path for this device.
+    /// </summary>
+    /// <returns>The cache path.</returns>
+    private string GetPipelineLibraryPath() {
+        string deviceKey = $"{this.DeviceName}|{this.VendorName}|{this.ApiVersion}";
+        return Path.Combine(_persistentPipelineLibraryDirectory, $"{ComputeStableFileHash(deviceKey)}.bin");
+    }
+
+    /// <summary>
+    /// Creates a stable short file-name-safe hash for cache data.
+    /// </summary>
+    /// <param name="text">The text to hash.</param>
+    /// <returns>The stable hash.</returns>
+    private static string ComputeStableFileHash(string text) {
+        byte[] bytes = Encoding.UTF8.GetBytes(text ?? string.Empty);
+        byte[] hash = SHA256.HashData(bytes);
+        return Convert.ToHexString(hash, 0, 16);
+    }
+
+    /// <summary>
+    /// Builds a short stable name for a pipeline library entry.
+    /// </summary>
+    /// <param name="cacheKey">The full pipeline cache key.</param>
+    /// <returns>The library entry name.</returns>
+    private static string BuildPipelineLibraryEntryName(string cacheKey) {
+        return ComputeStableFileHash(cacheKey);
+    }
+
+    /// <summary>
+    /// Releases the pinned pipeline library input blob.
+    /// </summary>
+    private void ReleasePipelineLibraryBlob() {
+        if (this._pipelineLibraryBlobHandle.IsAllocated) {
+            this._pipelineLibraryBlobHandle.Free();
+        }
+
+        this._pipelineLibraryBlob = null;
+    }
+
+    /// <summary>
     /// Gets a detailed device-removed diagnostic string for Direct3D 12.
     /// </summary>
     /// <returns>The value produced by this operation.</returns>
@@ -1574,6 +1850,8 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
 
             this._rootSignatureCache.Clear();
         }
+
+        this.StoreAndDestroyPipelineLibrary();
 
         lock (this._pipelineStateCacheLock) {
             foreach (ID3D12PipelineState pipelineState in this._pipelineStateCache.Values) {

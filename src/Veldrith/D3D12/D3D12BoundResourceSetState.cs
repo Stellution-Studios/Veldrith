@@ -23,6 +23,16 @@ internal sealed class D3D12BoundResourceSetState {
     internal D3D12ResourceSetChangeKind[] ChangeKinds = Array.Empty<D3D12ResourceSetChangeKind>();
 
     /// <summary>
+    /// Stores the resource-set slots that are currently dirty.
+    /// </summary>
+    internal int[] ChangedSlots = Array.Empty<int>();
+
+    /// <summary>
+    /// Gets the number of active entries in <see cref="ChangedSlots" />.
+    /// </summary>
+    internal int ChangedSlotCount { get; private set; }
+
+    /// <summary>
     /// Gets whether any resource set slot is dirty.
     /// </summary>
     internal bool Dirty { get; private set; }
@@ -107,7 +117,12 @@ internal sealed class D3D12BoundResourceSetState {
     /// <param name="changeKind">The required rebind scope.</param>
     internal void MarkChanged(uint slot, D3D12ResourceSetChangeKind changeKind) {
         int index = (int)slot;
-        this.Changed[index] = true;
+        if (!this.Changed[index]) {
+            Util.EnsureArrayMinimumSize(ref this.ChangedSlots, (uint)this.ChangedSlotCount + 1);
+            this.ChangedSlots[this.ChangedSlotCount++] = index;
+            this.Changed[index] = true;
+        }
+
         if (this.ChangeKinds[index] != D3D12ResourceSetChangeKind.Full) {
             this.ChangeKinds[index] = changeKind;
         }
@@ -190,6 +205,18 @@ internal sealed class D3D12BoundResourceSetState {
     /// Clears the dirty range after changed slots have been flushed.
     /// </summary>
     internal void ResetDirtyRange() {
+        for (int i = 0; i < this.ChangedSlotCount; i++) {
+            int slot = this.ChangedSlots[i];
+            if (slot >= 0 && slot < this.Changed.Length) {
+                this.Changed[slot] = false;
+            }
+
+            if (slot >= 0 && slot < this.ChangeKinds.Length) {
+                this.ChangeKinds[slot] = D3D12ResourceSetChangeKind.None;
+            }
+        }
+
+        this.ChangedSlotCount = 0;
         this.Dirty = false;
         this.ChangedStart = -1;
         this.ChangedEnd = -1;
@@ -246,6 +273,7 @@ internal sealed class D3D12BoundResourceSetState {
 
         this._maxTouchedSlot = 0;
         this._bufferSetSlotCount = 0;
+        this.ChangedSlotCount = 0;
         this.ResetDirtyRange();
     }
 

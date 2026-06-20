@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
@@ -391,7 +392,8 @@ internal readonly struct D3D12ResourceSetBindingPlan {
         }
 
         uint hash = ComputeDescriptorTableSignature(tableEntries, descriptorCount);
-        return new D3D12DescriptorTableBindingInfo(tableKind, descriptorCount, rootParameterIndex, hash, tableEntries);
+        D3D12DescriptorTableTextureTransitionEntry[] textureTransitionEntries = CreateTextureTransitionEntries(tableEntries);
+        return new D3D12DescriptorTableBindingInfo(tableKind, descriptorCount, rootParameterIndex, hash, tableEntries, textureTransitionEntries);
     }
 
     /// <summary>
@@ -425,7 +427,8 @@ internal readonly struct D3D12ResourceSetBindingPlan {
         }
 
         uint hash = ComputeDescriptorTableSignature(tableEntries, tableEntryCount);
-        return new D3D12DescriptorTableBindingInfo(tableKind, tableEntryCount, 0, hash, tableEntries);
+        D3D12DescriptorTableTextureTransitionEntry[] textureTransitionEntries = CreateTextureTransitionEntries(tableEntries);
+        return new D3D12DescriptorTableBindingInfo(tableKind, tableEntryCount, 0, hash, tableEntries, textureTransitionEntries);
     }
 
     /// <summary>
@@ -445,6 +448,38 @@ internal readonly struct D3D12ResourceSetBindingPlan {
 
         hash = (hash ^ descriptorCount) * 16777619u;
         return hash;
+    }
+
+    /// <summary>
+    /// Creates the texture-only transition plan for a descriptor table.
+    /// </summary>
+    /// <param name="entries">The descriptor-table entries.</param>
+    /// <returns>The texture transition entries used while binding.</returns>
+    private static D3D12DescriptorTableTextureTransitionEntry[] CreateTextureTransitionEntries(D3D12DescriptorTableBindingEntry[] entries) {
+        uint textureEntryCount = 0;
+        for (int i = 0; i < entries.Length; i++) {
+            ResourceKind kind = entries[i].Kind;
+            if (kind == ResourceKind.TextureReadOnly || kind == ResourceKind.TextureReadWrite) {
+                textureEntryCount++;
+            }
+        }
+
+        if (textureEntryCount == 0) {
+            return Array.Empty<D3D12DescriptorTableTextureTransitionEntry>();
+        }
+
+        D3D12DescriptorTableTextureTransitionEntry[] textureEntries = new D3D12DescriptorTableTextureTransitionEntry[textureEntryCount];
+        uint textureEntryIndex = 0;
+        for (int i = 0; i < entries.Length; i++) {
+            D3D12DescriptorTableBindingEntry entry = entries[i];
+            if (entry.Kind != ResourceKind.TextureReadOnly && entry.Kind != ResourceKind.TextureReadWrite) {
+                continue;
+            }
+
+            textureEntries[textureEntryIndex++] = new D3D12DescriptorTableTextureTransitionEntry(entry.ElementIndex, entry.Kind);
+        }
+
+        return textureEntries;
     }
 
     /// <summary>
@@ -495,6 +530,32 @@ internal readonly struct D3D12DescriptorTableBindingEntry {
 }
 
 /// <summary>
+/// Represents one texture resource that must be state-checked before a descriptor table is bound.
+/// </summary>
+internal readonly struct D3D12DescriptorTableTextureTransitionEntry {
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="D3D12DescriptorTableTextureTransitionEntry" /> struct.
+    /// </summary>
+    /// <param name="elementIndex">The resource-set element index.</param>
+    /// <param name="kind">The texture resource kind.</param>
+    public D3D12DescriptorTableTextureTransitionEntry(uint elementIndex, ResourceKind kind) {
+        this.ElementIndex = elementIndex;
+        this.Kind = kind;
+    }
+
+    /// <summary>
+    /// Gets the resource-set element index.
+    /// </summary>
+    public uint ElementIndex { get; }
+
+    /// <summary>
+    /// Gets the texture resource kind.
+    /// </summary>
+    public ResourceKind Kind { get; }
+}
+
+/// <summary>
 /// Represents cached metadata for one descriptor table in a resource-set binding plan.
 /// </summary>
 internal readonly struct D3D12DescriptorTableBindingInfo {
@@ -507,13 +568,15 @@ internal readonly struct D3D12DescriptorTableBindingInfo {
     /// <param name="rootParameterIndex">The root parameter index used by the table.</param>
     /// <param name="signature">The descriptor table signature used for cache validation.</param>
     /// <param name="entries">The descriptor entries included in this table.</param>
-    public D3D12DescriptorTableBindingInfo(D3D12Pipeline.DescriptorTableKind tableKind, uint descriptorCount, uint rootParameterIndex, uint signature, D3D12DescriptorTableBindingEntry[] entries) {
+    /// <param name="textureTransitionEntries">The texture-only entries that need state preparation.</param>
+    public D3D12DescriptorTableBindingInfo(D3D12Pipeline.DescriptorTableKind tableKind, uint descriptorCount, uint rootParameterIndex, uint signature, D3D12DescriptorTableBindingEntry[] entries, D3D12DescriptorTableTextureTransitionEntry[] textureTransitionEntries) {
         this.HasTable = true;
         this.TableKind = tableKind;
         this.DescriptorCount = descriptorCount;
         this.RootParameterIndex = rootParameterIndex;
         this.Signature = signature;
         this.Entries = entries;
+        this.TextureTransitionEntries = textureTransitionEntries;
     }
 
     /// <summary>
@@ -545,6 +608,11 @@ internal readonly struct D3D12DescriptorTableBindingInfo {
     /// Gets the descriptor entries included in this table.
     /// </summary>
     public D3D12DescriptorTableBindingEntry[] Entries { get; }
+
+    /// <summary>
+    /// Gets the texture-only entries that need state preparation.
+    /// </summary>
+    public D3D12DescriptorTableTextureTransitionEntry[] TextureTransitionEntries { get; }
 }
 
 /// <summary>

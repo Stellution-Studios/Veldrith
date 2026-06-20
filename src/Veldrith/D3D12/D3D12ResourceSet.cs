@@ -16,11 +16,17 @@ internal sealed class D3D12ResourceSet : ResourceSet {
     private bool _disposed;
 
     /// <summary>
+    /// Stores the graphics device that owns descriptor heap ranges for this set.
+    /// </summary>
+    private readonly D3D12GraphicsDevice _gd;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="D3D12ResourceSet" /> class.
     /// </summary>
     /// <param name="gd">The graphics device that owns this resource set.</param>
     /// <param name="description">The description used to configure this operation.</param>
     public D3D12ResourceSet(D3D12GraphicsDevice gd, ref ResourceSetDescription description) : base(ref description) {
+        this._gd = gd;
         this.ResourceLayoutInfo = Util.AssertSubtype<ResourceLayout, D3D12ResourceLayout>(description.Layout);
         this.BoundResources = Util.ShallowClone(description.BoundResources);
         this.ElementCaches = CreateElementCaches(gd, this.ResourceLayoutInfo.Elements, this.BoundResources);
@@ -75,6 +81,16 @@ internal sealed class D3D12ResourceSet : ResourceSet {
     internal bool HasCachedSrvUavHandle;
 
     /// <summary>
+    /// First descriptor index owned by the cached SRV/UAV descriptor table.
+    /// </summary>
+    internal uint CachedSrvUavDescriptorOffset;
+
+    /// <summary>
+    /// Number of descriptors owned by the cached SRV/UAV descriptor table.
+    /// </summary>
+    internal uint CachedSrvUavDescriptorCount;
+
+    /// <summary>
     /// Cached GPU descriptor table handle for the sampler descriptor table. Valid when the heap cache id and <see cref="CachedSamplerSignature"/> match.
     /// </summary>
     internal GpuDescriptorHandle CachedSamplerHandle;
@@ -93,6 +109,16 @@ internal sealed class D3D12ResourceSet : ResourceSet {
     /// Whether <see cref="CachedSamplerHandle"/> holds a valid cached value.
     /// </summary>
     internal bool HasCachedSamplerHandle;
+
+    /// <summary>
+    /// First descriptor index owned by the cached sampler descriptor table.
+    /// </summary>
+    internal uint CachedSamplerDescriptorOffset;
+
+    /// <summary>
+    /// Number of descriptors owned by the cached sampler descriptor table.
+    /// </summary>
+    internal uint CachedSamplerDescriptorCount;
 
     /// <summary>
     /// Caches graphics SRV/UAV descriptor-table texture transition state.
@@ -118,7 +144,12 @@ internal sealed class D3D12ResourceSet : ResourceSet {
     /// Releases resources held by this instance.
     /// </summary>
     public override void Dispose() {
+        if (this._disposed) {
+            return;
+        }
+
         this._disposed = true;
+        this._gd.DescriptorHeapState.ReleaseDescriptorTables(this);
     }
 
     /// <summary>
