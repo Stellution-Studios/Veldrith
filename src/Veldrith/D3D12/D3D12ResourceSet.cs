@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Vortice.Direct3D12;
 
 namespace Veldrith.D3D12;
@@ -118,6 +119,36 @@ internal sealed class D3D12ResourceSet : ResourceSet {
     /// </summary>
     public override void Dispose() {
         this._disposed = true;
+    }
+
+    /// <summary>
+    /// Attempts to get a cached shader-visible descriptor table handle for this resource set.
+    /// </summary>
+    /// <param name="tableInfo">The descriptor table metadata required by the active root signature.</param>
+    /// <param name="heapCacheId">The descriptor heap cache id that must own the handle.</param>
+    /// <param name="handle">The cached GPU descriptor handle, when available.</param>
+    /// <returns><see langword="true" /> when a cached handle was found.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal bool TryGetCachedDescriptorTableHandle(D3D12DescriptorTableBindingInfo tableInfo, uint heapCacheId, out GpuDescriptorHandle handle) {
+        if (tableInfo.TableKind == D3D12Pipeline.DescriptorTableKind.Sampler) {
+            if (this.HasCachedSamplerHandle
+                && this.CachedSamplerHeapId == heapCacheId
+                && this.CachedSamplerSignature == tableInfo.Signature) {
+                handle = this.CachedSamplerHandle;
+                return true;
+            }
+        }
+        else {
+            if (this.HasCachedSrvUavHandle
+                && this.CachedSrvUavHeapId == heapCacheId
+                && this.CachedSrvUavSignature == tableInfo.Signature) {
+                handle = this.CachedSrvUavHandle;
+                return true;
+            }
+        }
+
+        handle = default;
+        return false;
     }
 
     /// <summary>

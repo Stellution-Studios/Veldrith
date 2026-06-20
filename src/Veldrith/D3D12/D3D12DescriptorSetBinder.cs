@@ -459,7 +459,6 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
     /// <param name="bindingPlan">The binding plan for the active pipeline and set slot.</param>
     /// <param name="compute">Whether the active pipeline is a compute pipeline.</param>
     private void BindResourceSetDescriptorTables(D3D12ResourceSet set, D3D12ResourceSetBindingPlan bindingPlan, bool compute) {
-        this.BindDescriptorHeaps();
         this.BindResourceSetDescriptorTable(set, bindingPlan.SrvUavTable, compute);
         this.BindResourceSetDescriptorTable(set, bindingPlan.SamplerTable, compute);
     }
@@ -487,11 +486,14 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
             return;
         }
 
-        long descriptorCopyStartTicks = D3D12CommandListPerfTracker.Enabled ? Stopwatch.GetTimestamp() : 0;
-        uint copiedDescriptors = this._descriptorHeapState.GetOrCreateDescriptorTable(set, tableInfo, out GpuDescriptorHandle gpuHandle);
-        if (D3D12CommandListPerfTracker.Enabled && copiedDescriptors > 0) {
-            this._perf.DescriptorCopyMs += D3D12CommandListPerfTracker.TicksToMilliseconds(Stopwatch.GetTimestamp() - descriptorCopyStartTicks);
-            this._perf.DescriptorCopies += copiedDescriptors;
+        GpuDescriptorHandle gpuHandle;
+        if (!set.TryGetCachedDescriptorTableHandle(tableInfo, this._descriptorHeapState.CacheId, out gpuHandle)) {
+            long descriptorCopyStartTicks = D3D12CommandListPerfTracker.Enabled ? Stopwatch.GetTimestamp() : 0;
+            uint copiedDescriptors = this._descriptorHeapState.GetOrCreateDescriptorTable(set, tableInfo, out gpuHandle);
+            if (D3D12CommandListPerfTracker.Enabled && copiedDescriptors > 0) {
+                this._perf.DescriptorCopyMs += D3D12CommandListPerfTracker.TicksToMilliseconds(Stopwatch.GetTimestamp() - descriptorCopyStartTicks);
+                this._perf.DescriptorCopies += copiedDescriptors;
+            }
         }
 
         if (compute) {
@@ -499,6 +501,7 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
                 return;
             }
 
+            this.BindDescriptorHeaps();
             this._commandList.SetComputeRootDescriptorTableNoAlloc(tableInfo.RootParameterIndex, gpuHandle);
         }
         else {
@@ -506,6 +509,7 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
                 return;
             }
 
+            this.BindDescriptorHeaps();
             this._commandList.SetGraphicsRootDescriptorTableNoAlloc(tableInfo.RootParameterIndex, gpuHandle);
         }
 

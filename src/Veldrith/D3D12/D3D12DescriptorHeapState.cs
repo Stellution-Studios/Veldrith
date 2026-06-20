@@ -132,6 +132,11 @@ internal sealed class D3D12DescriptorHeapState : IDisposable {
     }
 
     /// <summary>
+    /// Gets the cache id used to validate resource-set descriptor table handles owned by this heap state.
+    /// </summary>
+    internal uint CacheId => this._cacheId;
+
+    /// <summary>
     /// <summary>
     /// Ensures the shader-visible descriptor heaps are bound on the command list.
     /// </summary>
