@@ -11,7 +11,7 @@ internal sealed class D3D12DynamicBufferSnapshotState {
     /// <summary>
     /// Stores the maximum backing allocation size used by the dynamic snapshot ring.
     /// </summary>
-    private const ulong MaxSnapshotBytes = 64UL * 1024UL * 1024UL;
+    private const ulong MaxSnapshotBytes = 256UL * 1024UL * 1024UL;
 
     /// <summary>
     /// Stores the persistently mapped upload memory for the dynamic buffer allocation.
@@ -112,7 +112,7 @@ internal sealed class D3D12DynamicBufferSnapshotState {
     /// <returns>The native byte capacity to allocate.</returns>
     internal static uint CalculateCapacity(uint logicalSize, BufferUsage usage) {
         uint alignment = GetSnapshotAlignment(usage);
-        uint minimumSnapshotCount = (usage & BufferUsage.UniformBuffer) == BufferUsage.UniformBuffer ? 1024u : 8u;
+        uint minimumSnapshotCount = GetMinimumSnapshotCount(logicalSize, usage);
         ulong alignedLogicalSize = AlignUp(logicalSize, alignment);
         ulong minimumSize = alignedLogicalSize * minimumSnapshotCount;
         ulong desired;
@@ -133,6 +133,28 @@ internal sealed class D3D12DynamicBufferSnapshotState {
         }
 
         return (uint)finalSize;
+    }
+
+    /// <summary>
+    /// Gets the minimum number of logical snapshots reserved in a dynamic buffer.
+    /// </summary>
+    /// <param name="logicalSize">The logical buffer size in bytes.</param>
+    /// <param name="usage">The buffer usage flags.</param>
+    /// <returns>The minimum snapshot count.</returns>
+    private static uint GetMinimumSnapshotCount(uint logicalSize, BufferUsage usage) {
+        if ((usage & BufferUsage.UniformBuffer) == BufferUsage.UniformBuffer) {
+            return 1024u;
+        }
+
+        if (logicalSize <= 64UL * 1024UL) {
+            return 1024u;
+        }
+
+        if (logicalSize <= 1UL * 1024UL * 1024UL) {
+            return 1024u;
+        }
+
+        return 128u;
     }
 
     /// <summary>

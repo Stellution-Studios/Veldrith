@@ -34,6 +34,11 @@ internal sealed class D3D12SwapchainBackBufferTracker {
     private ResourceStates _cachedBackBufferState;
 
     /// <summary>
+    /// Stores the swapchain back-buffer generation represented by the cached values.
+    /// </summary>
+    private uint _cachedBackBufferVersion;
+
+    /// <summary>
     /// Stores the back-buffer index that was transitioned during this recording.
     /// </summary>
     private int _transitionedBackBufferIndex = -1;
@@ -48,6 +53,7 @@ internal sealed class D3D12SwapchainBackBufferTracker {
         this._cachedRtv = default;
         this._cachedBackBufferIndex = -1;
         this._cachedBackBufferState = ResourceStates.Common;
+        this._cachedBackBufferVersion = 0;
     }
 
     /// <summary>
@@ -62,7 +68,8 @@ internal sealed class D3D12SwapchainBackBufferTracker {
     internal bool TryGetBackBuffer(D3D12SwapchainFramebuffer framebuffer, out ID3D12Resource backBuffer, out CpuDescriptorHandle rtv, out int index, out ResourceStates state) {
         if (ReferenceEquals(this._cachedFramebuffer, framebuffer)
             && this._cachedBackBuffer != null
-            && this._cachedBackBufferIndex >= 0) {
+            && this._cachedBackBufferIndex >= 0
+            && this._cachedBackBufferVersion == framebuffer.Swapchain.BackBufferVersion) {
             backBuffer = this._cachedBackBuffer;
             rtv = this._cachedRtv;
             index = this._cachedBackBufferIndex;
@@ -90,28 +97,31 @@ internal sealed class D3D12SwapchainBackBufferTracker {
 
     /// <summary>
     /// Transitions the touched swapchain back buffer back to present state at command-list end.
+    /// Uses the internally cached framebuffer so the transition fires correctly even when the
+    /// command list's active framebuffer was switched to an offscreen target after rendering to
+    /// the swapchain (e.g. GUI/overlay passes during scene transitions).
     /// </summary>
-    /// <param name="framebuffer">The active swapchain framebuffer.</param>
     /// <param name="transition">The transition callback used by the command list.</param>
-    internal void TransitionToPresent(D3D12SwapchainFramebuffer framebuffer, Action<ID3D12Resource, ResourceStates, ResourceStates> transition) {
-        if (framebuffer == null || this._transitionedBackBufferIndex < 0) {
+    internal void TransitionToPresent(Action<ID3D12Resource, ResourceStates, ResourceStates> transition) {
+        if (this._cachedFramebuffer == null
+            || this._transitionedBackBufferIndex < 0
+            || this._cachedBackBufferVersion != this._cachedFramebuffer.Swapchain.BackBufferVersion) {
             return;
         }
 
-        if (ReferenceEquals(this._cachedFramebuffer, framebuffer)
-            && this._cachedBackBuffer != null
+        if (this._cachedBackBuffer != null
             && this._cachedBackBufferIndex == this._transitionedBackBufferIndex) {
             transition(this._cachedBackBuffer, this._cachedBackBufferState, ResourceStates.Present);
-            framebuffer.Swapchain.SetBackBufferState(this._cachedBackBufferIndex, ResourceStates.Present);
+            this._cachedFramebuffer.Swapchain.SetBackBufferState(this._cachedBackBufferIndex, ResourceStates.Present);
             this._cachedBackBufferState = ResourceStates.Present;
             return;
         }
 
-        if (framebuffer.Swapchain.TryGetCurrentBackBuffer(out ID3D12Resource backBuffer, out CpuDescriptorHandle rtv, out int currentIndex, out ResourceStates state)
+        if (this._cachedFramebuffer.Swapchain.TryGetCurrentBackBuffer(out ID3D12Resource backBuffer, out CpuDescriptorHandle rtv, out int currentIndex, out ResourceStates state)
             && currentIndex == this._transitionedBackBufferIndex) {
-            this.Cache(framebuffer, backBuffer, rtv, currentIndex, state);
+            this.Cache(this._cachedFramebuffer, backBuffer, rtv, currentIndex, state);
             transition(backBuffer, state, ResourceStates.Present);
-            framebuffer.Swapchain.SetBackBufferState(currentIndex, ResourceStates.Present);
+            this._cachedFramebuffer.Swapchain.SetBackBufferState(currentIndex, ResourceStates.Present);
             this._cachedBackBufferState = ResourceStates.Present;
         }
     }
@@ -130,5 +140,6 @@ internal sealed class D3D12SwapchainBackBufferTracker {
         this._cachedRtv = rtv;
         this._cachedBackBufferIndex = index;
         this._cachedBackBufferState = state;
+        this._cachedBackBufferVersion = framebuffer.Swapchain.BackBufferVersion;
     }
 }

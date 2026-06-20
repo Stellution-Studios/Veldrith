@@ -346,7 +346,7 @@ internal sealed class D3D12CommandList : CommandList {
         this.FlushPendingUavBarrier();
         this.EndRenderPassForInternalUse();
         this.FlushQueuedRenderPassClears();
-        this._swapchainBackBuffer.TransitionToPresent(this.Framebuffer as D3D12SwapchainFramebuffer, this.Transition);
+        this._swapchainBackBuffer.TransitionToPresent(this.Transition);
         this.FlushPendingBarriers();
         this.CloseNoAlloc();
         this._ended = true;

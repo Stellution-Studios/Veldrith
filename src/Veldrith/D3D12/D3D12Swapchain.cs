@@ -78,6 +78,11 @@ internal sealed class D3D12Swapchain : Swapchain {
     private int _currentBackBufferIndex;
 
     /// <summary>
+    /// Increments whenever native swapchain back buffers are recreated.
+    /// </summary>
+    private uint _backBufferVersion;
+
+    /// <summary>
     /// Stores the back buffer rtvs state used by this instance.
     /// </summary>
     private CpuDescriptorHandle[] _backBufferRtvs;
@@ -336,12 +341,7 @@ internal sealed class D3D12Swapchain : Swapchain {
             return;
         }
 
-        if (this._hasNativeSwapchain) {
-            this.gd.WaitForLastSubmission();
-        }
-        else {
-            this.gd.WaitForIdle();
-        }
+        this.gd.WaitForIdle();
 
         bool useDepth = this._depthTexture != null;
         PixelFormat? depthFormat = useDepth ? this._depthTexture.Format : null;
@@ -483,7 +483,15 @@ internal sealed class D3D12Swapchain : Swapchain {
         }
 
         this._currentBackBufferIndex = (int)this.GetCurrentBackBufferIndexNoAlloc();
+        unchecked {
+            this._backBufferVersion++;
+        }
     }
+
+    /// <summary>
+    /// Gets the native back-buffer generation used to invalidate command-list-local swapchain caches.
+    /// </summary>
+    internal uint BackBufferVersion => this._backBufferVersion;
 
     /// <summary>
     /// Creates the render-target view description used by native back buffers.
