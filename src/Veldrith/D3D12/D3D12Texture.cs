@@ -67,6 +67,11 @@ internal sealed class D3D12Texture : Texture {
     private bool _hasCachedCommonState;
 
     /// <summary>
+    /// Tracks subresource-state changes observed by TextureView transition caches.
+    /// </summary>
+    private ulong _stateVersion;
+
+    /// <summary>
     /// Stores the mapped state used by this instance.
     /// </summary>
     private bool _mapped;
@@ -184,6 +189,11 @@ internal sealed class D3D12Texture : Texture {
     /// </summary>
 
     internal uint SubresourceCount => (uint)(this._subresourceStates?.Length ?? 0);
+
+    /// <summary>
+    /// Gets the version that changes whenever a tracked subresource state changes.
+    /// </summary>
+    internal ulong StateVersion => this._stateVersion;
 
     /// <summary>
     /// Gets or sets EffectiveArrayLayers.
@@ -793,7 +803,7 @@ internal sealed class D3D12Texture : Texture {
         uint uploadRowPitch = AlignUp(sourceRowPitch, Vortice.Direct3D12.D3D12.TextureDataPitchAlignment);
         ulong uploadDepthPitch = (ulong)uploadRowPitch * sourceRowCount;
         ulong totalBytes = uploadDepthPitch * depth;
-        D3D12ResourceAllocation uploadBuffer = this.gd.RentUploadBuffer(totalBytes);
+        D3D12ResourceAllocation uploadBuffer = this.gd.RentUploadBuffer(totalBytes, Vortice.Direct3D12.D3D12.TextureDataPlacementAlignment);
         bool uploadEnqueuedForDeferredDisposal = false;
 
         try {
@@ -849,7 +859,7 @@ internal sealed class D3D12Texture : Texture {
         ulong[] rowSizesInBytes = new ulong[1];
         this.gd.Device.GetCopyableFootprints(textureDescription, subresource, 1, 0, layouts, rowCounts, rowSizesInBytes, out ulong totalBytes);
 
-        D3D12ResourceAllocation uploadBuffer = this.gd.RentUploadBuffer(totalBytes);
+        D3D12ResourceAllocation uploadBuffer = this.gd.RentUploadBuffer(totalBytes, Vortice.Direct3D12.D3D12.TextureDataPlacementAlignment);
         bool uploadEnqueuedForDeferredDisposal = false;
 
         try {
@@ -1057,6 +1067,7 @@ internal sealed class D3D12Texture : Texture {
         }
 
         this._subresourceStates[subresource] = state;
+        this._stateVersion++;
         if (this._hasCachedCommonState && state != this._cachedCommonState) {
             this._hasCachedCommonState = false;
         }
@@ -1071,10 +1082,15 @@ internal sealed class D3D12Texture : Texture {
             return;
         }
 
+        if (this._hasCachedCommonState && this._cachedCommonState == state) {
+            return;
+        }
+
         for (int i = 0; i < this._subresourceStates.Length; i++) {
             this._subresourceStates[i] = state;
         }
 
+        this._stateVersion++;
         this._hasCachedCommonState = true;
         this._cachedCommonState = state;
     }

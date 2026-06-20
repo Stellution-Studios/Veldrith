@@ -39,6 +39,21 @@ internal sealed class D3D12TextureView : TextureView {
     private bool _storageBindingSupported;
 
     /// <summary>
+    /// Stores the texture state version associated with the cached transition state.
+    /// </summary>
+    private ulong _cachedTransitionStateVersion;
+
+    /// <summary>
+    /// Stores the resource state known to cover this full texture view at the cached version.
+    /// </summary>
+    private ResourceStates _cachedTransitionState;
+
+    /// <summary>
+    /// Tracks whether the cached transition state is valid.
+    /// </summary>
+    private bool _hasCachedTransitionState;
+
+    /// <summary>
     /// Stores the srv descriptor allocation used by this instance.
     /// </summary>
     private D3D12CpuDescriptorAllocation _srvDescriptor;
@@ -62,6 +77,27 @@ internal sealed class D3D12TextureView : TextureView {
     /// Gets or sets TargetTexture.
     /// </summary>
     internal D3D12Texture TargetTexture { get; }
+
+    /// <summary>
+    /// Checks whether this view is already known to be fully in the requested state.
+    /// </summary>
+    /// <param name="state">The required D3D12 resource state.</param>
+    /// <returns><see langword="true" /> when no subresource scan is required.</returns>
+    internal bool IsKnownInState(ResourceStates state) {
+        return this._hasCachedTransitionState
+               && this._cachedTransitionState == state
+               && this._cachedTransitionStateVersion == this.TargetTexture.StateVersion;
+    }
+
+    /// <summary>
+    /// Marks this view as fully transitioned to the requested state.
+    /// </summary>
+    /// <param name="state">The D3D12 resource state covering this view.</param>
+    internal void MarkKnownState(ResourceStates state) {
+        this._cachedTransitionState = state;
+        this._cachedTransitionStateVersion = this.TargetTexture.StateVersion;
+        this._hasCachedTransitionState = true;
+    }
 
     /// <summary>
     /// Gets or sets IsDisposed.

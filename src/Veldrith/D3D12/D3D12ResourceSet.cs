@@ -87,6 +87,16 @@ internal sealed class D3D12ResourceSet : ResourceSet {
     internal bool HasCachedSamplerHandle;
 
     /// <summary>
+    /// Caches graphics SRV/UAV descriptor-table texture transition state.
+    /// </summary>
+    internal D3D12DescriptorTableTransitionCache GraphicsSrvUavTransitionCache;
+
+    /// <summary>
+    /// Caches compute SRV/UAV descriptor-table texture transition state.
+    /// </summary>
+    internal D3D12DescriptorTableTransitionCache ComputeSrvUavTransitionCache;
+
+    /// <summary>
     /// Gets or sets IsDisposed.
     /// </summary>
     public override bool IsDisposed => this._disposed;

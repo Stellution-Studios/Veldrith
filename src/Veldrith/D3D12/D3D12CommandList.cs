@@ -77,6 +77,11 @@ internal sealed class D3D12CommandList : CommandList {
     private readonly D3D12ClearPlanner _clearPlanner;
 
     /// <summary>
+    /// Tracks native D3D12 render-pass lifetime for draw commands.
+    /// </summary>
+    private readonly D3D12RenderPassTracker _renderPassTracker;
+
+    /// <summary>
     /// Plans and records D3D12 buffer update operations.
     /// </summary>
     private readonly D3D12BufferUpdatePlanner _bufferUpdatePlanner;
@@ -166,8 +171,27 @@ internal sealed class D3D12CommandList : CommandList {
         this._pipelineStateBinder = new D3D12PipelineStateBinder(this, this._graphicsResourceSets, this._computeResourceSets, this._rootBindingCache, this._perf);
         this._renderTargetBinder = new D3D12RenderTargetBinder(this, this._swapchainBackBuffer, this._perf);
         this._clearPlanner = new D3D12ClearPlanner(this, this._swapchainBackBuffer);
+        this._renderPassTracker = new D3D12RenderPassTracker(this, this._swapchainBackBuffer);
         this._bufferUpdatePlanner = new D3D12BufferUpdatePlanner(gd, this, this._perf);
         this.NativeCommandList = gd.Device.CreateCommandList<ID3D12GraphicsCommandList>(0, CommandListType.Direct, this._frameState.InitialAllocator);
+        if (gd.SupportsDirectWriteBufferImmediate) {
+            try {
+                this.NativeCommandList2 = this.NativeCommandList.QueryInterface<ID3D12GraphicsCommandList2>();
+            }
+            catch (SharpGenException) {
+                this.NativeCommandList2 = null;
+            }
+        }
+
+        if (gd.SupportsRenderPasses) {
+            try {
+                this.NativeCommandList4 = this.NativeCommandList.QueryInterface<ID3D12GraphicsCommandList4>();
+            }
+            catch (SharpGenException) {
+                this.NativeCommandList4 = null;
+            }
+        }
+
         this._beginEventMethod = this.GetDebugMarkerMethod("BeginEvent");
         this._setMarkerMethod = this.GetDebugMarkerMethod("SetMarker");
         this._endEventMethod = this.NativeCommandList.GetType().GetMethod("EndEvent", Type.EmptyTypes);
@@ -178,6 +202,16 @@ internal sealed class D3D12CommandList : CommandList {
     /// Gets or sets NativeCommandList.
     /// </summary>
     public ID3D12GraphicsCommandList NativeCommandList { get; }
+
+    /// <summary>
+    /// Gets the optional command-list interface used for WriteBufferImmediate.
+    /// </summary>
+    internal ID3D12GraphicsCommandList2 NativeCommandList2 { get; }
+
+    /// <summary>
+    /// Gets the optional command-list interface used for native D3D12 render passes.
+    /// </summary>
+    internal ID3D12GraphicsCommandList4 NativeCommandList4 { get; }
 
     /// <summary>
     /// Gets or sets the currently recorded graphics pipeline for internal D3D12 helpers.
@@ -232,8 +266,11 @@ internal sealed class D3D12CommandList : CommandList {
         this.DisposePendingSubmissionDisposals();
         this._gpuMipmapGenerator.Dispose();
         this._indirectCommandSignatures.Dispose();
+        this._bufferUpdatePlanner.DiscardPendingUploads();
         this._graphicsResourceSets.Clear();
         this._computeResourceSets.Clear();
+        this.NativeCommandList4?.Dispose();
+        this.NativeCommandList2?.Dispose();
         this.NativeCommandList.Dispose();
         this._frameState.Dispose();
         this._descriptorSetBinder.Dispose();
@@ -251,10 +288,12 @@ internal sealed class D3D12CommandList : CommandList {
         this.ResetCommandListNoAlloc(allocator);
         this._descriptorSetBinder.BeginRecording();
         this._barriers.Reset();
+        this._bufferUpdatePlanner.BeginRecording();
         this._begun = true;
         this._ended = false;
         this._swapchainBackBuffer.Reset();
         this._renderTargetBinder.Reset();
+        this._renderPassTracker.Reset();
         this._viewportScissor.Reset();
         this._inputAssembler.Reset();
         this._graphicsResourceSets.Clear();
@@ -276,7 +315,10 @@ internal sealed class D3D12CommandList : CommandList {
             throw new VeldridException("CommandList.End cannot be called before Begin.");
         }
 
+        this.FlushPendingBufferUploads();
         this.FlushPendingUavBarrier();
+        this.EndRenderPassForInternalUse();
+        this.FlushQueuedRenderPassClears();
         this._swapchainBackBuffer.TransitionToPresent(this.Framebuffer as D3D12SwapchainFramebuffer, this.Transition);
         this.FlushPendingBarriers();
         this.CloseNoAlloc();
@@ -318,6 +360,9 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="groupCountZ">The group count z value used by this operation.</param>
     public override void Dispatch(uint groupCountX, uint groupCountY, uint groupCountZ) {
         long startTicks = D3D12CommandListPerfTracker.Enabled ? Stopwatch.GetTimestamp() : 0;
+        this.EndRenderPassForInternalUse();
+        this.FlushQueuedRenderPassClears();
+        this.FlushPendingBufferUploads();
         this.FlushComputeResourceSets();
         this.FlushPendingUavBarrier();
         this.FlushPendingBarriers();
@@ -352,10 +397,7 @@ internal sealed class D3D12CommandList : CommandList {
             return;
         }
 
-        for (int i = 0; i < this._pendingSubmissionUploadBuffers.Count; i++) {
-            this._gd.EnqueueSubmissionUploadBuffer(this._pendingSubmissionUploadBuffers[i], signalValue);
-        }
-
+        this._gd.EnqueueSubmissionUploadBuffers(this._pendingSubmissionUploadBuffers, signalValue);
         this._pendingSubmissionUploadBuffers.Clear();
     }
 
@@ -375,6 +417,7 @@ internal sealed class D3D12CommandList : CommandList {
             return;
         }
 
+        this.EndRenderPassForInternalUse();
         if (D3D12CommandListPerfTracker.Enabled) {
             this._perf.ResourceSetChanges++;
         }
@@ -394,6 +437,7 @@ internal sealed class D3D12CommandList : CommandList {
             return;
         }
 
+        this.EndRenderPassForInternalUse();
         if (!this._computeResourceSets.TrySet(slot, set, dynamicOffsetsCount, ref dynamicOffsets)) {
             return;
         }
@@ -410,6 +454,8 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     /// <param name="fb">The fb value used by this operation.</param>
     protected override void SetFramebufferCore(Framebuffer fb) {
+        this.EndRenderPassForInternalUse();
+        this.FlushQueuedRenderPassClears();
         this._renderTargetBinder.SetFramebuffer(fb);
     }
 
@@ -422,6 +468,8 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="stride">The stride value used by this operation.</param>
     protected override void DrawIndirectCore(DeviceBuffer indirectBuffer, uint offset, uint drawCount, uint stride) {
         long startTicks = D3D12CommandListPerfTracker.Enabled ? Stopwatch.GetTimestamp() : 0;
+        this.EndRenderPassForInternalUse();
+        this.FlushPendingBufferUploads();
         this.FlushGraphicsResourceSets();
         D3D12DeviceBuffer d3D12Buffer = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(indirectBuffer);
         uint argumentSize = (uint)Unsafe.SizeOf<IndirectDrawArguments>();
@@ -433,7 +481,7 @@ internal sealed class D3D12CommandList : CommandList {
         }
 
         if (this._indirectCommandSignatures.EnsureAvailable()) {
-            this.ExecuteIndirect(d3D12Buffer, offset, drawCount, stride, argumentSize, this._indirectCommandSignatures.Draw);
+            this.ExecuteIndirect(d3D12Buffer, offset, drawCount, stride, argumentSize, this._indirectCommandSignatures.Draw, true);
             if (D3D12CommandListPerfTracker.Enabled) {
                 this._perf.DrawCalls += drawCount;
                 this._perf.DrawMs += D3D12CommandListPerfTracker.TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
@@ -448,6 +496,7 @@ internal sealed class D3D12CommandList : CommandList {
                 throw new PlatformNotSupportedException("D3D12 indirect fallback requires a CPU-readable argument buffer.");
             }
 
+            this.BeginRenderPassForDraw();
             byte* basePtr = (byte*)mappedPointer + offset;
             for (uint i = 0; i < drawCount; i++) {
                 IndirectDrawArguments arguments = *(IndirectDrawArguments*)(basePtr + i * stride);
@@ -470,6 +519,8 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="stride">The stride value used by this operation.</param>
     protected override void DrawIndexedIndirectCore(DeviceBuffer indirectBuffer, uint offset, uint drawCount, uint stride) {
         long startTicks = D3D12CommandListPerfTracker.Enabled ? Stopwatch.GetTimestamp() : 0;
+        this.EndRenderPassForInternalUse();
+        this.FlushPendingBufferUploads();
         this.FlushGraphicsResourceSets();
         D3D12DeviceBuffer d3D12Buffer = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(indirectBuffer);
         uint argumentSize = (uint)Unsafe.SizeOf<IndirectDrawIndexedArguments>();
@@ -481,7 +532,7 @@ internal sealed class D3D12CommandList : CommandList {
         }
 
         if (this._indirectCommandSignatures.EnsureAvailable()) {
-            this.ExecuteIndirect(d3D12Buffer, offset, drawCount, stride, argumentSize, this._indirectCommandSignatures.DrawIndexed);
+            this.ExecuteIndirect(d3D12Buffer, offset, drawCount, stride, argumentSize, this._indirectCommandSignatures.DrawIndexed, true);
             if (D3D12CommandListPerfTracker.Enabled) {
                 this._perf.DrawCalls += drawCount;
                 this._perf.DrawMs += D3D12CommandListPerfTracker.TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
@@ -496,6 +547,7 @@ internal sealed class D3D12CommandList : CommandList {
                 throw new PlatformNotSupportedException("D3D12 indirect fallback requires a CPU-readable argument buffer.");
             }
 
+            this.BeginRenderPassForDraw();
             byte* basePtr = (byte*)mappedPointer + offset;
             for (uint i = 0; i < drawCount; i++) {
                 IndirectDrawIndexedArguments arguments = *(IndirectDrawIndexedArguments*)(basePtr + i * stride);
@@ -516,6 +568,9 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="offset">The byte offset used by this operation.</param>
     protected override void DispatchIndirectCore(DeviceBuffer indirectBuffer, uint offset) {
         long startTicks = D3D12CommandListPerfTracker.Enabled ? Stopwatch.GetTimestamp() : 0;
+        this.EndRenderPassForInternalUse();
+        this.FlushQueuedRenderPassClears();
+        this.FlushPendingBufferUploads();
         this.FlushComputeResourceSets();
         D3D12DeviceBuffer d3d12Buffer = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(indirectBuffer);
         uint argumentSize = (uint)Unsafe.SizeOf<IndirectDispatchArguments>();
@@ -525,7 +580,7 @@ internal sealed class D3D12CommandList : CommandList {
         }
 
         if (this._indirectCommandSignatures.EnsureAvailable()) {
-            this.ExecuteIndirect(d3d12Buffer, offset, 1, argumentSize, argumentSize, this._indirectCommandSignatures.Dispatch);
+            this.ExecuteIndirect(d3d12Buffer, offset, 1, argumentSize, argumentSize, this._indirectCommandSignatures.Dispatch, false);
             if (D3D12CommandListPerfTracker.Enabled) {
                 this._perf.DispatchCalls++;
                 this._perf.DispatchMs += D3D12CommandListPerfTracker.TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
@@ -556,6 +611,9 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="source">The source value or resource.</param>
     /// <param name="destination">The destination value or resource.</param>
     protected override void ResolveTextureCore(Texture source, Texture destination) {
+        this.EndRenderPassForInternalUse();
+        this.FlushQueuedRenderPassClears();
+        this.FlushPendingBufferUploads();
         this._textureCopyPlanner.Resolve(source, destination);
     }
 
@@ -568,6 +626,8 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="destinationOffset">The destination offset value used by this operation.</param>
     /// <param name="sizeInBytes">The size, in bytes, used by this operation.</param>
     protected override void CopyBufferCore(DeviceBuffer source, uint sourceOffset, DeviceBuffer destination, uint destinationOffset, uint sizeInBytes) {
+        this.EndRenderPassForInternalUse();
+        this.FlushPendingBufferUploads();
         this.FlushPendingUavBarrier();
         this.FlushPendingBarriers();
         D3D12DeviceBuffer src = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(source);
@@ -595,6 +655,9 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="depth">The depth value.</param>
     /// <param name="layerCount">The layer count value used by this operation.</param>
     protected override void CopyTextureCore(Texture source, uint srcX, uint srcY, uint srcZ, uint srcMipLevel, uint srcBaseArrayLayer, Texture destination, uint dstX, uint dstY, uint dstZ, uint dstMipLevel, uint dstBaseArrayLayer, uint width, uint height, uint depth, uint layerCount) {
+        this.EndRenderPassForInternalUse();
+        this.FlushQueuedRenderPassClears();
+        this.FlushPendingBufferUploads();
         this._textureCopyPlanner.Copy(source, srcX, srcY, srcZ, srcMipLevel, srcBaseArrayLayer, destination, dstX, dstY, dstZ, dstMipLevel, dstBaseArrayLayer, width, height, depth, layerCount);
     }
 
@@ -603,6 +666,10 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     /// <param name="pipeline">The pipeline value used by this operation.</param>
     private protected override void SetPipelineCore(Pipeline pipeline) {
+        if (pipeline.IsComputePipeline) {
+            this.EndRenderPassForInternalUse();
+        }
+
         this._pipelineStateBinder.SetPipeline(pipeline);
     }
 
@@ -620,6 +687,7 @@ internal sealed class D3D12CommandList : CommandList {
             return;
         }
 
+        this.EndRenderPassForInternalUse();
         this.BindVertexBuffer(index, d3D12Buffer, offset);
         if (D3D12CommandListPerfTracker.Enabled) {
             this._perf.VertexBufferBinds++;
@@ -640,6 +708,7 @@ internal sealed class D3D12CommandList : CommandList {
             return;
         }
 
+        this.EndRenderPassForInternalUse();
         this.TransitionBuffer(d3D12Buffer, ResourceStates.IndexBuffer);
         uint viewSize = d3D12Buffer.GetBindableSize(offset);
         IndexBufferView indexView = new(d3D12Buffer.GetGpuVirtualAddress(offset), viewSize, D3D12Formats.ToDxgiFormat(format));
@@ -656,6 +725,12 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="index">The zero-based index of the target item.</param>
     /// <param name="clearColor">The clear color value used by this operation.</param>
     private protected override void ClearColorTargetCore(uint index, RgbaFloat clearColor) {
+        this.EndRenderPassForInternalUse();
+        this.FlushPendingBufferUploads();
+        if (this._renderPassTracker.TryQueueColorClear(this.Framebuffer, index, clearColor)) {
+            return;
+        }
+
         this._clearPlanner.ClearColorTarget(this.Framebuffer, index, clearColor);
     }
 
@@ -665,6 +740,12 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="depth">The depth value.</param>
     /// <param name="stencil">The stencil value used by this operation.</param>
     private protected override void ClearDepthStencilCore(float depth, byte stencil) {
+        this.EndRenderPassForInternalUse();
+        this.FlushPendingBufferUploads();
+        if (this._renderPassTracker.TryQueueDepthStencilClear(this.Framebuffer, depth, stencil)) {
+            return;
+        }
+
         this._clearPlanner.ClearDepthStencil(this.Framebuffer, depth, stencil);
     }
 
@@ -677,9 +758,11 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="instanceStart">The instance start value used by this operation.</param>
     private protected override void DrawCore(uint vertexCount, uint instanceCount, uint vertexStart, uint instanceStart) {
         long startTicks = D3D12CommandListPerfTracker.Enabled ? Stopwatch.GetTimestamp() : 0;
+        this.FlushPendingBufferUploads();
         this.FlushGraphicsResourceSets();
         this.FlushPendingUavBarrier();
         this.FlushPendingBarriers();
+        this.BeginRenderPassForDraw();
         this.DrawInstancedNoAlloc(vertexCount, instanceCount, vertexStart, instanceStart);
         if (D3D12CommandListPerfTracker.Enabled) {
             this._perf.DrawCalls++;
@@ -697,9 +780,11 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="instanceStart">The instance start value used by this operation.</param>
     private protected override void DrawIndexedCore(uint indexCount, uint instanceCount, uint indexStart, int vertexOffset, uint instanceStart) {
         long startTicks = D3D12CommandListPerfTracker.Enabled ? Stopwatch.GetTimestamp() : 0;
+        this.FlushPendingBufferUploads();
         this.FlushGraphicsResourceSets();
         this.FlushPendingUavBarrier();
         this.FlushPendingBarriers();
+        this.BeginRenderPassForDraw();
         this.DrawIndexedInstancedNoAlloc(indexCount, instanceCount, indexStart, vertexOffset, instanceStart);
         if (D3D12CommandListPerfTracker.Enabled) {
             this._perf.DrawCalls++;
@@ -715,6 +800,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="source">The source value or resource.</param>
     /// <param name="sizeInBytes">The size, in bytes, used by this operation.</param>
     private protected override void UpdateBufferCore(DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes) {
+        this.EndRenderPassForInternalUse();
         this._bufferUpdatePlanner.Update(buffer, bufferOffsetInBytes, source, sizeInBytes);
     }
 
@@ -725,6 +811,9 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     /// <param name="texture">The texture resource involved in this operation.</param>
     private protected override void GenerateMipmapsCore(Texture texture) {
+        this.EndRenderPassForInternalUse();
+        this.FlushQueuedRenderPassClears();
+        this.FlushPendingBufferUploads();
         D3D12Texture d3D12Texture = Util.AssertSubtype<Texture, D3D12Texture>(texture);
         if (texture.MipLevels <= 1 || d3D12Texture.NativeTexture == null) {
             return;
@@ -1047,6 +1136,27 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
+    /// Begins a native D3D12 render pass before a draw command when the device supports it.
+    /// </summary>
+    private void BeginRenderPassForDraw() {
+        this._renderPassTracker.BeginDrawPass(this.Framebuffer);
+    }
+
+    /// <summary>
+    /// Ends the native D3D12 render pass for internal helpers that record non-render-pass commands.
+    /// </summary>
+    internal void EndRenderPassForInternalUse() {
+        this._renderPassTracker.EndPass();
+    }
+
+    /// <summary>
+    /// Emits queued render-pass clears through the immediate clear path when no draw consumes them.
+    /// </summary>
+    private void FlushQueuedRenderPassClears() {
+        this._renderPassTracker.FlushQueuedClears(this._clearPlanner);
+    }
+
+    /// <summary>
     /// Executes the execute indirect logic for this backend.
     /// </summary>
     /// <param name="argumentBuffer">The argument buffer value used by this operation.</param>
@@ -1055,7 +1165,8 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="stride">The stride value used by this operation.</param>
     /// <param name="argumentSize">The argument size value used by this operation.</param>
     /// <param name="signature">The signature value used by this operation.</param>
-    private void ExecuteIndirect(D3D12DeviceBuffer argumentBuffer, uint offset, uint drawCount, uint stride, uint argumentSize, ID3D12CommandSignature signature) {
+    /// <param name="beginRenderPass">Whether to begin a render pass before recording the indirect command.</param>
+    private void ExecuteIndirect(D3D12DeviceBuffer argumentBuffer, uint offset, uint drawCount, uint stride, uint argumentSize, ID3D12CommandSignature signature, bool beginRenderPass) {
         if (drawCount == 0) {
             return;
         }
@@ -1064,9 +1175,16 @@ internal sealed class D3D12CommandList : CommandList {
         ResourceStates previousState = argumentBuffer.CurrentState;
         this.TransitionBuffer(argumentBuffer, ResourceStates.IndirectArgument);
         this.FlushPendingBarriers();
+        if (beginRenderPass) {
+            this.BeginRenderPassForDraw();
+        }
 
         if (stride == argumentSize) {
             this.NativeCommandList.ExecuteIndirect(signature, drawCount, argumentBuffer.NativeBuffer, offset, null, 0);
+            if (beginRenderPass) {
+                this.EndRenderPassForInternalUse();
+            }
+
             this.TransitionBuffer(argumentBuffer, previousState);
             return;
         }
@@ -1074,6 +1192,10 @@ internal sealed class D3D12CommandList : CommandList {
         for (uint i = 0; i < drawCount; i++) {
             ulong commandOffset = offset + (ulong)i * stride;
             this.NativeCommandList.ExecuteIndirect(signature, 1, argumentBuffer.NativeBuffer, commandOffset, null, 0);
+        }
+
+        if (beginRenderPass) {
+            this.EndRenderPassForInternalUse();
         }
 
         this.TransitionBuffer(argumentBuffer, previousState);
@@ -1132,6 +1254,10 @@ internal sealed class D3D12CommandList : CommandList {
             return;
         }
 
+        if (textureView.IsKnownInState(toState)) {
+            return;
+        }
+
         uint mipStart = textureView.BaseMipLevel;
         uint mipEnd = mipStart + textureView.MipLevels;
         uint layerStart = textureView.BaseArrayLayer;
@@ -1148,6 +1274,7 @@ internal sealed class D3D12CommandList : CommandList {
 
         if (fullResourceView) {
             this.TransitionTexture(texture, toState);
+            textureView.MarkKnownState(toState);
             return;
         }
 
@@ -1163,6 +1290,8 @@ internal sealed class D3D12CommandList : CommandList {
                 texture.SetSubresourceState(subresource, toState);
             }
         }
+
+        textureView.MarkKnownState(toState);
     }
 
     /// <summary>
@@ -1583,6 +1712,13 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     internal void FlushComputeResourceSetsForInternalUse() {
         this.FlushComputeResourceSets();
+    }
+
+    /// <summary>
+    /// Flushes command-list-local batched buffer updates before recording a GPU command.
+    /// </summary>
+    private void FlushPendingBufferUploads() {
+        this._bufferUpdatePlanner.Flush();
     }
 
     /// <summary>

@@ -25,21 +25,6 @@ namespace Veldrith.D3D12;
 internal sealed class D3D12GraphicsDevice : GraphicsDevice {
 
     /// <summary>
-    /// Stores the largest upload buffer size that is retained for reuse.
-    /// </summary>
-    private const ulong _maxPooledUploadBufferSize = 16UL * 1024UL * 1024UL;
-
-    /// <summary>
-    /// Stores the size of each transient upload ring page.
-    /// </summary>
-    private const ulong _uploadRingPageSize = 16UL * 1024UL * 1024UL;
-
-    /// <summary>
-    /// Stores the total upload-buffer pool budget.
-    /// </summary>
-    private const ulong _maxPooledUploadBufferBytes = 128UL * 1024UL * 1024UL;
-
-    /// <summary>
     /// Stores the number of submissions between D3D12 device performance reports.
     /// </summary>
     private const int _perfReportIntervalSubmissions = 240;
@@ -68,6 +53,11 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     #endif
 
     /// <summary>
+    /// Gets whether small immediate buffer updates should use the experimental shared-page batcher.
+    /// </summary>
+    private static readonly bool _immediateBufferUpdateBatcherEnabled = string.Equals(Environment.GetEnvironmentVariable("VELDRID_D3D12_IMMEDIATE_BUFFER_BATCHER"), "1", StringComparison.Ordinal);
+
+    /// <summary>
     /// Stores the d3d12 info state used by this instance.
     /// </summary>
     private readonly BackendInfoD3D12 _d3D12Info;
@@ -91,6 +81,16 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// Stores the resource factory state used by this instance.
     /// </summary>
     private readonly D3D12ResourceFactory _resourceFactory;
+
+    /// <summary>
+    /// Tracks whether direct command lists support D3D12 WriteBufferImmediate.
+    /// </summary>
+    private readonly bool _supportsDirectWriteBufferImmediate;
+
+    /// <summary>
+    /// Tracks whether direct command lists can use native D3D12 render passes.
+    /// </summary>
+    private readonly bool _supportsRenderPasses;
 
     /// <summary>
     /// Serializes direct command queue, presentation, and swapchain resize operations.
@@ -148,6 +148,16 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     private readonly List<D3D12ResourceAllocation> _batchedImmediateUploadBuffers = new();
 
     /// <summary>
+    /// Batches small immediate buffer updates into shared upload pages.
+    /// </summary>
+    private readonly D3D12ImmediateBufferUpdateBatcher _immediateBufferUpdateBatcher;
+
+    /// <summary>
+    /// Pools standalone upload buffers and transient upload-ring pages.
+    /// </summary>
+    private readonly D3D12UploadBufferPool _uploadBufferPool;
+
+    /// <summary>
     /// Stores resources retained by batched immediate copy commands until the copy fence completes.
     /// </summary>
     private readonly List<IDisposable> _batchedImmediateRetainedResources = new();
@@ -178,6 +188,11 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     private int _submissionDeferredDisposalCount;
 
     /// <summary>
+    /// Stores the oldest submission fence value that can release deferred disposals.
+    /// </summary>
+    private ulong _submissionDeferredDisposalNextFenceValue;
+
+    /// <summary>
     /// Stores deferred disposals tracked by immediate copy fence values.
     /// </summary>
     private readonly Queue<DeferredDisposal> _immediateDeferredDisposals = new();
@@ -193,34 +208,14 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     private int _immediateDeferredDisposalCount;
 
     /// <summary>
+    /// Stores the oldest immediate-copy fence value that can release deferred disposals.
+    /// </summary>
+    private ulong _immediateDeferredDisposalNextFenceValue;
+
+    /// <summary>
     /// Reusable batch buffer for deferred disposal drains — avoids per-pump List allocation.
     /// </summary>
     private IDisposable[] _pumpDisposalBatch = new IDisposable[64];
-
-    /// <summary>
-    /// Stores reusable upload buffers after their GPU fence has completed.
-    /// </summary>
-    private readonly List<D3D12ResourceAllocation> _availableUploadBuffers = new();
-
-    /// <summary>
-    /// Stores transient upload pages used as a fence-recycled ring.
-    /// </summary>
-    private readonly List<UploadRingPage> _uploadRingPages = new();
-
-    /// <summary>
-    /// Protects reusable upload-buffer pool access.
-    /// </summary>
-    private readonly object _availableUploadBuffersLock = new();
-
-    /// <summary>
-    /// Tracks total bytes retained by the upload-buffer pool.
-    /// </summary>
-    private ulong _availableUploadBufferBytes;
-
-    /// <summary>
-    /// Stores the upload ring page index preferred for the next allocation.
-    /// </summary>
-    private int _currentUploadRingPageIndex = -1;
 
     /// <summary>
     /// Stores accumulated CPU time spent flushing batched immediate upload work.
@@ -568,7 +563,11 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         this.SamplerDescriptorAllocator = new D3D12CpuDescriptorAllocator(this._device, DescriptorHeapType.Sampler, 1024);
         this.RtvDescriptorAllocator = new D3D12CpuDescriptorAllocator(this._device, DescriptorHeapType.RenderTargetView, 1024);
         this.DsvDescriptorAllocator = new D3D12CpuDescriptorAllocator(this._device, DescriptorHeapType.DepthStencilView, 1024);
+        this._supportsDirectWriteBufferImmediate = this.CheckDirectWriteBufferImmediateSupport();
+        this._supportsRenderPasses = this.CheckRenderPassSupport();
         this._resourceFactory = new D3D12ResourceFactory(this, this.Features);
+        this._uploadBufferPool = new D3D12UploadBufferPool(this);
+        this._immediateBufferUpdateBatcher = new D3D12ImmediateBufferUpdateBatcher(this);
 
         if (swapchainDescription != null) {
             SwapchainDescription scDesc = swapchainDescription.Value;
@@ -632,6 +631,16 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// Gets or sets Features.
     /// </summary>
     public override GraphicsDeviceFeatures Features => _d3D12Features;
+
+    /// <summary>
+    /// Gets whether direct command lists can use WriteBufferImmediate.
+    /// </summary>
+    internal bool SupportsDirectWriteBufferImmediate => this._supportsDirectWriteBufferImmediate;
+
+    /// <summary>
+    /// Gets whether direct command lists can use native D3D12 render passes.
+    /// </summary>
+    internal bool SupportsRenderPasses => this._supportsRenderPasses;
 
     /// <summary>
     /// Gets or sets AllowTearing.
@@ -959,12 +968,9 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     internal void RecordBatchedImmediateCommand(Action<ID3D12GraphicsCommandList> recordCommands, D3D12ResourceAllocation uploadBuffer, IDisposable retainedResource) {
         long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
         lock (this._batchedImmediateCopyLock) {
-            if (this._batchedImmediateCopyContext == null) {
-                this._batchedImmediateCopyContext = this.AcquireImmediateCopyContext();
-                PrepareImmediateCopyContext(this._batchedImmediateCopyContext);
-            }
-
-            recordCommands(this._batchedImmediateCopyContext.CommandList);
+            ImmediateCopyContext context = this.EnsureBatchedImmediateCopyContextLocked();
+            this._immediateBufferUpdateBatcher.FlushLocked(context.CommandList);
+            recordCommands(context.CommandList);
             if (uploadBuffer != null) {
                 this._batchedImmediateUploadBuffers.Add(uploadBuffer);
             }
@@ -999,6 +1005,46 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
+    /// Gets a prepared batched immediate command context while the batched immediate lock is held.
+    /// </summary>
+    /// <returns>The prepared immediate copy context.</returns>
+    private ImmediateCopyContext EnsureBatchedImmediateCopyContextLocked() {
+        if (this._batchedImmediateCopyContext == null) {
+            this._batchedImmediateCopyContext = this.AcquireImmediateCopyContext();
+            PrepareImmediateCopyContext(this._batchedImmediateCopyContext);
+        }
+
+        return this._batchedImmediateCopyContext;
+    }
+
+    /// <summary>
+    /// Records a small immediate buffer update using a shared upload allocation in the batched immediate command list.
+    /// </summary>
+    /// <param name="buffer">The destination buffer.</param>
+    /// <param name="source">The source data pointer.</param>
+    /// <param name="bufferOffsetInBytes">The destination byte offset.</param>
+    /// <param name="sizeInBytes">The number of bytes to copy.</param>
+    private unsafe void RecordBatchedImmediateBufferUpdate(D3D12DeviceBuffer buffer, IntPtr source, uint bufferOffsetInBytes, uint sizeInBytes) {
+        long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
+        lock (this._batchedImmediateCopyLock) {
+            ImmediateCopyContext context = this.EnsureBatchedImmediateCopyContextLocked();
+            D3D12ResourceAllocation uploadToRetain = this._immediateBufferUpdateBatcher.QueueLocked(context.CommandList, buffer, source, bufferOffsetInBytes, sizeInBytes);
+            if (uploadToRetain != null) {
+                this._batchedImmediateUploadBuffers.Add(uploadToRetain);
+            }
+
+            this._batchedImmediateCopyHasWork = true;
+        }
+
+        if (_perfLogEnabled) {
+            double recordMs = TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
+            this._perfAccumImmediateRecordMs += recordMs;
+            this._perfMaxImmediateRecordMs = Math.Max(this._perfMaxImmediateRecordMs, recordMs);
+            this._perfAccumImmediateRecordCalls++;
+        }
+    }
+
+    /// <summary>
     /// Submits any batched immediate upload work recorded since the last flush.
     /// </summary>
     /// <param name="waitForCompletion">When true, waits until the submitted upload work has completed.</param>
@@ -1023,6 +1069,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
                 this._batchedImmediateCopyContext = null;
                 this._batchedImmediateCopyHasWork = false;
 
+                this._immediateBufferUpdateBatcher.FlushLocked(context.CommandList);
                 context.CommandList.Close();
                 this.CommandQueue.ExecuteCommandList(context.CommandList);
                 signalValue = this._nextImmediateCopyFenceValue++;
@@ -1030,16 +1077,12 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
                 context.FenceValue = signalValue;
 
                 uploadBufferCount = this._batchedImmediateUploadBuffers.Count;
-                for (int i = 0; i < this._batchedImmediateUploadBuffers.Count; i++) {
-                    this.EnqueueImmediateUploadBuffer(this._batchedImmediateUploadBuffers[i], signalValue);
-                }
-
-                for (int i = 0; i < this._batchedImmediateRetainedResources.Count; i++) {
-                    this.EnqueueImmediateDisposal(this._batchedImmediateRetainedResources[i], signalValue);
-                }
+                this.EnqueueImmediateUploadBuffers(this._batchedImmediateUploadBuffers, signalValue);
+                this.EnqueueImmediateDisposals(this._batchedImmediateRetainedResources, signalValue);
 
                 this._batchedImmediateUploadBuffers.Clear();
                 this._batchedImmediateRetainedResources.Clear();
+                this._immediateBufferUpdateBatcher.ResetAfterFlush();
             }
 
             if (waitForCompletion) {
@@ -1077,10 +1120,23 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         }
 
         lock (this._submissionDeferredDisposalsLock) {
+            if (this._submissionDeferredDisposals.Count == 0) {
+                Volatile.Write(ref this._submissionDeferredDisposalNextFenceValue, fenceValue);
+            }
+
             this._submissionDeferredDisposals.Enqueue(new DeferredDisposal(disposable, fenceValue));
         }
 
         Interlocked.Increment(ref this._submissionDeferredDisposalCount);
+    }
+
+    /// <summary>
+    /// Enqueues disposable resources to be released after the specified submission fence value has completed.
+    /// </summary>
+    /// <param name="disposables">The resources to dispose.</param>
+    /// <param name="fenceValue">The submission fence value that guards the resource lifetime.</param>
+    internal void EnqueueSubmissionDisposals(List<IDisposable> disposables, ulong fenceValue) {
+        this.EnqueueDeferredDisposals(this._submissionDeferredDisposalsLock, this._submissionDeferredDisposals, ref this._submissionDeferredDisposalCount, ref this._submissionDeferredDisposalNextFenceValue, disposables, fenceValue);
     }
 
     /// <summary>
@@ -1112,10 +1168,23 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         }
 
         lock (this._immediateDeferredDisposalsLock) {
+            if (this._immediateDeferredDisposals.Count == 0) {
+                Volatile.Write(ref this._immediateDeferredDisposalNextFenceValue, fenceValue);
+            }
+
             this._immediateDeferredDisposals.Enqueue(new DeferredDisposal(disposable, fenceValue));
         }
 
         Interlocked.Increment(ref this._immediateDeferredDisposalCount);
+    }
+
+    /// <summary>
+    /// Enqueues disposable resources to be released after the specified immediate fence value has completed.
+    /// </summary>
+    /// <param name="disposables">The resources to dispose.</param>
+    /// <param name="fenceValue">The immediate fence value that guards the resource lifetime.</param>
+    internal void EnqueueImmediateDisposals(List<IDisposable> disposables, ulong fenceValue) {
+        this.EnqueueDeferredDisposals(this._immediateDeferredDisposalsLock, this._immediateDeferredDisposals, ref this._immediateDeferredDisposalCount, ref this._immediateDeferredDisposalNextFenceValue, disposables, fenceValue);
     }
 
     /// <summary>
@@ -1124,42 +1193,17 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// <param name="sizeInBytes">The required upload-buffer size in bytes.</param>
     /// <returns>An upload heap resource ready for CPU writes.</returns>
     internal D3D12ResourceAllocation RentUploadBuffer(ulong sizeInBytes) {
-        if (sizeInBytes == 0) {
-            sizeInBytes = 1;
-        }
+        return this._uploadBufferPool.Rent(sizeInBytes);
+    }
 
-        ulong allocationSize = AlignUp(sizeInBytes, 256UL);
-        if (allocationSize <= _uploadRingPageSize) {
-            lock (this._availableUploadBuffersLock) {
-                D3D12ResourceAllocation ringAllocation = this.TryRentUploadRingAllocation(allocationSize);
-                if (ringAllocation != null) {
-                    return ringAllocation;
-                }
-            }
-        }
-
-        lock (this._availableUploadBuffersLock) {
-            int bestIndex = -1;
-            ulong bestSize = ulong.MaxValue;
-            for (int i = 0; i < this._availableUploadBuffers.Count; i++) {
-                D3D12ResourceAllocation candidate = this._availableUploadBuffers[i];
-                ulong candidateSize = candidate.Resource.Description.Width;
-                if (candidateSize >= sizeInBytes && candidateSize < bestSize) {
-                    bestIndex = i;
-                    bestSize = candidateSize;
-                }
-            }
-
-            if (bestIndex >= 0) {
-                D3D12ResourceAllocation buffer = this._availableUploadBuffers[bestIndex];
-                this._availableUploadBuffers.RemoveAt(bestIndex);
-                this._availableUploadBufferBytes -= buffer.Resource.Description.Width;
-                return buffer;
-            }
-        }
-
-        ResourceDescription description = ResourceDescription.Buffer(allocationSize);
-        return this.MemoryManager.CreateResource(ref description, ResourceStates.GenericRead, HeapType.Upload, HeapFlags.AllowOnlyBuffers);
+    /// <summary>
+    /// Rents an upload buffer with an offset aligned for the target D3D12 copy operation.
+    /// </summary>
+    /// <param name="sizeInBytes">The required upload-buffer size in bytes.</param>
+    /// <param name="alignment">The required byte alignment for the returned allocation offset.</param>
+    /// <returns>An upload heap resource ready for CPU writes.</returns>
+    internal D3D12ResourceAllocation RentUploadBuffer(ulong sizeInBytes, ulong alignment) {
+        return this._uploadBufferPool.Rent(sizeInBytes, alignment);
     }
 
     /// <summary>
@@ -1167,30 +1211,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// </summary>
     /// <param name="buffer">The upload buffer to return.</param>
     internal void ReturnUploadBuffer(D3D12ResourceAllocation buffer) {
-        if (buffer == null) {
-            return;
-        }
-
-        if (buffer.IsTransient) {
-            buffer.Dispose();
-            return;
-        }
-
-        ulong size = buffer.Resource.Description.Width;
-        if (size > _maxPooledUploadBufferSize) {
-            buffer.Dispose();
-            return;
-        }
-
-        lock (this._availableUploadBuffersLock) {
-            if (this._availableUploadBufferBytes + size > _maxPooledUploadBufferBytes) {
-                buffer.Dispose();
-                return;
-            }
-
-            this._availableUploadBuffers.Add(buffer);
-            this._availableUploadBufferBytes += size;
-        }
+        this._uploadBufferPool.Return(buffer);
     }
 
     /// <summary>
@@ -1203,6 +1224,15 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
+    /// Returns upload buffers to the pool after a submission fence has completed.
+    /// </summary>
+    /// <param name="buffers">The upload buffers to return.</param>
+    /// <param name="fenceValue">The submission fence value guarding the buffers.</param>
+    internal void EnqueueSubmissionUploadBuffers(List<D3D12ResourceAllocation> buffers, ulong fenceValue) {
+        this.EnqueueDeferredUploadBuffers(this._submissionDeferredDisposalsLock, this._submissionDeferredDisposals, ref this._submissionDeferredDisposalCount, ref this._submissionDeferredDisposalNextFenceValue, buffers, fenceValue);
+    }
+
+    /// <summary>
     /// Returns an upload buffer to the pool after an immediate-copy fence has completed.
     /// </summary>
     /// <param name="buffer">The upload buffer to return.</param>
@@ -1212,32 +1242,12 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Attempts to rent a suballocation from the transient upload ring.
+    /// Returns upload buffers to the pool after an immediate-copy fence has completed.
     /// </summary>
-    /// <param name="sizeInBytes">The aligned allocation size.</param>
-    /// <returns>The transient allocation, or null when a dedicated upload buffer should be used.</returns>
-    private D3D12ResourceAllocation TryRentUploadRingAllocation(ulong sizeInBytes) {
-        if (this._currentUploadRingPageIndex >= 0 && this._currentUploadRingPageIndex < this._uploadRingPages.Count) {
-            D3D12ResourceAllocation allocation = this._uploadRingPages[this._currentUploadRingPageIndex].TryAllocate(sizeInBytes);
-            if (allocation != null) {
-                return allocation;
-            }
-        }
-
-        for (int i = 0; i < this._uploadRingPages.Count; i++) {
-            D3D12ResourceAllocation allocation = this._uploadRingPages[i].TryAllocate(sizeInBytes);
-            if (allocation != null) {
-                this._currentUploadRingPageIndex = i;
-                return allocation;
-            }
-        }
-
-        ResourceDescription description = ResourceDescription.Buffer(_uploadRingPageSize);
-        D3D12ResourceAllocation pageAllocation = this.MemoryManager.CreateResource(ref description, ResourceStates.GenericRead, HeapType.Upload, HeapFlags.AllowOnlyBuffers);
-        UploadRingPage page = new(pageAllocation);
-        this._uploadRingPages.Add(page);
-        this._currentUploadRingPageIndex = this._uploadRingPages.Count - 1;
-        return page.TryAllocate(sizeInBytes);
+    /// <param name="buffers">The upload buffers to return.</param>
+    /// <param name="fenceValue">The immediate-copy fence value guarding the buffers.</param>
+    internal void EnqueueImmediateUploadBuffers(List<D3D12ResourceAllocation> buffers, ulong fenceValue) {
+        this.EnqueueDeferredUploadBuffers(this._immediateDeferredDisposalsLock, this._immediateDeferredDisposals, ref this._immediateDeferredDisposalCount, ref this._immediateDeferredDisposalNextFenceValue, buffers, fenceValue);
     }
 
     /// <summary>
@@ -1488,7 +1498,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         this.PumpSubmissionDeferredDisposals();
         this.PumpImmediateDeferredDisposals();
         this.DisposeAllDeferredDisposals();
-        this.DisposeAvailableUploadBuffers();
+        this._uploadBufferPool?.Dispose();
 
         lock (this._immediateCopyContextsLock) {
             foreach (ImmediateCopyContext context in this._immediateCopyContexts) {
@@ -1666,7 +1676,9 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         }
 
         if (d3d12Texture.NativeTexture != null) {
-            this.UpdateNativeTexture(d3d12Texture, source, sizeInBytes, x, y, z, width, height, depth, mipLevel, arrayLayer);
+            // Use the validated staging->native upload path in D3D12Texture to avoid
+            // partial CopyTextureRegion edge-cases that can trigger device removal.
+            d3d12Texture.UpdateNativeSubresource(source, sizeInBytes, x, y, z, width, height, depth, mipLevel, arrayLayer);
             return;
         }
 
@@ -1693,6 +1705,12 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
             d3d12Buffer.Update(null, source, bufferOffsetInBytes, sizeInBytes);
             return;
         }
+
+        if (_immediateBufferUpdateBatcherEnabled && this._immediateBufferUpdateBatcher.ShouldBatch(sizeInBytes)) {
+            this.RecordBatchedImmediateBufferUpdate(d3d12Buffer, source, bufferOffsetInBytes, sizeInBytes);
+            return;
+        }
+
         D3D12ResourceAllocation temporaryUpload = null;
         try {
             this.RecordBatchedImmediateCommand(commandList => {
@@ -2091,68 +2109,37 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Updates the native texture state for this command sequence.
+    /// Checks whether D3D12 WriteBufferImmediate can be used on direct command lists.
     /// </summary>
-    /// <param name="texture">The texture resource involved in this operation.</param>
-    /// <param name="source">The source value or resource.</param>
-    /// <param name="sizeInBytes">The size, in bytes, used by this operation.</param>
-    /// <param name="x">The X coordinate.</param>
-    /// <param name="y">The Y coordinate.</param>
-    /// <param name="z">The Z coordinate.</param>
-    /// <param name="width">The width value.</param>
-    /// <param name="height">The height value.</param>
-    /// <param name="depth">The depth value.</param>
-    /// <param name="mipLevel">The mip level index.</param>
-    /// <param name="arrayLayer">The array layer index.</param>
-    private void UpdateNativeTexture(D3D12Texture texture, IntPtr source, uint sizeInBytes, uint x, uint y, uint z, uint width, uint height, uint depth, uint mipLevel, uint arrayLayer) {
-        // Use the validated staging->native upload path in D3D12Texture to avoid
-        // partial CopyTextureRegion edge-cases that can trigger device removal.
-        texture.UpdateNativeSubresource(source, sizeInBytes, x, y, z, width, height, depth, mipLevel, arrayLayer);
+    /// <returns><see langword="true" /> when the fast path is supported and enabled.</returns>
+    private bool CheckDirectWriteBufferImmediateSupport() {
+        if (string.Equals(Environment.GetEnvironmentVariable("VELDRID_D3D12_WRITEBUFFERIMMEDIATE"), "0", StringComparison.Ordinal)) {
+            return false;
+        }
+
+        FeatureDataD3D12Options3 options = default;
+        if (!this.TryCheckFeatureSupport(D3D12Feature.Options3, ref options)) {
+            return false;
+        }
+
+        return (options.WriteBufferImmediateSupportFlags & CommandListSupportFlags.Direct) != 0;
     }
 
     /// <summary>
-    /// Copies texture data to upload buffer data between resources.
+    /// Checks whether native D3D12 render passes can be used.
     /// </summary>
-    /// <param name="source">The source value or resource.</param>
-    /// <param name="sizeInBytes">The size, in bytes, used by this operation.</param>
-    /// <param name="format">The format used by this operation.</param>
-    /// <param name="copyWidth">The copy width value used by this operation.</param>
-    /// <param name="copyHeight">The copy height value used by this operation.</param>
-    /// <param name="copyDepth">The copy depth value used by this operation.</param>
-    /// <param name="uploadMappedPtr">The upload mapped ptr value used by this operation.</param>
-    /// <param name="placedFootprint">The placed footprint value used by this operation.</param>
-    /// <param name="numRows">The num rows value used by this operation.</param>
-    /// <param name="rowSizeInBytes">The size, in bytes, used by this operation.</param>
-    private unsafe void CopyTextureDataToUploadBuffer(IntPtr source, uint sizeInBytes, PixelFormat format, uint copyWidth, uint copyHeight, uint copyDepth, void* uploadMappedPtr, PlacedSubresourceFootPrint placedFootprint, uint numRows, ulong rowSizeInBytes) {
-        uint srcRowPitch = FormatHelpers.GetRowPitch(copyWidth, format);
-        uint srcNumRows = FormatHelpers.GetNumRows(copyHeight, format);
-        uint srcDepthPitch = srcRowPitch * srcNumRows;
-        ulong requiredBytes = (ulong)srcDepthPitch * copyDepth;
-        if (sizeInBytes < requiredBytes) {
-            throw new VeldridException("Texture update source size is smaller than required for the destination texture.");
+    /// <returns><see langword="true" /> when render passes are supported and enabled.</returns>
+    private bool CheckRenderPassSupport() {
+        if (string.Equals(Environment.GetEnvironmentVariable("VELDRID_D3D12_RENDERPASS"), "0", StringComparison.Ordinal)) {
+            return false;
         }
 
-        if (numRows < srcNumRows) {
-            throw new VeldridException("Unexpected row count when uploading native D3D12 texture data.");
+        FeatureDataD3D12Options5 options = default;
+        if (!this.TryCheckFeatureSupport(D3D12Feature.Options5, ref options)) {
+            return false;
         }
 
-        if (rowSizeInBytes < srcRowPitch) {
-            throw new VeldridException("Unexpected row size when uploading native D3D12 texture data.");
-        }
-
-        byte* srcBase = (byte*)source.ToPointer();
-        byte* dstBase = (byte*)uploadMappedPtr + placedFootprint.Offset;
-        uint dstRowPitch = placedFootprint.Footprint.RowPitch;
-        uint dstSlicePitch = dstRowPitch * numRows;
-        uint copyRowSize = srcRowPitch;
-
-        for (uint slice = 0; slice < copyDepth; slice++) {
-            for (uint row = 0; row < srcNumRows; row++) {
-                byte* srcRow = srcBase + slice * srcDepthPitch + row * srcRowPitch;
-                byte* dstRow = dstBase + slice * dstSlicePitch + row * dstRowPitch;
-                Unsafe.CopyBlock(dstRow, srcRow, copyRowSize);
-            }
-        }
+        return options.RenderPassesTier != RenderPassTier.Tier0;
     }
 
     /// <summary>
@@ -2253,7 +2240,13 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
             return;
         }
 
-        this.PumpDeferredDisposals(this._submissionDeferredDisposalsLock, this._submissionDeferredDisposals, ref this._submissionDeferredDisposalCount, this.GetCompletedValueNoAlloc(this._submissionFence));
+        ulong completedFenceValue = this.GetCompletedValueNoAlloc(this._submissionFence);
+        ulong nextFenceValue = Volatile.Read(ref this._submissionDeferredDisposalNextFenceValue);
+        if (nextFenceValue != 0 && completedFenceValue < nextFenceValue) {
+            return;
+        }
+
+        this.PumpDeferredDisposals(this._submissionDeferredDisposalsLock, this._submissionDeferredDisposals, ref this._submissionDeferredDisposalCount, ref this._submissionDeferredDisposalNextFenceValue, completedFenceValue);
     }
 
     /// <summary>
@@ -2264,15 +2257,153 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
             return;
         }
 
-        this.PumpDeferredDisposals(this._immediateDeferredDisposalsLock, this._immediateDeferredDisposals, ref this._immediateDeferredDisposalCount, this.GetCompletedValueNoAlloc(this._immediateCopyFence));
+        ulong completedFenceValue = this.GetCompletedValueNoAlloc(this._immediateCopyFence);
+        ulong nextFenceValue = Volatile.Read(ref this._immediateDeferredDisposalNextFenceValue);
+        if (nextFenceValue != 0 && completedFenceValue < nextFenceValue) {
+            return;
+        }
+
+        this.PumpDeferredDisposals(this._immediateDeferredDisposalsLock, this._immediateDeferredDisposals, ref this._immediateDeferredDisposalCount, ref this._immediateDeferredDisposalNextFenceValue, completedFenceValue);
+    }
+
+    /// <summary>
+    /// Adds a batch of upload buffers to a deferred-disposal queue under one lock.
+    /// </summary>
+    /// <param name="lockObject">The queue lock object.</param>
+    /// <param name="queue">The deferred disposal queue to append to.</param>
+    /// <param name="pendingCount">The approximate pending item count.</param>
+    /// <param name="nextFenceValue">The cached oldest fence value still pending in the queue.</param>
+    /// <param name="buffers">The upload buffers to return after the fence completes.</param>
+    /// <param name="fenceValue">The fence value that guards the batch.</param>
+    private void EnqueueDeferredUploadBuffers(object lockObject, Queue<DeferredDisposal> queue, ref int pendingCount, ref ulong nextFenceValue, List<D3D12ResourceAllocation> buffers, ulong fenceValue) {
+        if (buffers == null || buffers.Count == 0) {
+            return;
+        }
+
+        IDisposable disposableBatch = this.CreatePooledUploadBufferBatch(buffers);
+        if (disposableBatch == null) {
+            return;
+        }
+
+        lock (lockObject) {
+            if (queue.Count == 0) {
+                Volatile.Write(ref nextFenceValue, fenceValue);
+            }
+
+            queue.Enqueue(new DeferredDisposal(disposableBatch, fenceValue));
+        }
+
+        Interlocked.Increment(ref pendingCount);
+    }
+
+    /// <summary>
+    /// Adds a batch of disposable resources to a deferred-disposal queue under one lock.
+    /// </summary>
+    /// <param name="lockObject">The queue lock object.</param>
+    /// <param name="queue">The deferred disposal queue to append to.</param>
+    /// <param name="pendingCount">The approximate pending item count.</param>
+    /// <param name="nextFenceValue">The cached oldest fence value still pending in the queue.</param>
+    /// <param name="disposables">The disposable resources to release after the fence completes.</param>
+    /// <param name="fenceValue">The fence value that guards the batch.</param>
+    private void EnqueueDeferredDisposals(object lockObject, Queue<DeferredDisposal> queue, ref int pendingCount, ref ulong nextFenceValue, List<IDisposable> disposables, ulong fenceValue) {
+        if (disposables == null || disposables.Count == 0) {
+            return;
+        }
+
+        IDisposable disposableBatch = CreateDisposableBatch(disposables);
+        if (disposableBatch == null) {
+            return;
+        }
+
+        lock (lockObject) {
+            if (queue.Count == 0) {
+                Volatile.Write(ref nextFenceValue, fenceValue);
+            }
+
+            queue.Enqueue(new DeferredDisposal(disposableBatch, fenceValue));
+        }
+
+        Interlocked.Increment(ref pendingCount);
+    }
+
+    /// <summary>
+    /// Creates the smallest disposable wrapper for a batch of upload buffers.
+    /// </summary>
+    /// <param name="buffers">The upload buffers to return after a fence completes.</param>
+    /// <returns>A disposable upload-buffer wrapper, or null when the list contains no buffers.</returns>
+    private IDisposable CreatePooledUploadBufferBatch(List<D3D12ResourceAllocation> buffers) {
+        D3D12ResourceAllocation first = null;
+        D3D12ResourceAllocation[] batch = null;
+        int count = 0;
+        for (int i = 0; i < buffers.Count; i++) {
+            D3D12ResourceAllocation buffer = buffers[i];
+            if (buffer == null) {
+                continue;
+            }
+
+            if (first == null) {
+                first = buffer;
+                count = 1;
+                continue;
+            }
+
+            if (batch == null) {
+                batch = new D3D12ResourceAllocation[buffers.Count];
+                batch[0] = first;
+            }
+
+            batch[count++] = buffer;
+        }
+
+        if (first == null) {
+            return null;
+        }
+
+        return batch == null ? new PooledUploadBuffer(this, first) : new PooledUploadBufferBatch(this, batch, count);
+    }
+
+    /// <summary>
+    /// Creates the smallest disposable wrapper for a batch of disposable resources.
+    /// </summary>
+    /// <param name="disposables">The disposable resources to release after a fence completes.</param>
+    /// <returns>A disposable wrapper, or null when the list contains no resources.</returns>
+    private static IDisposable CreateDisposableBatch(List<IDisposable> disposables) {
+        IDisposable first = null;
+        IDisposable[] batch = null;
+        int count = 0;
+        for (int i = 0; i < disposables.Count; i++) {
+            IDisposable disposable = disposables[i];
+            if (disposable == null) {
+                continue;
+            }
+
+            if (first == null) {
+                first = disposable;
+                count = 1;
+                continue;
+            }
+
+            if (batch == null) {
+                batch = new IDisposable[disposables.Count];
+                batch[0] = first;
+            }
+
+            batch[count++] = disposable;
+        }
+
+        if (first == null) {
+            return null;
+        }
+
+        return batch == null ? first : new DisposableBatch(batch, count);
     }
 
     /// <summary>
     /// Disposes all deferred resources, regardless of fence value.
     /// </summary>
     private void DisposeAllDeferredDisposals() {
-        this.DisposeDeferredQueue(this._submissionDeferredDisposalsLock, this._submissionDeferredDisposals, ref this._submissionDeferredDisposalCount);
-        this.DisposeDeferredQueue(this._immediateDeferredDisposalsLock, this._immediateDeferredDisposals, ref this._immediateDeferredDisposalCount);
+        this.DisposeDeferredQueue(this._submissionDeferredDisposalsLock, this._submissionDeferredDisposals, ref this._submissionDeferredDisposalCount, ref this._submissionDeferredDisposalNextFenceValue);
+        this.DisposeDeferredQueue(this._immediateDeferredDisposalsLock, this._immediateDeferredDisposals, ref this._immediateDeferredDisposalCount, ref this._immediateDeferredDisposalNextFenceValue);
     }
 
     /// <summary>
@@ -2281,8 +2412,9 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// <param name="lockObject">The queue lock object.</param>
     /// <param name="queue">The deferred disposal queue to process.</param>
     /// <param name="pendingCount">The approximate pending item count.</param>
+    /// <param name="nextFenceValue">The cached oldest fence value still pending in the queue.</param>
     /// <param name="completedFenceValue">The latest completed fence value.</param>
-    private void PumpDeferredDisposals(object lockObject, Queue<DeferredDisposal> queue, ref int pendingCount, ulong completedFenceValue) {
+    private void PumpDeferredDisposals(object lockObject, Queue<DeferredDisposal> queue, ref int pendingCount, ref ulong nextFenceValue, ulong completedFenceValue) {
         int count = 0;
         lock (lockObject) {
             while (queue.Count > 0 && queue.Peek().FenceValue <= completedFenceValue) {
@@ -2292,6 +2424,8 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
 
                 this._pumpDisposalBatch[count++] = queue.Dequeue().Disposable;
             }
+
+            Volatile.Write(ref nextFenceValue, queue.Count > 0 ? queue.Peek().FenceValue : 0);
         }
 
         if (count == 0) {
@@ -2311,7 +2445,8 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// <param name="lockObject">The queue lock object.</param>
     /// <param name="queue">The deferred disposal queue to drain.</param>
     /// <param name="pendingCount">The approximate pending item count.</param>
-    private void DisposeDeferredQueue(object lockObject, Queue<DeferredDisposal> queue, ref int pendingCount) {
+    /// <param name="nextFenceValue">The cached oldest fence value still pending in the queue.</param>
+    private void DisposeDeferredQueue(object lockObject, Queue<DeferredDisposal> queue, ref int pendingCount, ref ulong nextFenceValue) {
         int count = 0;
         lock (lockObject) {
             while (queue.Count > 0) {
@@ -2324,55 +2459,11 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         }
 
         Volatile.Write(ref pendingCount, 0);
+        Volatile.Write(ref nextFenceValue, 0);
         for (int i = 0; i < count; i++) {
             this._pumpDisposalBatch[i].Dispose();
             this._pumpDisposalBatch[i] = null;
         }
-    }
-
-    /// <summary>
-    /// Disposes all upload buffers currently retained by the pool.
-    /// </summary>
-    private void DisposeAvailableUploadBuffers() {
-        List<D3D12ResourceAllocation> buffers = null;
-        List<UploadRingPage> ringPages = null;
-        lock (this._availableUploadBuffersLock) {
-            if (this._availableUploadBuffers.Count > 0) {
-                buffers = new List<D3D12ResourceAllocation>(this._availableUploadBuffers);
-                this._availableUploadBuffers.Clear();
-                this._availableUploadBufferBytes = 0;
-            }
-
-            if (this._uploadRingPages.Count > 0) {
-                ringPages = new List<UploadRingPage>(this._uploadRingPages);
-                this._uploadRingPages.Clear();
-                this._currentUploadRingPageIndex = -1;
-            }
-        }
-
-        if (buffers != null) {
-            for (int i = 0; i < buffers.Count; i++) {
-                buffers[i].Dispose();
-            }
-        }
-
-        if (ringPages == null) {
-            return;
-        }
-
-        for (int i = 0; i < ringPages.Count; i++) {
-            ringPages[i].Dispose();
-        }
-    }
-
-    /// <summary>
-    /// Aligns a value upward to the specified alignment.
-    /// </summary>
-    /// <param name="value">The value to align.</param>
-    /// <param name="alignment">The alignment boundary.</param>
-    /// <returns>The aligned value.</returns>
-    private static ulong AlignUp(ulong value, ulong alignment) {
-        return (value + alignment - 1) / alignment * alignment;
     }
 
     /// <summary>
@@ -2465,81 +2556,97 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
-    /// Represents a persistently mapped transient upload page.
+    /// Returns a batch of upload buffers to its owning D3D12 device when a deferred fence completes.
     /// </summary>
-    private sealed class UploadRingPage : IDisposable {
+    private sealed class PooledUploadBufferBatch : IDisposable {
 
         /// <summary>
-        /// Stores the backing upload resource allocation.
+        /// Stores the owning graphics device.
         /// </summary>
-        private readonly D3D12ResourceAllocation _allocation;
+        private readonly D3D12GraphicsDevice _gd;
 
         /// <summary>
-        /// Protects page suballocation state.
+        /// Stores upload buffers retained by this batch.
         /// </summary>
-        private readonly object _lock = new();
+        private D3D12ResourceAllocation[] _buffers;
 
         /// <summary>
-        /// Stores the current write offset.
+        /// Stores the number of valid entries in <see cref="_buffers" />.
         /// </summary>
-        private ulong _offset;
+        private readonly int _count;
 
         /// <summary>
-        /// Stores the number of live transient allocations on this page.
+        /// Initializes a new instance of the <see cref="PooledUploadBufferBatch" /> class.
         /// </summary>
-        private int _activeAllocations;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="UploadRingPage"/> type.
-        /// </summary>
-        /// <param name="allocation">The backing allocation.</param>
-        public UploadRingPage(D3D12ResourceAllocation allocation) {
-            this._allocation = allocation;
+        /// <param name="gd">The owning graphics device.</param>
+        /// <param name="buffers">The upload buffers to return.</param>
+        /// <param name="count">The number of valid buffer entries.</param>
+        public PooledUploadBufferBatch(D3D12GraphicsDevice gd, D3D12ResourceAllocation[] buffers, int count) {
+            this._gd = gd;
+            this._buffers = buffers;
+            this._count = count;
         }
 
         /// <summary>
-        /// Attempts to allocate a transient region from this page.
-        /// </summary>
-        /// <param name="sizeInBytes">The allocation size in bytes.</param>
-        /// <returns>The allocation, or null when this page has no room.</returns>
-        public D3D12ResourceAllocation TryAllocate(ulong sizeInBytes) {
-            lock (this._lock) {
-                if (this._offset + sizeInBytes > _uploadRingPageSize) {
-                    if (this._activeAllocations == 0) {
-                        this._offset = 0;
-                    }
-
-                    if (this._offset + sizeInBytes > _uploadRingPageSize) {
-                        return null;
-                    }
-                }
-
-                ulong allocationOffset = this._offset;
-                this._offset += sizeInBytes;
-                this._activeAllocations++;
-                IntPtr mappedPointer = IntPtr.Add(this._allocation.MappedPointer, checked((int)allocationOffset));
-                return new D3D12ResourceAllocation(this._allocation.Resource, null, mappedPointer, allocationOffset, sizeInBytes, this.ReturnAllocation);
-            }
-        }
-
-        /// <summary>
-        /// Returns a transient allocation to this page.
-        /// </summary>
-        /// <param name="returnedAllocation">The returned allocation.</param>
-        private void ReturnAllocation(D3D12ResourceAllocation returnedAllocation) {
-            lock (this._lock) {
-                this._activeAllocations--;
-                if (this._activeAllocations == 0 && this._offset >= _uploadRingPageSize) {
-                    this._offset = 0;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Releases the backing allocation.
+        /// Returns every upload buffer in the batch to the graphics device pool.
         /// </summary>
         public void Dispose() {
-            this._allocation.Dispose();
+            D3D12ResourceAllocation[] buffers = this._buffers;
+            this._buffers = null;
+            if (buffers == null) {
+                return;
+            }
+
+            for (int i = 0; i < this._count; i++) {
+                D3D12ResourceAllocation resource = buffers[i];
+                buffers[i] = null;
+                if (resource != null) {
+                    this._gd.ReturnUploadBuffer(resource);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Disposes a batch of resources when a deferred fence completes.
+    /// </summary>
+    private sealed class DisposableBatch : IDisposable {
+
+        /// <summary>
+        /// Stores disposable resources retained by this batch.
+        /// </summary>
+        private IDisposable[] _disposables;
+
+        /// <summary>
+        /// Stores the number of valid entries in <see cref="_disposables" />.
+        /// </summary>
+        private readonly int _count;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DisposableBatch" /> class.
+        /// </summary>
+        /// <param name="disposables">The resources to dispose.</param>
+        /// <param name="count">The number of valid disposable entries.</param>
+        public DisposableBatch(IDisposable[] disposables, int count) {
+            this._disposables = disposables;
+            this._count = count;
+        }
+
+        /// <summary>
+        /// Disposes every retained resource.
+        /// </summary>
+        public void Dispose() {
+            IDisposable[] disposables = this._disposables;
+            this._disposables = null;
+            if (disposables == null) {
+                return;
+            }
+
+            for (int i = 0; i < this._count; i++) {
+                IDisposable disposable = disposables[i];
+                disposables[i] = null;
+                disposable?.Dispose();
+            }
         }
     }
 

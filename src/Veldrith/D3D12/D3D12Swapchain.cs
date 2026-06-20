@@ -1,3 +1,4 @@
+using System;
 using Vortice.Direct3D12;
 using Vortice.DXGI;
 using Microsoft.Win32.SafeHandles;
@@ -10,6 +11,16 @@ namespace Veldrith.D3D12;
 /// Provides the Direct3D 12 backend implementation for D3D12Swapchain.
 /// </summary>
 internal sealed class D3D12Swapchain : Swapchain {
+
+    /// <summary>
+    /// Gets whether DXGI frame-latency wait handles should be used.
+    /// </summary>
+    private static readonly bool FrameLatencyWaitEnabled = string.Equals(Environment.GetEnvironmentVariable("VELDRID_D3D12_FRAME_LATENCY_WAIT"), "1", StringComparison.Ordinal);
+
+    /// <summary>
+    /// Stores the maximum queued-frame latency used when frame-latency waits are explicitly enabled.
+    /// </summary>
+    private static readonly int MaximumFrameLatency = ReadMaximumFrameLatency();
 
     /// <summary>
     /// Stores the buffer count value used during command execution.
@@ -278,6 +289,10 @@ internal sealed class D3D12Swapchain : Swapchain {
     /// Waits until DXGI allows another frame to be queued.
     /// </summary>
     internal void WaitForNextFrameReady() {
+        if (!FrameLatencyWaitEnabled) {
+            return;
+        }
+
         this._frameLatencyWaitHandle?.WaitOne(1000);
     }
 
@@ -573,7 +588,7 @@ internal sealed class D3D12Swapchain : Swapchain {
             flags |= SwapChainFlags.AllowTearing;
         }
 
-        if (this.SyncToVerticalBlank && this._canCreateFrameLatencyWaitableObject) {
+        if (FrameLatencyWaitEnabled && this.SyncToVerticalBlank && this._canCreateFrameLatencyWaitableObject) {
             flags |= SwapChainFlags.FrameLatencyWaitableObject;
         }
 
@@ -587,7 +602,7 @@ internal sealed class D3D12Swapchain : Swapchain {
         this._frameLatencyWaitHandle?.Dispose();
         this._frameLatencyWaitHandle = null;
 
-        if (!this.SyncToVerticalBlank) {
+        if (!FrameLatencyWaitEnabled || !this.SyncToVerticalBlank) {
             return;
         }
 
@@ -600,8 +615,21 @@ internal sealed class D3D12Swapchain : Swapchain {
             return;
         }
 
-        swapChain2.MaximumFrameLatency = 1;
+        swapChain2.MaximumFrameLatency = (uint)MaximumFrameLatency;
         this._frameLatencyWaitHandle = new FrameLatencyWaitHandle(swapChain2.FrameLatencyWaitableObject);
+    }
+
+    /// <summary>
+    /// Reads the optional DXGI maximum frame latency override.
+    /// </summary>
+    /// <returns>The configured latency clamped to a conservative range.</returns>
+    private static int ReadMaximumFrameLatency() {
+        string value = Environment.GetEnvironmentVariable("VELDRID_D3D12_MAX_FRAME_LATENCY");
+        if (int.TryParse(value, out int parsed) && parsed >= 1 && parsed <= 16) {
+            return parsed;
+        }
+
+        return 2;
     }
 
     /// <summary>

@@ -27,6 +27,11 @@ internal sealed class D3D12Pipeline : Pipeline {
     private readonly ResourceLayout[] _pipelineResourceLayouts;
 
     /// <summary>
+    /// Stores the graphics shader stages used by this pipeline.
+    /// </summary>
+    private readonly ShaderStages _graphicsShaderStages;
+
+    /// <summary>
     /// Stores the gd state used by this instance.
     /// </summary>
     private readonly D3D12GraphicsDevice _gd;
@@ -79,6 +84,7 @@ internal sealed class D3D12Pipeline : Pipeline {
         }
 
         this._pipelineResourceLayouts = description.ResourceLayouts;
+        this._graphicsShaderStages = GetShaderStages(description.ShaderSet.Shaders);
         this.CreateRootSignature(description.ResourceLayouts, false);
         this.CreateGraphicsPipelineState(ref description);
     }
@@ -92,6 +98,7 @@ internal sealed class D3D12Pipeline : Pipeline {
         this._gd = gd;
         this.IsComputePipeline = true;
         this._pipelineResourceLayouts = description.ResourceLayouts;
+        this._graphicsShaderStages = ShaderStages.None;
         this.CreateRootSignature(description.ResourceLayouts, false);
         this.CreateComputePipelineState(ref description);
     }
@@ -255,12 +262,10 @@ internal sealed class D3D12Pipeline : Pipeline {
         this._pushConstantRootParameterIndex = (uint)rootParameters.Count;
         rootParameters.Add(new RootParameter(rootConstants, ShaderVisibility.All));
 
-        RootSignatureFlags rootSignatureFlags = this.IsComputePipeline
-            ? RootSignatureFlags.None
-            : RootSignatureFlags.AllowInputAssemblerInputLayout;
+        RootSignatureFlags rootSignatureFlags = this.BuildRootSignatureFlags(resourceLayouts);
 
         RootSignatureDescription rootSignatureDescription = new(rootSignatureFlags, rootParameters.ToArray(), Array.Empty<StaticSamplerDescription>());
-        string cacheKey = BuildRootSignatureCacheKey(resourceLayouts, useSetRegisterSpaces, this.IsComputePipeline);
+        string cacheKey = BuildRootSignatureCacheKey(resourceLayouts, useSetRegisterSpaces, this.IsComputePipeline, rootSignatureFlags);
         this._rootSignatureCacheKey = cacheKey;
         this.RootSignature = this._gd.GetOrCreateRootSignature(cacheKey, in rootSignatureDescription);
     }
@@ -274,6 +279,81 @@ internal sealed class D3D12Pipeline : Pipeline {
         }
 
         this.CreateRootSignature(this._pipelineResourceLayouts, false);
+    }
+
+    /// <summary>
+    /// Builds D3D12 root-signature flags for this pipeline.
+    /// </summary>
+    /// <param name="resourceLayouts">The resource layouts used by the root signature.</param>
+    /// <returns>The root-signature flags.</returns>
+    private RootSignatureFlags BuildRootSignatureFlags(ResourceLayout[] resourceLayouts) {
+        if (this.IsComputePipeline) {
+            return RootSignatureFlags.None;
+        }
+
+        RootSignatureFlags flags = RootSignatureFlags.AllowInputAssemblerInputLayout;
+        ShaderStages visibleStages = this._graphicsShaderStages | GetResourceLayoutStages(resourceLayouts);
+        if ((visibleStages & ShaderStages.Vertex) == 0) {
+            flags |= RootSignatureFlags.DenyVertexShaderRootAccess;
+        }
+
+        if ((visibleStages & ShaderStages.Fragment) == 0) {
+            flags |= RootSignatureFlags.DenyPixelShaderRootAccess;
+        }
+
+        if ((visibleStages & ShaderStages.Geometry) == 0) {
+            flags |= RootSignatureFlags.DenyGeometryShaderRootAccess;
+        }
+
+        if ((visibleStages & ShaderStages.TessellationControl) == 0) {
+            flags |= RootSignatureFlags.DenyHullShaderRootAccess;
+        }
+
+        if ((visibleStages & ShaderStages.TessellationEvaluation) == 0) {
+            flags |= RootSignatureFlags.DenyDomainShaderRootAccess;
+        }
+
+        return flags;
+    }
+
+    /// <summary>
+    /// Collects shader stages from a shader array.
+    /// </summary>
+    /// <param name="shaders">The shaders to inspect.</param>
+    /// <returns>The combined shader stage mask.</returns>
+    private static ShaderStages GetShaderStages(Shader[] shaders) {
+        ShaderStages stages = ShaderStages.None;
+        if (shaders == null) {
+            return stages;
+        }
+
+        for (int i = 0; i < shaders.Length; i++) {
+            stages |= shaders[i].Stage;
+        }
+
+        return stages;
+    }
+
+    /// <summary>
+    /// Collects shader stages declared by resource layouts.
+    /// </summary>
+    /// <param name="resourceLayouts">The resource layouts to inspect.</param>
+    /// <returns>The combined resource-layout stage mask.</returns>
+    private static ShaderStages GetResourceLayoutStages(ResourceLayout[] resourceLayouts) {
+        ShaderStages stages = ShaderStages.None;
+        if (resourceLayouts == null) {
+            return stages;
+        }
+
+        for (int layoutIndex = 0; layoutIndex < resourceLayouts.Length; layoutIndex++) {
+            D3D12ResourceLayout layout = Util.AssertSubtype<ResourceLayout, D3D12ResourceLayout>(resourceLayouts[layoutIndex]);
+            ResourceLayoutElementDescription[] elements = layout.Elements;
+            for (int elementIndex = 0; elementIndex < elements.Length; elementIndex++) {
+                stages |= elements[elementIndex].Stages;
+            }
+        }
+
+        return stages;
     }
 
     /// <summary>
@@ -368,11 +448,14 @@ internal sealed class D3D12Pipeline : Pipeline {
     /// <param name="resourceLayouts">The resource layout used by this operation.</param>
     /// <param name="useSetRegisterSpaces">The use set register spaces value used by this operation.</param>
     /// <param name="isComputePipeline">The is compute pipeline value used by this operation.</param>
+    /// <param name="rootSignatureFlags">The D3D12 root-signature flags.</param>
     /// <returns>The value produced by this operation.</returns>
-    private static string BuildRootSignatureCacheKey(ResourceLayout[] resourceLayouts, bool useSetRegisterSpaces, bool isComputePipeline) {
+    private static string BuildRootSignatureCacheKey(ResourceLayout[] resourceLayouts, bool useSetRegisterSpaces, bool isComputePipeline, RootSignatureFlags rootSignatureFlags) {
         StringBuilder sb = new(256);
         sb.Append(isComputePipeline ? 'C' : 'G');
         sb.Append(useSetRegisterSpaces ? 'S' : 'N');
+        sb.Append('F');
+        sb.Append((int)rootSignatureFlags);
         sb.Append('|');
         if (resourceLayouts == null || resourceLayouts.Length == 0) {
             sb.Append("0");

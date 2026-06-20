@@ -18,9 +18,24 @@ namespace Veldrith.D3D12;
 internal sealed class D3D12CommandListFrameState : IDisposable {
 
     /// <summary>
+    /// Stores the default number of command allocators rotated by one command list.
+    /// </summary>
+    private const int DefaultAllocatorSlotCount = 8;
+
+    /// <summary>
+    /// Stores the minimum supported allocator slot count.
+    /// </summary>
+    private const int MinAllocatorSlotCount = 3;
+
+    /// <summary>
+    /// Stores the maximum supported allocator slot count.
+    /// </summary>
+    private const int MaxAllocatorSlotCount = 32;
+
+    /// <summary>
     /// Stores the number of command allocators rotated by one command list.
     /// </summary>
-    private const int FramesInFlight = 3;
+    private static readonly int AllocatorSlotCount = ReadAllocatorSlotCount();
 
     /// <summary>
     /// Stores the graphics device used for allocator creation and fence waiting.
@@ -30,7 +45,7 @@ internal sealed class D3D12CommandListFrameState : IDisposable {
     /// <summary>
     /// Stores command allocator slots retained by this command list.
     /// </summary>
-    private readonly AllocatorSlot[] _allocatorSlots = new AllocatorSlot[FramesInFlight];
+    private readonly AllocatorSlot[] _allocatorSlots = new AllocatorSlot[AllocatorSlotCount];
 
     /// <summary>
     /// Stores the current frame slot index.
@@ -43,7 +58,7 @@ internal sealed class D3D12CommandListFrameState : IDisposable {
     /// <param name="gd">The graphics device that owns the command allocators.</param>
     internal D3D12CommandListFrameState(D3D12GraphicsDevice gd) {
         this._gd = gd;
-        for (int i = 0; i < FramesInFlight; i++) {
+        for (int i = 0; i < this._allocatorSlots.Length; i++) {
             this._allocatorSlots[i] = new AllocatorSlot(gd.Device.CreateCommandAllocator(CommandListType.Direct));
         }
     }
@@ -59,7 +74,7 @@ internal sealed class D3D12CommandListFrameState : IDisposable {
     /// <param name="perf">The optional performance tracker receiving begin-wait timing.</param>
     /// <returns>The allocator that is ready for the next recording.</returns>
     internal ID3D12CommandAllocator BeginRecording(D3D12CommandListPerfTracker perf) {
-        this._currentFrameSlot = (this._currentFrameSlot + 1) % FramesInFlight;
+        this._currentFrameSlot = (this._currentFrameSlot + 1) % this._allocatorSlots.Length;
         AllocatorSlot slot = this._allocatorSlots[this._currentFrameSlot];
         this.WaitForFrameSlot(slot, perf);
         ResetCommandAllocatorNoAlloc(slot.Allocator);
@@ -138,6 +153,19 @@ internal sealed class D3D12CommandListFrameState : IDisposable {
         delegate* unmanaged[Stdcall]<void*, int> reset = (delegate* unmanaged[Stdcall]<void*, int>)vtbl[8];
         Result result = new(reset((void*)allocator.NativePointer));
         result.CheckError();
+    }
+
+    /// <summary>
+    /// Reads the fixed command allocator slot count from the environment.
+    /// </summary>
+    /// <returns>The configured allocator slot count.</returns>
+    private static int ReadAllocatorSlotCount() {
+        string value = Environment.GetEnvironmentVariable("VELDRID_D3D12_COMMAND_ALLOCATOR_SLOTS");
+        if (int.TryParse(value, out int parsed)) {
+            return Math.Clamp(parsed, MinAllocatorSlotCount, MaxAllocatorSlotCount);
+        }
+
+        return DefaultAllocatorSlotCount;
     }
 
     /// <summary>

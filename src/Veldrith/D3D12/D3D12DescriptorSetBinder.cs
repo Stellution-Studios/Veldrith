@@ -160,6 +160,9 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
         uint dynamicOffsetIndex = 0;
         bool descriptorTablesChanged = false;
         D3D12ResourceSetBindingPlanEntry[] entries = bindingPlan.Entries;
+        bool hasSrvUavTable = bindingPlan.SrvUavTable.HasTable;
+        bool skipSrvUavTableResourcePreparation = hasSrvUavTable
+                                                   && CanSkipDescriptorTableResourcePreparation(d3d12Set, entries, bindingPlan.SrvUavTable, compute);
 
         for (int i = 0; i < entries.Length; i++) {
             ref readonly D3D12ResourceSetBindingPlanEntry bindingEntry = ref entries[i];
@@ -175,7 +178,11 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
 
             D3D12ResourceSetElementCache elementCache = elementCaches[bindingEntry.ElementIndex];
             if (bindingEntry.BindingInfo.DescriptorTable) {
-                this.PrepareDescriptorTableResource(bindingEntry.BindingInfo.Kind, elementCache, compute);
+                if (!skipSrvUavTableResourcePreparation
+                    && bindingEntry.BindingInfo.DescriptorTableKind == D3D12Pipeline.DescriptorTableKind.SrvUav) {
+                    this.PrepareDescriptorTableResource(bindingEntry.BindingInfo.Kind, elementCache, compute);
+                }
+
                 descriptorTablesChanged = true;
                 continue;
             }
@@ -186,6 +193,10 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
             else {
                 this.BindGraphicsResource(bindingEntry.BindingInfo, elementCache, dynamicOffset);
             }
+        }
+
+        if (hasSrvUavTable && !skipSrvUavTableResourcePreparation) {
+            StoreDescriptorTableResourcePreparation(d3d12Set, entries, bindingPlan.SrvUavTable, compute);
         }
 
         if (descriptorTablesChanged) {
@@ -285,8 +296,7 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
             case ResourceKind.TextureReadOnly: {
                     D3D12TextureView d3d12TextureView = elementCache.TextureView
                                                         ?? throw new VeldridException("D3D12 sampled descriptor-table binding requires a texture view.");
-                    ResourceStates readState = compute ? ResourceStates.NonPixelShaderResource : ResourceStates.PixelShaderResource | ResourceStates.NonPixelShaderResource;
-                    this._commandList.TransitionTextureViewForInternalUse(d3d12TextureView, readState);
+                    this._commandList.TransitionTextureViewForInternalUse(d3d12TextureView, GetDescriptorTableTextureReadState(compute));
                     break;
                 }
             case ResourceKind.TextureReadWrite: {
@@ -376,5 +386,110 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
             case ResourceKind.StructuredBufferReadWrite: return ResourceStates.UnorderedAccess;
             default: return ResourceStates.Common;
         }
+    }
+
+    /// <summary>
+    /// Checks whether descriptor-table texture preparation can be skipped for a resource set.
+    /// </summary>
+    /// <param name="set">The resource set being bound.</param>
+    /// <param name="bindingPlan">The binding plan entries for the resource set slot.</param>
+    /// <param name="tableInfo">The descriptor table metadata.</param>
+    /// <param name="compute">Whether the active pipeline is a compute pipeline.</param>
+    /// <returns><see langword="true" /> when all table textures are known to be in the required state.</returns>
+    private static bool CanSkipDescriptorTableResourcePreparation(D3D12ResourceSet set, D3D12ResourceSetBindingPlanEntry[] bindingPlan, D3D12DescriptorTableBindingInfo tableInfo, bool compute) {
+        ulong stateVersionHash = ComputeDescriptorTableStateVersionHash(set, bindingPlan, tableInfo, compute, out uint textureCount);
+        if (textureCount == 0) {
+            return true;
+        }
+
+        ref D3D12DescriptorTableTransitionCache cache = ref GetSrvUavTransitionCache(set, compute);
+        return cache.Matches(tableInfo.Signature, stateVersionHash, textureCount);
+    }
+
+    /// <summary>
+    /// Stores descriptor-table texture preparation state for later resource-set binds.
+    /// </summary>
+    /// <param name="set">The resource set being bound.</param>
+    /// <param name="bindingPlan">The binding plan entries for the resource set slot.</param>
+    /// <param name="tableInfo">The descriptor table metadata.</param>
+    /// <param name="compute">Whether the active pipeline is a compute pipeline.</param>
+    private static void StoreDescriptorTableResourcePreparation(D3D12ResourceSet set, D3D12ResourceSetBindingPlanEntry[] bindingPlan, D3D12DescriptorTableBindingInfo tableInfo, bool compute) {
+        ulong stateVersionHash = ComputeDescriptorTableStateVersionHash(set, bindingPlan, tableInfo, compute, out uint textureCount);
+        if (textureCount == 0) {
+            return;
+        }
+
+        ref D3D12DescriptorTableTransitionCache cache = ref GetSrvUavTransitionCache(set, compute);
+        cache.Store(tableInfo.Signature, stateVersionHash, textureCount);
+    }
+
+    /// <summary>
+    /// Computes a stable hash of the texture state versions required by one descriptor table.
+    /// </summary>
+    /// <param name="set">The resource set being bound.</param>
+    /// <param name="bindingPlan">The binding plan entries for the resource set slot.</param>
+    /// <param name="tableInfo">The descriptor table metadata.</param>
+    /// <param name="compute">Whether the active pipeline is a compute pipeline.</param>
+    /// <param name="textureCount">The number of texture descriptors included in the hash.</param>
+    /// <returns>The combined state-version hash.</returns>
+    private static ulong ComputeDescriptorTableStateVersionHash(D3D12ResourceSet set, D3D12ResourceSetBindingPlanEntry[] bindingPlan, D3D12DescriptorTableBindingInfo tableInfo, bool compute, out uint textureCount) {
+        const ulong fnvOffsetBasis = 14695981039346656037ul;
+        const ulong fnvPrime = 1099511628211ul;
+        ulong hash = fnvOffsetBasis;
+        textureCount = 0;
+
+        for (int i = 0; i < bindingPlan.Length; i++) {
+            D3D12ResourceSetBindingPlanEntry entry = bindingPlan[i];
+            D3D12Pipeline.RootBindingInfo bindingInfo = entry.BindingInfo;
+            if (!bindingInfo.DescriptorTable || bindingInfo.DescriptorTableKind != tableInfo.TableKind) {
+                continue;
+            }
+
+            ResourceStates requiredState;
+            switch (bindingInfo.Kind) {
+                case ResourceKind.TextureReadOnly:
+                    requiredState = GetDescriptorTableTextureReadState(compute);
+                    break;
+                case ResourceKind.TextureReadWrite:
+                    requiredState = ResourceStates.UnorderedAccess;
+                    break;
+                case ResourceKind.Sampler:
+                    continue;
+                default:
+                    continue;
+            }
+
+            D3D12TextureView textureView = set.ElementCaches[entry.ElementIndex].TextureView
+                                           ?? throw new VeldridException("D3D12 descriptor-table texture binding requires a texture view.");
+            hash = (hash ^ entry.ElementIndex) * fnvPrime;
+            hash = (hash ^ (ulong)requiredState) * fnvPrime;
+            hash = (hash ^ textureView.TargetTexture.StateVersion) * fnvPrime;
+            textureCount++;
+        }
+
+        return hash;
+    }
+
+    /// <summary>
+    /// Gets the descriptor-table transition cache for a bind point.
+    /// </summary>
+    /// <param name="set">The resource set that owns the cache.</param>
+    /// <param name="compute">Whether the active pipeline is a compute pipeline.</param>
+    /// <returns>The descriptor-table transition cache.</returns>
+    private static ref D3D12DescriptorTableTransitionCache GetSrvUavTransitionCache(D3D12ResourceSet set, bool compute) {
+        if (compute) {
+            return ref set.ComputeSrvUavTransitionCache;
+        }
+
+        return ref set.GraphicsSrvUavTransitionCache;
+    }
+
+    /// <summary>
+    /// Gets the required read state for sampled descriptor-table textures.
+    /// </summary>
+    /// <param name="compute">Whether the active pipeline is a compute pipeline.</param>
+    /// <returns>The required D3D12 resource state.</returns>
+    private static ResourceStates GetDescriptorTableTextureReadState(bool compute) {
+        return compute ? ResourceStates.NonPixelShaderResource : ResourceStates.PixelShaderResource | ResourceStates.NonPixelShaderResource;
     }
 }
