@@ -227,7 +227,7 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
                                         ?? throw new VeldridException("D3D12 root binding requires a buffer resource.");
         uint rangeOffset = elementCache.BufferOffset + dynamicOffset;
         this._commandList.TransitionBufferForInternalUse(d3D12Buffer, GetGraphicsBufferState(bindingInfo.Kind));
-        ulong gpuAddress = d3D12Buffer.GetGpuVirtualAddress(rangeOffset);
+        ulong gpuAddress = this._commandList.GetBufferGpuVirtualAddressForInternalUse(d3D12Buffer, rangeOffset);
         if (this._rootBindingCache.IsSameGraphicsRootBuffer(bindingInfo.RootParameterIndex, gpuAddress)) {
             return;
         }
@@ -267,7 +267,7 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
                                         ?? throw new VeldridException("D3D12 root binding requires a buffer resource.");
         uint rangeOffset = elementCache.BufferOffset + dynamicOffset;
         this._commandList.TransitionBufferForInternalUse(d3D12Buffer, GetComputeBufferState(bindingInfo.Kind));
-        ulong gpuAddress = d3D12Buffer.GetGpuVirtualAddress(rangeOffset);
+        ulong gpuAddress = this._commandList.GetBufferGpuVirtualAddressForInternalUse(d3D12Buffer, rangeOffset);
 
         if (this._rootBindingCache.IsSameComputeRootBuffer(bindingInfo.RootParameterIndex, gpuAddress)) {
             return;

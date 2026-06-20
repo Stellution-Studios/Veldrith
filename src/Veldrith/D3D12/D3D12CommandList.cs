@@ -133,6 +133,11 @@ internal sealed class D3D12CommandList : CommandList {
     private readonly D3D12ResourceBarrierTracker _barriers = new();
 
     /// <summary>
+    /// Stores dynamic buffers whose command-list-local snapshot address changed and may need a deferred IA rebind.
+    /// </summary>
+    private readonly List<D3D12DeviceBuffer> _dynamicBindingRefreshBuffers = new(8);
+
+    /// <summary>
     /// Plans and records D3D12 texture copy/resolve operations.
     /// </summary>
     private readonly D3D12TextureCopyPlanner _textureCopyPlanner;
@@ -325,6 +330,7 @@ internal sealed class D3D12CommandList : CommandList {
         this._renderPassTracker.Reset();
         this._viewportScissor.Reset();
         this._inputAssembler.Reset();
+        this._dynamicBindingRefreshBuffers.Clear();
         this._graphicsResourceSets.Clear();
         this._computeResourceSets.Clear();
         this._rootBindingCache.InvalidateGraphics();
@@ -708,13 +714,17 @@ internal sealed class D3D12CommandList : CommandList {
     private protected override void SetVertexBufferCore(uint index, DeviceBuffer buffer, uint offset) {
         D3D12DeviceBuffer d3D12Buffer = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(buffer);
         bool isDynamicBuffer = (d3D12Buffer.Usage & BufferUsage.Dynamic) == BufferUsage.Dynamic;
-        ulong bindVersion = d3D12Buffer.BindVersion;
+        ulong bindVersion = this.GetBufferBindVersion(d3D12Buffer);
         if (!this._inputAssembler.TrySetVertexBuffer(index, d3D12Buffer, offset, bindVersion, isDynamicBuffer)) {
             return;
         }
 
-        this.EndRenderPassForInternalUse();
+        if (RequiresBufferTransition(d3D12Buffer, ResourceStates.VertexAndConstantBuffer)) {
+            this.EndRenderPassForInternalUse();
+        }
+
         this.BindVertexBuffer(index, d3D12Buffer, offset);
+        this.ClearDynamicBindingRefreshIfCurrent(d3D12Buffer);
         if (D3D12CommandListPerfTracker.Enabled) {
             this._perf.VertexBufferBinds++;
         }
@@ -729,17 +739,21 @@ internal sealed class D3D12CommandList : CommandList {
     private protected override void SetIndexBufferCore(DeviceBuffer buffer, IndexFormat format, uint offset) {
         D3D12DeviceBuffer d3D12Buffer = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(buffer);
         bool isDynamicBuffer = (d3D12Buffer.Usage & BufferUsage.Dynamic) == BufferUsage.Dynamic;
-        ulong bindVersion = d3D12Buffer.BindVersion;
+        ulong bindVersion = this.GetBufferBindVersion(d3D12Buffer);
         if (!this._inputAssembler.NeedsIndexBufferBind(d3D12Buffer, format, offset, bindVersion, isDynamicBuffer)) {
             return;
         }
 
-        this.EndRenderPassForInternalUse();
+        if (RequiresBufferTransition(d3D12Buffer, ResourceStates.IndexBuffer)) {
+            this.EndRenderPassForInternalUse();
+        }
+
         this.TransitionBuffer(d3D12Buffer, ResourceStates.IndexBuffer);
-        uint viewSize = d3D12Buffer.GetBindableSize(offset);
-        IndexBufferView indexView = new(d3D12Buffer.GetGpuVirtualAddress(offset), viewSize, D3D12Formats.ToDxgiFormat(format));
+        uint viewSize = this.GetBufferBindableSize(d3D12Buffer, offset);
+        IndexBufferView indexView = new(this.GetBufferGpuVirtualAddress(d3D12Buffer, offset), viewSize, D3D12Formats.ToDxgiFormat(format));
         this.SetIndexBufferNoAlloc(ref indexView);
         this._inputAssembler.SetIndexBuffer(d3D12Buffer, format, offset, bindVersion);
+        this.ClearDynamicBindingRefreshIfCurrent(d3D12Buffer);
         if (D3D12CommandListPerfTracker.Enabled) {
             this._perf.IndexBufferBinds++;
         }
@@ -818,8 +832,12 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="source">The source value or resource.</param>
     /// <param name="sizeInBytes">The size, in bytes, used by this operation.</param>
     private protected override void UpdateBufferCore(DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes) {
-        this.EndRenderPassForInternalUse();
-        this._bufferUpdatePlanner.Update(buffer, bufferOffsetInBytes, source, sizeInBytes);
+        D3D12DeviceBuffer d3D12Buffer = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(buffer);
+        if (d3D12Buffer.CanTransitionState) {
+            this.EndRenderPassForInternalUse();
+        }
+
+        this._bufferUpdatePlanner.Update(d3D12Buffer, bufferOffsetInBytes, source, sizeInBytes);
     }
 
     [SupportedOSPlatform("windows")]
@@ -919,6 +937,7 @@ internal sealed class D3D12CommandList : CommandList {
             return;
         }
 
+        this.EndRenderPassForInternalUse();
         D3D12BarrierQueueResult result = this._barriers.QueueTransition(resource, from, to);
         if (result == D3D12BarrierQueueResult.Full) {
             this.FlushPendingBarriers();
@@ -966,8 +985,8 @@ internal sealed class D3D12CommandList : CommandList {
             stride = currentGraphicsPipeline.VertexStrides[index];
         }
 
-        uint viewSize = buffer.GetBindableSize(offset);
-        VertexBufferView view = new(buffer.GetGpuVirtualAddress(offset), viewSize, stride);
+        uint viewSize = this.GetBufferBindableSize(buffer, offset);
+        VertexBufferView view = new(this.GetBufferGpuVirtualAddress(buffer, offset), viewSize, stride);
         this.SetVertexBufferNoAlloc(index, ref view);
         this._inputAssembler.SetVertexBufferStride(index, stride);
     }
@@ -1001,9 +1020,13 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     /// <param name="buffer">The dynamic buffer whose binding version changed.</param>
     private void RefreshDynamicBufferBindings(D3D12DeviceBuffer buffer) {
-        ulong bindVersion = buffer.BindVersion;
+        ulong bindVersion = this.GetBufferBindVersion(buffer);
         for (uint index = 0; index < this._inputAssembler.MaxBoundVertexBufferSlot; index++) {
             if (!ReferenceEquals(this._inputAssembler.GetVertexBuffer(index), buffer)) {
+                continue;
+            }
+
+            if (this._inputAssembler.GetVertexBufferVersion(index) == bindVersion) {
                 continue;
             }
 
@@ -1018,9 +1041,13 @@ internal sealed class D3D12CommandList : CommandList {
             return;
         }
 
+        if (this._inputAssembler.IndexBufferVersion == bindVersion) {
+            return;
+        }
+
         this.TransitionBuffer(buffer, ResourceStates.IndexBuffer);
-        uint viewSize = buffer.GetBindableSize(this._inputAssembler.IndexBufferOffset);
-        IndexBufferView indexView = new(buffer.GetGpuVirtualAddress(this._inputAssembler.IndexBufferOffset), viewSize, D3D12Formats.ToDxgiFormat(this._inputAssembler.IndexFormat));
+        uint viewSize = this.GetBufferBindableSize(buffer, this._inputAssembler.IndexBufferOffset);
+        IndexBufferView indexView = new(this.GetBufferGpuVirtualAddress(buffer, this._inputAssembler.IndexBufferOffset), viewSize, D3D12Formats.ToDxgiFormat(this._inputAssembler.IndexFormat));
         this.SetIndexBufferNoAlloc(ref indexView);
         this._inputAssembler.SetIndexBufferVersion(bindVersion);
         if (D3D12CommandListPerfTracker.Enabled) {
@@ -1033,7 +1060,119 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     /// <param name="buffer">The dynamic buffer whose binding version changed.</param>
     internal void RefreshDynamicBufferBindingsForInternalUse(D3D12DeviceBuffer buffer) {
-        this.RefreshDynamicBufferBindings(buffer);
+        this.MarkDynamicBufferBindingsDirty(buffer);
+    }
+
+    /// <summary>
+    /// Marks input-assembler bindings dirty after a dynamic buffer snapshot address changed.
+    /// </summary>
+    /// <param name="buffer">The dynamic buffer whose command-list-local address changed.</param>
+    private void MarkDynamicBufferBindingsDirty(D3D12DeviceBuffer buffer) {
+        if (!this.HasStaleDynamicInputAssemblerBinding(buffer)) {
+            return;
+        }
+
+        for (int i = 0; i < this._dynamicBindingRefreshBuffers.Count; i++) {
+            if (ReferenceEquals(this._dynamicBindingRefreshBuffers[i], buffer)) {
+                return;
+            }
+        }
+
+        this._dynamicBindingRefreshBuffers.Add(buffer);
+    }
+
+    /// <summary>
+    /// Removes a dynamic buffer from the deferred refresh list when all recorded input-assembler bindings are current.
+    /// </summary>
+    /// <param name="buffer">The dynamic buffer to inspect.</param>
+    private void ClearDynamicBindingRefreshIfCurrent(D3D12DeviceBuffer buffer) {
+        if (this._dynamicBindingRefreshBuffers.Count == 0 || this.HasStaleDynamicInputAssemblerBinding(buffer)) {
+            return;
+        }
+
+        for (int i = 0; i < this._dynamicBindingRefreshBuffers.Count; i++) {
+            if (!ReferenceEquals(this._dynamicBindingRefreshBuffers[i], buffer)) {
+                continue;
+            }
+
+            int lastIndex = this._dynamicBindingRefreshBuffers.Count - 1;
+            this._dynamicBindingRefreshBuffers[i] = this._dynamicBindingRefreshBuffers[lastIndex];
+            this._dynamicBindingRefreshBuffers.RemoveAt(lastIndex);
+            return;
+        }
+    }
+
+    /// <summary>
+    /// Checks whether any recorded input-assembler binding still points at an older dynamic snapshot.
+    /// </summary>
+    /// <param name="buffer">The dynamic buffer to inspect.</param>
+    /// <returns><see langword="true" /> when a deferred refresh is still required.</returns>
+    private bool HasStaleDynamicInputAssemblerBinding(D3D12DeviceBuffer buffer) {
+        ulong bindVersion = this.GetBufferBindVersion(buffer);
+        for (uint index = 0; index < this._inputAssembler.MaxBoundVertexBufferSlot; index++) {
+            if (ReferenceEquals(this._inputAssembler.GetVertexBuffer(index), buffer)
+                && this._inputAssembler.GetVertexBufferVersion(index) != bindVersion) {
+                return true;
+            }
+        }
+
+        return this._inputAssembler.HasIndexBuffer
+               && ReferenceEquals(this._inputAssembler.IndexBuffer, buffer)
+               && this._inputAssembler.IndexBufferVersion != bindVersion;
+    }
+
+    /// <summary>
+    /// Refreshes stale input-assembler bindings after dynamic buffer snapshot address changes.
+    /// </summary>
+    private void RefreshDirtyDynamicBufferBindings() {
+        if (this._dynamicBindingRefreshBuffers.Count == 0) {
+            return;
+        }
+
+        for (int i = 0; i < this._dynamicBindingRefreshBuffers.Count; i++) {
+            this.RefreshDynamicBufferBindings(this._dynamicBindingRefreshBuffers[i]);
+        }
+
+        this._dynamicBindingRefreshBuffers.Clear();
+    }
+
+    /// <summary>
+    /// Gets the command-list-local GPU virtual address for a buffer range.
+    /// </summary>
+    /// <param name="buffer">The buffer to bind.</param>
+    /// <param name="offset">The byte offset into the buffer.</param>
+    /// <returns>The GPU virtual address visible to this command list.</returns>
+    internal ulong GetBufferGpuVirtualAddressForInternalUse(D3D12DeviceBuffer buffer, uint offset) {
+        return this.GetBufferGpuVirtualAddress(buffer, offset);
+    }
+
+    /// <summary>
+    /// Gets the command-list-local bind version for a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer to inspect.</param>
+    /// <returns>The bind version visible to this command list.</returns>
+    private ulong GetBufferBindVersion(D3D12DeviceBuffer buffer) {
+        return this._bufferUpdatePlanner.GetBindVersion(buffer);
+    }
+
+    /// <summary>
+    /// Gets the command-list-local GPU virtual address for a buffer range.
+    /// </summary>
+    /// <param name="buffer">The buffer to bind.</param>
+    /// <param name="offset">The byte offset into the buffer.</param>
+    /// <returns>The GPU virtual address visible to this command list.</returns>
+    private ulong GetBufferGpuVirtualAddress(D3D12DeviceBuffer buffer, uint offset) {
+        return this._bufferUpdatePlanner.GetGpuVirtualAddress(buffer, offset);
+    }
+
+    /// <summary>
+    /// Gets the command-list-local bindable size for a buffer range.
+    /// </summary>
+    /// <param name="buffer">The buffer to bind.</param>
+    /// <param name="offset">The byte offset into the buffer.</param>
+    /// <returns>The bindable size visible to this command list.</returns>
+    private uint GetBufferBindableSize(D3D12DeviceBuffer buffer, uint offset) {
+        return this._bufferUpdatePlanner.GetBindableSize(buffer, offset);
     }
 
     /// <summary>
@@ -1088,6 +1227,7 @@ internal sealed class D3D12CommandList : CommandList {
             return;
         }
 
+        this.EndRenderPassForInternalUse();
         D3D12BarrierQueueResult result = this._barriers.QueueSubresourceTransition(resource, from, to, subresource);
         if (result == D3D12BarrierQueueResult.Full) {
             this.FlushPendingBarriers();
@@ -1107,6 +1247,7 @@ internal sealed class D3D12CommandList : CommandList {
             return;
         }
 
+        this.EndRenderPassForInternalUse();
         long startTicks = D3D12CommandListPerfTracker.Enabled ? Stopwatch.GetTimestamp() : 0;
         bool flushed = this._barriers.FlushPendingUavBarrier(this.NativeCommandList);
         if (!flushed) {
@@ -1142,6 +1283,7 @@ internal sealed class D3D12CommandList : CommandList {
             return;
         }
 
+        this.EndRenderPassForInternalUse();
         long startTicks = D3D12CommandListPerfTracker.Enabled ? Stopwatch.GetTimestamp() : 0;
         bool flushed = this._barriers.FlushPendingBarriers(this.NativeCommandList);
         if (!flushed) {
@@ -1172,7 +1314,6 @@ internal sealed class D3D12CommandList : CommandList {
 
         D3D12Pipeline pipeline = this.CurrentGraphicsPipeline;
         if (this._graphicsResourceSets.Dirty && pipeline != null) {
-            this.EndRenderPassForInternalUse();
             this._descriptorSetBinder.FlushGraphicsResourceSets(this._graphicsResourceSets, pipeline);
         }
 
@@ -1183,6 +1324,8 @@ internal sealed class D3D12CommandList : CommandList {
         if (this._barriers.HasQueuedBarriers) {
             this.FlushPendingBarriers();
         }
+
+        this.RefreshDirtyDynamicBufferBindings();
 
         if (this.NativeCommandList4 != null) {
             this._renderPassTracker.BeginDrawPass(this.Framebuffer);
@@ -1369,6 +1512,16 @@ internal sealed class D3D12CommandList : CommandList {
 
         this.Transition(buffer.NativeBuffer, buffer.CurrentState, toState);
         buffer.CurrentState = toState;
+    }
+
+    /// <summary>
+    /// Checks whether binding a buffer would require recording a D3D12 resource barrier.
+    /// </summary>
+    /// <param name="buffer">The buffer to inspect.</param>
+    /// <param name="toState">The required D3D12 state.</param>
+    /// <returns><see langword="true" /> when the buffer needs a transition command.</returns>
+    private static bool RequiresBufferTransition(D3D12DeviceBuffer buffer, ResourceStates toState) {
+        return buffer.CanTransitionState && buffer.CurrentState != toState;
     }
 
     /// <summary>
@@ -1776,7 +1929,6 @@ internal sealed class D3D12CommandList : CommandList {
             return;
         }
 
-        this.EndRenderPassForInternalUse();
         this._descriptorSetBinder.FlushGraphicsResourceSets(this._graphicsResourceSets, this.CurrentGraphicsPipeline);
     }
 

@@ -96,6 +96,11 @@ internal sealed class D3D12InputAssemblerState {
     internal IndexFormat IndexFormat => this._indexFormat;
 
     /// <summary>
+    /// Gets the dynamic bind version of the currently bound index buffer.
+    /// </summary>
+    internal ulong IndexBufferVersion => this._indexBufferVersion;
+
+    /// <summary>
     /// Clears all cached state for a new command-list recording.
     /// </summary>
     internal void Reset() {
@@ -139,6 +144,15 @@ internal sealed class D3D12InputAssemblerState {
     /// <returns>The recorded stride.</returns>
     internal uint GetVertexBufferStride(uint index) {
         return this._vertexBufferStrides[index];
+    }
+
+    /// <summary>
+    /// Gets the recorded dynamic bind version at a vertex buffer slot.
+    /// </summary>
+    /// <param name="index">The vertex buffer slot.</param>
+    /// <returns>The recorded dynamic bind version.</returns>
+    internal ulong GetVertexBufferVersion(uint index) {
+        return this._vertexBufferVersions[index];
     }
 
     /// <summary>

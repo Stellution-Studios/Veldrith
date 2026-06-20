@@ -20,14 +20,19 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     private static readonly bool PreferHostVisibleUniformBuffers = !string.Equals(Environment.GetEnvironmentVariable("VELDRID_D3D12_HOST_VISIBLE_UNIFORMS"), "0", StringComparison.Ordinal);
 
     /// <summary>
-    /// Tracks dynamic upload-ring snapshots for buffer usages that are rebound frequently.
-    /// </summary>
-    private readonly D3D12DynamicBufferSnapshotState _dynamicSnapshot;
-
-    /// <summary>
     /// Tracks whether is dynamic is currently enabled.
     /// </summary>
     private readonly bool _isDynamic;
+
+    /// <summary>
+    /// Tracks whether command-list updates should bind transient upload snapshots instead of overwriting the stable dynamic buffer.
+    /// </summary>
+    private readonly bool _usesCommandListSnapshots;
+
+    /// <summary>
+    /// Tracks whether command-list snapshot updates must also update the stable CPU-visible buffer immediately.
+    /// </summary>
+    private readonly bool _requiresCommandListSnapshotCpuMirror;
 
     /// <summary>
     /// Tracks whether is staging is currently enabled.
@@ -94,8 +99,9 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         this._isStaging = (description.Usage & BufferUsage.Staging) == BufferUsage.Staging;
         this._isCpuVisibleUniform = ShouldUseHostVisibleUniformBuffer(description.Usage, description.SizeInBytes);
         this.CanTransitionState = !this._isDynamic && !this._isStaging && !this._isCpuVisibleUniform;
-        bool dynamicSnapshotEnabled = D3D12DynamicBufferSnapshotState.IsSupported(description.Usage);
-        uint nativeSizeInBytes = dynamicSnapshotEnabled ? D3D12DynamicBufferSnapshotState.CalculateCapacity(description.SizeInBytes, description.Usage) : description.SizeInBytes;
+        this._usesCommandListSnapshots = ShouldUseCommandListSnapshots(description.Usage);
+        this._requiresCommandListSnapshotCpuMirror = ShouldMirrorCommandListSnapshotsToCpuBuffer(description.Usage);
+        uint nativeSizeInBytes = description.SizeInBytes;
 
         ResourceDescription resourceDescription = ResourceDescription.Buffer(nativeSizeInBytes, GetResourceFlags(description.Usage));
 
@@ -108,10 +114,6 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         else if (this._isDynamic) {
             this._allocation = gd.MemoryManager.CreateResource(ref resourceDescription, ResourceStates.GenericRead, HeapType.Upload, HeapFlags.AllowOnlyBuffers);
             this.NativeBuffer = this._allocation.Resource;
-
-            if (dynamicSnapshotEnabled) {
-                this._dynamicSnapshot = new D3D12DynamicBufferSnapshotState(this._allocation.MappedPointer, description.SizeInBytes, description.Usage);
-            }
         }
         else if (this._isCpuVisibleUniform) {
             this._allocation = gd.MemoryManager.CreateResource(ref resourceDescription, ResourceStates.GenericRead, HeapType.Upload, HeapFlags.AllowOnlyBuffers);
@@ -164,24 +166,14 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     internal bool CanTransitionState { get; }
 
     /// <summary>
-    /// Stores the bind version state used by this instance.
+    /// Gets whether command-list updates should create transient snapshots for this dynamic buffer.
     /// </summary>
-    internal ulong BindVersion => this._dynamicSnapshot?.BindVersion ?? 0UL;
+    internal bool UsesCommandListSnapshots => this._usesCommandListSnapshots;
 
     /// <summary>
-    /// Gets the source-copy byte count from the most recent dynamic snapshot update.
+    /// Gets whether command-list snapshot updates must also update the stable CPU-visible buffer immediately.
     /// </summary>
-    internal uint LastDynamicSnapshotCopyBytes => this._dynamicSnapshot?.LastCopyBytes ?? 0;
-
-    /// <summary>
-    /// Gets the prefix-copy byte count from the most recent dynamic snapshot update.
-    /// </summary>
-    internal uint LastDynamicSnapshotPrefixCopyBytes => this._dynamicSnapshot?.LastPrefixCopyBytes ?? 0;
-
-    /// <summary>
-    /// Gets whether the most recent dynamic snapshot update moved to a new slot.
-    /// </summary>
-    internal bool LastDynamicSnapshotRotated => this._dynamicSnapshot?.LastRotated ?? false;
+    internal bool RequiresCommandListSnapshotCpuMirror => this._requiresCommandListSnapshotCpuMirror;
 
     /// <summary>
     /// Gets or sets IsDisposed.
@@ -199,7 +191,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     /// <param name="offset">The byte offset used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     internal ulong GetGpuVirtualAddress(uint offset) {
-        return this._gpuVirtualAddress + this.ResolveNativeOffset(offset);
+        return this._gpuVirtualAddress + offset;
     }
 
     /// <summary>
@@ -209,15 +201,6 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     /// <returns>The value produced by this operation.</returns>
     internal uint GetBindableSize(uint offset) {
         return offset < this.SizeInBytes ? this.SizeInBytes - offset : 0;
-    }
-
-    /// <summary>
-    /// Executes the resolve native offset logic for this backend.
-    /// </summary>
-    /// <param name="offset">The byte offset used by this operation.</param>
-    /// <returns>The value produced by this operation.</returns>
-    internal uint ResolveNativeOffset(uint offset) {
-        return this._dynamicSnapshot?.ResolveNativeOffset(offset) ?? offset;
     }
 
     /// <summary>
@@ -247,16 +230,9 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     /// <param name="sizeInBytes">The size, in bytes, used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     internal D3D12ResourceAllocation Update(ID3D12GraphicsCommandList commandList, IntPtr source, uint destinationOffset, uint sizeInBytes) {
-        if (destinationOffset + sizeInBytes > this.SizeInBytes) {
-            throw new VeldridException("Buffer update range exceeds the destination buffer size.");
-        }
+        this.ValidateBufferUpdateRange(destinationOffset, sizeInBytes);
 
         if (!this.CanTransitionState) {
-            if (this._dynamicSnapshot != null) {
-                this._dynamicSnapshot.Update(source, destinationOffset, sizeInBytes);
-                return null;
-            }
-
             this.WriteCpuData(source, destinationOffset, sizeInBytes);
             return null;
         }
@@ -315,12 +291,21 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     /// <param name="destinationOffset">The destination byte offset.</param>
     /// <param name="sizeInBytes">The number of bytes to update.</param>
     internal void ValidateCommandListUpdateRange(uint destinationOffset, uint sizeInBytes) {
-        if ((ulong)destinationOffset + sizeInBytes > this.SizeInBytes) {
-            throw new VeldridException("Buffer update range exceeds the destination buffer size.");
-        }
+        this.ValidateBufferUpdateRange(destinationOffset, sizeInBytes);
 
         if (!this.CanTransitionState) {
             throw new VeldridException("CPU-visible D3D12 buffers do not require an upload allocation.");
+        }
+    }
+
+    /// <summary>
+    /// Validates a buffer update range against the logical buffer size.
+    /// </summary>
+    /// <param name="destinationOffset">The destination byte offset.</param>
+    /// <param name="sizeInBytes">The number of bytes to update.</param>
+    internal void ValidateBufferUpdateRange(uint destinationOffset, uint sizeInBytes) {
+        if ((ulong)destinationOffset + sizeInBytes > this.SizeInBytes) {
+            throw new VeldridException("Buffer update range exceeds the destination buffer size.");
         }
     }
 
@@ -690,6 +675,33 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         }
 
         return usage == BufferUsage.UniformBuffer;
+    }
+
+    /// <summary>
+    /// Checks whether a dynamic buffer should use command-list-local transient snapshots.
+    /// </summary>
+    /// <param name="usage">The declared buffer usage.</param>
+    /// <returns><see langword="true" /> when command-list updates need stable per-draw GPU addresses.</returns>
+    private static bool ShouldUseCommandListSnapshots(BufferUsage usage) {
+        return (usage & BufferUsage.Dynamic) == BufferUsage.Dynamic
+               && (((usage & BufferUsage.VertexBuffer) == BufferUsage.VertexBuffer)
+                   || ((usage & BufferUsage.IndexBuffer) == BufferUsage.IndexBuffer)
+                   || ((usage & BufferUsage.UniformBuffer) == BufferUsage.UniformBuffer)
+                   || ((usage & BufferUsage.StructuredBufferReadOnly) == BufferUsage.StructuredBufferReadOnly));
+    }
+
+    /// <summary>
+    /// Checks whether command-list snapshots should also update the stable CPU-visible dynamic buffer immediately.
+    /// </summary>
+    /// <param name="usage">The declared buffer usage.</param>
+    /// <returns><see langword="true" /> when future non-IA bindings may need the stable buffer contents.</returns>
+    private static bool ShouldMirrorCommandListSnapshotsToCpuBuffer(BufferUsage usage) {
+        if (!ShouldUseCommandListSnapshots(usage)) {
+            return false;
+        }
+
+        const BufferUsage pureInputAssemblerDynamic = BufferUsage.Dynamic | BufferUsage.VertexBuffer | BufferUsage.IndexBuffer;
+        return (usage & ~pureInputAssemblerDynamic) != 0;
     }
 
 }
