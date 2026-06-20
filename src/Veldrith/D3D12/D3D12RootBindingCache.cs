@@ -13,9 +13,9 @@ internal sealed class D3D12RootBindingCache {
     private ulong[] _computeRootBufferAddresses = new ulong[32];
 
     /// <summary>
-    /// Tracks which compute root-buffer cache slots contain valid addresses.
+    /// Stores validity generations for cached compute root-buffer addresses.
     /// </summary>
-    private bool[] _computeRootBufferAddressValid = new bool[32];
+    private uint[] _computeRootBufferAddressGenerations = new uint[32];
 
     /// <summary>
     /// Stores cached compute root descriptor-table GPU pointers by root parameter index.
@@ -23,9 +23,9 @@ internal sealed class D3D12RootBindingCache {
     private ulong[] _computeRootTablePointers = new ulong[32];
 
     /// <summary>
-    /// Tracks which compute root descriptor-table cache slots contain valid pointers.
+    /// Stores validity generations for cached compute root descriptor-table pointers.
     /// </summary>
-    private bool[] _computeRootTablePointerValid = new bool[32];
+    private uint[] _computeRootTablePointerGenerations = new uint[32];
 
     /// <summary>
     /// Stores cached graphics root-buffer GPU addresses by root parameter index.
@@ -33,9 +33,9 @@ internal sealed class D3D12RootBindingCache {
     private ulong[] _graphicsRootBufferAddresses = new ulong[32];
 
     /// <summary>
-    /// Tracks which graphics root-buffer cache slots contain valid addresses.
+    /// Stores validity generations for cached graphics root-buffer addresses.
     /// </summary>
-    private bool[] _graphicsRootBufferAddressValid = new bool[32];
+    private uint[] _graphicsRootBufferAddressGenerations = new uint[32];
 
     /// <summary>
     /// Stores cached graphics root descriptor-table GPU pointers by root parameter index.
@@ -43,9 +43,19 @@ internal sealed class D3D12RootBindingCache {
     private ulong[] _graphicsRootTablePointers = new ulong[32];
 
     /// <summary>
-    /// Tracks which graphics root descriptor-table cache slots contain valid pointers.
+    /// Stores validity generations for cached graphics root descriptor-table pointers.
     /// </summary>
-    private bool[] _graphicsRootTablePointerValid = new bool[32];
+    private uint[] _graphicsRootTablePointerGenerations = new uint[32];
+
+    /// <summary>
+    /// Stores the active graphics cache generation.
+    /// </summary>
+    private uint _graphicsGeneration = 1;
+
+    /// <summary>
+    /// Stores the active compute cache generation.
+    /// </summary>
+    private uint _computeGeneration = 1;
 
     /// <summary>
     /// Checks whether a graphics root-buffer binding already matches the requested GPU address.
@@ -55,7 +65,8 @@ internal sealed class D3D12RootBindingCache {
     /// <returns><see langword="true" /> when the cached graphics binding matches.</returns>
     internal bool IsSameGraphicsRootBuffer(uint rootParameterIndex, ulong gpuAddress) {
         int index = this.EnsureGraphicsRootBufferCapacity(rootParameterIndex);
-        return this._graphicsRootBufferAddressValid[index] && this._graphicsRootBufferAddresses[index] == gpuAddress;
+        return this._graphicsRootBufferAddressGenerations[index] == this._graphicsGeneration
+               && this._graphicsRootBufferAddresses[index] == gpuAddress;
     }
 
     /// <summary>
@@ -66,7 +77,7 @@ internal sealed class D3D12RootBindingCache {
     internal void SetGraphicsRootBuffer(uint rootParameterIndex, ulong gpuAddress) {
         int index = this.EnsureGraphicsRootBufferCapacity(rootParameterIndex);
         this._graphicsRootBufferAddresses[index] = gpuAddress;
-        this._graphicsRootBufferAddressValid[index] = true;
+        this._graphicsRootBufferAddressGenerations[index] = this._graphicsGeneration;
     }
 
     /// <summary>
@@ -77,7 +88,8 @@ internal sealed class D3D12RootBindingCache {
     /// <returns><see langword="true" /> when the cached compute binding matches.</returns>
     internal bool IsSameComputeRootBuffer(uint rootParameterIndex, ulong gpuAddress) {
         int index = this.EnsureComputeRootBufferCapacity(rootParameterIndex);
-        return this._computeRootBufferAddressValid[index] && this._computeRootBufferAddresses[index] == gpuAddress;
+        return this._computeRootBufferAddressGenerations[index] == this._computeGeneration
+               && this._computeRootBufferAddresses[index] == gpuAddress;
     }
 
     /// <summary>
@@ -88,7 +100,7 @@ internal sealed class D3D12RootBindingCache {
     internal void SetComputeRootBuffer(uint rootParameterIndex, ulong gpuAddress) {
         int index = this.EnsureComputeRootBufferCapacity(rootParameterIndex);
         this._computeRootBufferAddresses[index] = gpuAddress;
-        this._computeRootBufferAddressValid[index] = true;
+        this._computeRootBufferAddressGenerations[index] = this._computeGeneration;
     }
 
     /// <summary>
@@ -99,7 +111,8 @@ internal sealed class D3D12RootBindingCache {
     /// <returns><see langword="true" /> when the cached graphics table matches.</returns>
     internal bool IsSameGraphicsRootTable(uint rootParameterIndex, ulong tablePtr) {
         int index = this.EnsureGraphicsRootTableCapacity(rootParameterIndex);
-        return this._graphicsRootTablePointerValid[index] && this._graphicsRootTablePointers[index] == tablePtr;
+        return this._graphicsRootTablePointerGenerations[index] == this._graphicsGeneration
+               && this._graphicsRootTablePointers[index] == tablePtr;
     }
 
     /// <summary>
@@ -110,7 +123,7 @@ internal sealed class D3D12RootBindingCache {
     internal void SetGraphicsRootTable(uint rootParameterIndex, ulong tablePtr) {
         int index = this.EnsureGraphicsRootTableCapacity(rootParameterIndex);
         this._graphicsRootTablePointers[index] = tablePtr;
-        this._graphicsRootTablePointerValid[index] = true;
+        this._graphicsRootTablePointerGenerations[index] = this._graphicsGeneration;
     }
 
     /// <summary>
@@ -121,7 +134,8 @@ internal sealed class D3D12RootBindingCache {
     /// <returns><see langword="true" /> when the cached compute table matches.</returns>
     internal bool IsSameComputeRootTable(uint rootParameterIndex, ulong tablePtr) {
         int index = this.EnsureComputeRootTableCapacity(rootParameterIndex);
-        return this._computeRootTablePointerValid[index] && this._computeRootTablePointers[index] == tablePtr;
+        return this._computeRootTablePointerGenerations[index] == this._computeGeneration
+               && this._computeRootTablePointers[index] == tablePtr;
     }
 
     /// <summary>
@@ -132,23 +146,35 @@ internal sealed class D3D12RootBindingCache {
     internal void SetComputeRootTable(uint rootParameterIndex, ulong tablePtr) {
         int index = this.EnsureComputeRootTableCapacity(rootParameterIndex);
         this._computeRootTablePointers[index] = tablePtr;
-        this._computeRootTablePointerValid[index] = true;
+        this._computeRootTablePointerGenerations[index] = this._computeGeneration;
     }
 
     /// <summary>
     /// Invalidates graphics root-buffer and root descriptor-table cache entries.
     /// </summary>
     internal void InvalidateGraphics() {
-        Array.Clear(this._graphicsRootBufferAddressValid, 0, this._graphicsRootBufferAddressValid.Length);
-        Array.Clear(this._graphicsRootTablePointerValid, 0, this._graphicsRootTablePointerValid.Length);
+        this._graphicsGeneration++;
+        if (this._graphicsGeneration != 0) {
+            return;
+        }
+
+        Array.Clear(this._graphicsRootBufferAddressGenerations, 0, this._graphicsRootBufferAddressGenerations.Length);
+        Array.Clear(this._graphicsRootTablePointerGenerations, 0, this._graphicsRootTablePointerGenerations.Length);
+        this._graphicsGeneration = 1;
     }
 
     /// <summary>
     /// Invalidates compute root-buffer and root descriptor-table cache entries.
     /// </summary>
     internal void InvalidateCompute() {
-        Array.Clear(this._computeRootBufferAddressValid, 0, this._computeRootBufferAddressValid.Length);
-        Array.Clear(this._computeRootTablePointerValid, 0, this._computeRootTablePointerValid.Length);
+        this._computeGeneration++;
+        if (this._computeGeneration != 0) {
+            return;
+        }
+
+        Array.Clear(this._computeRootBufferAddressGenerations, 0, this._computeRootBufferAddressGenerations.Length);
+        Array.Clear(this._computeRootTablePointerGenerations, 0, this._computeRootTablePointerGenerations.Length);
+        this._computeGeneration = 1;
     }
 
     /// <summary>
@@ -160,7 +186,7 @@ internal sealed class D3D12RootBindingCache {
         int index = (int)rootParameterIndex;
         if (index >= this._graphicsRootBufferAddresses.Length) {
             Util.EnsureArrayMinimumSize(ref this._graphicsRootBufferAddresses, rootParameterIndex + 1);
-            Util.EnsureArrayMinimumSize(ref this._graphicsRootBufferAddressValid, rootParameterIndex + 1);
+            Util.EnsureArrayMinimumSize(ref this._graphicsRootBufferAddressGenerations, rootParameterIndex + 1);
         }
 
         return index;
@@ -175,7 +201,7 @@ internal sealed class D3D12RootBindingCache {
         int index = (int)rootParameterIndex;
         if (index >= this._computeRootBufferAddresses.Length) {
             Util.EnsureArrayMinimumSize(ref this._computeRootBufferAddresses, rootParameterIndex + 1);
-            Util.EnsureArrayMinimumSize(ref this._computeRootBufferAddressValid, rootParameterIndex + 1);
+            Util.EnsureArrayMinimumSize(ref this._computeRootBufferAddressGenerations, rootParameterIndex + 1);
         }
 
         return index;
@@ -190,7 +216,7 @@ internal sealed class D3D12RootBindingCache {
         int index = (int)rootParameterIndex;
         if (index >= this._graphicsRootTablePointers.Length) {
             Util.EnsureArrayMinimumSize(ref this._graphicsRootTablePointers, rootParameterIndex + 1);
-            Util.EnsureArrayMinimumSize(ref this._graphicsRootTablePointerValid, rootParameterIndex + 1);
+            Util.EnsureArrayMinimumSize(ref this._graphicsRootTablePointerGenerations, rootParameterIndex + 1);
         }
 
         return index;
@@ -205,7 +231,7 @@ internal sealed class D3D12RootBindingCache {
         int index = (int)rootParameterIndex;
         if (index >= this._computeRootTablePointers.Length) {
             Util.EnsureArrayMinimumSize(ref this._computeRootTablePointers, rootParameterIndex + 1);
-            Util.EnsureArrayMinimumSize(ref this._computeRootTablePointerValid, rootParameterIndex + 1);
+            Util.EnsureArrayMinimumSize(ref this._computeRootTablePointerGenerations, rootParameterIndex + 1);
         }
 
         return index;

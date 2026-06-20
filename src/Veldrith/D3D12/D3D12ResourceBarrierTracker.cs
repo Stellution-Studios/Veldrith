@@ -228,24 +228,16 @@ internal sealed class D3D12ResourceBarrierTracker {
 
         this._barrierBatch[lastIndex] = default;
         this._barrierResources[lastIndex] = null;
-        this._barrierFromStates[lastIndex] = default;
-        this._barrierToStates[lastIndex] = default;
-        this._barrierSubresources[lastIndex] = default;
-        this._barrierUsesSubresource[lastIndex] = false;
         this._pendingBarrierCount = lastIndex;
     }
 
     /// <summary>
-    /// Clears metadata for all queued transition barriers.
+    /// Clears queued transition barriers and releases resource references for the valid range.
     /// </summary>
     private void ClearQueuedBarrierMetadata() {
         for (uint i = 0; i < this._pendingBarrierCount; i++) {
             this._barrierBatch[i] = default;
             this._barrierResources[i] = null;
-            this._barrierFromStates[i] = default;
-            this._barrierToStates[i] = default;
-            this._barrierSubresources[i] = default;
-            this._barrierUsesSubresource[i] = false;
         }
     }
 

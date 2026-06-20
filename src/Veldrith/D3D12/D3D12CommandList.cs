@@ -298,8 +298,6 @@ internal sealed class D3D12CommandList : CommandList {
         this._inputAssembler.Reset();
         this._graphicsResourceSets.Clear();
         this._computeResourceSets.Clear();
-        this._graphicsResourceSets.ResetDirtyRange();
-        this._computeResourceSets.ResetDirtyRange();
         this._rootBindingCache.InvalidateGraphics();
         this._rootBindingCache.InvalidateCompute();
         this.ClearCachedState();

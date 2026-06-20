@@ -892,7 +892,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         ulong signalValue = 0;
 
         lock (this._commandQueueLock) {
-            this.FlushBatchedImmediateCommands();
+            this.FlushBatchedImmediateCommandsQueueLocked();
 
             ImmediateCopyContext context = this.AcquireImmediateCopyContext();
             bool removeContext = false;
@@ -1054,45 +1054,58 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
             return 0;
         }
 
+        lock (this._commandQueueLock) {
+            return this.FlushBatchedImmediateCommandsQueueLocked(waitForCompletion);
+        }
+    }
+
+    /// <summary>
+    /// Submits pending batched immediate upload work while the queue lock is already held.
+    /// </summary>
+    /// <param name="waitForCompletion">When true, waits until the submitted upload work has completed.</param>
+    /// <returns>The signaled fence value, or zero when there was no batched work.</returns>
+    private ulong FlushBatchedImmediateCommandsQueueLocked(bool waitForCompletion = false) {
+        if (!Volatile.Read(ref this._batchedImmediateCopyHasWork)) {
+            return 0;
+        }
+
         long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
         ImmediateCopyContext context;
         ulong signalValue;
         int uploadBufferCount;
 
-        lock (this._commandQueueLock) {
-            lock (this._batchedImmediateCopyLock) {
-                if (!this._batchedImmediateCopyHasWork || this._batchedImmediateCopyContext == null) {
-                    return 0;
-                }
-
-                context = this._batchedImmediateCopyContext;
-                this._batchedImmediateCopyContext = null;
-                this._batchedImmediateCopyHasWork = false;
-
-                this._immediateBufferUpdateBatcher.FlushLocked(context.CommandList);
-                context.CommandList.Close();
-                this.CommandQueue.ExecuteCommandList(context.CommandList);
-                signalValue = this._nextImmediateCopyFenceValue++;
-                this.SignalQueueFenceNoAlloc(this._immediateCopyFence, signalValue);
-                context.FenceValue = signalValue;
-
-                uploadBufferCount = this._batchedImmediateUploadBuffers.Count;
-                this.EnqueueImmediateUploadBuffers(this._batchedImmediateUploadBuffers, signalValue);
-                this.EnqueueImmediateDisposals(this._batchedImmediateRetainedResources, signalValue);
-
-                this._batchedImmediateUploadBuffers.Clear();
-                this._batchedImmediateRetainedResources.Clear();
-                this._immediateBufferUpdateBatcher.ResetAfterFlush();
+        lock (this._batchedImmediateCopyLock) {
+            if (!this._batchedImmediateCopyHasWork || this._batchedImmediateCopyContext == null) {
+                return 0;
             }
 
-            if (waitForCompletion) {
-                long waitStartTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
-                this.WaitForImmediateCopyFence(signalValue);
-                if (_perfLogEnabled) {
-                    double waitMs = TicksToMilliseconds(Stopwatch.GetTimestamp() - waitStartTicks);
-                    this._perfAccumImmediateWaitMs += waitMs;
-                    this._perfMaxImmediateWaitMs = Math.Max(this._perfMaxImmediateWaitMs, waitMs);
-                }
+            context = this._batchedImmediateCopyContext;
+            this._batchedImmediateCopyContext = null;
+            this._batchedImmediateCopyHasWork = false;
+
+            this._immediateBufferUpdateBatcher.FlushLocked(context.CommandList);
+            context.CommandList.Close();
+            this.CommandQueue.ExecuteCommandList(context.CommandList);
+            signalValue = this._nextImmediateCopyFenceValue++;
+            this.SignalQueueFenceNoAlloc(this._immediateCopyFence, signalValue);
+            context.FenceValue = signalValue;
+
+            uploadBufferCount = this._batchedImmediateUploadBuffers.Count;
+            this.EnqueueImmediateUploadBuffers(this._batchedImmediateUploadBuffers, signalValue);
+            this.EnqueueImmediateDisposals(this._batchedImmediateRetainedResources, signalValue);
+
+            this._batchedImmediateUploadBuffers.Clear();
+            this._batchedImmediateRetainedResources.Clear();
+            this._immediateBufferUpdateBatcher.ResetAfterFlush();
+        }
+
+        if (waitForCompletion) {
+            long waitStartTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
+            this.WaitForImmediateCopyFence(signalValue);
+            if (_perfLogEnabled) {
+                double waitMs = TicksToMilliseconds(Stopwatch.GetTimestamp() - waitStartTicks);
+                this._perfAccumImmediateWaitMs += waitMs;
+                this._perfMaxImmediateWaitMs = Math.Max(this._perfMaxImmediateWaitMs, waitMs);
             }
         }
 
@@ -1565,7 +1578,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
                 this._perfMaxSubmitLockWaitMs = Math.Max(this._perfMaxSubmitLockWaitMs, lockWaitMs);
             }
 
-            this.FlushBatchedImmediateCommands();
+            this.FlushBatchedImmediateCommandsQueueLocked();
 
             try {
                 if (commandList is D3D12CommandList d3d12CommandList) {
@@ -2147,7 +2160,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// </summary>
     private void WaitForQueueIdle() {
         lock (this._commandQueueLock) {
-            this.FlushBatchedImmediateCommands();
+            this.FlushBatchedImmediateCommandsQueueLocked();
             try {
                 ulong signalValue = this._nextSubmissionFenceValue++;
                 this.SignalQueueFenceNoAlloc(this._submissionFence, signalValue);

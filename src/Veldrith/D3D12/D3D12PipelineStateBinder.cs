@@ -105,7 +105,6 @@ internal sealed class D3D12PipelineStateBinder {
         this._commandList.SetPipelineStateNoAllocForInternalUse(pipeline.PipelineState);
         if (rootSignatureChanged) {
             this._computeResourceSets.Clear();
-            this._computeResourceSets.ResetDirtyRange();
             this._rootBindingCache.InvalidateCompute();
             this._commandList.SetComputeRootSignatureNoAllocForInternalUse(pipeline.RootSignature);
         }
@@ -141,7 +140,6 @@ internal sealed class D3D12PipelineStateBinder {
 
         if (rootSignatureChanged) {
             this._graphicsResourceSets.Clear();
-            this._graphicsResourceSets.ResetDirtyRange();
             this._rootBindingCache.InvalidateGraphics();
             this._commandList.SetGraphicsRootSignatureNoAllocForInternalUse(pipeline.RootSignature);
         }

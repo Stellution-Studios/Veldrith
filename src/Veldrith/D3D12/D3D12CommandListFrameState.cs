@@ -20,7 +20,7 @@ internal sealed class D3D12CommandListFrameState : IDisposable {
     /// <summary>
     /// Stores the default number of command allocators rotated by one command list.
     /// </summary>
-    private const int DefaultAllocatorSlotCount = 8;
+    private const int DefaultAllocatorSlotCount = 3;
 
     /// <summary>
     /// Stores the minimum supported allocator slot count.
