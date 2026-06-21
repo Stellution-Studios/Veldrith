@@ -126,6 +126,21 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
 
         int changedSlotCount = resourceSets.ChangedSlotCount;
         int[] changedSlots = resourceSets.ChangedSlots;
+        if (changedSlotCount == 1) {
+            int slot = changedSlots[0];
+            if (slot >= start && slot <= end && resourceSets.Changed[slot]) {
+                D3D12ResourceSetChangeKind changeKind = resourceSets.ChangeKinds[slot];
+                this.BindResourceSet(pipeline, (uint)slot, ref resourceSets.BoundSets[slot], compute, changeKind);
+            }
+
+            resourceSets.ResetSingleDirtySlot(slot);
+            if (D3D12CommandListPerfTracker.Enabled) {
+                this._perf.ResourceSetFlushMs += D3D12CommandListPerfTracker.TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
+            }
+
+            return;
+        }
+
         for (int changedSlotIndex = 0; changedSlotIndex < changedSlotCount; changedSlotIndex++) {
             int slot = changedSlots[changedSlotIndex];
             if (slot < start || slot > end) {

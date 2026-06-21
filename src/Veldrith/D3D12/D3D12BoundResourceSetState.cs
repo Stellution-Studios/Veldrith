@@ -64,6 +64,31 @@ internal sealed class D3D12BoundResourceSetState {
     private int _bufferSetSlotCount;
 
     /// <summary>
+    /// Stores a monotonically increasing version for bound buffer-resource-set membership.
+    /// </summary>
+    private uint _bufferSetVersion;
+
+    /// <summary>
+    /// Gets the number of bound resource-set slots that reference buffers.
+    /// </summary>
+    internal int BufferSetSlotCount => this._bufferSetSlotCount;
+
+    /// <summary>
+    /// Gets the current buffer-resource-set membership version.
+    /// </summary>
+    internal uint BufferSetVersion => this._bufferSetVersion;
+
+    /// <summary>
+    /// Gets a bound resource-set slot that references at least one buffer.
+    /// </summary>
+    /// <param name="index">The compact buffer-slot list index.</param>
+    /// <returns>The resource-set slot.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal int GetBufferSetSlot(int index) {
+        return this._bufferSetSlots[index];
+    }
+
+    /// <summary>
     /// Updates a resource set slot and marks it dirty when the binding changed.
     /// </summary>
     /// <param name="slot">The resource set slot.</param>
@@ -230,6 +255,25 @@ internal sealed class D3D12BoundResourceSetState {
     }
 
     /// <summary>
+    /// Clears dirty state for the common case where exactly one slot was dirty.
+    /// </summary>
+    /// <param name="slot">The dirty slot to clear.</param>
+    internal void ResetSingleDirtySlot(int slot) {
+        if (slot >= 0 && slot < this.Changed.Length) {
+            this.Changed[slot] = false;
+        }
+
+        if (slot >= 0 && slot < this.ChangeKinds.Length) {
+            this.ChangeKinds[slot] = D3D12ResourceSetChangeKind.None;
+        }
+
+        this.ChangedSlotCount = 0;
+        this.Dirty = false;
+        this.ChangedStart = -1;
+        this.ChangedEnd = -1;
+    }
+
+    /// <summary>
     /// Marks bound resource sets dirty when they reference a dynamic buffer whose GPU address changed.
     /// </summary>
     /// <param name="resourceSetCount">The active pipeline resource set count.</param>
@@ -304,6 +348,10 @@ internal sealed class D3D12BoundResourceSetState {
     private void UpdateBufferSetSlot(uint slot, ResourceSet previousSet, ResourceSet nextSet) {
         bool previousHadBuffers = ResourceSetHasBuffers(previousSet);
         bool nextHasBuffers = ResourceSetHasBuffers(nextSet);
+        if (previousHadBuffers || nextHasBuffers) {
+            this._bufferSetVersion++;
+        }
+
         if (previousHadBuffers == nextHasBuffers) {
             return;
         }

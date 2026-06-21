@@ -146,6 +146,7 @@ internal sealed class D3D12PipelineStateBinder {
 
         this._commandList.SetPrimitiveTopologyForInternalUse(pipeline.PrimitiveTopology);
         this._commandList.RebindVertexBuffersForCurrentPipeline();
+
         if (D3D12CommandListPerfTracker.Enabled) {
             this._perf.PipelineSetMs += D3D12CommandListPerfTracker.TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
         }

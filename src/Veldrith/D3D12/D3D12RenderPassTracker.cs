@@ -59,6 +59,11 @@ internal sealed class D3D12RenderPassTracker {
     private bool _active;
 
     /// <summary>
+    /// Gets whether a native D3D12 render pass is active.
+    /// </summary>
+    internal bool Active => this._active;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="D3D12RenderPassTracker" /> class.
     /// </summary>
     /// <param name="commandList">The command list that receives render-pass commands.</param>

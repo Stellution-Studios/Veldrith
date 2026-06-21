@@ -290,11 +290,12 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     /// </summary>
     /// <param name="destinationOffset">The destination byte offset.</param>
     /// <param name="sizeInBytes">The number of bytes to update.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void ValidateCommandListUpdateRange(uint destinationOffset, uint sizeInBytes) {
         this.ValidateBufferUpdateRange(destinationOffset, sizeInBytes);
 
         if (!this.CanTransitionState) {
-            throw new VeldridException("CPU-visible D3D12 buffers do not require an upload allocation.");
+            ThrowCpuVisibleCommandListUpdate();
         }
     }
 
@@ -303,10 +304,52 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     /// </summary>
     /// <param name="destinationOffset">The destination byte offset.</param>
     /// <param name="sizeInBytes">The number of bytes to update.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void ValidateBufferUpdateRange(uint destinationOffset, uint sizeInBytes) {
-        if ((ulong)destinationOffset + sizeInBytes > this.SizeInBytes) {
-            throw new VeldridException("Buffer update range exceeds the destination buffer size.");
+        if ((ulong)destinationOffset + sizeInBytes > this.sizeInBytes) {
+            ThrowBufferUpdateRangeExceeded();
         }
+    }
+
+    /// <summary>
+    /// Writes to CPU-visible buffer memory after the caller has already validated the range.
+    /// </summary>
+    /// <param name="source">The source memory.</param>
+    /// <param name="destinationOffset">The destination byte offset.</param>
+    /// <param name="sizeInBytes">The number of bytes to copy.</param>
+    internal unsafe void WriteMappedCpuVisibleDataForInternalUse(IntPtr source, uint destinationOffset, uint sizeInBytes) {
+        byte* destination;
+        if (this._isDynamic || this._isCpuVisibleUniform) {
+            destination = (byte*)this._allocation.MappedPointer + destinationOffset;
+        }
+        else if (this._isStaging) {
+            destination = (byte*)this._staging.WriteMappedPointer + destinationOffset;
+        }
+        else {
+            ThrowCpuVisibleCommandListUpdate();
+            return;
+        }
+
+        CopyMemory(source.ToPointer(), destination, sizeInBytes);
+        if (this._isStaging) {
+            this._staging.MarkWriteBufferChanged(destinationOffset, sizeInBytes, this.sizeInBytes);
+        }
+    }
+
+    /// <summary>
+    /// Throws when a command-list upload is requested for a CPU-visible buffer.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void ThrowCpuVisibleCommandListUpdate() {
+        throw new VeldridException("CPU-visible D3D12 buffers do not require an upload allocation.");
+    }
+
+    /// <summary>
+    /// Throws when an update range exceeds the buffer bounds.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void ThrowBufferUpdateRangeExceeded() {
+        throw new VeldridException("Buffer update range exceeds the destination buffer size.");
     }
 
     /// <summary>

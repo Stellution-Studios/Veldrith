@@ -29,6 +29,11 @@ internal sealed class D3D12CommandList : CommandList {
     private const int DrawDirtyDynamicInputAssembler = 1 << 4;
 
     /// <summary>
+    /// Controls the experimental stable ResourceSet buffer update bypass.
+    /// </summary>
+    private static readonly bool _stableResourceSetUpdateFastPathEnabled = string.Equals(Environment.GetEnvironmentVariable("VELDRID_D3D12_STABLE_RESOURCESET_UPDATE_FASTPATH"), "1", StringComparison.Ordinal);
+
+    /// <summary>
     /// Stores the begin event method state used by this instance.
     /// </summary>
     private readonly MethodInfo _beginEventMethod;
@@ -147,6 +152,51 @@ internal sealed class D3D12CommandList : CommandList {
     /// Stores the number of active dynamic IA refresh entries.
     /// </summary>
     private int _dynamicBindingRefreshBufferCount;
+
+    /// <summary>
+    /// Stores ResourceSet buffers that have already been used by a draw or dispatch in this command-list recording.
+    /// </summary>
+    private D3D12DeviceBuffer[] _usedResourceSetBuffers = new D3D12DeviceBuffer[16];
+
+    /// <summary>
+    /// Stores the number of active ResourceSet buffer usage entries.
+    /// </summary>
+    private int _usedResourceSetBufferCount;
+
+    /// <summary>
+    /// Stores the most recently tracked ResourceSet buffer.
+    /// </summary>
+    private D3D12DeviceBuffer _lastUsedResourceSetBuffer;
+
+    /// <summary>
+    /// Tracks whether graphics ResourceSet buffer usage has been captured for the current state version.
+    /// </summary>
+    private bool _graphicsResourceSetUsageCaptured;
+
+    /// <summary>
+    /// Stores the graphics ResourceSet buffer-membership version that has already been captured.
+    /// </summary>
+    private uint _graphicsResourceSetUsageVersion;
+
+    /// <summary>
+    /// Stores the active graphics ResourceSet count that has already been captured.
+    /// </summary>
+    private uint _graphicsResourceSetUsageCount;
+
+    /// <summary>
+    /// Tracks whether compute ResourceSet buffer usage has been captured for the current state version.
+    /// </summary>
+    private bool _computeResourceSetUsageCaptured;
+
+    /// <summary>
+    /// Stores the compute ResourceSet buffer-membership version that has already been captured.
+    /// </summary>
+    private uint _computeResourceSetUsageVersion;
+
+    /// <summary>
+    /// Stores the active compute ResourceSet count that has already been captured.
+    /// </summary>
+    private uint _computeResourceSetUsageCount;
 
     /// <summary>
     /// Plans and records D3D12 texture copy/resolve operations.
@@ -305,6 +355,11 @@ internal sealed class D3D12CommandList : CommandList {
     internal D3D12BoundResourceSetState GraphicsResourceSets => this._graphicsResourceSets;
 
     /// <summary>
+    /// Gets whether experimental stable ResourceSet buffer update bypass tracking is enabled.
+    /// </summary>
+    internal static bool StableResourceSetUpdateFastPathEnabled => _stableResourceSetUpdateFastPathEnabled;
+
+    /// <summary>
     /// Gets the root binding cache for internal D3D12 helpers that temporarily bind root signatures.
     /// </summary>
     internal D3D12RootBindingCache RootBindingCache => this._rootBindingCache;
@@ -362,6 +417,7 @@ internal sealed class D3D12CommandList : CommandList {
         this._viewportScissor.Reset();
         this._inputAssembler.Reset();
         this.ClearDynamicBindingRefreshBuffers();
+        this.ClearUsedResourceSetBuffers();
         this._drawDirtyFlags = 0;
         this._graphicsResourceSets.Clear();
         this._computeResourceSets.Clear();
@@ -429,6 +485,10 @@ internal sealed class D3D12CommandList : CommandList {
         this.FlushQueuedRenderPassClears();
         this.FlushPendingBufferUploads();
         this.FlushComputeResourceSets();
+        if (_stableResourceSetUpdateFastPathEnabled) {
+            this.MarkComputeResourceSetBuffersUsed();
+        }
+
         this.FlushPendingUavBarrier();
         this.FlushPendingBarriers();
         this.DispatchNoAlloc(groupCountX, groupCountY, groupCountZ);
@@ -537,6 +597,10 @@ internal sealed class D3D12CommandList : CommandList {
         this.EndRenderPassForInternalUse();
         this.FlushPendingBufferUploads();
         this.FlushGraphicsResourceSets();
+        if (_stableResourceSetUpdateFastPathEnabled && drawCount != 0) {
+            this.MarkGraphicsResourceSetBuffersUsed();
+        }
+
         D3D12DeviceBuffer d3D12Buffer = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(indirectBuffer);
         uint argumentSize = (uint)Unsafe.SizeOf<IndirectDrawArguments>();
         if (drawCount > 0) {
@@ -588,6 +652,10 @@ internal sealed class D3D12CommandList : CommandList {
         this.EndRenderPassForInternalUse();
         this.FlushPendingBufferUploads();
         this.FlushGraphicsResourceSets();
+        if (_stableResourceSetUpdateFastPathEnabled && drawCount != 0) {
+            this.MarkGraphicsResourceSetBuffersUsed();
+        }
+
         D3D12DeviceBuffer d3D12Buffer = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(indirectBuffer);
         uint argumentSize = (uint)Unsafe.SizeOf<IndirectDrawIndexedArguments>();
         if (drawCount > 0) {
@@ -638,6 +706,10 @@ internal sealed class D3D12CommandList : CommandList {
         this.FlushQueuedRenderPassClears();
         this.FlushPendingBufferUploads();
         this.FlushComputeResourceSets();
+        if (_stableResourceSetUpdateFastPathEnabled) {
+            this.MarkComputeResourceSetBuffersUsed();
+        }
+
         D3D12DeviceBuffer d3d12Buffer = Util.AssertSubtype<DeviceBuffer, D3D12DeviceBuffer>(indirectBuffer);
         uint argumentSize = (uint)Unsafe.SizeOf<IndirectDispatchArguments>();
         ulong requiredSize = (ulong)offset + argumentSize;
@@ -835,6 +907,10 @@ internal sealed class D3D12CommandList : CommandList {
     private protected override void DrawCore(uint vertexCount, uint instanceCount, uint vertexStart, uint instanceStart) {
         long startTicks = D3D12CommandListPerfTracker.Enabled ? Stopwatch.GetTimestamp() : 0;
         this.PreDrawCommand();
+        if (_stableResourceSetUpdateFastPathEnabled && vertexCount != 0 && instanceCount != 0) {
+            this.MarkGraphicsResourceSetBuffersUsed();
+        }
+
         this.DrawInstancedNoAlloc(vertexCount, instanceCount, vertexStart, instanceStart);
         if (D3D12CommandListPerfTracker.Enabled) {
             this._perf.DrawCalls++;
@@ -853,6 +929,10 @@ internal sealed class D3D12CommandList : CommandList {
     private protected override void DrawIndexedCore(uint indexCount, uint instanceCount, uint indexStart, int vertexOffset, uint instanceStart) {
         long startTicks = D3D12CommandListPerfTracker.Enabled ? Stopwatch.GetTimestamp() : 0;
         this.PreDrawCommand();
+        if (_stableResourceSetUpdateFastPathEnabled && indexCount != 0 && instanceCount != 0) {
+            this.MarkGraphicsResourceSetBuffersUsed();
+        }
+
         this.DrawIndexedInstancedNoAlloc(indexCount, instanceCount, indexStart, vertexOffset, instanceStart);
         if (D3D12CommandListPerfTracker.Enabled) {
             this._perf.DrawCalls++;
@@ -1072,17 +1152,17 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     /// <param name="buffer">The dynamic buffer whose binding version changed.</param>
     private void RefreshDynamicBufferBindings(D3D12DeviceBuffer buffer) {
-        ulong bindVersion = this.GetBufferBindVersion(buffer);
         for (uint index = 0; index < this._inputAssembler.MaxBoundVertexBufferSlot; index++) {
             if (!ReferenceEquals(this._inputAssembler.GetVertexBuffer(index), buffer)) {
                 continue;
             }
 
+            uint offset = this._inputAssembler.GetVertexBufferOffset(index);
+            ulong bindVersion = this.GetBufferBindVersion(buffer, offset);
             if (this._inputAssembler.GetVertexBufferVersion(index) == bindVersion) {
                 continue;
             }
 
-            uint offset = this._inputAssembler.GetVertexBufferOffset(index);
             D3D12BufferBindingInfo bindingInfo = this.GetBufferBindingInfo(buffer, offset);
             this.BindVertexBuffer(index, buffer, offset, in bindingInfo);
             this._inputAssembler.SetVertexBufferVersion(index, bindingInfo.BindVersion);
@@ -1095,7 +1175,8 @@ internal sealed class D3D12CommandList : CommandList {
             return;
         }
 
-        if (this._inputAssembler.IndexBufferVersion == bindVersion) {
+        ulong indexBindVersion = this.GetBufferBindVersion(buffer, this._inputAssembler.IndexBufferOffset);
+        if (this._inputAssembler.IndexBufferVersion == indexBindVersion) {
             return;
         }
 
@@ -1122,14 +1203,14 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     /// <param name="buffer">The dynamic buffer whose command-list-local address changed.</param>
     private void MarkDynamicBufferBindingsDirty(D3D12DeviceBuffer buffer) {
-        if (!this.HasStaleDynamicInputAssemblerBinding(buffer)) {
-            return;
-        }
-
         for (int i = 0; i < this._dynamicBindingRefreshBufferCount; i++) {
             if (ReferenceEquals(this._dynamicBindingRefreshBuffers[i], buffer)) {
                 return;
             }
+        }
+
+        if (!this.HasStaleDynamicInputAssemblerBinding(buffer)) {
+            return;
         }
 
         this.AddDynamicBindingRefreshBuffer(buffer);
@@ -1168,17 +1249,21 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="buffer">The dynamic buffer to inspect.</param>
     /// <returns><see langword="true" /> when a deferred refresh is still required.</returns>
     private bool HasStaleDynamicInputAssemblerBinding(D3D12DeviceBuffer buffer) {
-        ulong bindVersion = this.GetBufferBindVersion(buffer);
         for (uint index = 0; index < this._inputAssembler.MaxBoundVertexBufferSlot; index++) {
-            if (ReferenceEquals(this._inputAssembler.GetVertexBuffer(index), buffer)
-                && this._inputAssembler.GetVertexBufferVersion(index) != bindVersion) {
+            if (!ReferenceEquals(this._inputAssembler.GetVertexBuffer(index), buffer)) {
+                continue;
+            }
+
+            uint offset = this._inputAssembler.GetVertexBufferOffset(index);
+            ulong bindVersion = this.GetBufferBindVersion(buffer, offset);
+            if (this._inputAssembler.GetVertexBufferVersion(index) != bindVersion) {
                 return true;
             }
         }
 
         return this._inputAssembler.HasIndexBuffer
                && ReferenceEquals(this._inputAssembler.IndexBuffer, buffer)
-               && this._inputAssembler.IndexBufferVersion != bindVersion;
+               && this._inputAssembler.IndexBufferVersion != this.GetBufferBindVersion(buffer, this._inputAssembler.IndexBufferOffset);
     }
 
     /// <summary>
@@ -1223,6 +1308,133 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
+    /// Checks whether a ResourceSet buffer has already been consumed by this command-list recording.
+    /// </summary>
+    /// <param name="buffer">The buffer to inspect.</param>
+    /// <returns><see langword="true" /> when a previous draw or dispatch may still read the stable buffer address.</returns>
+    internal bool HasResourceSetBufferBeenUsedForInternalUse(D3D12DeviceBuffer buffer) {
+        for (int i = 0; i < this._usedResourceSetBufferCount; i++) {
+            if (ReferenceEquals(this._usedResourceSetBuffers[i], buffer)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Marks buffers referenced by bound graphics resource sets as used by a draw.
+    /// </summary>
+    private void MarkGraphicsResourceSetBuffersUsed() {
+        if (!_stableResourceSetUpdateFastPathEnabled) {
+            return;
+        }
+
+        uint resourceSetCount = this.CurrentGraphicsPipeline?.ResourceSetCount ?? 0u;
+        if (this._graphicsResourceSetUsageCaptured
+            && this._graphicsResourceSetUsageVersion == this._graphicsResourceSets.BufferSetVersion
+            && this._graphicsResourceSetUsageCount == resourceSetCount) {
+            return;
+        }
+
+        this.MarkResourceSetBuffersUsed(this._graphicsResourceSets, resourceSetCount);
+        this._graphicsResourceSetUsageVersion = this._graphicsResourceSets.BufferSetVersion;
+        this._graphicsResourceSetUsageCount = resourceSetCount;
+        this._graphicsResourceSetUsageCaptured = true;
+    }
+
+    /// <summary>
+    /// Marks buffers referenced by bound compute resource sets as used by a dispatch.
+    /// </summary>
+    private void MarkComputeResourceSetBuffersUsed() {
+        if (!_stableResourceSetUpdateFastPathEnabled) {
+            return;
+        }
+
+        uint resourceSetCount = this.CurrentComputePipeline?.ResourceSetCount ?? 0u;
+        if (this._computeResourceSetUsageCaptured
+            && this._computeResourceSetUsageVersion == this._computeResourceSets.BufferSetVersion
+            && this._computeResourceSetUsageCount == resourceSetCount) {
+            return;
+        }
+
+        this.MarkResourceSetBuffersUsed(this._computeResourceSets, resourceSetCount);
+        this._computeResourceSetUsageVersion = this._computeResourceSets.BufferSetVersion;
+        this._computeResourceSetUsageCount = resourceSetCount;
+        this._computeResourceSetUsageCaptured = true;
+    }
+
+    /// <summary>
+    /// Marks buffers referenced by one bind point's active resource sets as used.
+    /// </summary>
+    /// <param name="resourceSets">The resource set state to scan.</param>
+    /// <param name="resourceSetCount">The active pipeline resource set count.</param>
+    private void MarkResourceSetBuffersUsed(D3D12BoundResourceSetState resourceSets, uint resourceSetCount) {
+        int count = Math.Min(resourceSets.BoundSets.Length, resourceSetCount > int.MaxValue ? int.MaxValue : (int)resourceSetCount);
+        int bufferSlotCount = resourceSets.BufferSetSlotCount;
+        for (int bufferSlotIndex = 0; bufferSlotIndex < bufferSlotCount; bufferSlotIndex++) {
+            int slot = resourceSets.GetBufferSetSlot(bufferSlotIndex);
+            if (slot >= count) {
+                continue;
+            }
+
+            if (resourceSets.BoundSets[slot].Set is not D3D12ResourceSet set) {
+                continue;
+            }
+
+            D3D12DeviceBuffer singleBuffer = set.SingleReferencedBuffer;
+            if (singleBuffer != null) {
+                this.TrackUsedResourceSetBuffer(singleBuffer);
+                continue;
+            }
+
+            D3D12DeviceBuffer[] referencedBuffers = set.ReferencedBuffers;
+            for (int i = 0; i < referencedBuffers.Length; i++) {
+                this.TrackUsedResourceSetBuffer(referencedBuffers[i]);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Tracks a single ResourceSet buffer as used by a recorded draw or dispatch.
+    /// </summary>
+    /// <param name="buffer">The buffer to track.</param>
+    private void TrackUsedResourceSetBuffer(D3D12DeviceBuffer buffer) {
+        if (ReferenceEquals(this._lastUsedResourceSetBuffer, buffer)) {
+            return;
+        }
+
+        for (int i = 0; i < this._usedResourceSetBufferCount; i++) {
+            if (ReferenceEquals(this._usedResourceSetBuffers[i], buffer)) {
+                this._lastUsedResourceSetBuffer = buffer;
+                return;
+            }
+        }
+
+        Util.EnsureArrayMinimumSize(ref this._usedResourceSetBuffers, (uint)this._usedResourceSetBufferCount + 1);
+        this._usedResourceSetBuffers[this._usedResourceSetBufferCount++] = buffer;
+        this._lastUsedResourceSetBuffer = buffer;
+    }
+
+    /// <summary>
+    /// Clears the ResourceSet buffer usage list for a new command-list recording.
+    /// </summary>
+    private void ClearUsedResourceSetBuffers() {
+        if (this._usedResourceSetBufferCount != 0) {
+            Array.Clear(this._usedResourceSetBuffers, 0, this._usedResourceSetBufferCount);
+            this._usedResourceSetBufferCount = 0;
+        }
+
+        this._lastUsedResourceSetBuffer = null;
+        this._graphicsResourceSetUsageCaptured = false;
+        this._graphicsResourceSetUsageVersion = 0;
+        this._graphicsResourceSetUsageCount = 0;
+        this._computeResourceSetUsageCaptured = false;
+        this._computeResourceSetUsageVersion = 0;
+        this._computeResourceSetUsageCount = 0;
+    }
+
+    /// <summary>
     /// Gets the command-list-local GPU virtual address for a buffer range.
     /// </summary>
     /// <param name="buffer">The buffer to bind.</param>
@@ -1241,6 +1453,17 @@ internal sealed class D3D12CommandList : CommandList {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private ulong GetBufferBindVersion(D3D12DeviceBuffer buffer) {
         return this._bufferUpdatePlanner.GetBindVersion(buffer);
+    }
+
+    /// <summary>
+    /// Gets the command-list-local bind version for a buffer range.
+    /// </summary>
+    /// <param name="buffer">The buffer to inspect.</param>
+    /// <param name="offset">The byte offset into the buffer.</param>
+    /// <returns>The bind version visible to this command list for the range.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private ulong GetBufferBindVersion(D3D12DeviceBuffer buffer, uint offset) {
+        return this._bufferUpdatePlanner.GetBindVersion(buffer, offset);
     }
 
     /// <summary>
@@ -1420,8 +1643,10 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void PreDrawCommand() {
-        if (this._drawDirtyFlags == 0 && this.NativeCommandList4 == null) {
-            return;
+        if (this._drawDirtyFlags == 0) {
+            if (this.NativeCommandList4 == null || this._renderPassTracker.Active) {
+                return;
+            }
         }
 
         this.PreDrawCommandSlow();
@@ -1435,6 +1660,10 @@ internal sealed class D3D12CommandList : CommandList {
             this.FlushPendingBufferUploads();
         }
 
+        if ((this._drawDirtyFlags & DrawDirtyDynamicInputAssembler) != 0) {
+            this.RefreshDirtyDynamicBufferBindings();
+        }
+
         if ((this._drawDirtyFlags & DrawDirtyGraphicsResourceSets) != 0) {
             this.FlushGraphicsResourceSets();
         }
@@ -1445,10 +1674,6 @@ internal sealed class D3D12CommandList : CommandList {
 
         if ((this._drawDirtyFlags & DrawDirtyResourceBarriers) != 0) {
             this.FlushPendingBarriers();
-        }
-
-        if ((this._drawDirtyFlags & DrawDirtyDynamicInputAssembler) != 0) {
-            this.RefreshDirtyDynamicBufferBindings();
         }
 
         if (this.NativeCommandList4 != null) {
@@ -1857,6 +2082,22 @@ internal sealed class D3D12CommandList : CommandList {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void SetPipelineStateNoAllocForInternalUse(ID3D12PipelineState pipelineState) {
         this.SetPipelineStateNoAlloc(pipelineState);
+    }
+
+    /// <summary>
+    /// Copies a buffer range without going through the managed COM wrapper.
+    /// </summary>
+    /// <param name="destinationBuffer">The destination buffer resource.</param>
+    /// <param name="destinationOffset">The destination byte offset.</param>
+    /// <param name="sourceBuffer">The source buffer resource.</param>
+    /// <param name="sourceOffset">The source byte offset.</param>
+    /// <param name="sizeInBytes">The number of bytes to copy.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal unsafe void CopyBufferRegionNoAllocForInternalUse(ID3D12Resource destinationBuffer, ulong destinationOffset, ID3D12Resource sourceBuffer, ulong sourceOffset, ulong sizeInBytes) {
+        void** vtbl = (void**)this._nativeCommandListVTable;
+        delegate* unmanaged[Stdcall]<void*, void*, ulong, void*, ulong, ulong, void> copyBufferRegion =
+            (delegate* unmanaged[Stdcall]<void*, void*, ulong, void*, ulong, ulong, void>)vtbl[15];
+        copyBufferRegion((void*)this._nativeCommandListPointer, (void*)destinationBuffer.NativePointer, destinationOffset, (void*)sourceBuffer.NativePointer, sourceOffset, sizeInBytes);
     }
 
     /// <summary>

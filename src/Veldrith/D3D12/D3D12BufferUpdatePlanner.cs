@@ -99,6 +99,16 @@ internal sealed class D3D12BufferUpdatePlanner {
     private readonly List<PendingBufferState> _pendingBuffers = new(8);
 
     /// <summary>
+    /// Stores unique destination buffers touched by the pending update batch without capturing state yet.
+    /// </summary>
+    private readonly List<D3D12DeviceBuffer> _pendingUpdateBuffers = new(8);
+
+    /// <summary>
+    /// Stores the most recently registered pending destination buffer.
+    /// </summary>
+    private D3D12DeviceBuffer _lastPendingUpdateBuffer;
+
+    /// <summary>
     /// Stores command-list-local dynamic buffer snapshots used by subsequently recorded bindings.
     /// </summary>
     private readonly List<DynamicSnapshotBinding> _dynamicSnapshots = new(16);
@@ -180,7 +190,27 @@ internal sealed class D3D12BufferUpdatePlanner {
     /// <returns>The command-list-local bind version.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal ulong GetBindVersion(D3D12DeviceBuffer buffer) {
+        if (!buffer.UsesCommandListSnapshots || this._dynamicSnapshots.Count == 0) {
+            return 0;
+        }
+
         int index = this.FindDynamicSnapshot(buffer);
+        return index >= 0 ? this._dynamicSnapshots[index].BindVersion : 0;
+    }
+
+    /// <summary>
+    /// Gets the bind version visible to this command list for a buffer range.
+    /// </summary>
+    /// <param name="buffer">The buffer to inspect.</param>
+    /// <param name="offset">The byte offset into the buffer.</param>
+    /// <returns>The command-list-local bind version for the range.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal ulong GetBindVersion(D3D12DeviceBuffer buffer, uint offset) {
+        if (!buffer.UsesCommandListSnapshots || this._dynamicSnapshots.Count == 0) {
+            return 0;
+        }
+
+        int index = this.FindDynamicSnapshot(buffer, offset);
         return index >= 0 ? this._dynamicSnapshots[index].BindVersion : 0;
     }
 
@@ -192,18 +222,18 @@ internal sealed class D3D12BufferUpdatePlanner {
     /// <returns>The resolved binding information.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal D3D12BufferBindingInfo GetBindingInfo(D3D12DeviceBuffer buffer, uint offset) {
-        int index = this.FindDynamicSnapshot(buffer);
+        if (!buffer.UsesCommandListSnapshots || this._dynamicSnapshots.Count == 0) {
+            return new D3D12BufferBindingInfo(buffer.GetGpuVirtualAddress(offset), buffer.GetBindableSize(offset), 0);
+        }
+
+        int index = this.FindDynamicSnapshot(buffer, offset);
         if (index >= 0) {
             DynamicSnapshotBinding snapshot = this._dynamicSnapshots[index];
-            if (snapshot.Contains(offset)) {
-                uint snapshotOffset = offset - snapshot.DestinationOffset;
-                return new D3D12BufferBindingInfo(
-                    snapshot.Resource.GPUVirtualAddress + snapshot.Offset + snapshotOffset,
-                    snapshot.SizeInBytes - snapshotOffset,
-                    snapshot.BindVersion);
-            }
-
-            return new D3D12BufferBindingInfo(buffer.GetGpuVirtualAddress(offset), buffer.GetBindableSize(offset), snapshot.BindVersion);
+            uint snapshotOffset = offset - snapshot.DestinationOffset;
+            return new D3D12BufferBindingInfo(
+                snapshot.GpuVirtualAddress + snapshotOffset,
+                snapshot.SizeInBytes - snapshotOffset,
+                snapshot.BindVersion);
         }
 
         return new D3D12BufferBindingInfo(buffer.GetGpuVirtualAddress(offset), buffer.GetBindableSize(offset), 0);
@@ -217,12 +247,14 @@ internal sealed class D3D12BufferUpdatePlanner {
     /// <returns>The command-list-local GPU virtual address.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal ulong GetGpuVirtualAddress(D3D12DeviceBuffer buffer, uint offset) {
-        int index = this.FindDynamicSnapshot(buffer);
+        if (!buffer.UsesCommandListSnapshots || this._dynamicSnapshots.Count == 0) {
+            return buffer.GetGpuVirtualAddress(offset);
+        }
+
+        int index = this.FindDynamicSnapshot(buffer, offset);
         if (index >= 0) {
             DynamicSnapshotBinding snapshot = this._dynamicSnapshots[index];
-            if (snapshot.Contains(offset)) {
-                return snapshot.Resource.GPUVirtualAddress + snapshot.Offset + (offset - snapshot.DestinationOffset);
-            }
+            return snapshot.GpuVirtualAddress + (offset - snapshot.DestinationOffset);
         }
 
         return buffer.GetGpuVirtualAddress(offset);
@@ -236,12 +268,14 @@ internal sealed class D3D12BufferUpdatePlanner {
     /// <returns>The command-list-local bindable size.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal uint GetBindableSize(D3D12DeviceBuffer buffer, uint offset) {
-        int index = this.FindDynamicSnapshot(buffer);
+        if (!buffer.UsesCommandListSnapshots || this._dynamicSnapshots.Count == 0) {
+            return buffer.GetBindableSize(offset);
+        }
+
+        int index = this.FindDynamicSnapshot(buffer, offset);
         if (index >= 0) {
             DynamicSnapshotBinding snapshot = this._dynamicSnapshots[index];
-            if (snapshot.Contains(offset)) {
-                return snapshot.SizeInBytes - (offset - snapshot.DestinationOffset);
-            }
+            return snapshot.SizeInBytes - (offset - snapshot.DestinationOffset);
         }
 
         return buffer.GetBindableSize(offset);
@@ -256,6 +290,8 @@ internal sealed class D3D12BufferUpdatePlanner {
         this.ReturnPendingUpload();
         this._pendingUpdates.Clear();
         this._pendingBuffers.Clear();
+        this._pendingUpdateBuffers.Clear();
+        this._lastPendingUpdateBuffer = null;
         this._batchedUploadOffset = 0;
         this._dynamicSnapshotUploadPage = null;
         this._dynamicSnapshotUploadOffset = 0;
@@ -297,18 +333,24 @@ internal sealed class D3D12BufferUpdatePlanner {
         }
         else {
             if (d3D12Buffer.UsesCommandListSnapshots) {
-                if (d3D12Buffer.RequiresCommandListSnapshotCpuMirror) {
+                if (this.CanUpdateStableResourceSetBufferWithoutSnapshot(d3D12Buffer)) {
                     d3D12Buffer.Update(null, source, bufferOffsetInBytes, sizeInBytes);
                 }
                 else {
+                    IntPtr snapshotSource = source;
+                    uint snapshotOffset = bufferOffsetInBytes;
+                    uint snapshotSize = sizeInBytes;
                     d3D12Buffer.ValidateBufferUpdateRange(bufferOffsetInBytes, sizeInBytes);
-                }
+                    if (d3D12Buffer.RequiresCommandListSnapshotCpuMirror) {
+                        d3D12Buffer.WriteMappedCpuVisibleDataForInternalUse(source, bufferOffsetInBytes, sizeInBytes);
+                    }
 
-                DynamicSnapshotUploadSlice snapshot = this.AllocateDynamicSnapshotUpload(sizeInBytes);
-                CopySnapshotPayload(source, snapshot.MappedPointer, sizeInBytes);
-                this.TrackDynamicSnapshot(d3D12Buffer, snapshot.Resource, snapshot.Offset, bufferOffsetInBytes, sizeInBytes);
-                bindingAddressChanged = true;
-                this.RecordDynamicSnapshotMetrics(sizeInBytes);
+                    DynamicSnapshotUploadSlice snapshot = this.AllocateDynamicSnapshotUpload(d3D12Buffer, snapshotSize);
+                    CopySnapshotPayload(snapshotSource, snapshot.MappedPointer, snapshotSize);
+                    this.TrackDynamicSnapshot(d3D12Buffer, snapshot.Resource, snapshot.Offset, snapshot.GpuVirtualAddress, snapshotOffset, snapshotSize);
+                    bindingAddressChanged = true;
+                    this.RecordDynamicSnapshotMetrics(snapshotSize);
+                }
             }
             else {
                 d3D12Buffer.Update(null, source, bufferOffsetInBytes, sizeInBytes);
@@ -348,7 +390,7 @@ internal sealed class D3D12BufferUpdatePlanner {
 
             for (int i = 0; i < this._pendingUpdates.Count; i++) {
                 PendingUpdate update = this._pendingUpdates[i];
-                this._commandList.NativeCommandList.CopyBufferRegion(update.Buffer.NativeBuffer, update.DestinationOffset, upload.Resource, upload.Offset + update.UploadOffset, update.SizeInBytes);
+                this._commandList.CopyBufferRegionNoAllocForInternalUse(update.Buffer.NativeBuffer, update.DestinationOffset, upload.Resource, upload.Offset + update.UploadOffset, update.SizeInBytes);
             }
 
             for (int i = 0; i < this._pendingBuffers.Count; i++) {
@@ -367,6 +409,8 @@ internal sealed class D3D12BufferUpdatePlanner {
 
             this._pendingUpdates.Clear();
             this._pendingBuffers.Clear();
+            this._pendingUpdateBuffers.Clear();
+            this._lastPendingUpdateBuffer = null;
             this._batchedUploadOffset = 0;
         }
     }
@@ -386,7 +430,7 @@ internal sealed class D3D12BufferUpdatePlanner {
             ResourceStates previousState = buffer.CurrentState;
             this._commandList.TransitionBufferForInternalUse(buffer, ResourceStates.CopyDest);
             this._commandList.FlushPendingBarriersForInternalUse();
-            this._commandList.NativeCommandList.CopyBufferRegion(buffer.NativeBuffer, bufferOffsetInBytes, upload.Resource, upload.Offset, sizeInBytes);
+            this._commandList.CopyBufferRegionNoAllocForInternalUse(buffer.NativeBuffer, bufferOffsetInBytes, upload.Resource, upload.Offset, sizeInBytes);
             this._commandList.TransitionBufferForInternalUse(buffer, previousState);
             this._commandList.TrackPendingSubmissionUploadBufferForInternalUse(upload);
             upload = null;
@@ -406,12 +450,12 @@ internal sealed class D3D12BufferUpdatePlanner {
     /// <param name="source">The source data pointer.</param>
     /// <param name="sizeInBytes">The number of bytes to copy.</param>
     private unsafe void QueueGpuBufferUpdate(D3D12DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes) {
-        buffer.ValidateCommandListUpdateRange(bufferOffsetInBytes, sizeInBytes);
+        buffer.ValidateBufferUpdateRange(bufferOffsetInBytes, sizeInBytes);
         this.EnsureBatchedUploadSpace(sizeInBytes);
 
         ulong uploadOffset = this._batchedUploadOffset;
         byte* destination = (byte*)this._batchedUpload.MappedPointer.ToPointer() + uploadOffset;
-        Buffer.MemoryCopy(source.ToPointer(), destination, sizeInBytes, sizeInBytes);
+        CopyMemory(source.ToPointer(), destination, sizeInBytes);
         this.AppendOrMergePendingUpdate(buffer, bufferOffsetInBytes, uploadOffset, sizeInBytes);
         this._batchedUploadOffset = AlignUp(uploadOffset + sizeInBytes, 4);
 
@@ -438,6 +482,7 @@ internal sealed class D3D12BufferUpdatePlanner {
         }
 
         this._pendingUpdates.Add(new PendingUpdate(buffer, destinationOffset, uploadOffset, sizeInBytes));
+        this.TrackPendingUpdateBuffer(buffer);
     }
 
     /// <summary>
@@ -460,31 +505,32 @@ internal sealed class D3D12BufferUpdatePlanner {
     /// </summary>
     private void CapturePendingBufferStates() {
         this._pendingBuffers.Clear();
-        D3D12DeviceBuffer lastPendingBuffer = null;
-        for (int i = 0; i < this._pendingUpdates.Count; i++) {
-            D3D12DeviceBuffer buffer = this._pendingUpdates[i].Buffer;
-            if (ReferenceEquals(buffer, lastPendingBuffer) || this.HasPendingBuffer(buffer)) {
-                continue;
-            }
-
+        for (int i = 0; i < this._pendingUpdateBuffers.Count; i++) {
+            D3D12DeviceBuffer buffer = this._pendingUpdateBuffers[i];
             this._pendingBuffers.Add(new PendingBufferState(buffer, buffer.CurrentState));
-            lastPendingBuffer = buffer;
         }
     }
 
     /// <summary>
-    /// Checks whether the pending-buffer list already contains a buffer.
+    /// Tracks a unique destination buffer for the current upload batch.
     /// </summary>
     /// <param name="buffer">The buffer to find.</param>
-    /// <returns><see langword="true" /> when the buffer is already tracked.</returns>
-    private bool HasPendingBuffer(D3D12DeviceBuffer buffer) {
-        for (int i = 0; i < this._pendingBuffers.Count; i++) {
-            if (ReferenceEquals(this._pendingBuffers[i].Buffer, buffer)) {
-                return true;
-            }
+    private void TrackPendingUpdateBuffer(D3D12DeviceBuffer buffer) {
+        if (ReferenceEquals(this._lastPendingUpdateBuffer, buffer)) {
+            return;
         }
 
-        return false;
+        for (int i = 0; i < this._pendingUpdateBuffers.Count; i++) {
+            if (!ReferenceEquals(this._pendingUpdateBuffers[i], buffer)) {
+                continue;
+            }
+
+            this._lastPendingUpdateBuffer = buffer;
+            return;
+        }
+
+        this._pendingUpdateBuffers.Add(buffer);
+        this._lastPendingUpdateBuffer = buffer;
     }
 
     /// <summary>
@@ -556,16 +602,35 @@ internal sealed class D3D12BufferUpdatePlanner {
     /// <param name="buffer">The dynamic buffer to track.</param>
     /// <param name="resource">The upload resource containing the snapshot bytes.</param>
     /// <param name="snapshotOffset">The byte offset inside the upload resource.</param>
+    /// <param name="gpuVirtualAddress">The absolute GPU address of the first snapshot byte.</param>
     /// <param name="destinationOffset">The logical byte offset represented by the first snapshot byte.</param>
     /// <param name="snapshotSize">The number of valid bytes in the snapshot.</param>
-    private void TrackDynamicSnapshot(D3D12DeviceBuffer buffer, ID3D12Resource resource, ulong snapshotOffset, uint destinationOffset, uint snapshotSize) {
+    private void TrackDynamicSnapshot(D3D12DeviceBuffer buffer, ID3D12Resource resource, ulong snapshotOffset, ulong gpuVirtualAddress, uint destinationOffset, uint snapshotSize) {
         if (resource == null || snapshotSize == 0) {
             return;
         }
 
-        DynamicSnapshotBinding binding = new(buffer, resource, snapshotOffset, destinationOffset, snapshotSize, ++this._dynamicSnapshotVersion);
+        DynamicSnapshotBinding binding = new(buffer, resource, snapshotOffset, gpuVirtualAddress, destinationOffset, snapshotSize, ++this._dynamicSnapshotVersion);
+        if (ReferenceEquals(this._lastDynamicSnapshotBuffer, buffer)
+            && (uint)this._lastDynamicSnapshotIndex < (uint)this._dynamicSnapshots.Count
+            && ReferenceEquals(this._dynamicSnapshots[this._lastDynamicSnapshotIndex].Buffer, buffer)
+            && this._dynamicSnapshots[this._lastDynamicSnapshotIndex].DestinationOffset == destinationOffset) {
+            this._dynamicSnapshots[this._lastDynamicSnapshotIndex] = binding;
+            return;
+        }
+
+        if (ReferenceEquals(this._secondLastDynamicSnapshotBuffer, buffer)
+            && (uint)this._secondLastDynamicSnapshotIndex < (uint)this._dynamicSnapshots.Count
+            && ReferenceEquals(this._dynamicSnapshots[this._secondLastDynamicSnapshotIndex].Buffer, buffer)
+            && this._dynamicSnapshots[this._secondLastDynamicSnapshotIndex].DestinationOffset == destinationOffset) {
+            this._dynamicSnapshots[this._secondLastDynamicSnapshotIndex] = binding;
+            this.CacheDynamicSnapshotLookup(buffer, this._secondLastDynamicSnapshotIndex);
+            return;
+        }
+
         for (int i = 0; i < this._dynamicSnapshots.Count; i++) {
-            if (ReferenceEquals(this._dynamicSnapshots[i].Buffer, buffer)) {
+            if (ReferenceEquals(this._dynamicSnapshots[i].Buffer, buffer)
+                && this._dynamicSnapshots[i].DestinationOffset == destinationOffset) {
                 this._dynamicSnapshots[i] = binding;
                 this.CacheDynamicSnapshotLookup(buffer, i);
                 return;
@@ -591,16 +656,19 @@ internal sealed class D3D12BufferUpdatePlanner {
     /// <summary>
     /// Allocates a command-list-local upload slice for a dynamic snapshot.
     /// </summary>
+    /// <param name="buffer">The dynamic buffer represented by the snapshot.</param>
     /// <param name="sizeInBytes">The required snapshot size.</param>
     /// <returns>The upload slice to write and bind.</returns>
-    private DynamicSnapshotUploadSlice AllocateDynamicSnapshotUpload(uint sizeInBytes) {
+    private DynamicSnapshotUploadSlice AllocateDynamicSnapshotUpload(D3D12DeviceBuffer buffer, uint sizeInBytes) {
+        ulong alignment = GetDynamicSnapshotUploadAlignment(buffer);
         if (sizeInBytes > DynamicSnapshotUploadPageSize) {
-            D3D12ResourceAllocation largeUpload = this._gd.RentUploadBuffer(sizeInBytes, DynamicSnapshotUploadAlignment);
+            D3D12ResourceAllocation largeUpload = this._gd.RentUploadBuffer(sizeInBytes, alignment);
             this._commandList.TrackPendingSubmissionUploadBufferForInternalUse(largeUpload);
-            return new DynamicSnapshotUploadSlice(largeUpload.Resource, largeUpload.Offset, largeUpload.MappedPointer);
+            ulong gpuVirtualAddress = largeUpload.Resource.GPUVirtualAddress + largeUpload.Offset;
+            return new DynamicSnapshotUploadSlice(largeUpload.Resource, largeUpload.Offset, gpuVirtualAddress, largeUpload.MappedPointer);
         }
 
-        ulong alignedOffset = this._dynamicSnapshotUploadPage != null ? AlignUp(this._dynamicSnapshotUploadOffset, DynamicSnapshotUploadAlignment) : 0;
+        ulong alignedOffset = this._dynamicSnapshotUploadPage != null ? AlignUp(this._dynamicSnapshotUploadOffset, alignment) : 0;
         if (this._dynamicSnapshotUploadPage == null || alignedOffset + sizeInBytes > this._dynamicSnapshotUploadPage.Size) {
             this._dynamicSnapshotUploadPage = this._gd.RentUploadBuffer(DynamicSnapshotUploadPageSize, DynamicSnapshotUploadAlignment);
             this._commandList.TrackPendingSubmissionUploadBufferForInternalUse(this._dynamicSnapshotUploadPage);
@@ -609,8 +677,24 @@ internal sealed class D3D12BufferUpdatePlanner {
 
         IntPtr mappedPointer = IntPtr.Add(this._dynamicSnapshotUploadPage.MappedPointer, checked((int)alignedOffset));
         ulong resourceOffset = this._dynamicSnapshotUploadPage.Offset + alignedOffset;
-        this._dynamicSnapshotUploadOffset = AlignUp(alignedOffset + sizeInBytes, DynamicSnapshotUploadAlignment);
-        return new DynamicSnapshotUploadSlice(this._dynamicSnapshotUploadPage.Resource, resourceOffset, mappedPointer);
+        ulong gpuAddress = this._dynamicSnapshotUploadPage.Resource.GPUVirtualAddress + resourceOffset;
+        this._dynamicSnapshotUploadOffset = AlignUp(alignedOffset + sizeInBytes, alignment);
+        return new DynamicSnapshotUploadSlice(this._dynamicSnapshotUploadPage.Resource, resourceOffset, gpuAddress, mappedPointer);
+    }
+
+    /// <summary>
+    /// Gets the required upload alignment for a dynamic snapshot.
+    /// </summary>
+    /// <param name="buffer">The dynamic buffer represented by the snapshot.</param>
+    /// <returns>The upload alignment in bytes.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static ulong GetDynamicSnapshotUploadAlignment(D3D12DeviceBuffer buffer) {
+        const BufferUsage pureInputAssemblerDynamic = BufferUsage.Dynamic | BufferUsage.VertexBuffer | BufferUsage.IndexBuffer;
+        if ((buffer.Usage & ~pureInputAssemblerDynamic) != 0) {
+            return DynamicSnapshotUploadAlignment;
+        }
+
+        return (buffer.Usage & BufferUsage.VertexBuffer) != 0 ? 16UL : 4UL;
     }
 
     /// <summary>
@@ -620,7 +704,7 @@ internal sealed class D3D12BufferUpdatePlanner {
     /// <param name="destination">The mapped upload pointer.</param>
     /// <param name="sizeInBytes">The number of bytes to copy.</param>
     private static unsafe void CopySnapshotPayload(IntPtr source, IntPtr destination, uint sizeInBytes) {
-        Buffer.MemoryCopy(source.ToPointer(), destination.ToPointer(), sizeInBytes, sizeInBytes);
+        CopyMemory(source.ToPointer(), destination.ToPointer(), sizeInBytes);
     }
 
     /// <summary>
@@ -635,6 +719,18 @@ internal sealed class D3D12BufferUpdatePlanner {
         if (CanBeInputAssemblerBuffer(buffer)) {
             this._commandList.RefreshDynamicBufferBindingsForInternalUse(buffer);
         }
+    }
+
+    /// <summary>
+    /// Checks whether a dynamic ResourceSet buffer can be updated through its stable CPU-visible backing store.
+    /// </summary>
+    /// <param name="buffer">The buffer to inspect.</param>
+    /// <returns><see langword="true" /> when no previous draw or dispatch can still read the old stable contents.</returns>
+    private bool CanUpdateStableResourceSetBufferWithoutSnapshot(D3D12DeviceBuffer buffer) {
+        return D3D12CommandList.StableResourceSetUpdateFastPathEnabled
+               && buffer.RequiresCommandListSnapshotCpuMirror
+               && !CanBeInputAssemblerBuffer(buffer)
+               && !this._commandList.HasResourceSetBufferBeenUsedForInternalUse(buffer);
     }
 
     /// <summary>
@@ -679,6 +775,21 @@ internal sealed class D3D12BufferUpdatePlanner {
     }
 
     /// <summary>
+    /// Copies buffer update payload into mapped upload memory.
+    /// </summary>
+    /// <param name="source">The source memory.</param>
+    /// <param name="destination">The destination memory.</param>
+    /// <param name="byteCount">The number of bytes to copy.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static unsafe void CopyMemory(void* source, void* destination, uint byteCount) {
+        if (byteCount == 0) {
+            return;
+        }
+
+        Unsafe.CopyBlockUnaligned(destination, source, byteCount);
+    }
+
+    /// <summary>
     /// Finds the command-list-local dynamic snapshot for a buffer.
     /// </summary>
     /// <param name="buffer">The buffer to find.</param>
@@ -699,6 +810,39 @@ internal sealed class D3D12BufferUpdatePlanner {
 
         for (int i = 0; i < this._dynamicSnapshots.Count; i++) {
             if (ReferenceEquals(this._dynamicSnapshots[i].Buffer, buffer)) {
+                this.CacheDynamicSnapshotLookup(buffer, i);
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    /// <summary>
+    /// Finds the newest command-list-local dynamic snapshot covering a buffer offset.
+    /// </summary>
+    /// <param name="buffer">The buffer to find.</param>
+    /// <param name="offset">The logical buffer offset that must be covered.</param>
+    /// <returns>The snapshot index, or -1 when no snapshot covers the offset.</returns>
+    private int FindDynamicSnapshot(D3D12DeviceBuffer buffer, uint offset) {
+        if (ReferenceEquals(this._lastDynamicSnapshotBuffer, buffer)
+            && (uint)this._lastDynamicSnapshotIndex < (uint)this._dynamicSnapshots.Count
+            && ReferenceEquals(this._dynamicSnapshots[this._lastDynamicSnapshotIndex].Buffer, buffer)
+            && this._dynamicSnapshots[this._lastDynamicSnapshotIndex].Contains(offset)) {
+            return this._lastDynamicSnapshotIndex;
+        }
+
+        if (ReferenceEquals(this._secondLastDynamicSnapshotBuffer, buffer)
+            && (uint)this._secondLastDynamicSnapshotIndex < (uint)this._dynamicSnapshots.Count
+            && ReferenceEquals(this._dynamicSnapshots[this._secondLastDynamicSnapshotIndex].Buffer, buffer)
+            && this._dynamicSnapshots[this._secondLastDynamicSnapshotIndex].Contains(offset)) {
+            this.CacheDynamicSnapshotLookup(buffer, this._secondLastDynamicSnapshotIndex);
+            return this._lastDynamicSnapshotIndex;
+        }
+
+        for (int i = this._dynamicSnapshots.Count - 1; i >= 0; i--) {
+            DynamicSnapshotBinding snapshot = this._dynamicSnapshots[i];
+            if (ReferenceEquals(snapshot.Buffer, buffer) && snapshot.Contains(offset)) {
                 this.CacheDynamicSnapshotLookup(buffer, i);
                 return i;
             }
@@ -811,10 +955,12 @@ internal sealed class D3D12BufferUpdatePlanner {
         /// </summary>
         /// <param name="resource">The upload resource containing the slice.</param>
         /// <param name="offset">The byte offset inside the upload resource.</param>
+        /// <param name="gpuVirtualAddress">The absolute GPU address for the first slice byte.</param>
         /// <param name="mappedPointer">The mapped CPU pointer for the first slice byte.</param>
-        public DynamicSnapshotUploadSlice(ID3D12Resource resource, ulong offset, IntPtr mappedPointer) {
+        public DynamicSnapshotUploadSlice(ID3D12Resource resource, ulong offset, ulong gpuVirtualAddress, IntPtr mappedPointer) {
             this.Resource = resource;
             this.Offset = offset;
+            this.GpuVirtualAddress = gpuVirtualAddress;
             this.MappedPointer = mappedPointer;
         }
 
@@ -827,6 +973,11 @@ internal sealed class D3D12BufferUpdatePlanner {
         /// Gets the byte offset inside the upload resource.
         /// </summary>
         public ulong Offset { get; }
+
+        /// <summary>
+        /// Gets the absolute GPU address for the first slice byte.
+        /// </summary>
+        public ulong GpuVirtualAddress { get; }
 
         /// <summary>
         /// Gets the mapped CPU pointer for the first slice byte.
@@ -845,13 +996,15 @@ internal sealed class D3D12BufferUpdatePlanner {
         /// <param name="buffer">The logical buffer represented by this snapshot.</param>
         /// <param name="resource">The upload resource containing the snapshot bytes.</param>
         /// <param name="offset">The byte offset inside the upload resource.</param>
+        /// <param name="gpuVirtualAddress">The absolute GPU address for the first snapshot byte.</param>
         /// <param name="destinationOffset">The logical byte offset represented by the first snapshot byte.</param>
         /// <param name="sizeInBytes">The number of valid bytes in the snapshot.</param>
         /// <param name="bindVersion">The bind version associated with this snapshot.</param>
-        public DynamicSnapshotBinding(D3D12DeviceBuffer buffer, ID3D12Resource resource, ulong offset, uint destinationOffset, uint sizeInBytes, ulong bindVersion) {
+        public DynamicSnapshotBinding(D3D12DeviceBuffer buffer, ID3D12Resource resource, ulong offset, ulong gpuVirtualAddress, uint destinationOffset, uint sizeInBytes, ulong bindVersion) {
             this.Buffer = buffer;
             this.Resource = resource;
             this.Offset = offset;
+            this.GpuVirtualAddress = gpuVirtualAddress;
             this.DestinationOffset = destinationOffset;
             this.SizeInBytes = sizeInBytes;
             this.BindVersion = bindVersion;
@@ -871,6 +1024,11 @@ internal sealed class D3D12BufferUpdatePlanner {
         /// Gets the byte offset inside the upload resource.
         /// </summary>
         internal ulong Offset { get; }
+
+        /// <summary>
+        /// Gets the absolute GPU address for <see cref="DestinationOffset"/>.
+        /// </summary>
+        internal ulong GpuVirtualAddress { get; }
 
         /// <summary>
         /// Gets the logical byte offset represented by the first snapshot byte.
@@ -895,5 +1053,6 @@ internal sealed class D3D12BufferUpdatePlanner {
         internal bool Contains(uint offset) {
             return offset >= this.DestinationOffset && offset - this.DestinationOffset < this.SizeInBytes;
         }
+
     }
 }

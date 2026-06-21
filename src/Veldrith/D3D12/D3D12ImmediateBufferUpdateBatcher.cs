@@ -37,6 +37,16 @@ internal sealed class D3D12ImmediateBufferUpdateBatcher {
     private readonly List<PendingBufferState> _pendingBuffers = new(8);
 
     /// <summary>
+    /// Stores unique destination buffers touched by the queued immediate update batch without capturing state yet.
+    /// </summary>
+    private readonly List<D3D12DeviceBuffer> _pendingUpdateBuffers = new(8);
+
+    /// <summary>
+    /// Stores the most recently registered pending destination buffer.
+    /// </summary>
+    private D3D12DeviceBuffer _lastPendingUpdateBuffer;
+
+    /// <summary>
     /// Stores transition barriers before they are emitted into the immediate command list.
     /// </summary>
     private ResourceBarrier[] _barrierBatch = new ResourceBarrier[32];
@@ -83,12 +93,12 @@ internal sealed class D3D12ImmediateBufferUpdateBatcher {
     /// <param name="sizeInBytes">The number of bytes to copy.</param>
     /// <returns>A newly rented upload allocation that must be retained until the batch completes, or <see langword="null" />.</returns>
     internal unsafe D3D12ResourceAllocation QueueLocked(ID3D12GraphicsCommandList commandList, D3D12DeviceBuffer buffer, IntPtr source, uint bufferOffsetInBytes, uint sizeInBytes) {
-        buffer.ValidateCommandListUpdateRange(bufferOffsetInBytes, sizeInBytes);
+        buffer.ValidateBufferUpdateRange(bufferOffsetInBytes, sizeInBytes);
 
         D3D12ResourceAllocation uploadToRetain = this.EnsureBatchedUploadSpace(commandList, sizeInBytes);
         ulong uploadOffset = this._batchedUploadOffset;
         byte* destination = (byte*)this._batchedUpload.MappedPointer.ToPointer() + uploadOffset;
-        Buffer.MemoryCopy(source.ToPointer(), destination, sizeInBytes, sizeInBytes);
+        CopyMemory(source.ToPointer(), destination, sizeInBytes);
         this.AppendOrMergePendingUpdate(buffer, this._batchedUpload, bufferOffsetInBytes, uploadOffset, sizeInBytes);
         this._batchedUploadOffset = AlignUp(uploadOffset + sizeInBytes, 4);
         return uploadToRetain;
@@ -111,7 +121,7 @@ internal sealed class D3D12ImmediateBufferUpdateBatcher {
         this.FlushTransitionBarriers(commandList);
         for (int i = 0; i < this._pendingUpdates.Count; i++) {
             PendingUpdate update = this._pendingUpdates[i];
-            commandList.CopyBufferRegion(update.Buffer.NativeBuffer, update.DestinationOffset, update.Upload.Resource, update.Upload.Offset + update.UploadOffset, update.SizeInBytes);
+            CopyBufferRegionNoAlloc(commandList, update.Buffer.NativeBuffer, update.DestinationOffset, update.Upload.Resource, update.Upload.Offset + update.UploadOffset, update.SizeInBytes);
         }
 
         for (int i = 0; i < this._pendingBuffers.Count; i++) {
@@ -122,6 +132,8 @@ internal sealed class D3D12ImmediateBufferUpdateBatcher {
         this.FlushTransitionBarriers(commandList);
         this._pendingUpdates.Clear();
         this._pendingBuffers.Clear();
+        this._pendingUpdateBuffers.Clear();
+        this._lastPendingUpdateBuffer = null;
     }
 
     /// <summary>
@@ -130,6 +142,8 @@ internal sealed class D3D12ImmediateBufferUpdateBatcher {
     internal void ResetAfterFlush() {
         this._pendingUpdates.Clear();
         this._pendingBuffers.Clear();
+        this._pendingUpdateBuffers.Clear();
+        this._lastPendingUpdateBuffer = null;
         this._pendingBarrierCount = 0;
         this._batchedUpload = null;
         this._batchedUploadOffset = 0;
@@ -174,6 +188,7 @@ internal sealed class D3D12ImmediateBufferUpdateBatcher {
         }
 
         this._pendingUpdates.Add(new PendingUpdate(buffer, upload, destinationOffset, uploadOffset, sizeInBytes));
+        this.TrackPendingUpdateBuffer(buffer);
     }
 
     /// <summary>
@@ -181,31 +196,32 @@ internal sealed class D3D12ImmediateBufferUpdateBatcher {
     /// </summary>
     private void CapturePendingBufferStates() {
         this._pendingBuffers.Clear();
-        D3D12DeviceBuffer lastPendingBuffer = null;
-        for (int i = 0; i < this._pendingUpdates.Count; i++) {
-            D3D12DeviceBuffer buffer = this._pendingUpdates[i].Buffer;
-            if (ReferenceEquals(buffer, lastPendingBuffer) || this.HasPendingBuffer(buffer)) {
-                continue;
-            }
-
+        for (int i = 0; i < this._pendingUpdateBuffers.Count; i++) {
+            D3D12DeviceBuffer buffer = this._pendingUpdateBuffers[i];
             this._pendingBuffers.Add(new PendingBufferState(buffer, buffer.CurrentState));
-            lastPendingBuffer = buffer;
         }
     }
 
     /// <summary>
-    /// Checks whether the pending-buffer list already contains a buffer.
+    /// Tracks a unique destination buffer for the current immediate update batch.
     /// </summary>
     /// <param name="buffer">The buffer to find.</param>
-    /// <returns><see langword="true" /> when the buffer is already tracked.</returns>
-    private bool HasPendingBuffer(D3D12DeviceBuffer buffer) {
-        for (int i = 0; i < this._pendingBuffers.Count; i++) {
-            if (ReferenceEquals(this._pendingBuffers[i].Buffer, buffer)) {
-                return true;
-            }
+    private void TrackPendingUpdateBuffer(D3D12DeviceBuffer buffer) {
+        if (ReferenceEquals(this._lastPendingUpdateBuffer, buffer)) {
+            return;
         }
 
-        return false;
+        for (int i = 0; i < this._pendingUpdateBuffers.Count; i++) {
+            if (!ReferenceEquals(this._pendingUpdateBuffers[i], buffer)) {
+                continue;
+            }
+
+            this._lastPendingUpdateBuffer = buffer;
+            return;
+        }
+
+        this._pendingUpdateBuffers.Add(buffer);
+        this._lastPendingUpdateBuffer = buffer;
     }
 
     /// <summary>
@@ -270,6 +286,23 @@ internal sealed class D3D12ImmediateBufferUpdateBatcher {
     }
 
     /// <summary>
+    /// Copies a buffer range without going through the managed COM wrapper.
+    /// </summary>
+    /// <param name="commandList">The native command list that receives the copy command.</param>
+    /// <param name="destinationBuffer">The destination buffer resource.</param>
+    /// <param name="destinationOffset">The destination byte offset.</param>
+    /// <param name="sourceBuffer">The source buffer resource.</param>
+    /// <param name="sourceOffset">The source byte offset.</param>
+    /// <param name="sizeInBytes">The number of bytes to copy.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static unsafe void CopyBufferRegionNoAlloc(ID3D12GraphicsCommandList commandList, ID3D12Resource destinationBuffer, ulong destinationOffset, ID3D12Resource sourceBuffer, ulong sourceOffset, ulong sizeInBytes) {
+        void** vtbl = *(void***)commandList.NativePointer;
+        delegate* unmanaged[Stdcall]<void*, void*, ulong, void*, ulong, ulong, void> copyBufferRegion =
+            (delegate* unmanaged[Stdcall]<void*, void*, ulong, void*, ulong, ulong, void>)vtbl[15];
+        copyBufferRegion((void*)commandList.NativePointer, (void*)destinationBuffer.NativePointer, destinationOffset, (void*)sourceBuffer.NativePointer, sourceOffset, sizeInBytes);
+    }
+
+    /// <summary>
     /// Aligns a value upward to a power-of-two alignment.
     /// </summary>
     /// <param name="value">The value to align.</param>
@@ -278,6 +311,21 @@ internal sealed class D3D12ImmediateBufferUpdateBatcher {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static ulong AlignUp(ulong value, ulong alignment) {
         return (value + alignment - 1) & ~(alignment - 1);
+    }
+
+    /// <summary>
+    /// Copies buffer update payload into mapped upload memory.
+    /// </summary>
+    /// <param name="source">The source memory.</param>
+    /// <param name="destination">The destination memory.</param>
+    /// <param name="byteCount">The number of bytes to copy.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static unsafe void CopyMemory(void* source, void* destination, uint byteCount) {
+        if (byteCount == 0) {
+            return;
+        }
+
+        Unsafe.CopyBlockUnaligned(destination, source, byteCount);
     }
 
     /// <summary>

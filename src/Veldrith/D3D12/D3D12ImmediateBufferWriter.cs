@@ -98,7 +98,7 @@ internal sealed class D3D12ImmediateBufferWriter {
     /// <param name="source">The source data pointer.</param>
     /// <param name="sizeInBytes">The number of bytes to write.</param>
     internal unsafe void Queue(D3D12DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes) {
-        buffer.ValidateCommandListUpdateRange(bufferOffsetInBytes, sizeInBytes);
+        buffer.ValidateBufferUpdateRange(bufferOffsetInBytes, sizeInBytes);
         uint dwordCount = sizeInBytes >> 2;
         if (this._parameterCount + dwordCount > MaxPendingDwords) {
             this.Flush();
