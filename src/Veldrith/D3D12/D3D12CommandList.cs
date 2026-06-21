@@ -169,6 +169,31 @@ internal sealed class D3D12CommandList : CommandList {
     private D3D12DeviceBuffer _lastUsedResourceSetBuffer;
 
     /// <summary>
+    /// Stores input-assembler buffers that have already been used by a draw in this command-list recording.
+    /// </summary>
+    private D3D12DeviceBuffer[] _usedInputAssemblerBuffers = new D3D12DeviceBuffer[16];
+
+    /// <summary>
+    /// Stores the number of active input-assembler usage entries.
+    /// </summary>
+    private int _usedInputAssemblerBufferCount;
+
+    /// <summary>
+    /// Stores the most recently tracked input-assembler buffer.
+    /// </summary>
+    private D3D12DeviceBuffer _lastUsedInputAssemblerBuffer;
+
+    /// <summary>
+    /// Tracks whether input-assembler buffer usage has been captured for the current dynamic IA binding version.
+    /// </summary>
+    private bool _inputAssemblerUsageCaptured;
+
+    /// <summary>
+    /// Stores the dynamic IA binding version that has already been captured.
+    /// </summary>
+    private uint _inputAssemblerUsageVersion;
+
+    /// <summary>
     /// Tracks whether graphics ResourceSet buffer usage has been captured for the current state version.
     /// </summary>
     private bool _graphicsResourceSetUsageCaptured;
@@ -217,6 +242,33 @@ internal sealed class D3D12CommandList : CommandList {
     /// Stores the native command-list vtable pointer for no-alloc hotpath calls.
     /// </summary>
     private readonly nint _nativeCommandListVTable;
+
+    private readonly unsafe delegate* unmanaged[Stdcall]<void*, int> _closeCommandList;
+    private readonly unsafe delegate* unmanaged[Stdcall]<void*, void*, void*, int> _resetCommandList;
+    private readonly unsafe delegate* unmanaged[Stdcall]<void*, uint, uint, uint, uint, void> _drawInstanced;
+    private readonly unsafe delegate* unmanaged[Stdcall]<void*, uint, uint, uint, int, uint, void> _drawIndexedInstanced;
+    private readonly unsafe delegate* unmanaged[Stdcall]<void*, uint, uint, uint, void> _dispatch;
+    private readonly unsafe delegate* unmanaged[Stdcall]<void*, void*, ulong, void*, ulong, ulong, void> _copyBufferRegion;
+    private readonly unsafe delegate* unmanaged[Stdcall]<void*, void*, void> _setPipelineState;
+    private readonly unsafe delegate* unmanaged[Stdcall]<void*, void*, void> _setComputeRootSignature;
+    private readonly unsafe delegate* unmanaged[Stdcall]<void*, void*, void> _setGraphicsRootSignature;
+    private readonly unsafe delegate* unmanaged[Stdcall]<void*, uint, ulong, void> _setComputeRootConstantBufferView;
+    private readonly unsafe delegate* unmanaged[Stdcall]<void*, uint, ulong, void> _setGraphicsRootConstantBufferView;
+    private readonly unsafe delegate* unmanaged[Stdcall]<void*, uint, ulong, void> _setComputeRootShaderResourceView;
+    private readonly unsafe delegate* unmanaged[Stdcall]<void*, uint, ulong, void> _setGraphicsRootShaderResourceView;
+    private readonly unsafe delegate* unmanaged[Stdcall]<void*, uint, ulong, void> _setComputeRootUnorderedAccessView;
+    private readonly unsafe delegate* unmanaged[Stdcall]<void*, uint, ulong, void> _setGraphicsRootUnorderedAccessView;
+    private readonly unsafe delegate* unmanaged[Stdcall]<void*, uint, ulong, void> _setComputeRootDescriptorTable;
+    private readonly unsafe delegate* unmanaged[Stdcall]<void*, uint, ulong, void> _setGraphicsRootDescriptorTable;
+    private readonly unsafe delegate* unmanaged[Stdcall]<void*, uint, uint, void*, uint, void> _setComputeRoot32BitConstants;
+    private readonly unsafe delegate* unmanaged[Stdcall]<void*, uint, uint, void*, uint, void> _setGraphicsRoot32BitConstants;
+    private readonly unsafe delegate* unmanaged[Stdcall]<void*, void*, void> _setIndexBuffer;
+    private readonly unsafe delegate* unmanaged[Stdcall]<void*, uint, uint, void*, void> _setVertexBuffers;
+    private readonly unsafe delegate* unmanaged[Stdcall]<void*, int, void> _setPrimitiveTopology;
+    private readonly unsafe delegate* unmanaged[Stdcall]<void*, uint, void> _setStencilReference;
+    private readonly unsafe delegate* unmanaged[Stdcall]<void*, uint, void*, int, void*, void> _setRenderTargets;
+    private readonly unsafe delegate* unmanaged[Stdcall]<void*, CpuDescriptorHandle, uint, float, byte, uint, void*, void> _clearDepthStencilView;
+    private readonly unsafe delegate* unmanaged[Stdcall]<void*, CpuDescriptorHandle, float*, uint, void*, void> _clearRenderTargetView;
 
     /// <summary>
     /// Stores upload resources recorded on this command list until submission assigns a fence value.
@@ -283,6 +335,33 @@ internal sealed class D3D12CommandList : CommandList {
         unsafe {
             this._nativeCommandListPointer = this.NativeCommandList.NativePointer;
             this._nativeCommandListVTable = (nint)(*(void***)this._nativeCommandListPointer);
+            void** vtbl = (void**)this._nativeCommandListVTable;
+            this._closeCommandList = (delegate* unmanaged[Stdcall]<void*, int>)vtbl[9];
+            this._resetCommandList = (delegate* unmanaged[Stdcall]<void*, void*, void*, int>)vtbl[10];
+            this._drawInstanced = (delegate* unmanaged[Stdcall]<void*, uint, uint, uint, uint, void>)vtbl[12];
+            this._drawIndexedInstanced = (delegate* unmanaged[Stdcall]<void*, uint, uint, uint, int, uint, void>)vtbl[13];
+            this._dispatch = (delegate* unmanaged[Stdcall]<void*, uint, uint, uint, void>)vtbl[14];
+            this._copyBufferRegion = (delegate* unmanaged[Stdcall]<void*, void*, ulong, void*, ulong, ulong, void>)vtbl[15];
+            this._setPrimitiveTopology = (delegate* unmanaged[Stdcall]<void*, int, void>)vtbl[20];
+            this._setStencilReference = (delegate* unmanaged[Stdcall]<void*, uint, void>)vtbl[24];
+            this._setPipelineState = (delegate* unmanaged[Stdcall]<void*, void*, void>)vtbl[25];
+            this._setComputeRootSignature = (delegate* unmanaged[Stdcall]<void*, void*, void>)vtbl[29];
+            this._setGraphicsRootSignature = (delegate* unmanaged[Stdcall]<void*, void*, void>)vtbl[30];
+            this._setComputeRootDescriptorTable = (delegate* unmanaged[Stdcall]<void*, uint, ulong, void>)vtbl[31];
+            this._setGraphicsRootDescriptorTable = (delegate* unmanaged[Stdcall]<void*, uint, ulong, void>)vtbl[32];
+            this._setComputeRoot32BitConstants = (delegate* unmanaged[Stdcall]<void*, uint, uint, void*, uint, void>)vtbl[35];
+            this._setGraphicsRoot32BitConstants = (delegate* unmanaged[Stdcall]<void*, uint, uint, void*, uint, void>)vtbl[36];
+            this._setComputeRootConstantBufferView = (delegate* unmanaged[Stdcall]<void*, uint, ulong, void>)vtbl[37];
+            this._setGraphicsRootConstantBufferView = (delegate* unmanaged[Stdcall]<void*, uint, ulong, void>)vtbl[38];
+            this._setComputeRootShaderResourceView = (delegate* unmanaged[Stdcall]<void*, uint, ulong, void>)vtbl[39];
+            this._setGraphicsRootShaderResourceView = (delegate* unmanaged[Stdcall]<void*, uint, ulong, void>)vtbl[40];
+            this._setComputeRootUnorderedAccessView = (delegate* unmanaged[Stdcall]<void*, uint, ulong, void>)vtbl[41];
+            this._setGraphicsRootUnorderedAccessView = (delegate* unmanaged[Stdcall]<void*, uint, ulong, void>)vtbl[42];
+            this._setIndexBuffer = (delegate* unmanaged[Stdcall]<void*, void*, void>)vtbl[43];
+            this._setVertexBuffers = (delegate* unmanaged[Stdcall]<void*, uint, uint, void*, void>)vtbl[44];
+            this._setRenderTargets = (delegate* unmanaged[Stdcall]<void*, uint, void*, int, void*, void>)vtbl[46];
+            this._clearDepthStencilView = (delegate* unmanaged[Stdcall]<void*, CpuDescriptorHandle, uint, float, byte, uint, void*, void>)vtbl[47];
+            this._clearRenderTargetView = (delegate* unmanaged[Stdcall]<void*, CpuDescriptorHandle, float*, uint, void*, void>)vtbl[48];
         }
 
         if (gd.SupportsDirectWriteBufferImmediate) {
@@ -418,6 +497,7 @@ internal sealed class D3D12CommandList : CommandList {
         this._inputAssembler.Reset();
         this.ClearDynamicBindingRefreshBuffers();
         this.ClearUsedResourceSetBuffers();
+        this.ClearUsedInputAssemblerBuffers();
         this._drawDirtyFlags = 0;
         this._graphicsResourceSets.Clear();
         this._computeResourceSets.Clear();
@@ -612,6 +692,10 @@ internal sealed class D3D12CommandList : CommandList {
 
         if (this._indirectCommandSignatures.EnsureAvailable()) {
             this.ExecuteIndirect(d3D12Buffer, offset, drawCount, stride, argumentSize, this._indirectCommandSignatures.Draw, true);
+            if (drawCount != 0) {
+                this.MarkInputAssemblerBuffersUsed();
+            }
+
             if (D3D12CommandListPerfTracker.Enabled) {
                 this._perf.DrawCalls += drawCount;
                 this._perf.DrawMs += D3D12CommandListPerfTracker.TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
@@ -630,8 +714,12 @@ internal sealed class D3D12CommandList : CommandList {
             byte* basePtr = (byte*)mappedPointer + offset;
             for (uint i = 0; i < drawCount; i++) {
                 IndirectDrawArguments arguments = *(IndirectDrawArguments*)(basePtr + i * stride);
-                this.NativeCommandList.DrawInstanced(arguments.VertexCount, arguments.InstanceCount, arguments.FirstVertex, arguments.FirstInstance);
+                this.DrawInstancedNoAlloc(arguments.VertexCount, arguments.InstanceCount, arguments.FirstVertex, arguments.FirstInstance);
             }
+        }
+
+        if (drawCount != 0) {
+            this.MarkInputAssemblerBuffersUsed();
         }
 
         if (D3D12CommandListPerfTracker.Enabled) {
@@ -667,6 +755,10 @@ internal sealed class D3D12CommandList : CommandList {
 
         if (this._indirectCommandSignatures.EnsureAvailable()) {
             this.ExecuteIndirect(d3D12Buffer, offset, drawCount, stride, argumentSize, this._indirectCommandSignatures.DrawIndexed, true);
+            if (drawCount != 0) {
+                this.MarkInputAssemblerBuffersUsed();
+            }
+
             if (D3D12CommandListPerfTracker.Enabled) {
                 this._perf.DrawCalls += drawCount;
                 this._perf.DrawMs += D3D12CommandListPerfTracker.TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
@@ -685,8 +777,12 @@ internal sealed class D3D12CommandList : CommandList {
             byte* basePtr = (byte*)mappedPointer + offset;
             for (uint i = 0; i < drawCount; i++) {
                 IndirectDrawIndexedArguments arguments = *(IndirectDrawIndexedArguments*)(basePtr + i * stride);
-                            this.DrawIndexedInstancedNoAlloc(arguments.IndexCount, arguments.InstanceCount, arguments.FirstIndex, arguments.VertexOffset, arguments.FirstInstance);
+                this.DrawIndexedInstancedNoAlloc(arguments.IndexCount, arguments.InstanceCount, arguments.FirstIndex, arguments.VertexOffset, arguments.FirstInstance);
             }
+        }
+
+        if (drawCount != 0) {
+            this.MarkInputAssemblerBuffersUsed();
         }
 
         if (D3D12CommandListPerfTracker.Enabled) {
@@ -860,7 +956,7 @@ internal sealed class D3D12CommandList : CommandList {
         this.TransitionBuffer(d3D12Buffer, ResourceStates.IndexBuffer);
         IndexBufferView indexView = new(bindingInfo.GpuVirtualAddress, bindingInfo.BindableSize, D3D12Formats.ToDxgiFormat(format));
         this.SetIndexBufferNoAlloc(ref indexView);
-        this._inputAssembler.SetIndexBuffer(d3D12Buffer, format, offset, bindingInfo.BindVersion);
+        this._inputAssembler.SetIndexBuffer(d3D12Buffer, format, offset, bindingInfo.BindVersion, isDynamicBuffer);
         this.ClearDynamicBindingRefreshIfCurrent(d3D12Buffer);
         if (D3D12CommandListPerfTracker.Enabled) {
             this._perf.IndexBufferBinds++;
@@ -912,6 +1008,10 @@ internal sealed class D3D12CommandList : CommandList {
         }
 
         this.DrawInstancedNoAlloc(vertexCount, instanceCount, vertexStart, instanceStart);
+        if (vertexCount != 0 && instanceCount != 0) {
+            this.MarkInputAssemblerBuffersUsed();
+        }
+
         if (D3D12CommandListPerfTracker.Enabled) {
             this._perf.DrawCalls++;
             this._perf.DrawMs += D3D12CommandListPerfTracker.TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
@@ -934,6 +1034,10 @@ internal sealed class D3D12CommandList : CommandList {
         }
 
         this.DrawIndexedInstancedNoAlloc(indexCount, instanceCount, indexStart, vertexOffset, instanceStart);
+        if (indexCount != 0 && instanceCount != 0) {
+            this.MarkInputAssemblerBuffersUsed();
+        }
+
         if (D3D12CommandListPerfTracker.Enabled) {
             this._perf.DrawCalls++;
             this._perf.DrawMs += D3D12CommandListPerfTracker.TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
@@ -1323,6 +1427,71 @@ internal sealed class D3D12CommandList : CommandList {
     }
 
     /// <summary>
+    /// Checks whether an input-assembler buffer has already been consumed by this command-list recording.
+    /// </summary>
+    /// <param name="buffer">The buffer to inspect.</param>
+    /// <returns><see langword="true" /> when a previous draw may still read the stable buffer address.</returns>
+    internal bool HasInputAssemblerBufferBeenUsedForInternalUse(D3D12DeviceBuffer buffer) {
+        for (int i = 0; i < this._usedInputAssemblerBufferCount; i++) {
+            if (ReferenceEquals(this._usedInputAssemblerBuffers[i], buffer)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Marks snapshot-capable input-assembler buffers as used by a recorded draw.
+    /// </summary>
+    private void MarkInputAssemblerBuffersUsed() {
+        if (!this._inputAssembler.HasDynamicInputAssemblerBuffer) {
+            return;
+        }
+
+        uint dynamicBindingVersion = this._inputAssembler.DynamicBindingVersion;
+        if (this._inputAssemblerUsageCaptured && this._inputAssemblerUsageVersion == dynamicBindingVersion) {
+            return;
+        }
+
+        for (uint index = 0; index < this._inputAssembler.MaxBoundVertexBufferSlot; index++) {
+            D3D12DeviceBuffer buffer = this._inputAssembler.GetVertexBuffer(index);
+            if (buffer?.UsesCommandListSnapshots == true) {
+                this.TrackUsedInputAssemblerBuffer(buffer);
+            }
+        }
+
+        D3D12DeviceBuffer indexBuffer = this._inputAssembler.HasIndexBuffer ? this._inputAssembler.IndexBuffer : null;
+        if (indexBuffer?.UsesCommandListSnapshots == true) {
+            this.TrackUsedInputAssemblerBuffer(indexBuffer);
+        }
+
+        this._inputAssemblerUsageVersion = dynamicBindingVersion;
+        this._inputAssemblerUsageCaptured = true;
+    }
+
+    /// <summary>
+    /// Tracks a single input-assembler buffer as used by a recorded draw.
+    /// </summary>
+    /// <param name="buffer">The buffer to track.</param>
+    private void TrackUsedInputAssemblerBuffer(D3D12DeviceBuffer buffer) {
+        if (ReferenceEquals(this._lastUsedInputAssemblerBuffer, buffer)) {
+            return;
+        }
+
+        for (int i = 0; i < this._usedInputAssemblerBufferCount; i++) {
+            if (ReferenceEquals(this._usedInputAssemblerBuffers[i], buffer)) {
+                this._lastUsedInputAssemblerBuffer = buffer;
+                return;
+            }
+        }
+
+        Util.EnsureArrayMinimumSize(ref this._usedInputAssemblerBuffers, (uint)this._usedInputAssemblerBufferCount + 1);
+        this._usedInputAssemblerBuffers[this._usedInputAssemblerBufferCount++] = buffer;
+        this._lastUsedInputAssemblerBuffer = buffer;
+    }
+
+    /// <summary>
     /// Marks buffers referenced by bound graphics resource sets as used by a draw.
     /// </summary>
     private void MarkGraphicsResourceSetBuffersUsed() {
@@ -1432,6 +1601,20 @@ internal sealed class D3D12CommandList : CommandList {
         this._computeResourceSetUsageCaptured = false;
         this._computeResourceSetUsageVersion = 0;
         this._computeResourceSetUsageCount = 0;
+    }
+
+    /// <summary>
+    /// Clears the input-assembler buffer usage list for a new command-list recording.
+    /// </summary>
+    private void ClearUsedInputAssemblerBuffers() {
+        if (this._usedInputAssemblerBufferCount != 0) {
+            Array.Clear(this._usedInputAssemblerBuffers, 0, this._usedInputAssemblerBufferCount);
+            this._usedInputAssemblerBufferCount = 0;
+        }
+
+        this._lastUsedInputAssemblerBuffer = null;
+        this._inputAssemblerUsageCaptured = false;
+        this._inputAssemblerUsageVersion = 0;
     }
 
     /// <summary>
@@ -1969,58 +2152,48 @@ internal sealed class D3D12CommandList : CommandList {
     /// Binds a graphics root constant buffer view without going through the managed COM wrapper.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void SetGraphicsRootConstantBufferViewNoAlloc(uint rootParameterIndex, ulong gpuAddress) {
-        this.SetRootBufferViewNoAlloc(38, rootParameterIndex, gpuAddress);
+    internal unsafe void SetGraphicsRootConstantBufferViewNoAlloc(uint rootParameterIndex, ulong gpuAddress) {
+        this._setGraphicsRootConstantBufferView((void*)this._nativeCommandListPointer, rootParameterIndex, gpuAddress);
     }
 
     /// <summary>
     /// Binds a graphics root shader resource view without going through the managed COM wrapper.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void SetGraphicsRootShaderResourceViewNoAlloc(uint rootParameterIndex, ulong gpuAddress) {
-        this.SetRootBufferViewNoAlloc(40, rootParameterIndex, gpuAddress);
+    internal unsafe void SetGraphicsRootShaderResourceViewNoAlloc(uint rootParameterIndex, ulong gpuAddress) {
+        this._setGraphicsRootShaderResourceView((void*)this._nativeCommandListPointer, rootParameterIndex, gpuAddress);
     }
 
     /// <summary>
     /// Binds a graphics root unordered access view without going through the managed COM wrapper.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void SetGraphicsRootUnorderedAccessViewNoAlloc(uint rootParameterIndex, ulong gpuAddress) {
-        this.SetRootBufferViewNoAlloc(42, rootParameterIndex, gpuAddress);
+    internal unsafe void SetGraphicsRootUnorderedAccessViewNoAlloc(uint rootParameterIndex, ulong gpuAddress) {
+        this._setGraphicsRootUnorderedAccessView((void*)this._nativeCommandListPointer, rootParameterIndex, gpuAddress);
     }
 
     /// <summary>
     /// Binds a compute root constant buffer view without going through the managed COM wrapper.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void SetComputeRootConstantBufferViewNoAlloc(uint rootParameterIndex, ulong gpuAddress) {
-        this.SetRootBufferViewNoAlloc(37, rootParameterIndex, gpuAddress);
+    internal unsafe void SetComputeRootConstantBufferViewNoAlloc(uint rootParameterIndex, ulong gpuAddress) {
+        this._setComputeRootConstantBufferView((void*)this._nativeCommandListPointer, rootParameterIndex, gpuAddress);
     }
 
     /// <summary>
     /// Binds a compute root shader resource view without going through the managed COM wrapper.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void SetComputeRootShaderResourceViewNoAlloc(uint rootParameterIndex, ulong gpuAddress) {
-        this.SetRootBufferViewNoAlloc(39, rootParameterIndex, gpuAddress);
+    internal unsafe void SetComputeRootShaderResourceViewNoAlloc(uint rootParameterIndex, ulong gpuAddress) {
+        this._setComputeRootShaderResourceView((void*)this._nativeCommandListPointer, rootParameterIndex, gpuAddress);
     }
 
     /// <summary>
     /// Binds a compute root unordered access view without going through the managed COM wrapper.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void SetComputeRootUnorderedAccessViewNoAlloc(uint rootParameterIndex, ulong gpuAddress) {
-        this.SetRootBufferViewNoAlloc(41, rootParameterIndex, gpuAddress);
-    }
-
-    /// <summary>
-    /// Invokes an ID3D12GraphicsCommandList root buffer binding method directly.
-    /// </summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private unsafe void SetRootBufferViewNoAlloc(int vtableIndex, uint rootParameterIndex, ulong gpuAddress) {
-        void** vtbl = (void**)this._nativeCommandListVTable;
-        delegate* unmanaged[Stdcall]<void*, uint, ulong, void> setRootBufferView = (delegate* unmanaged[Stdcall]<void*, uint, ulong, void>)vtbl[vtableIndex];
-        setRootBufferView((void*)this._nativeCommandListPointer, rootParameterIndex, gpuAddress);
+    internal unsafe void SetComputeRootUnorderedAccessViewNoAlloc(uint rootParameterIndex, ulong gpuAddress) {
+        this._setComputeRootUnorderedAccessView((void*)this._nativeCommandListPointer, rootParameterIndex, gpuAddress);
     }
 
     /// <summary>
@@ -2028,9 +2201,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private unsafe void CloseNoAlloc() {
-        void** vtbl = (void**)this._nativeCommandListVTable;
-        delegate* unmanaged[Stdcall]<void*, int> close = (delegate* unmanaged[Stdcall]<void*, int>)vtbl[9];
-        Result result = new(close((void*)this._nativeCommandListPointer));
+        Result result = new(this._closeCommandList((void*)this._nativeCommandListPointer));
         result.CheckError();
     }
 
@@ -2039,9 +2210,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private unsafe void ResetCommandListNoAlloc(ID3D12CommandAllocator allocator) {
-        void** vtbl = (void**)this._nativeCommandListVTable;
-        delegate* unmanaged[Stdcall]<void*, void*, void*, int> reset = (delegate* unmanaged[Stdcall]<void*, void*, void*, int>)vtbl[10];
-        Result result = new(reset((void*)this._nativeCommandListPointer, (void*)allocator.NativePointer, null));
+        Result result = new(this._resetCommandList((void*)this._nativeCommandListPointer, (void*)allocator.NativePointer, null));
         result.CheckError();
     }
 
@@ -2050,9 +2219,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private unsafe void DrawInstancedNoAlloc(uint vertexCount, uint instanceCount, uint startVertexLocation, uint startInstanceLocation) {
-        void** vtbl = (void**)this._nativeCommandListVTable;
-        delegate* unmanaged[Stdcall]<void*, uint, uint, uint, uint, void> drawInstanced = (delegate* unmanaged[Stdcall]<void*, uint, uint, uint, uint, void>)vtbl[12];
-        drawInstanced((void*)this._nativeCommandListPointer, vertexCount, instanceCount, startVertexLocation, startInstanceLocation);
+        this._drawInstanced((void*)this._nativeCommandListPointer, vertexCount, instanceCount, startVertexLocation, startInstanceLocation);
     }
 
     /// <summary>
@@ -2060,9 +2227,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private unsafe void DrawIndexedInstancedNoAlloc(uint indexCount, uint instanceCount, uint startIndexLocation, int baseVertexLocation, uint startInstanceLocation) {
-        void** vtbl = (void**)this._nativeCommandListVTable;
-        delegate* unmanaged[Stdcall]<void*, uint, uint, uint, int, uint, void> drawIndexedInstanced = (delegate* unmanaged[Stdcall]<void*, uint, uint, uint, int, uint, void>)vtbl[13];
-        drawIndexedInstanced((void*)this._nativeCommandListPointer, indexCount, instanceCount, startIndexLocation, baseVertexLocation, startInstanceLocation);
+        this._drawIndexedInstanced((void*)this._nativeCommandListPointer, indexCount, instanceCount, startIndexLocation, baseVertexLocation, startInstanceLocation);
     }
 
     /// <summary>
@@ -2070,9 +2235,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private unsafe void SetPipelineStateNoAlloc(ID3D12PipelineState pipelineState) {
-        void** vtbl = (void**)this._nativeCommandListVTable;
-        delegate* unmanaged[Stdcall]<void*, void*, void> setPipelineState = (delegate* unmanaged[Stdcall]<void*, void*, void>)vtbl[25];
-        setPipelineState((void*)this._nativeCommandListPointer, (void*)pipelineState.NativePointer);
+        this._setPipelineState((void*)this._nativeCommandListPointer, (void*)pipelineState.NativePointer);
     }
 
     /// <summary>
@@ -2094,10 +2257,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="sizeInBytes">The number of bytes to copy.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal unsafe void CopyBufferRegionNoAllocForInternalUse(ID3D12Resource destinationBuffer, ulong destinationOffset, ID3D12Resource sourceBuffer, ulong sourceOffset, ulong sizeInBytes) {
-        void** vtbl = (void**)this._nativeCommandListVTable;
-        delegate* unmanaged[Stdcall]<void*, void*, ulong, void*, ulong, ulong, void> copyBufferRegion =
-            (delegate* unmanaged[Stdcall]<void*, void*, ulong, void*, ulong, ulong, void>)vtbl[15];
-        copyBufferRegion((void*)this._nativeCommandListPointer, (void*)destinationBuffer.NativePointer, destinationOffset, (void*)sourceBuffer.NativePointer, sourceOffset, sizeInBytes);
+        this._copyBufferRegion((void*)this._nativeCommandListPointer, (void*)destinationBuffer.NativePointer, destinationOffset, (void*)sourceBuffer.NativePointer, sourceOffset, sizeInBytes);
     }
 
     /// <summary>
@@ -2105,9 +2265,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private unsafe void SetIndexBufferNoAlloc(ref IndexBufferView view) {
-        void** vtbl = (void**)this._nativeCommandListVTable;
-        delegate* unmanaged[Stdcall]<void*, void*, void> setIndexBuffer = (delegate* unmanaged[Stdcall]<void*, void*, void>)vtbl[43];
-        setIndexBuffer((void*)this._nativeCommandListPointer, Unsafe.AsPointer(ref view));
+        this._setIndexBuffer((void*)this._nativeCommandListPointer, Unsafe.AsPointer(ref view));
     }
 
     /// <summary>
@@ -2115,9 +2273,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal unsafe void OMSetRenderTargetsNoAlloc(uint numRenderTargetDescriptors, CpuDescriptorHandle rtvHandle, bool hasDepthStencil, CpuDescriptorHandle dsvHandle) {
-        void** vtbl = (void**)this._nativeCommandListVTable;
-        delegate* unmanaged[Stdcall]<void*, uint, void*, int, void*, void> omSetRenderTargets = (delegate* unmanaged[Stdcall]<void*, uint, void*, int, void*, void>)vtbl[46];
-        omSetRenderTargets((void*)this._nativeCommandListPointer, numRenderTargetDescriptors, Unsafe.AsPointer(ref rtvHandle), 1, hasDepthStencil ? Unsafe.AsPointer(ref dsvHandle) : null);
+        this._setRenderTargets((void*)this._nativeCommandListPointer, numRenderTargetDescriptors, Unsafe.AsPointer(ref rtvHandle), 1, hasDepthStencil ? Unsafe.AsPointer(ref dsvHandle) : null);
     }
 
     /// <summary>
@@ -2125,9 +2281,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private unsafe void OMSetStencilRefNoAlloc(uint stencilRef) {
-        void** vtbl = (void**)this._nativeCommandListVTable;
-        delegate* unmanaged[Stdcall]<void*, uint, void> setStencilRef = (delegate* unmanaged[Stdcall]<void*, uint, void>)vtbl[24];
-        setStencilRef((void*)this._nativeCommandListPointer, stencilRef);
+        this._setStencilReference((void*)this._nativeCommandListPointer, stencilRef);
     }
 
     /// <summary>
@@ -2135,9 +2289,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private unsafe void IASetPrimitiveTopologyNoAlloc(Vortice.Direct3D.PrimitiveTopology topology) {
-        void** vtbl = (void**)this._nativeCommandListVTable;
-        delegate* unmanaged[Stdcall]<void*, int, void> setPrimitiveTopology = (delegate* unmanaged[Stdcall]<void*, int, void>)vtbl[20];
-        setPrimitiveTopology((void*)this._nativeCommandListPointer, (int)topology);
+        this._setPrimitiveTopology((void*)this._nativeCommandListPointer, (int)topology);
     }
 
     /// <summary>
@@ -2145,9 +2297,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private unsafe void SetVertexBufferNoAlloc(uint startSlot, ref VertexBufferView view) {
-        void** vtbl = (void**)this._nativeCommandListVTable;
-        delegate* unmanaged[Stdcall]<void*, uint, uint, void*, void> setVertexBuffers = (delegate* unmanaged[Stdcall]<void*, uint, uint, void*, void>)vtbl[44];
-        setVertexBuffers((void*)this._nativeCommandListPointer, startSlot, 1u, Unsafe.AsPointer(ref view));
+        this._setVertexBuffers((void*)this._nativeCommandListPointer, startSlot, 1u, Unsafe.AsPointer(ref view));
     }
 
     /// <summary>
@@ -2155,9 +2305,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private unsafe void DispatchNoAlloc(uint groupCountX, uint groupCountY, uint groupCountZ) {
-        void** vtbl = (void**)this._nativeCommandListVTable;
-        delegate* unmanaged[Stdcall]<void*, uint, uint, uint, void> dispatch = (delegate* unmanaged[Stdcall]<void*, uint, uint, uint, void>)vtbl[14];
-        dispatch((void*)this._nativeCommandListPointer, groupCountX, groupCountY, groupCountZ);
+        this._dispatch((void*)this._nativeCommandListPointer, groupCountX, groupCountY, groupCountZ);
     }
 
     /// <summary>
@@ -2176,9 +2324,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private unsafe void SetComputeRootSignatureNoAlloc(ID3D12RootSignature rootSignature) {
-        void** vtbl = (void**)this._nativeCommandListVTable;
-        delegate* unmanaged[Stdcall]<void*, void*, void> setRootSig = (delegate* unmanaged[Stdcall]<void*, void*, void>)vtbl[29];
-        setRootSig((void*)this._nativeCommandListPointer, (void*)rootSignature.NativePointer);
+        this._setComputeRootSignature((void*)this._nativeCommandListPointer, (void*)rootSignature.NativePointer);
     }
 
     /// <summary>
@@ -2195,9 +2341,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private unsafe void SetGraphicsRootSignatureNoAlloc(ID3D12RootSignature rootSignature) {
-        void** vtbl = (void**)this._nativeCommandListVTable;
-        delegate* unmanaged[Stdcall]<void*, void*, void> setRootSig = (delegate* unmanaged[Stdcall]<void*, void*, void>)vtbl[30];
-        setRootSig((void*)this._nativeCommandListPointer, (void*)rootSignature.NativePointer);
+        this._setGraphicsRootSignature((void*)this._nativeCommandListPointer, (void*)rootSignature.NativePointer);
     }
 
     /// <summary>
@@ -2214,9 +2358,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private unsafe void SetComputeRoot32BitConstantsNoAlloc(uint rootParameterIndex, uint num32BitValues, void* srcData, uint destOffset) {
-        void** vtbl = (void**)this._nativeCommandListVTable;
-        delegate* unmanaged[Stdcall]<void*, uint, uint, void*, uint, void> setConstants = (delegate* unmanaged[Stdcall]<void*, uint, uint, void*, uint, void>)vtbl[35];
-        setConstants((void*)this._nativeCommandListPointer, rootParameterIndex, num32BitValues, srcData, destOffset);
+        this._setComputeRoot32BitConstants((void*)this._nativeCommandListPointer, rootParameterIndex, num32BitValues, srcData, destOffset);
     }
 
     /// <summary>
@@ -2224,9 +2366,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private unsafe void SetGraphicsRoot32BitConstantsNoAlloc(uint rootParameterIndex, uint num32BitValues, void* srcData, uint destOffset) {
-        void** vtbl = (void**)this._nativeCommandListVTable;
-        delegate* unmanaged[Stdcall]<void*, uint, uint, void*, uint, void> setConstants = (delegate* unmanaged[Stdcall]<void*, uint, uint, void*, uint, void>)vtbl[36];
-        setConstants((void*)this._nativeCommandListPointer, rootParameterIndex, num32BitValues, srcData, destOffset);
+        this._setGraphicsRoot32BitConstants((void*)this._nativeCommandListPointer, rootParameterIndex, num32BitValues, srcData, destOffset);
     }
 
     /// <summary>
@@ -2234,10 +2374,8 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal unsafe void OMSetRenderTargetsArrayNoAlloc(CpuDescriptorHandle[] rtvs, bool hasDepthStencil, CpuDescriptorHandle dsv) {
-        void** vtbl = (void**)this._nativeCommandListVTable;
-        delegate* unmanaged[Stdcall]<void*, uint, void*, int, void*, void> omSetRenderTargets = (delegate* unmanaged[Stdcall]<void*, uint, void*, int, void*, void>)vtbl[46];
         fixed (CpuDescriptorHandle* rtvPtr = rtvs) {
-            omSetRenderTargets((void*)this._nativeCommandListPointer, (uint)rtvs.Length, rtvPtr, 0, hasDepthStencil ? Unsafe.AsPointer(ref dsv) : null);
+            this._setRenderTargets((void*)this._nativeCommandListPointer, (uint)rtvs.Length, rtvPtr, 0, hasDepthStencil ? Unsafe.AsPointer(ref dsv) : null);
         }
     }
 
@@ -2246,11 +2384,8 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private unsafe void ClearRenderTargetViewNoAlloc(CpuDescriptorHandle rtv, float r, float g, float b, float a) {
-        void** vtbl = (void**)this._nativeCommandListVTable;
-        delegate* unmanaged[Stdcall]<void*, CpuDescriptorHandle, float*, uint, void*, void> fn =
-            (delegate* unmanaged[Stdcall]<void*, CpuDescriptorHandle, float*, uint, void*, void>)vtbl[48];
         float* color = stackalloc float[4] { r, g, b, a };
-        fn((void*)this._nativeCommandListPointer, rtv, color, 0u, null);
+        this._clearRenderTargetView((void*)this._nativeCommandListPointer, rtv, color, 0u, null);
     }
 
     /// <summary>
@@ -2270,10 +2405,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private unsafe void ClearDepthStencilViewNoAlloc(CpuDescriptorHandle dsv, uint clearFlags, float depth, byte stencil) {
-        void** vtbl = (void**)this._nativeCommandListVTable;
-        delegate* unmanaged[Stdcall]<void*, CpuDescriptorHandle, uint, float, byte, uint, void*, void> fn =
-            (delegate* unmanaged[Stdcall]<void*, CpuDescriptorHandle, uint, float, byte, uint, void*, void>)vtbl[47];
-        fn((void*)this._nativeCommandListPointer, dsv, clearFlags, depth, stencil, 0u, null);
+        this._clearDepthStencilView((void*)this._nativeCommandListPointer, dsv, clearFlags, depth, stencil, 0u, null);
     }
 
     /// <summary>
@@ -2437,7 +2569,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal unsafe void SetComputeRootDescriptorTableNoAlloc(uint rootParameterIndex, GpuDescriptorHandle gpuHandle) {
-        this.SetRootDescriptorTableNoAlloc(31, rootParameterIndex, gpuHandle);
+        this._setComputeRootDescriptorTable((void*)this._nativeCommandListPointer, rootParameterIndex, gpuHandle.Ptr);
     }
 
     /// <summary>
@@ -2445,17 +2577,7 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal unsafe void SetGraphicsRootDescriptorTableNoAlloc(uint rootParameterIndex, GpuDescriptorHandle gpuHandle) {
-        this.SetRootDescriptorTableNoAlloc(32, rootParameterIndex, gpuHandle);
-    }
-
-    /// <summary>
-    /// Invokes an ID3D12GraphicsCommandList root descriptor-table binding method directly.
-    /// </summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private unsafe void SetRootDescriptorTableNoAlloc(int vtableIndex, uint rootParameterIndex, GpuDescriptorHandle gpuHandle) {
-        void** vtbl = (void**)this._nativeCommandListVTable;
-        delegate* unmanaged[Stdcall]<void*, uint, ulong, void> setRootDescriptorTable = (delegate* unmanaged[Stdcall]<void*, uint, ulong, void>)vtbl[vtableIndex];
-        setRootDescriptorTable((void*)this._nativeCommandListPointer, rootParameterIndex, gpuHandle.Ptr);
+        this._setGraphicsRootDescriptorTable((void*)this._nativeCommandListPointer, rootParameterIndex, gpuHandle.Ptr);
     }
 
     /// Disposes upload resources that were recorded but not submitted.

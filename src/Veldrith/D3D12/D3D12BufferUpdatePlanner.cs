@@ -333,7 +333,8 @@ internal sealed class D3D12BufferUpdatePlanner {
         }
         else {
             if (d3D12Buffer.UsesCommandListSnapshots) {
-                if (this.CanUpdateStableResourceSetBufferWithoutSnapshot(d3D12Buffer)) {
+                if (this.CanUpdateStableInputAssemblerBufferWithoutSnapshot(d3D12Buffer)
+                    || this.CanUpdateStableResourceSetBufferWithoutSnapshot(d3D12Buffer)) {
                     d3D12Buffer.Update(null, source, bufferOffsetInBytes, sizeInBytes);
                 }
                 else {
@@ -731,6 +732,17 @@ internal sealed class D3D12BufferUpdatePlanner {
                && buffer.RequiresCommandListSnapshotCpuMirror
                && !CanBeInputAssemblerBuffer(buffer)
                && !this._commandList.HasResourceSetBufferBeenUsedForInternalUse(buffer);
+    }
+
+    /// <summary>
+    /// Checks whether a dynamic input-assembler buffer can be updated through its stable CPU-visible backing store.
+    /// </summary>
+    /// <param name="buffer">The buffer to inspect.</param>
+    /// <returns><see langword="true" /> when no previous draw can still read the old stable contents.</returns>
+    private bool CanUpdateStableInputAssemblerBufferWithoutSnapshot(D3D12DeviceBuffer buffer) {
+        return CanBeInputAssemblerBuffer(buffer)
+               && !CanBeResourceSetBuffer(buffer)
+               && !this._commandList.HasInputAssemblerBufferBeenUsedForInternalUse(buffer);
     }
 
     /// <summary>

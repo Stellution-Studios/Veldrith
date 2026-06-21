@@ -31,6 +31,21 @@ internal sealed class D3D12InputAssemblerState {
     private readonly ulong[] _vertexBufferVersions = new ulong[VertexBufferSlotCount];
 
     /// <summary>
+    /// Stores whether a vertex buffer slot currently holds a dynamic buffer.
+    /// </summary>
+    private readonly bool[] _vertexBufferIsDynamic = new bool[VertexBufferSlotCount];
+
+    /// <summary>
+    /// Stores the number of vertex buffer slots currently holding dynamic buffers.
+    /// </summary>
+    private int _dynamicVertexBufferCount;
+
+    /// <summary>
+    /// Stores a version for dynamic input-assembler binding identity changes.
+    /// </summary>
+    private uint _dynamicBindingVersion;
+
+    /// <summary>
     /// Stores the currently bound index buffer.
     /// </summary>
     private D3D12DeviceBuffer _indexBuffer;
@@ -44,6 +59,11 @@ internal sealed class D3D12InputAssemblerState {
     /// Stores the dynamic bind version of the currently bound index buffer.
     /// </summary>
     private ulong _indexBufferVersion;
+
+    /// <summary>
+    /// Stores whether the currently bound index buffer is dynamic.
+    /// </summary>
+    private bool _indexBufferIsDynamic;
 
     /// <summary>
     /// Stores the format of the currently bound index buffer.
@@ -69,6 +89,16 @@ internal sealed class D3D12InputAssemblerState {
     /// Gets whether the primitive topology cache matches command-list state.
     /// </summary>
     internal bool PrimitiveTopologyValid { get; private set; }
+
+    /// <summary>
+    /// Gets whether any currently bound input-assembler buffer can rotate dynamic snapshots.
+    /// </summary>
+    internal bool HasDynamicInputAssemblerBuffer => this._dynamicVertexBufferCount != 0 || (this.HasIndexBuffer && this._indexBufferIsDynamic);
+
+    /// <summary>
+    /// Gets the version for dynamic input-assembler binding identity changes.
+    /// </summary>
+    internal uint DynamicBindingVersion => this._dynamicBindingVersion;
 
     /// <summary>
     /// Gets whether the stencil reference cache matches command-list state.
@@ -107,13 +137,17 @@ internal sealed class D3D12InputAssemblerState {
         int count = System.Math.Min((int)this.MaxBoundVertexBufferSlot, this._vertexBuffers.Length);
         if (count > 0) {
             System.Array.Clear(this._vertexBuffers, 0, count);
+            System.Array.Clear(this._vertexBufferIsDynamic, 0, count);
         }
 
         this._indexBuffer = null;
         this._indexBufferOffset = 0;
         this._indexBufferVersion = 0;
+        this._indexBufferIsDynamic = false;
         this._indexFormat = IndexFormat.UInt16;
         this.HasIndexBuffer = false;
+        this._dynamicVertexBufferCount = 0;
+        this._dynamicBindingVersion = 0;
         this.MaxBoundVertexBufferSlot = 0;
         this.PrimitiveTopologyValid = false;
         this.StencilReferenceValid = false;
@@ -184,9 +218,15 @@ internal sealed class D3D12InputAssemblerState {
             return false;
         }
 
+        bool previousDynamic = this._vertexBufferIsDynamic[index];
+        if (previousDynamic || isDynamicBuffer) {
+            this._dynamicBindingVersion++;
+        }
+
         this._vertexBuffers[index] = buffer;
         this._vertexBufferOffsets[index] = offset;
         this._vertexBufferVersions[index] = bindVersion;
+        this.UpdateVertexBufferDynamicState(index, isDynamicBuffer);
         if (index + 1 > this.MaxBoundVertexBufferSlot) {
             this.MaxBoundVertexBufferSlot = index + 1;
         }
@@ -227,10 +267,15 @@ internal sealed class D3D12InputAssemblerState {
     /// <param name="format">The index buffer format.</param>
     /// <param name="offset">The bound byte offset.</param>
     /// <param name="bindVersion">The dynamic bind version.</param>
-    internal void SetIndexBuffer(D3D12DeviceBuffer buffer, IndexFormat format, uint offset, ulong bindVersion) {
+    internal void SetIndexBuffer(D3D12DeviceBuffer buffer, IndexFormat format, uint offset, ulong bindVersion, bool isDynamicBuffer) {
+        if (this._indexBufferIsDynamic || isDynamicBuffer) {
+            this._dynamicBindingVersion++;
+        }
+
         this._indexBuffer = buffer;
         this._indexBufferOffset = offset;
         this._indexBufferVersion = bindVersion;
+        this._indexBufferIsDynamic = isDynamicBuffer;
         this._indexFormat = format;
         this.HasIndexBuffer = true;
     }
@@ -271,5 +316,19 @@ internal sealed class D3D12InputAssemblerState {
         this._stencilReference = stencilReference;
         this.StencilReferenceValid = true;
         return true;
+    }
+
+    /// <summary>
+    /// Updates the dynamic-buffer slot count for a vertex buffer slot.
+    /// </summary>
+    /// <param name="index">The vertex buffer slot.</param>
+    /// <param name="isDynamicBuffer">Whether the slot now contains a dynamic buffer.</param>
+    private void UpdateVertexBufferDynamicState(uint index, bool isDynamicBuffer) {
+        if (this._vertexBufferIsDynamic[index] == isDynamicBuffer) {
+            return;
+        }
+
+        this._vertexBufferIsDynamic[index] = isDynamicBuffer;
+        this._dynamicVertexBufferCount += isDynamicBuffer ? 1 : -1;
     }
 }
