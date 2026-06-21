@@ -1,9 +1,7 @@
 using System;
 using Vortice.Direct3D12;
 using Vortice.DXGI;
-using Microsoft.Win32.SafeHandles;
 using SharpGen.Runtime;
-using System.Threading;
 
 namespace Veldrith.D3D12;
 
@@ -13,24 +11,9 @@ namespace Veldrith.D3D12;
 internal sealed class D3D12Swapchain : Swapchain {
 
     /// <summary>
-    /// Gets whether DXGI frame-latency wait handles should be used.
-    /// </summary>
-    private static readonly bool FrameLatencyWaitEnabled = string.Equals(Environment.GetEnvironmentVariable("VELDRID_D3D12_FRAME_LATENCY_WAIT"), "1", StringComparison.Ordinal);
-
-    /// <summary>
-    /// Gets whether DXGI frame-latency wait handles are enabled for this process.
-    /// </summary>
-    internal static bool FrameLatencyWaitsEnabled => FrameLatencyWaitEnabled;
-
-    /// <summary>
-    /// Stores the maximum queued-frame latency used when frame-latency waits are explicitly enabled.
-    /// </summary>
-    private static readonly int MaximumFrameLatency = ReadMaximumFrameLatency();
-
-    /// <summary>
     /// Stores the buffer count value used during command execution.
     /// </summary>
-    private readonly int _bufferCount = 3;
+    private const int SwapchainBufferCount = 2;
 
     /// <summary>
     /// Tracks whether can tear is currently enabled.
@@ -41,11 +24,6 @@ internal sealed class D3D12Swapchain : Swapchain {
     /// Tracks whether has native swapchain is currently enabled.
     /// </summary>
     private readonly bool _hasNativeSwapchain;
-
-    /// <summary>
-    /// Tracks whether DXGI frame latency waitable objects can be used.
-    /// </summary>
-    private readonly bool _canCreateFrameLatencyWaitableObject;
 
     /// <summary>
     /// Stores the native color format state used by this instance.
@@ -141,11 +119,6 @@ internal sealed class D3D12Swapchain : Swapchain {
     private Framebuffer _framebuffer;
 
     /// <summary>
-    /// Stores the frame latency wait handle used by this instance.
-    /// </summary>
-    private FrameLatencyWaitHandle _frameLatencyWaitHandle;
-
-    /// <summary>
     /// Stores the rtv descriptor size value used during command execution.
     /// </summary>
     private int _rtvDescriptorSize;
@@ -171,10 +144,6 @@ internal sealed class D3D12Swapchain : Swapchain {
 
         this._allowTearing = !description.SyncToVerticalBlank;
         this.RefreshPresentParameters();
-
-        using (IDXGIFactory3 factory3 = gd.DxgiFactory.QueryInterfaceOrNull<IDXGIFactory3>()) {
-            this._canCreateFrameLatencyWaitableObject = factory3 != null;
-        }
 
         this._hasNativeSwapchain = this.TryCreateNativeSwapchain(ref description);
         uint attachmentWidth = description.Width;
@@ -209,9 +178,6 @@ internal sealed class D3D12Swapchain : Swapchain {
             }
 
             this.RefreshPresentParameters();
-            if (this._hasNativeSwapchain && this._dxgiSwapChain != null) {
-                this.ConfigureFrameLatencyWaitableObject();
-            }
         }
     }
 
@@ -246,7 +212,6 @@ internal sealed class D3D12Swapchain : Swapchain {
         this._disposed = true;
         this._gd.WaitForIdle();
         this.DisposeNativeResources(disposeDescriptorHeap: true);
-        this._frameLatencyWaitHandle?.Dispose();
         this._dxgiSwapChain?.Dispose();
         this._framebuffer?.Dispose();
         this._colorTexture?.Dispose();
@@ -283,10 +248,8 @@ internal sealed class D3D12Swapchain : Swapchain {
         if (this._hasNativeSwapchain) {
             uint syncInterval = this._presentSyncInterval;
             PresentFlags presentFlags = this._presentFlags;
-            lock (this._gd.CommandQueueLock) {
-                this.PresentNoAlloc(syncInterval, presentFlags);
-                this._currentBackBufferIndex = (this._currentBackBufferIndex + 1) % this._bufferCount;
-            }
+            this.PresentNoAlloc(syncInterval, presentFlags);
+            this._currentBackBufferIndex ^= 1;
         }
     }
 
@@ -306,8 +269,10 @@ internal sealed class D3D12Swapchain : Swapchain {
     /// <param name="syncInterval">The vertical sync interval.</param>
     /// <param name="presentFlags">The DXGI present flags.</param>
     private unsafe void PresentNoAlloc(uint syncInterval, PresentFlags presentFlags) {
-        Result result = new(this._present((void*)this._dxgiSwapChainPointer, syncInterval, (uint)presentFlags));
-        result.CheckError();
+        int result = this._present((void*)this._dxgiSwapChainPointer, syncInterval, (uint)presentFlags);
+        if (result < 0) {
+            new Result(result).CheckError();
+        }
     }
 
     /// <summary>
@@ -316,17 +281,6 @@ internal sealed class D3D12Swapchain : Swapchain {
     /// </summary>
     private unsafe uint GetCurrentBackBufferIndexNoAlloc() {
         return this._getCurrentBackBufferIndex((void*)this._dxgiSwapChainPointer);
-    }
-
-    /// <summary>
-    /// Waits until DXGI allows another frame to be queued.
-    /// </summary>
-    internal void WaitForNextFrameReady() {
-        if (!FrameLatencyWaitEnabled) {
-            return;
-        }
-
-        this._frameLatencyWaitHandle?.WaitOne(1000);
     }
 
     /// <summary>
@@ -381,7 +335,7 @@ internal sealed class D3D12Swapchain : Swapchain {
         this._depthTexture?.Dispose();
         if (this._hasNativeSwapchain) {
             this.DisposeNativeResources(disposeDescriptorHeap: false);
-            this._dxgiSwapChain.ResizeBuffers((uint)this._bufferCount, width, height, this._nativeColorFormat, this.GetSwapChainFlags());
+            this._dxgiSwapChain.ResizeBuffers((uint)SwapchainBufferCount, width, height, this._nativeColorFormat, this.GetSwapChainFlags());
             this.CreateNativeRenderTargets();
         }
         else {
@@ -437,7 +391,7 @@ internal sealed class D3D12Swapchain : Swapchain {
             Width = description.Width,
             Height = description.Height,
             Format = this._nativeColorFormat,
-            BufferCount = (uint)this._bufferCount,
+            BufferCount = (uint)SwapchainBufferCount,
             BufferUsage = Usage.RenderTargetOutput,
             SampleDescription = new SampleDescription(1, 0),
             SwapEffect = SwapEffect.FlipDiscard,
@@ -451,7 +405,6 @@ internal sealed class D3D12Swapchain : Swapchain {
         this._dxgiSwapChain = swapChain1.QueryInterface<IDXGISwapChain3>();
         this.CacheSwapchainHotpathCalls();
         swapChain1.Dispose();
-        this.ConfigureFrameLatencyWaitableObject();
         this.CreateNativeRenderTargets();
         return true;
     }
@@ -505,15 +458,15 @@ internal sealed class D3D12Swapchain : Swapchain {
     private void CreateNativeRenderTargets() {
         if (this._rtvDescriptors == null) {
             this._rtvDescriptorSize = (int)this._gd.Device.GetDescriptorHandleIncrementSize(DescriptorHeapType.RenderTargetView);
-            this._rtvDescriptors = this._gd.RtvDescriptorAllocator.Allocate((uint)this._bufferCount);
+            this._rtvDescriptors = this._gd.RtvDescriptorAllocator.Allocate((uint)SwapchainBufferCount);
         }
 
-        this._backBufferResources = new ID3D12Resource[this._bufferCount];
-        this._backBufferRtvs = new CpuDescriptorHandle[this._bufferCount];
-        this._backBufferStates = new ResourceStates[this._bufferCount];
+        this._backBufferResources = new ID3D12Resource[SwapchainBufferCount];
+        this._backBufferRtvs = new CpuDescriptorHandle[SwapchainBufferCount];
+        this._backBufferStates = new ResourceStates[SwapchainBufferCount];
 
         CpuDescriptorHandle handle = this._rtvDescriptors.Handle;
-        for (int i = 0; i < this._bufferCount; i++) {
+        for (int i = 0; i < SwapchainBufferCount; i++) {
             ID3D12Resource buffer = this._dxgiSwapChain.GetBuffer<ID3D12Resource>((uint)i);
             this._backBufferResources[i] = buffer;
             this._backBufferRtvs[i] = handle + i * this._rtvDescriptorSize;
@@ -569,8 +522,7 @@ internal sealed class D3D12Swapchain : Swapchain {
             this._depthTexture = null;
 
             this.DisposeNativeResources(disposeDescriptorHeap: false);
-            this._dxgiSwapChain.ResizeBuffers((uint)this._bufferCount, width, height, this._nativeColorFormat, this.GetSwapChainFlags());
-            this.ConfigureFrameLatencyWaitableObject();
+            this._dxgiSwapChain.ResizeBuffers((uint)SwapchainBufferCount, width, height, this._nativeColorFormat, this.GetSwapChainFlags());
             this.CreateNativeRenderTargets();
 
             this.TryResolveAttachmentSize(ref width, ref height);
@@ -635,48 +587,7 @@ internal sealed class D3D12Swapchain : Swapchain {
             flags |= SwapChainFlags.AllowTearing;
         }
 
-        if (FrameLatencyWaitEnabled && this.SyncToVerticalBlank && this._canCreateFrameLatencyWaitableObject) {
-            flags |= SwapChainFlags.FrameLatencyWaitableObject;
-        }
-
         return flags;
-    }
-
-    /// <summary>
-    /// Configures DXGI frame latency limiting for this swapchain when available.
-    /// </summary>
-    private void ConfigureFrameLatencyWaitableObject() {
-        this._frameLatencyWaitHandle?.Dispose();
-        this._frameLatencyWaitHandle = null;
-
-        if (!FrameLatencyWaitEnabled || !this.SyncToVerticalBlank) {
-            return;
-        }
-
-        if ((this.GetSwapChainFlags() & SwapChainFlags.FrameLatencyWaitableObject) == 0) {
-            return;
-        }
-
-        using IDXGISwapChain2 swapChain2 = this._dxgiSwapChain.QueryInterfaceOrNull<IDXGISwapChain2>();
-        if (swapChain2 == null) {
-            return;
-        }
-
-        swapChain2.MaximumFrameLatency = (uint)MaximumFrameLatency;
-        this._frameLatencyWaitHandle = new FrameLatencyWaitHandle(swapChain2.FrameLatencyWaitableObject);
-    }
-
-    /// <summary>
-    /// Reads the optional DXGI maximum frame latency override.
-    /// </summary>
-    /// <returns>The configured latency clamped to a conservative range.</returns>
-    private static int ReadMaximumFrameLatency() {
-        string value = Environment.GetEnvironmentVariable("VELDRID_D3D12_MAX_FRAME_LATENCY");
-        if (int.TryParse(value, out int parsed) && parsed >= 1 && parsed <= 16) {
-            return parsed;
-        }
-
-        return 2;
     }
 
     /// <summary>
@@ -700,17 +611,4 @@ internal sealed class D3D12Swapchain : Swapchain {
         this._backBufferStates = null;
     }
 
-    /// <summary>
-    /// Wraps a DXGI frame-latency waitable handle.
-    /// </summary>
-    private sealed class FrameLatencyWaitHandle : WaitHandle {
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="FrameLatencyWaitHandle" /> type.
-        /// </summary>
-        /// <param name="handle">The native handle value.</param>
-        public FrameLatencyWaitHandle(nint handle) {
-            this.SafeWaitHandle = new SafeWaitHandle(handle, false);
-        }
-    }
 }

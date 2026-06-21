@@ -247,6 +247,11 @@ internal sealed class D3D12CommandListPerfTracker {
     private long _frameStartTicks;
 
     /// <summary>
+    /// Stores the largest allocator-slot count observed during the current reporting window.
+    /// </summary>
+    private int _maxAllocatorSlots;
+
+    /// <summary>
     /// Stores the managed allocated byte counter captured at the beginning of the current command list recording.
     /// </summary>
     private long _frameStartAllocatedBytes;
@@ -597,6 +602,11 @@ internal sealed class D3D12CommandListPerfTracker {
     internal ulong VertexBufferBinds;
 
     /// <summary>
+    /// Stores the number of allocator slots retained by the current command list.
+    /// </summary>
+    internal int AllocatorSlots;
+
+    /// <summary>
     /// Converts high-resolution stopwatch ticks to milliseconds for D3D12 performance logging.
     /// </summary>
     /// <param name="ticks">The elapsed stopwatch ticks.</param>
@@ -651,6 +661,7 @@ internal sealed class D3D12CommandListPerfTracker {
         this.RenderTargetBindSkips = 0;
         this.VertexBufferBinds = 0;
         this.IndexBufferBinds = 0;
+        this.AllocatorSlots = 0;
         this.DynamicSnapshotCopyBytes = 0;
         this.DynamicSnapshotPrefixCopyBytes = 0;
         this.DynamicSnapshotRotations = 0;
@@ -685,6 +696,7 @@ internal sealed class D3D12CommandListPerfTracker {
         this._frames++;
         this._maxRecordMs = Math.Max(this._maxRecordMs, recordMs);
         this._maxUntrackedRecordMs = Math.Max(this._maxUntrackedRecordMs, untrackedMs);
+        this._maxAllocatorSlots = Math.Max(this._maxAllocatorSlots, this.AllocatorSlots);
         this._accumGc0Collections += (ulong)Math.Max(gc0Delta, 0);
         this._accumGc1Collections += (ulong)Math.Max(gc1Delta, 0);
         this._accumGc2Collections += (ulong)Math.Max(gc2Delta, 0);
@@ -737,7 +749,7 @@ internal sealed class D3D12CommandListPerfTracker {
         this.AccumulateCommandGapReport();
 
         if (untrackedMs >= RecordSpikeThresholdMs) {
-            Console.WriteLine($"[D3D12 PERF SPIKE] recordMs={recordMs:F3}, trackedMs={trackedMs:F3}, untrackedMs={untrackedMs:F3}, " + $"wait={this.BeginWaitMs:F3}, pso={this.PipelineSetMs:F3}, rs={this.ResourceSetFlushMs:F3}, barrier={this.BarrierMs:F3}, " + $"upload={this.UploadRecordMs:F3}, draw={this.DrawMs:F3}, dispatch={this.DispatchMs:F3}, " + $"allocKB={this.AllocatedBytes / 1024.0:F1}, gc={Math.Max(gc0Delta, 0)}/{Math.Max(gc1Delta, 0)}/{Math.Max(gc2Delta, 0)}, psoCount={this.PipelineChanges}, rsCount={this.ResourceSetChanges}, drawCount={this.DrawCalls}");
+            Console.WriteLine($"[D3D12 PERF SPIKE] recordMs={recordMs:F3}, trackedMs={trackedMs:F3}, untrackedMs={untrackedMs:F3}, " + $"wait={this.BeginWaitMs:F3}, pso={this.PipelineSetMs:F3}, rs={this.ResourceSetFlushMs:F3}, barrier={this.BarrierMs:F3}, " + $"upload={this.UploadRecordMs:F3}, draw={this.DrawMs:F3}, dispatch={this.DispatchMs:F3}, allocSlots={this.AllocatorSlots}, " + $"allocKB={this.AllocatedBytes / 1024.0:F1}, gc={Math.Max(gc0Delta, 0)}/{Math.Max(gc1Delta, 0)}/{Math.Max(gc2Delta, 0)}, psoCount={this.PipelineChanges}, rsCount={this.ResourceSetChanges}, drawCount={this.DrawCalls}");
             Console.WriteLine($"[D3D12 PERF UPLOAD] uploadKB={this.UploadBytes / 1024.0:F1}, uploadCopies={this.UploadCopies}, uploadRing={this.UploadRingAllocations}, uploadDedicated={this.UploadDedicatedAllocations}, immWriteKB={this.ImmediateBufferWriteBytes / 1024.0:F1}, immWriteDw={this.ImmediateBufferWriteDwords}, immWriteBatch={this.ImmediateBufferWriteBatches}, dynCopyKB={this.DynamicSnapshotCopyBytes / 1024.0:F1}, dynPrefixKB={this.DynamicSnapshotPrefixCopyBytes / 1024.0:F1}, dynRot={this.DynamicSnapshotRotations}, vb={this.VertexBufferBinds}, ib={this.IndexBufferBinds}, rtBind={this.RenderTargetBinds}, rtSkip={this.RenderTargetBindSkips}, barrierCoal={this.BarrierCoalescedTransitions}, barrierDrop={this.BarrierRemovedTransitions}");
             Console.WriteLine($"[D3D12 PERF GAP] maxGapMs={this._maxExternalGapMs:F3}, transition={this._maxExternalGapBefore}->{this._maxExternalGapAfter}, scope={this._maxExternalGapScope}");
             if (!string.IsNullOrEmpty(this._maxExternalGapStack)) {
@@ -873,7 +885,7 @@ internal sealed class D3D12CommandListPerfTracker {
         double reportWindowMs = elapsedMs - this._lastReportMs;
         this._lastReportMs = elapsedMs;
         double invFrames = 1.0 / ReportIntervalFrames;
-        Console.WriteLine($"[D3D12 PERF] {ReportIntervalFrames}f/{reportWindowMs:F0}ms avg: " + $"wait={this._accumBeginWaitMs * invFrames:F3}ms ({this._accumBeginWaitCount * invFrames:F2}x), " + $"psoMs={this._accumPipelineSetMs * invFrames:F3}, rsMs={this._accumResourceSetFlushMs * invFrames:F3}, " + $"barrierMs={this._accumBarrierMs * invFrames:F3}, descCopyMs={this._accumDescriptorCopyMs * invFrames:F3}, uploadMs={this._accumUploadRecordMs * invFrames:F3}, " + $"drawMs={this._accumDrawMs * invFrames:F3}, dispatchMs={this._accumDispatchMs * invFrames:F3}, " + $"maxRecordMs={this._maxRecordMs:F3}, maxUntrackedMs={this._maxUntrackedRecordMs:F3}, maxWaitMs={this._maxBeginWaitMs:F3}, maxPsoMs={this._maxPipelineSetMs:F3}, maxRsMs={this._maxResourceSetFlushMs:F3}, " + $"maxBarrierMs={this._maxBarrierMs:F3}, maxUploadMs={this._maxUploadRecordMs:F3}, maxDrawMs={this._maxDrawMs:F3}, " + $"allocKB={this._accumAllocatedBytes * invFrames / 1024.0:F1}, gc={this._accumGc0Collections}/{this._accumGc1Collections}/{this._accumGc2Collections}, " + $"trans={this._accumTransitions * invFrames:F1}, subTrans={this._accumSubresourceTransitions * invFrames:F1}, barrierCoal={this._accumBarrierCoalescedTransitions * invFrames:F1}, barrierDrop={this._accumBarrierRemovedTransitions * invFrames:F1}, uavB={this._accumUavBarriers * invFrames:F1}, " + $"pso={this._accumPipelineChanges * invFrames:F1}, rs={this._accumResourceSetChanges * invFrames:F1}, rsScan={this._accumResourceSetScanSlots * invFrames:F1}, rsBind={this._accumResourceSetBinds * invFrames:F1}, " + $"descCopy={this._accumDescriptorCopies * invFrames:F1}, rootTbl={this._accumRootTableSets * invFrames:F1}, rootBuf={this._accumRootBufferSets * invFrames:F1}, rtBind={this._accumRenderTargetBinds * invFrames:F1}, rtSkip={this._accumRenderTargetBindSkips * invFrames:F1}, " + $"vb={this._accumVertexBufferBinds * invFrames:F1}, ib={this._accumIndexBufferBinds * invFrames:F1}, " + $"uploadKB={this._accumUploadBytes * invFrames / 1024.0:F1}, uploadCopies={this._accumUploadCopies * invFrames:F1}, uploadRing={this._accumUploadRingAllocations * invFrames:F1}, uploadDedicated={this._accumUploadDedicatedAllocations * invFrames:F1}, immWriteKB={this._accumImmediateBufferWriteBytes * invFrames / 1024.0:F1}, immWriteDw={this._accumImmediateBufferWriteDwords * invFrames:F1}, immWriteBatch={this._accumImmediateBufferWriteBatches * invFrames:F1}, " + $"dynCopyKB={this._accumDynamicSnapshotCopyBytes * invFrames / 1024.0:F1}, dynPrefixKB={this._accumDynamicSnapshotPrefixCopyBytes * invFrames / 1024.0:F1}, dynRot={this._accumDynamicSnapshotRotations * invFrames:F1}, " + $"draw={this._accumDrawCalls * invFrames:F1}, dispatch={this._accumDispatchCalls * invFrames:F1}");
+        Console.WriteLine($"[D3D12 PERF] {ReportIntervalFrames}f/{reportWindowMs:F0}ms avg: " + $"wait={this._accumBeginWaitMs * invFrames:F3}ms ({this._accumBeginWaitCount * invFrames:F2}x), " + $"psoMs={this._accumPipelineSetMs * invFrames:F3}, rsMs={this._accumResourceSetFlushMs * invFrames:F3}, " + $"barrierMs={this._accumBarrierMs * invFrames:F3}, descCopyMs={this._accumDescriptorCopyMs * invFrames:F3}, uploadMs={this._accumUploadRecordMs * invFrames:F3}, " + $"drawMs={this._accumDrawMs * invFrames:F3}, dispatchMs={this._accumDispatchMs * invFrames:F3}, allocSlots={this._maxAllocatorSlots}, " + $"maxRecordMs={this._maxRecordMs:F3}, maxUntrackedMs={this._maxUntrackedRecordMs:F3}, maxWaitMs={this._maxBeginWaitMs:F3}, maxPsoMs={this._maxPipelineSetMs:F3}, maxRsMs={this._maxResourceSetFlushMs:F3}, " + $"maxBarrierMs={this._maxBarrierMs:F3}, maxUploadMs={this._maxUploadRecordMs:F3}, maxDrawMs={this._maxDrawMs:F3}, " + $"allocKB={this._accumAllocatedBytes * invFrames / 1024.0:F1}, gc={this._accumGc0Collections}/{this._accumGc1Collections}/{this._accumGc2Collections}, " + $"trans={this._accumTransitions * invFrames:F1}, subTrans={this._accumSubresourceTransitions * invFrames:F1}, barrierCoal={this._accumBarrierCoalescedTransitions * invFrames:F1}, barrierDrop={this._accumBarrierRemovedTransitions * invFrames:F1}, uavB={this._accumUavBarriers * invFrames:F1}, " + $"pso={this._accumPipelineChanges * invFrames:F1}, rs={this._accumResourceSetChanges * invFrames:F1}, rsScan={this._accumResourceSetScanSlots * invFrames:F1}, rsBind={this._accumResourceSetBinds * invFrames:F1}, " + $"descCopy={this._accumDescriptorCopies * invFrames:F1}, rootTbl={this._accumRootTableSets * invFrames:F1}, rootBuf={this._accumRootBufferSets * invFrames:F1}, rtBind={this._accumRenderTargetBinds * invFrames:F1}, rtSkip={this._accumRenderTargetBindSkips * invFrames:F1}, " + $"vb={this._accumVertexBufferBinds * invFrames:F1}, ib={this._accumIndexBufferBinds * invFrames:F1}, " + $"uploadKB={this._accumUploadBytes * invFrames / 1024.0:F1}, uploadCopies={this._accumUploadCopies * invFrames:F1}, uploadRing={this._accumUploadRingAllocations * invFrames:F1}, uploadDedicated={this._accumUploadDedicatedAllocations * invFrames:F1}, immWriteKB={this._accumImmediateBufferWriteBytes * invFrames / 1024.0:F1}, immWriteDw={this._accumImmediateBufferWriteDwords * invFrames:F1}, immWriteBatch={this._accumImmediateBufferWriteBatches * invFrames:F1}, " + $"dynCopyKB={this._accumDynamicSnapshotCopyBytes * invFrames / 1024.0:F1}, dynPrefixKB={this._accumDynamicSnapshotPrefixCopyBytes * invFrames / 1024.0:F1}, dynRot={this._accumDynamicSnapshotRotations * invFrames:F1}, " + $"draw={this._accumDrawCalls * invFrames:F1}, dispatch={this._accumDispatchCalls * invFrames:F1}");
         Console.WriteLine($"[D3D12 PERF GAP] windowMaxGapMs={this._reportMaxExternalGapMs:F3}, transition={this._reportMaxExternalGapTransition}, scope={this._reportMaxExternalGapScope}");
     }
 
@@ -927,6 +939,7 @@ internal sealed class D3D12CommandListPerfTracker {
         this._maxDescriptorCopyMs = 0;
         this._maxDispatchMs = 0;
         this._maxDrawMs = 0;
+        this._maxAllocatorSlots = 0;
         this._maxPipelineSetMs = 0;
         this._maxRecordMs = 0;
         this._maxUntrackedRecordMs = 0;

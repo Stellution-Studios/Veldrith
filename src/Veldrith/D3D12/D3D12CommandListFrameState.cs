@@ -48,12 +48,24 @@ internal sealed class D3D12CommandListFrameState : IDisposable {
     internal ID3D12CommandAllocator InitialAllocator => this._allocatorSlots[0].Allocator;
 
     /// <summary>
+    /// Gets the number of allocator slots currently retained by this command list.
+    /// </summary>
+    internal int AllocatorSlotCount => this._allocatorSlots.Count;
+
+    /// <summary>
     /// Rotates to the next fixed frame allocator, waits if needed, resets it, and returns it for command-list reset.
     /// </summary>
     /// <param name="perf">The optional performance tracker receiving begin-wait timing.</param>
     /// <returns>The allocator that is ready for the next recording.</returns>
     internal ID3D12CommandAllocator BeginRecording(D3D12CommandListPerfTracker perf) {
+        long startTicks = D3D12CommandListPerfTracker.Enabled ? Stopwatch.GetTimestamp() : 0;
         AllocatorSlot slot = this.AcquireAllocatorSlot();
+        if (D3D12CommandListPerfTracker.Enabled) {
+            double elapsedMs = D3D12CommandListPerfTracker.TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
+            perf.BeginWaitMs += elapsedMs;
+            perf.BeginWaitCount++;
+        }
+
         this._currentAllocatorSlot = slot;
         slot.Reset();
         return slot.Allocator;

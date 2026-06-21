@@ -109,6 +109,21 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     private double _perfSubmitMs;
 
     /// <summary>
+    /// Accumulates Vulkan submit-fence check time for diagnostics.
+    /// </summary>
+    private double _perfSubmitFenceCheckMs;
+
+    /// <summary>
+    /// Accumulates Vulkan submit lock wait time for diagnostics.
+    /// </summary>
+    private double _perfSubmitLockWaitMs;
+
+    /// <summary>
+    /// Accumulates Vulkan present lock wait time for diagnostics.
+    /// </summary>
+    private double _perfPresentLockWaitMs;
+
+    /// <summary>
     /// Accumulates Vulkan present time for diagnostics.
     /// </summary>
     private double _perfPresentMs;
@@ -1097,7 +1112,11 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
     /// <param name="signalSemaphoresPtr">The signal semaphores ptr value used by this operation.</param>
     /// <param name="fence">The synchronization fence used by this operation.</param>
     private void SubmitCommandBuffer(VkCommandList vkCl, VkCommandBuffer vkCb, uint waitSemaphoreCount, VkSemaphore* waitSemaphoresPtr, uint signalSemaphoreCount, VkSemaphore* signalSemaphoresPtr, Fence fence) {
+        long fenceCheckStartTicks = PerfLogEnabled ? Stopwatch.GetTimestamp() : 0;
         this.CheckSubmittedFences();
+        if (PerfLogEnabled) {
+            this._perfSubmitFenceCheckMs += TicksToMilliseconds(Stopwatch.GetTimestamp() - fenceCheckStartTicks);
+        }
 
         bool useExtraFence = fence != null;
         VkSubmitInfo si = new VkSubmitInfo();
@@ -1123,9 +1142,18 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
             ownsSubmissionFence = true;
         }
 
+        long submitLockStartTicks = PerfLogEnabled ? Stopwatch.GetTimestamp() : 0;
         lock (this._graphicsQueueLock) {
+            if (PerfLogEnabled) {
+                this._perfSubmitLockWaitMs += TicksToMilliseconds(Stopwatch.GetTimestamp() - submitLockStartTicks);
+            }
+
+            long submitQueueStartTicks = PerfLogEnabled ? Stopwatch.GetTimestamp() : 0;
             VkResult result = VulkanDispatch.GetApi(this._graphicsQueue).vkQueueSubmit(this._graphicsQueue, 1, &si, vkFence);
             CheckResult(result);
+            if (PerfLogEnabled) {
+                this._perfSubmitMs += TicksToMilliseconds(Stopwatch.GetTimestamp() - submitQueueStartTicks);
+            }
         }
 
         lock (this._submittedFencesLock) {
@@ -1213,9 +1241,12 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
 
         double invFrames = this._perfFrameCount == 0 ? 0.0 : 1.0 / this._perfFrameCount;
         double fps = this._perfFrameCount * 1000.0 / windowMs;
-        Console.WriteLine($"[VK PERF] fps={fps:F0}, presentMode={swapchain.PresentMode}, submit={this._perfSubmitMs * invFrames:F3}ms, present={this._perfPresentMs * invFrames:F3}ms, acquire={this._perfAcquireMs * invFrames:F3}ms");
+        Console.WriteLine($"[VK PERF] fps={fps:F0}, presentMode={swapchain.PresentMode}, submitCheck={this._perfSubmitFenceCheckMs * invFrames:F3}ms, submitLock={this._perfSubmitLockWaitMs * invFrames:F3}ms, submit={this._perfSubmitMs * invFrames:F3}ms, presentLock={this._perfPresentLockWaitMs * invFrames:F3}ms, present={this._perfPresentMs * invFrames:F3}ms, acquire={this._perfAcquireMs * invFrames:F3}ms");
 
         this._perfSubmitMs = 0.0;
+        this._perfSubmitFenceCheckMs = 0.0;
+        this._perfSubmitLockWaitMs = 0.0;
+        this._perfPresentLockWaitMs = 0.0;
         this._perfPresentMs = 0.0;
         this._perfAcquireMs = 0.0;
         this._perfFrameCount = 0;
@@ -2036,7 +2067,12 @@ internal unsafe class VkGraphicsDevice : GraphicsDevice {
 
         object presentLock = vkSc.PresentQueueIndex == this.GraphicsQueueIndex ? this._graphicsQueueLock : vkSc;
 
+        long presentLockStartTicks = PerfLogEnabled ? Stopwatch.GetTimestamp() : 0;
         lock (presentLock) {
+            if (PerfLogEnabled) {
+                this._perfPresentLockWaitMs += TicksToMilliseconds(Stopwatch.GetTimestamp() - presentLockStartTicks);
+            }
+
             long presentStartTicks = PerfLogEnabled ? Stopwatch.GetTimestamp() : 0;
             VulkanDispatch.GetApi(vkSc.PresentQueue).vkQueuePresentKHR(vkSc.PresentQueue, &presentInfo);
             if (PerfLogEnabled) {

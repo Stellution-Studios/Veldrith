@@ -529,6 +529,7 @@ internal sealed class D3D12CommandList : CommandList {
         if (D3D12CommandListPerfTracker.Enabled) {
             this._perf.BarrierCoalescedTransitions = this._barriers.CoalescedTransitions;
             this._perf.BarrierRemovedTransitions = this._barriers.RemovedTransitions;
+            this._perf.AllocatorSlots = this._frameState.AllocatorSlotCount;
         }
 
         this._perf.EndRecording();

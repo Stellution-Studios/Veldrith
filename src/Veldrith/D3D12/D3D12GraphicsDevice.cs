@@ -39,7 +39,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// <summary>
     /// Stores the number of submissions covered by one internal submission fence signal.
     /// </summary>
-    private const int SubmissionFenceSignalInterval = 1;
+    private const int SubmissionFenceSignalInterval = 4;
 
     /// <summary>
     /// Stores the maximum number of pending deferred-disposal batches before throttling is bypassed.
@@ -814,8 +814,10 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// <param name="fence">The fence to signal.</param>
     /// <param name="value">The fence value to signal.</param>
     internal unsafe void SignalQueueFenceNoAlloc(ID3D12Fence fence, ulong value) {
-        Result result = new(this._signalQueueFence((void*)this._commandQueuePointer, (void*)fence.NativePointer, value));
-        result.CheckError();
+        int result = this._signalQueueFence((void*)this._commandQueuePointer, (void*)fence.NativePointer, value);
+        if (result < 0) {
+            new Result(result).CheckError();
+        }
     }
 
     /// <summary>
@@ -2098,19 +2100,6 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// Executes the wait for next frame ready core logic for this backend.
     /// </summary>
     private protected override void WaitForNextFrameReadyCore() {
-        if (!D3D12Swapchain.FrameLatencyWaitsEnabled) {
-            return;
-        }
-
-        if (this.MainSwapchain is D3D12Swapchain swapchain) {
-            long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
-            swapchain.WaitForNextFrameReady();
-            if (_perfLogEnabled) {
-                double waitMs = TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
-                this._perfAccumFrameWaitMs += waitMs;
-                this._perfMaxFrameWaitMs = Math.Max(this._perfMaxFrameWaitMs, waitMs);
-            }
-        }
     }
 
     /// <summary>
