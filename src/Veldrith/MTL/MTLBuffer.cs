@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Veldrith.MetalBindings;
 
 namespace Veldrith.MTL;
@@ -24,11 +25,27 @@ internal class MtlBuffer : DeviceBuffer {
     private MTLCommandBuffer _lastSubmittedUse;
 
     /// <summary>
+    /// Stores the graphics device that owns this buffer.
+    /// </summary>
+    private readonly MtlGraphicsDevice _gd;
+
+    /// <summary>
+    /// Stores renamed buffer backings waiting for prior GPU work to complete.
+    /// </summary>
+    private readonly List<PendingBufferUse> _pendingRenamedBuffers = new();
+
+    /// <summary>
+    /// Stores renamed buffer backings available for reuse.
+    /// </summary>
+    private readonly List<MTLBuffer> _availableRenamedBuffers = new();
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="MtlBuffer" /> type.
     /// </summary>
     /// <param name="bd">The bd value used by this operation.</param>
     /// <param name="gd">The graphics device that owns this operation.</param>
     public MtlBuffer(ref BufferDescription bd, MtlGraphicsDevice gd) {
+        this._gd = gd;
         this.SizeInBytes = bd.SizeInBytes;
         uint roundFactor = (4 - this.SizeInBytes % 4) % 4;
         this.ActualCapacity = this.SizeInBytes + roundFactor;
@@ -37,7 +54,7 @@ internal class MtlBuffer : DeviceBuffer {
         bool sharedMemory = (this.Usage & (BufferUsage.Staging | BufferUsage.Dynamic)) != 0;
         MTLResourceOptions bufferOptions = sharedMemory ? MTLResourceOptions.StorageModeShared : MTLResourceOptions.StorageModePrivate;
 
-        this.DeviceBuffer = gd.Device.NewBufferWithLengthOptions(this.ActualCapacity, bufferOptions);
+        this.DeviceBuffer = this._gd.Device.NewBufferWithLengthOptions(this.ActualCapacity, bufferOptions);
 
         unsafe {
             if (sharedMemory) {
@@ -82,12 +99,51 @@ internal class MtlBuffer : DeviceBuffer {
     /// <summary>
     /// Gets or sets DeviceBuffer.
     /// </summary>
-    public MTLBuffer DeviceBuffer { get; }
+    public MTLBuffer DeviceBuffer { get; private set; }
 
     /// <summary>
     /// Gets or sets Pointer.
     /// </summary>
     public unsafe void* Pointer { get; private set; }
+
+    /// <summary>
+    /// Prepares this dynamic buffer for a CPU write without stalling on in-flight GPU use.
+    /// </summary>
+    public void PrepareForCpuUpdate() {
+        if ((this.Usage & BufferUsage.Dynamic) == 0) {
+            return;
+        }
+
+        lock (this._submittedUseLock) {
+            this.RecycleCompletedRenamedBuffers_NoLock();
+
+            if (this._lastSubmittedUse.NativePtr == IntPtr.Zero) {
+                return;
+            }
+
+            if (this._lastSubmittedUse.Status == MTLCommandBufferStatus.Completed) {
+                ObjectiveCRuntime.Release(this._lastSubmittedUse.NativePtr);
+                this._lastSubmittedUse = default;
+                return;
+            }
+
+            this._pendingRenamedBuffers.Add(new PendingBufferUse(this.DeviceBuffer, this._lastSubmittedUse));
+            this._lastSubmittedUse = default;
+
+            int lastAvailableIndex = this._availableRenamedBuffers.Count - 1;
+            if (lastAvailableIndex >= 0) {
+                this.DeviceBuffer = this._availableRenamedBuffers[lastAvailableIndex];
+                this._availableRenamedBuffers.RemoveAt(lastAvailableIndex);
+            }
+            else {
+                this.DeviceBuffer = this.CreateSharedBuffer();
+            }
+
+            unsafe {
+                this.Pointer = this.DeviceBuffer.Contents();
+            }
+        }
+    }
 
     /// <summary>
     /// Tracks a submitted command buffer which may read this dynamic buffer.
@@ -153,6 +209,31 @@ internal class MtlBuffer : DeviceBuffer {
         }
     }
 
+    /// <summary>
+    /// Creates a shared Metal buffer backing compatible with this buffer.
+    /// </summary>
+    /// <returns>The created Metal buffer.</returns>
+    private MTLBuffer CreateSharedBuffer() {
+        return this._gd.Device.NewBufferWithLengthOptions(this.ActualCapacity, MTLResourceOptions.StorageModeShared);
+    }
+
+    /// <summary>
+    /// Moves completed renamed backings into the reuse list.
+    /// </summary>
+    private void RecycleCompletedRenamedBuffers_NoLock() {
+        for (int i = this._pendingRenamedBuffers.Count - 1; i >= 0; i--) {
+            PendingBufferUse pending = this._pendingRenamedBuffers[i];
+
+            if (pending.CommandBuffer.Status != MTLCommandBufferStatus.Completed) {
+                continue;
+            }
+
+            this._availableRenamedBuffers.Add(pending.Buffer);
+            ObjectiveCRuntime.Release(pending.CommandBuffer.NativePtr);
+            this._pendingRenamedBuffers.RemoveAt(i);
+        }
+    }
+
     #region Disposal
 
     /// <summary>
@@ -166,9 +247,32 @@ internal class MtlBuffer : DeviceBuffer {
                 this._lastSubmittedUse = default;
             }
 
+            foreach (PendingBufferUse pending in this._pendingRenamedBuffers) {
+                ObjectiveCRuntime.Release(pending.CommandBuffer.NativePtr);
+                ObjectiveCRuntime.Release(pending.Buffer.NativePtr);
+            }
+
+            this._pendingRenamedBuffers.Clear();
+
+            foreach (MTLBuffer buffer in this._availableRenamedBuffers) {
+                ObjectiveCRuntime.Release(buffer.NativePtr);
+            }
+
+            this._availableRenamedBuffers.Clear();
+
             ObjectiveCRuntime.Release(this.DeviceBuffer.NativePtr);
         }
     }
 
     #endregion
+
+    /// <summary>
+    /// Stores a renamed backing buffer and the command buffer still using it.
+    /// </summary>
+    /// <param name="buffer">The renamed backing buffer.</param>
+    /// <param name="commandBuffer">The command buffer using the backing buffer.</param>
+    private readonly struct PendingBufferUse(MTLBuffer buffer, MTLCommandBuffer commandBuffer) {
+        public readonly MTLBuffer Buffer = buffer;
+        public readonly MTLCommandBuffer CommandBuffer = commandBuffer;
+    }
 }

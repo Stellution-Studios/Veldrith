@@ -82,6 +82,11 @@ internal unsafe class MtlCommandList : CommandList {
     private readonly HashSet<MtlBuffer> _usedDynamicBuffers = new();
 
     /// <summary>
+    /// Stores dynamic buffers directly written by this command list before first use.
+    /// </summary>
+    private readonly HashSet<MtlBuffer> _directlyUpdatedDynamicBuffers = new();
+
+    /// <summary>
     /// Stores the gd state used by this instance.
     /// </summary>
     private readonly MtlGraphicsDevice gd;
@@ -353,6 +358,7 @@ internal unsafe class MtlCommandList : CommandList {
 
         this.ClearCachedState();
         this._usedDynamicBuffers.Clear();
+        this._directlyUpdatedDynamicBuffers.Clear();
     }
 
     /// <summary>
@@ -1492,14 +1498,16 @@ internal unsafe class MtlCommandList : CommandList {
         MtlBuffer dstMtlBuffer = Util.AssertSubtype<DeviceBuffer, MtlBuffer>(buffer);
 
         if (dstMtlBuffer.Pointer != null && !this._usedDynamicBuffers.Contains(dstMtlBuffer)) {
-            dstMtlBuffer.WaitForPendingUse();
+            if ((dstMtlBuffer.Usage & BufferUsage.Dynamic) == 0 || this._directlyUpdatedDynamicBuffers.Add(dstMtlBuffer)) {
+                dstMtlBuffer.PrepareForCpuUpdate();
+            }
+
             byte* destOffsetPtr = (byte*)dstMtlBuffer.Pointer + bufferOffsetInBytes;
             Unsafe.CopyBlock(destOffsetPtr, source.ToPointer(), sizeInBytes);
             return;
         }
 
         bool useComputeCopy = bufferOffsetInBytes % 4 != 0 || sizeInBytes % 4 != 0;
-        dstMtlBuffer.WaitForPendingUse();
         MtlBuffer staging = this.GetFreeStagingBuffer(sizeInBytes);
 
         this.gd.UpdateBuffer(staging, 0, source, sizeInBytes);

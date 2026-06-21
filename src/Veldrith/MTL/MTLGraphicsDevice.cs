@@ -834,7 +834,8 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
 
         if (destPtr != null) {
             if ((buffer.Usage & BufferUsage.Dynamic) != 0) {
-                mtlBuffer.WaitForPendingUse();
+                mtlBuffer.PrepareForCpuUpdate();
+                destPtr = mtlBuffer.Pointer;
             }
 
             byte* destOffsetPtr = (byte*)destPtr + bufferOffsetInBytes;
