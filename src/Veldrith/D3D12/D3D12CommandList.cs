@@ -31,7 +31,9 @@ internal sealed class D3D12CommandList : CommandList {
     /// <summary>
     /// Controls the experimental stable ResourceSet buffer update bypass.
     /// </summary>
-    private static readonly bool _stableResourceSetUpdateFastPathEnabled = string.Equals(Environment.GetEnvironmentVariable("VELDRID_D3D12_STABLE_RESOURCESET_UPDATE_FASTPATH"), "1", StringComparison.Ordinal);
+    // The stable backing-store path is safe when the buffer has not been consumed yet
+    // and avoids unnecessary snapshot uploads on dynamic ResourceSet buffers.
+    private static readonly bool _stableResourceSetUpdateFastPathEnabled = !string.Equals(Environment.GetEnvironmentVariable("VELDRID_D3D12_STABLE_RESOURCESET_UPDATE_FASTPATH"), "0", StringComparison.Ordinal);
 
     /// <summary>
     /// Stores the begin event method state used by this instance.
