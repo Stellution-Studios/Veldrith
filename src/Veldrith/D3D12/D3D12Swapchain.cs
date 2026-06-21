@@ -285,7 +285,7 @@ internal sealed class D3D12Swapchain : Swapchain {
             PresentFlags presentFlags = this._presentFlags;
             lock (this._gd.CommandQueueLock) {
                 this.PresentNoAlloc(syncInterval, presentFlags);
-                this._currentBackBufferIndex = (int)this.GetCurrentBackBufferIndexNoAlloc();
+                this._currentBackBufferIndex = (this._currentBackBufferIndex + 1) % this._bufferCount;
             }
         }
     }

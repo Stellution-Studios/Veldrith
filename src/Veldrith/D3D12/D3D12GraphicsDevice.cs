@@ -37,9 +37,9 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     private const int DefaultDeferredDisposalPumpInterval = 4;
 
     /// <summary>
-    /// Stores the default number of submissions covered by one internal submission fence signal.
+    /// Stores the number of submissions covered by one internal submission fence signal.
     /// </summary>
-    private const int DefaultSubmissionFenceSignalInterval = 3;
+    private const int SubmissionFenceSignalInterval = 1;
 
     /// <summary>
     /// Stores the maximum number of pending deferred-disposal batches before throttling is bypassed.
@@ -54,7 +54,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// <summary>
     /// Stores the number of submissions batched behind one internal D3D12 fence signal.
     /// </summary>
-    private static readonly int _submissionFenceSignalInterval = ReadSubmissionFenceSignalInterval();
+    private const int _submissionFenceSignalInterval = SubmissionFenceSignalInterval;
 
     /// <summary>
     /// Gets whether persistent D3D12 pipeline library caching is enabled.
@@ -104,20 +104,6 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         }
 
         return DefaultDeferredDisposalPumpInterval;
-    }
-
-    /// <summary>
-    /// Reads the internal submission fence signal interval from the environment.
-    /// </summary>
-    /// <returns>The configured signal interval.</returns>
-    private static int ReadSubmissionFenceSignalInterval() {
-        string value = Environment.GetEnvironmentVariable("VELDRID_D3D12_SUBMISSION_FENCE_SIGNAL_INTERVAL");
-
-        if (int.TryParse(value, out int parsed)) {
-            return Math.Clamp(parsed, 1, 16);
-        }
-
-        return DefaultSubmissionFenceSignalInterval;
     }
 
     /// <summary>
@@ -2601,10 +2587,6 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// </summary>
     /// <returns><see langword="true" /> when render passes are supported and enabled.</returns>
     private bool CheckRenderPassSupport() {
-        if (!string.Equals(Environment.GetEnvironmentVariable("VELDRID_D3D12_RENDERPASS"), "1", StringComparison.Ordinal)) {
-            return false;
-        }
-
         FeatureDataD3D12Options5 options = default;
         if (!this.TryCheckFeatureSupport(D3D12Feature.Options5, ref options)) {
             return false;
