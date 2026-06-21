@@ -1,4 +1,3 @@
-using System;
 using Vortice.Direct3D12;
 
 namespace Veldrith.D3D12;
@@ -101,8 +100,8 @@ internal sealed class D3D12SwapchainBackBufferTracker {
     /// command list's active framebuffer was switched to an offscreen target after rendering to
     /// the swapchain (e.g. GUI/overlay passes during scene transitions).
     /// </summary>
-    /// <param name="transition">The transition callback used by the command list.</param>
-    internal void TransitionToPresent(Action<ID3D12Resource, ResourceStates, ResourceStates> transition) {
+    /// <param name="commandList">The command list that records the transition.</param>
+    internal void TransitionToPresent(D3D12CommandList commandList) {
         if (this._cachedFramebuffer == null
             || this._transitionedBackBufferIndex < 0
             || this._cachedBackBufferVersion != this._cachedFramebuffer.Swapchain.BackBufferVersion) {
@@ -111,7 +110,7 @@ internal sealed class D3D12SwapchainBackBufferTracker {
 
         if (this._cachedBackBuffer != null
             && this._cachedBackBufferIndex == this._transitionedBackBufferIndex) {
-            transition(this._cachedBackBuffer, this._cachedBackBufferState, ResourceStates.Present);
+            commandList.TransitionForInternalUse(this._cachedBackBuffer, this._cachedBackBufferState, ResourceStates.Present);
             this._cachedFramebuffer.Swapchain.SetBackBufferState(this._cachedBackBufferIndex, ResourceStates.Present);
             this._cachedBackBufferState = ResourceStates.Present;
             return;
@@ -120,7 +119,7 @@ internal sealed class D3D12SwapchainBackBufferTracker {
         if (this._cachedFramebuffer.Swapchain.TryGetCurrentBackBuffer(out ID3D12Resource backBuffer, out CpuDescriptorHandle rtv, out int currentIndex, out ResourceStates state)
             && currentIndex == this._transitionedBackBufferIndex) {
             this.Cache(this._cachedFramebuffer, backBuffer, rtv, currentIndex, state);
-            transition(backBuffer, state, ResourceStates.Present);
+            commandList.TransitionForInternalUse(backBuffer, state, ResourceStates.Present);
             this._cachedFramebuffer.Swapchain.SetBackBufferState(currentIndex, ResourceStates.Present);
             this._cachedBackBufferState = ResourceStates.Present;
         }

@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 
 namespace Veldrith.D3D12;
 
@@ -70,13 +71,19 @@ internal sealed class D3D12BoundResourceSetState {
     /// <param name="dynamicOffsetsCount">The number of dynamic offsets supplied for the set.</param>
     /// <param name="dynamicOffsets">The first dynamic offset value.</param>
     /// <returns><see langword="true" /> when the slot changed.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool TrySet(uint slot, ResourceSet set, uint dynamicOffsetsCount, ref uint dynamicOffsets) {
         if (slot >= (uint)this.BoundSets.Length) {
             this.EnsureCapacity(slot + 1);
         }
 
         BoundResourceSetInfo previousBinding = this.BoundSets[slot];
-        if (previousBinding.Equals(set, dynamicOffsetsCount, ref dynamicOffsets)) {
+        if (dynamicOffsetsCount == 0) {
+            if (ReferenceEquals(previousBinding.Set, set) && previousBinding.Offsets.Count == 0) {
+                return false;
+            }
+        }
+        else if (previousBinding.Equals(set, dynamicOffsetsCount, ref dynamicOffsets)) {
             return false;
         }
 
@@ -118,7 +125,7 @@ internal sealed class D3D12BoundResourceSetState {
     internal void MarkChanged(uint slot, D3D12ResourceSetChangeKind changeKind) {
         int index = (int)slot;
         if (!this.Changed[index]) {
-            Util.EnsureArrayMinimumSize(ref this.ChangedSlots, (uint)this.ChangedSlotCount + 1);
+            this.EnsureChangedSlotCapacity();
             this.ChangedSlots[this.ChangedSlotCount++] = index;
             this.Changed[index] = true;
         }
@@ -316,6 +323,18 @@ internal sealed class D3D12BoundResourceSetState {
     private void AddBufferSetSlot(uint slot) {
         Util.EnsureArrayMinimumSize(ref this._bufferSetSlots, (uint)this._bufferSetSlotCount + 1);
         this._bufferSetSlots[this._bufferSetSlotCount++] = (int)slot;
+    }
+
+    /// <summary>
+    /// Ensures the dirty-slot list can append one more slot.
+    /// </summary>
+    private void EnsureChangedSlotCapacity() {
+        if (this.ChangedSlotCount < this.ChangedSlots.Length) {
+            return;
+        }
+
+        int newSize = this.ChangedSlots.Length == 0 ? 4 : this.ChangedSlots.Length * 2;
+        Array.Resize(ref this.ChangedSlots, newSize);
     }
 
     /// <summary>

@@ -181,13 +181,15 @@ internal sealed class D3D12ImmediateBufferUpdateBatcher {
     /// </summary>
     private void CapturePendingBufferStates() {
         this._pendingBuffers.Clear();
+        D3D12DeviceBuffer lastPendingBuffer = null;
         for (int i = 0; i < this._pendingUpdates.Count; i++) {
             D3D12DeviceBuffer buffer = this._pendingUpdates[i].Buffer;
-            if (this.HasPendingBuffer(buffer)) {
+            if (ReferenceEquals(buffer, lastPendingBuffer) || this.HasPendingBuffer(buffer)) {
                 continue;
             }
 
             this._pendingBuffers.Add(new PendingBufferState(buffer, buffer.CurrentState));
+            lastPendingBuffer = buffer;
         }
     }
 

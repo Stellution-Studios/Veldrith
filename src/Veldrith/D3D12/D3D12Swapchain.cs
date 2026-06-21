@@ -18,6 +18,11 @@ internal sealed class D3D12Swapchain : Swapchain {
     private static readonly bool FrameLatencyWaitEnabled = string.Equals(Environment.GetEnvironmentVariable("VELDRID_D3D12_FRAME_LATENCY_WAIT"), "1", StringComparison.Ordinal);
 
     /// <summary>
+    /// Gets whether DXGI frame-latency wait handles are enabled for this process.
+    /// </summary>
+    internal static bool FrameLatencyWaitsEnabled => FrameLatencyWaitEnabled;
+
+    /// <summary>
     /// Stores the maximum queued-frame latency used when frame-latency waits are explicitly enabled.
     /// </summary>
     private static readonly int MaximumFrameLatency = ReadMaximumFrameLatency();
@@ -55,7 +60,7 @@ internal sealed class D3D12Swapchain : Swapchain {
     /// <summary>
     /// Stores the gd state used by this instance.
     /// </summary>
-    private readonly D3D12GraphicsDevice gd;
+    private readonly D3D12GraphicsDevice _gd;
 
     /// <summary>
     /// Stores the allow tearing state used by this instance.
@@ -138,7 +143,7 @@ internal sealed class D3D12Swapchain : Swapchain {
     /// <param name="gd">The graphics device that owns this operation.</param>
     /// <param name="description">The description used to configure this operation.</param>
     public D3D12Swapchain(D3D12GraphicsDevice gd, ref SwapchainDescription description) {
-        this.gd = gd;
+        this._gd = gd;
         this._syncToVerticalBlank = description.SyncToVerticalBlank;
         this._nativeColorFormat = Format.B8G8R8A8_UNorm;
         this._nativeRtvFormat = description.ColorSrgb ? Format.B8G8R8A8_UNorm_SRgb : Format.B8G8R8A8_UNorm;
@@ -218,7 +223,7 @@ internal sealed class D3D12Swapchain : Swapchain {
         }
 
         this._disposed = true;
-        this.gd.WaitForIdle();
+        this._gd.WaitForIdle();
         this.DisposeNativeResources(disposeDescriptorHeap: true);
         this._frameLatencyWaitHandle?.Dispose();
         this._dxgiSwapChain?.Dispose();
@@ -241,7 +246,7 @@ internal sealed class D3D12Swapchain : Swapchain {
             return;
         }
 
-        lock (this.gd.CommandQueueLock) {
+        lock (this._gd.CommandQueueLock) {
             if (this._framebuffer != null && this._framebuffer.Width == width && this._framebuffer.Height == height) {
                 return;
             }
@@ -260,7 +265,7 @@ internal sealed class D3D12Swapchain : Swapchain {
                 presentFlags = PresentFlags.AllowTearing;
             }
 
-            lock (this.gd.CommandQueueLock) {
+            lock (this._gd.CommandQueueLock) {
                 this.PresentNoAlloc(this.SyncToVerticalBlank ? 1u : 0u, presentFlags);
                 this._currentBackBufferIndex = (int)this.GetCurrentBackBufferIndexNoAlloc();
             }
@@ -313,7 +318,7 @@ internal sealed class D3D12Swapchain : Swapchain {
 
         if (depthFormat != null) {
             TextureDescription depthDesc = TextureDescription.Texture2D(width, height, 1, 1, depthFormat.Value, TextureUsage.DepthStencil);
-            this._depthTexture = this.gd.ResourceFactory.CreateTexture(depthDesc);
+            this._depthTexture = this._gd.ResourceFactory.CreateTexture(depthDesc);
         }
         else {
             this._depthTexture = null;
@@ -321,13 +326,13 @@ internal sealed class D3D12Swapchain : Swapchain {
 
         if (this._hasNativeSwapchain) {
             this._colorTexture = null;
-            this._framebuffer = new D3D12SwapchainFramebuffer(this.gd, this, width, height, colorFormat, (D3D12Texture)this._depthTexture);
+            this._framebuffer = new D3D12SwapchainFramebuffer(this._gd, this, width, height, colorFormat, (D3D12Texture)this._depthTexture);
         }
         else {
             TextureDescription colorDesc = TextureDescription.Texture2D(width, height, 1, 1, colorFormat, TextureUsage.RenderTarget | TextureUsage.Sampled);
-            this._colorTexture = this.gd.ResourceFactory.CreateTexture(colorDesc);
+            this._colorTexture = this._gd.ResourceFactory.CreateTexture(colorDesc);
             FramebufferDescription fbDesc = new(this._depthTexture, this._colorTexture);
-            this._framebuffer = this.gd.ResourceFactory.CreateFramebuffer(fbDesc);
+            this._framebuffer = this._gd.ResourceFactory.CreateFramebuffer(fbDesc);
         }
     }
 
@@ -341,7 +346,7 @@ internal sealed class D3D12Swapchain : Swapchain {
             return;
         }
 
-        this.gd.WaitForIdle();
+        this._gd.WaitForIdle();
 
         bool useDepth = this._depthTexture != null;
         PixelFormat? depthFormat = useDepth ? this._depthTexture.Format : null;
@@ -380,7 +385,7 @@ internal sealed class D3D12Swapchain : Swapchain {
         PixelFormat colorFormat = srgb ? PixelFormat.B8G8R8A8UNormSRgb : PixelFormat.B8G8R8A8UNorm;
         if (depthFormat != null) {
             TextureDescription depthDesc = TextureDescription.Texture2D(width, height, 1, 1, depthFormat.Value, TextureUsage.DepthStencil);
-            this._depthTexture = this.gd.ResourceFactory.CreateTexture(depthDesc);
+            this._depthTexture = this._gd.ResourceFactory.CreateTexture(depthDesc);
         }
         else {
             this._depthTexture = null;
@@ -390,7 +395,7 @@ internal sealed class D3D12Swapchain : Swapchain {
             swapchainFramebuffer.Resize(width, height, colorFormat, (D3D12Texture)this._depthTexture);
         }
         else {
-            this._framebuffer = new D3D12SwapchainFramebuffer(this.gd, this, width, height, colorFormat, (D3D12Texture)this._depthTexture);
+            this._framebuffer = new D3D12SwapchainFramebuffer(this._gd, this, width, height, colorFormat, (D3D12Texture)this._depthTexture);
         }
     }
 
@@ -419,7 +424,7 @@ internal sealed class D3D12Swapchain : Swapchain {
             Flags = flags
         };
 
-        IDXGISwapChain1 swapChain1 = this.gd.DxgiFactory.CreateSwapChainForHwnd(this.gd.CommandQueue, win32Source.Hwnd, swapChainDesc);
+        IDXGISwapChain1 swapChain1 = this._gd.DxgiFactory.CreateSwapChainForHwnd(this._gd.CommandQueue, win32Source.Hwnd, swapChainDesc);
         this._dxgiSwapChain = swapChain1.QueryInterface<IDXGISwapChain3>();
         swapChain1.Dispose();
         this.ConfigureFrameLatencyWaitableObject();
@@ -465,8 +470,8 @@ internal sealed class D3D12Swapchain : Swapchain {
     /// </summary>
     private void CreateNativeRenderTargets() {
         if (this._rtvDescriptors == null) {
-            this._rtvDescriptorSize = (int)this.gd.Device.GetDescriptorHandleIncrementSize(DescriptorHeapType.RenderTargetView);
-            this._rtvDescriptors = this.gd.RtvDescriptorAllocator.Allocate((uint)this._bufferCount);
+            this._rtvDescriptorSize = (int)this._gd.Device.GetDescriptorHandleIncrementSize(DescriptorHeapType.RenderTargetView);
+            this._rtvDescriptors = this._gd.RtvDescriptorAllocator.Allocate((uint)this._bufferCount);
         }
 
         this._backBufferResources = new ID3D12Resource[this._bufferCount];
@@ -479,7 +484,7 @@ internal sealed class D3D12Swapchain : Swapchain {
             this._backBufferResources[i] = buffer;
             this._backBufferRtvs[i] = handle + i * this._rtvDescriptorSize;
             this._backBufferStates[i] = ResourceStates.Present;
-            this.gd.Device.CreateRenderTargetView(buffer, this.CreateBackBufferRenderTargetViewDescription(), this._backBufferRtvs[i]);
+            this._gd.Device.CreateRenderTargetView(buffer, this.CreateBackBufferRenderTargetViewDescription(), this._backBufferRtvs[i]);
         }
 
         this._currentBackBufferIndex = (int)this.GetCurrentBackBufferIndexNoAlloc();
@@ -518,8 +523,8 @@ internal sealed class D3D12Swapchain : Swapchain {
             return;
         }
 
-        lock (this.gd.CommandQueueLock) {
-            this.gd.WaitForIdle();
+        lock (this._gd.CommandQueueLock) {
+            this._gd.WaitForIdle();
 
             bool useDepth = this._depthTexture != null;
             PixelFormat? depthFormat = useDepth ? this._depthTexture.Format : null;

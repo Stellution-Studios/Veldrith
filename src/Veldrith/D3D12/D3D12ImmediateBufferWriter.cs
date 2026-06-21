@@ -50,6 +50,11 @@ internal sealed class D3D12ImmediateBufferWriter {
     private readonly List<PendingBufferState> _pendingBuffers = new(8);
 
     /// <summary>
+    /// Stores the most recently tracked pending buffer.
+    /// </summary>
+    private D3D12DeviceBuffer _lastPendingBuffer;
+
+    /// <summary>
     /// Stores the number of pending 32-bit writes.
     /// </summary>
     private uint _parameterCount;
@@ -167,6 +172,7 @@ internal sealed class D3D12ImmediateBufferWriter {
     internal void Discard() {
         this._parameterCount = 0;
         this._pendingBuffers.Clear();
+        this._lastPendingBuffer = null;
     }
 
     /// <summary>
@@ -191,13 +197,19 @@ internal sealed class D3D12ImmediateBufferWriter {
     /// </summary>
     /// <param name="buffer">The buffer to track.</param>
     private void TrackBuffer(D3D12DeviceBuffer buffer) {
+        if (ReferenceEquals(this._lastPendingBuffer, buffer)) {
+            return;
+        }
+
         for (int i = 0; i < this._pendingBuffers.Count; i++) {
             if (ReferenceEquals(this._pendingBuffers[i].Buffer, buffer)) {
+                this._lastPendingBuffer = buffer;
                 return;
             }
         }
 
         this._pendingBuffers.Add(new PendingBufferState(buffer, buffer.CurrentState));
+        this._lastPendingBuffer = buffer;
     }
 
     /// <summary>

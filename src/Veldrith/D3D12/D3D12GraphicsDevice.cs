@@ -2009,6 +2009,10 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// Executes the wait for next frame ready core logic for this backend.
     /// </summary>
     private protected override void WaitForNextFrameReadyCore() {
+        if (!D3D12Swapchain.FrameLatencyWaitsEnabled) {
+            return;
+        }
+
         if (this.MainSwapchain is D3D12Swapchain swapchain) {
             long startTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
             swapchain.WaitForNextFrameReady();

@@ -58,11 +58,10 @@ internal sealed class D3D12DescriptorSetBinder : IDisposable {
     }
 
     /// <summary>
-    /// Resets per-recording descriptor heap and fast binding-plan state.
+    /// Resets per-recording descriptor heap binding state.
     /// </summary>
     internal void BeginRecording() {
         this._descriptorHeapsBound = false;
-        this._bindingPlans.ClearPipelineCaches();
     }
 
     /// <summary>

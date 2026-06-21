@@ -114,6 +114,16 @@ internal sealed class D3D12BufferUpdatePlanner {
     private int _lastDynamicSnapshotIndex = -1;
 
     /// <summary>
+    /// Stores the buffer from the second most recent dynamic snapshot lookup.
+    /// </summary>
+    private D3D12DeviceBuffer _secondLastDynamicSnapshotBuffer;
+
+    /// <summary>
+    /// Stores the index from the second most recent dynamic snapshot lookup.
+    /// </summary>
+    private int _secondLastDynamicSnapshotIndex = -1;
+
+    /// <summary>
     /// Stores the upload allocation that backs the pending update batch.
     /// </summary>
     private D3D12ResourceAllocation _batchedUpload;
@@ -450,13 +460,15 @@ internal sealed class D3D12BufferUpdatePlanner {
     /// </summary>
     private void CapturePendingBufferStates() {
         this._pendingBuffers.Clear();
+        D3D12DeviceBuffer lastPendingBuffer = null;
         for (int i = 0; i < this._pendingUpdates.Count; i++) {
             D3D12DeviceBuffer buffer = this._pendingUpdates[i].Buffer;
-            if (this.HasPendingBuffer(buffer)) {
+            if (ReferenceEquals(buffer, lastPendingBuffer) || this.HasPendingBuffer(buffer)) {
                 continue;
             }
 
             this._pendingBuffers.Add(new PendingBufferState(buffer, buffer.CurrentState));
+            lastPendingBuffer = buffer;
         }
     }
 
@@ -571,6 +583,8 @@ internal sealed class D3D12BufferUpdatePlanner {
         this._dynamicSnapshots.Clear();
         this._lastDynamicSnapshotBuffer = null;
         this._lastDynamicSnapshotIndex = -1;
+        this._secondLastDynamicSnapshotBuffer = null;
+        this._secondLastDynamicSnapshotIndex = -1;
         this._dynamicSnapshotVersion = 0;
     }
 
@@ -676,6 +690,13 @@ internal sealed class D3D12BufferUpdatePlanner {
             return this._lastDynamicSnapshotIndex;
         }
 
+        if (ReferenceEquals(this._secondLastDynamicSnapshotBuffer, buffer)
+            && (uint)this._secondLastDynamicSnapshotIndex < (uint)this._dynamicSnapshots.Count
+            && ReferenceEquals(this._dynamicSnapshots[this._secondLastDynamicSnapshotIndex].Buffer, buffer)) {
+            this.CacheDynamicSnapshotLookup(buffer, this._secondLastDynamicSnapshotIndex);
+            return this._lastDynamicSnapshotIndex;
+        }
+
         for (int i = 0; i < this._dynamicSnapshots.Count; i++) {
             if (ReferenceEquals(this._dynamicSnapshots[i].Buffer, buffer)) {
                 this.CacheDynamicSnapshotLookup(buffer, i);
@@ -692,6 +713,12 @@ internal sealed class D3D12BufferUpdatePlanner {
     /// <param name="buffer">The buffer that was found.</param>
     /// <param name="index">The matching snapshot index.</param>
     private void CacheDynamicSnapshotLookup(D3D12DeviceBuffer buffer, int index) {
+        if (ReferenceEquals(this._lastDynamicSnapshotBuffer, buffer) && this._lastDynamicSnapshotIndex == index) {
+            return;
+        }
+
+        this._secondLastDynamicSnapshotBuffer = this._lastDynamicSnapshotBuffer;
+        this._secondLastDynamicSnapshotIndex = this._lastDynamicSnapshotIndex;
         this._lastDynamicSnapshotBuffer = buffer;
         this._lastDynamicSnapshotIndex = index;
     }
