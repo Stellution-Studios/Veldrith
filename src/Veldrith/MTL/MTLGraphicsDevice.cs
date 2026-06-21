@@ -647,6 +647,10 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
     /// <param name="mode">The mode value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     private MappedResource MapBuffer(MtlBuffer buffer, MapMode mode) {
+        if (mode == MapMode.Write && (buffer.Usage & BufferUsage.Staging) == 0) {
+            this.WaitForPendingGpuWorkBeforeSharedBufferWrite();
+        }
+
         return new MappedResource(buffer, mode, (IntPtr)buffer.Pointer, buffer.SizeInBytes, 0, buffer.SizeInBytes, buffer.SizeInBytes);
     }
 
@@ -828,6 +832,10 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
         void* destPtr = mtlBuffer.Pointer;
 
         if (destPtr != null) {
+            if ((buffer.Usage & BufferUsage.Staging) == 0) {
+                this.WaitForPendingGpuWorkBeforeSharedBufferWrite();
+            }
+
             byte* destOffsetPtr = (byte*)destPtr + bufferOffsetInBytes;
             Unsafe.CopyBlock(destOffsetPtr, source.ToPointer(), sizeInBytes);
             return;
@@ -932,6 +940,35 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
         this._immediateUploadCb.Commit();
         this._latestSubmittedCb = this._immediateUploadCb;
         this._immediateUploadCb = default;
+    }
+
+    /// <summary>
+    /// Waits until in-flight GPU work can no longer read from CPU-writable shared buffers.
+    /// </summary>
+    private void WaitForPendingGpuWorkBeforeSharedBufferWrite() {
+        MTLCommandBuffer lastCb;
+
+        lock (this._submittedCommandsLock) {
+            this.FlushPendingImmediateBufferUploads_NoLock();
+            lastCb = this._latestSubmittedCb;
+
+            if (lastCb.NativePtr != IntPtr.Zero) {
+                ObjectiveCRuntime.Retain(lastCb.NativePtr);
+            }
+        }
+
+        if (lastCb.NativePtr == IntPtr.Zero) {
+            return;
+        }
+
+        try {
+            if (lastCb.Status != MTLCommandBufferStatus.Completed) {
+                lastCb.WaitUntilCompleted();
+            }
+        }
+        finally {
+            ObjectiveCRuntime.Release(lastCb.NativePtr);
+        }
     }
 
     /// <summary>
