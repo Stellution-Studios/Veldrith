@@ -77,6 +77,11 @@ internal unsafe class MtlCommandList : CommandList {
     private readonly CommandBufferUsageList<MtlBuffer> _submittedStagingBuffers = new();
 
     /// <summary>
+    /// Stores dynamic buffers used by this command list before submission.
+    /// </summary>
+    private readonly HashSet<MtlBuffer> _usedDynamicBuffers = new();
+
+    /// <summary>
     /// Stores the gd state used by this instance.
     /// </summary>
     private readonly MtlGraphicsDevice gd;
@@ -347,6 +352,7 @@ internal unsafe class MtlCommandList : CommandList {
         }
 
         this.ClearCachedState();
+        this._usedDynamicBuffers.Clear();
     }
 
     /// <summary>
@@ -421,6 +427,16 @@ internal unsafe class MtlCommandList : CommandList {
             foreach (MtlBuffer buffer in this._submittedStagingBuffers.EnumerateAndRemove(cb)) {
                 this._availableStagingBuffers.Add(buffer);
             }
+        }
+    }
+
+    /// <summary>
+    /// Tracks submitted dynamic buffer use so later updates can avoid overwriting in-flight data.
+    /// </summary>
+    /// <param name="cb">The submitted command buffer.</param>
+    public void TrackSubmittedDynamicBufferUses(MTLCommandBuffer cb) {
+        foreach (MtlBuffer buffer in this._usedDynamicBuffers) {
+            buffer.TrackSubmittedUse(cb);
         }
     }
 
@@ -828,6 +844,8 @@ internal unsafe class MtlCommandList : CommandList {
 
                     this._vbOffsetsActive[i] = true;
                 }
+
+                this.TrackDynamicBufferUse(this._vertexBuffers[i]);
             }
 
             return true;
@@ -1054,6 +1072,7 @@ internal unsafe class MtlCommandList : CommandList {
 
         if (stages == ShaderStages.Compute) {
             UIntPtr index = slot + baseBuffer;
+            this.TrackDynamicBufferUse(mtlBuffer);
 
             if (!this._boundComputeBuffers.TryGetValue(index, out DeviceBufferRange boundBuffer) || !range.Equals(boundBuffer)) {
                 this._cce.SetBuffer(mtlBuffer.DeviceBuffer, range.Offset, slot + baseBuffer);
@@ -1061,6 +1080,8 @@ internal unsafe class MtlCommandList : CommandList {
             }
         }
         else {
+            this.TrackDynamicBufferUse(mtlBuffer);
+
             if ((stages & ShaderStages.Vertex) == ShaderStages.Vertex) {
                 UIntPtr index = this._graphicsPipeline.ResourceBindingModel == ResourceBindingModel.Improved
                     ? slot + baseBuffer
@@ -1414,6 +1435,7 @@ internal unsafe class MtlCommandList : CommandList {
     /// <param name="instanceStart">The instance start value used by this operation.</param>
     private protected override void DrawIndexedCore(uint indexCount, uint instanceCount, uint indexStart, int vertexOffset, uint instanceStart) {
         if (this.PreDrawCommand()) {
+            this.TrackDynamicBufferUse(this._indexBuffer);
             uint indexSize = this._indexType == MTLIndexType.UInt16 ? 2u : 4u;
             uint indexBufferOffset = indexSize * indexStart + this._ibOffset;
 
@@ -1467,10 +1489,17 @@ internal unsafe class MtlCommandList : CommandList {
     /// <param name="source">The source value or resource.</param>
     /// <param name="sizeInBytes">The size, in bytes, used by this operation.</param>
     private protected override void UpdateBufferCore(DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes) {
-        bool useComputeCopy = bufferOffsetInBytes % 4 != 0
-                              || (sizeInBytes % 4 != 0 && bufferOffsetInBytes != 0 && sizeInBytes != buffer.SizeInBytes);
-
         MtlBuffer dstMtlBuffer = Util.AssertSubtype<DeviceBuffer, MtlBuffer>(buffer);
+
+        if (dstMtlBuffer.Pointer != null && !this._usedDynamicBuffers.Contains(dstMtlBuffer)) {
+            dstMtlBuffer.WaitForPendingUse();
+            byte* destOffsetPtr = (byte*)dstMtlBuffer.Pointer + bufferOffsetInBytes;
+            Unsafe.CopyBlock(destOffsetPtr, source.ToPointer(), sizeInBytes);
+            return;
+        }
+
+        bool useComputeCopy = bufferOffsetInBytes % 4 != 0 || sizeInBytes % 4 != 0;
+        dstMtlBuffer.WaitForPendingUse();
         MtlBuffer staging = this.GetFreeStagingBuffer(sizeInBytes);
 
         this.gd.UpdateBuffer(staging, 0, source, sizeInBytes);
@@ -1480,9 +1509,8 @@ internal unsafe class MtlCommandList : CommandList {
         }
         else {
             Debug.Assert(bufferOffsetInBytes % 4 == 0);
-            uint sizeRoundFactor = (4 - sizeInBytes % 4) % 4;
             this.EnsureBlitEncoder();
-            this._bce.Copy(staging.DeviceBuffer, UIntPtr.Zero, dstMtlBuffer.DeviceBuffer, bufferOffsetInBytes, sizeInBytes + sizeRoundFactor);
+            this._bce.Copy(staging.DeviceBuffer, UIntPtr.Zero, dstMtlBuffer.DeviceBuffer, bufferOffsetInBytes, sizeInBytes);
         }
 
         lock (this._submittedCommandsLock) {
@@ -1622,6 +1650,16 @@ internal unsafe class MtlCommandList : CommandList {
 
             this._rce.SetVertexBytes(pushConstantData, (UIntPtr)totalSize, pipeline.VertexPushConstantSlot);
             this._rce.SetFragmentBytes(pushConstantData, (UIntPtr)totalSize, pipeline.FragmentPushConstantSlot);
+        }
+    }
+
+    /// <summary>
+    /// Tracks a dynamic buffer used by this command list.
+    /// </summary>
+    /// <param name="buffer">The buffer to track.</param>
+    private void TrackDynamicBufferUse(MtlBuffer buffer) {
+        if (buffer != null && (buffer.Usage & BufferUsage.Dynamic) != 0) {
+            this._usedDynamicBuffers.Add(buffer);
         }
     }
 }

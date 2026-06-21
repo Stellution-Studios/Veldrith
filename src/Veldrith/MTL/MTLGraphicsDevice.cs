@@ -722,6 +722,7 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
             }
 
             this._submittedCLs.Add(mtlCl.CommandBuffer, mtlCl);
+            mtlCl.TrackSubmittedDynamicBufferUses(mtlCl.CommandBuffer);
             this._latestSubmittedCb = mtlCl.Commit();
         }
     }
@@ -832,8 +833,8 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
         void* destPtr = mtlBuffer.Pointer;
 
         if (destPtr != null) {
-            if ((buffer.Usage & BufferUsage.Staging) == 0) {
-                this.WaitForPendingGpuWorkBeforeSharedBufferWrite();
+            if ((buffer.Usage & BufferUsage.Dynamic) != 0) {
+                mtlBuffer.WaitForPendingUse();
             }
 
             byte* destOffsetPtr = (byte*)destPtr + bufferOffsetInBytes;

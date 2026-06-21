@@ -1,3 +1,4 @@
+using System;
 using Veldrith.MetalBindings;
 
 namespace Veldrith.MTL;
@@ -13,6 +14,16 @@ internal class MtlBuffer : DeviceBuffer {
     private bool _disposed;
 
     /// <summary>
+    /// Synchronizes access to the last submitted command buffer using this buffer.
+    /// </summary>
+    private readonly object _submittedUseLock = new();
+
+    /// <summary>
+    /// Stores the last in-flight command buffer which may read this dynamic buffer.
+    /// </summary>
+    private MTLCommandBuffer _lastSubmittedUse;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="MtlBuffer" /> type.
     /// </summary>
     /// <param name="bd">The bd value used by this operation.</param>
@@ -23,7 +34,7 @@ internal class MtlBuffer : DeviceBuffer {
         this.ActualCapacity = this.SizeInBytes + roundFactor;
         this.Usage = bd.Usage;
 
-        bool sharedMemory = this.Usage == BufferUsage.Staging || (this.Usage & BufferUsage.Dynamic) == BufferUsage.Dynamic;
+        bool sharedMemory = (this.Usage & (BufferUsage.Staging | BufferUsage.Dynamic)) != 0;
         MTLResourceOptions bufferOptions = sharedMemory ? MTLResourceOptions.StorageModeShared : MTLResourceOptions.StorageModePrivate;
 
         this.DeviceBuffer = gd.Device.NewBufferWithLengthOptions(this.ActualCapacity, bufferOptions);
@@ -78,6 +89,70 @@ internal class MtlBuffer : DeviceBuffer {
     /// </summary>
     public unsafe void* Pointer { get; private set; }
 
+    /// <summary>
+    /// Tracks a submitted command buffer which may read this dynamic buffer.
+    /// </summary>
+    /// <param name="cb">The submitted command buffer.</param>
+    public void TrackSubmittedUse(MTLCommandBuffer cb) {
+        if ((this.Usage & BufferUsage.Dynamic) == 0 || cb.NativePtr == IntPtr.Zero) {
+            return;
+        }
+
+        MTLCommandBuffer previous;
+        lock (this._submittedUseLock) {
+            if (this._lastSubmittedUse.NativePtr == cb.NativePtr) {
+                return;
+            }
+
+            ObjectiveCRuntime.Retain(cb.NativePtr);
+            previous = this._lastSubmittedUse;
+            this._lastSubmittedUse = cb;
+        }
+
+        if (previous.NativePtr != IntPtr.Zero) {
+            ObjectiveCRuntime.Release(previous.NativePtr);
+        }
+    }
+
+    /// <summary>
+    /// Waits until the last submitted command buffer using this dynamic buffer has completed.
+    /// </summary>
+    public void WaitForPendingUse() {
+        MTLCommandBuffer cb;
+
+        lock (this._submittedUseLock) {
+            cb = this._lastSubmittedUse;
+
+            if (cb.NativePtr == IntPtr.Zero) {
+                return;
+            }
+
+            ObjectiveCRuntime.Retain(cb.NativePtr);
+        }
+
+        try {
+            if (cb.Status != MTLCommandBufferStatus.Completed) {
+                cb.WaitUntilCompleted();
+            }
+        }
+        finally {
+            bool releaseTrackedUse = false;
+
+            lock (this._submittedUseLock) {
+                if (this._lastSubmittedUse.NativePtr == cb.NativePtr && cb.Status == MTLCommandBufferStatus.Completed) {
+                    this._lastSubmittedUse = default;
+                    releaseTrackedUse = true;
+                }
+            }
+
+            if (releaseTrackedUse) {
+                ObjectiveCRuntime.Release(cb.NativePtr);
+            }
+
+            ObjectiveCRuntime.Release(cb.NativePtr);
+        }
+    }
+
     #region Disposal
 
     /// <summary>
@@ -86,6 +161,11 @@ internal class MtlBuffer : DeviceBuffer {
     public override void Dispose() {
         if (!this._disposed) {
             this._disposed = true;
+            if (this._lastSubmittedUse.NativePtr != IntPtr.Zero) {
+                ObjectiveCRuntime.Release(this._lastSubmittedUse.NativePtr);
+                this._lastSubmittedUse = default;
+            }
+
             ObjectiveCRuntime.Release(this.DeviceBuffer.NativePtr);
         }
     }
