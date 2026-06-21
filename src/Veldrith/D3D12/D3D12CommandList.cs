@@ -1006,6 +1006,7 @@ internal sealed class D3D12CommandList : CommandList {
     private protected override void DrawCore(uint vertexCount, uint instanceCount, uint vertexStart, uint instanceStart) {
         long startTicks = D3D12CommandListPerfTracker.Enabled ? Stopwatch.GetTimestamp() : 0;
         this.PreDrawCommand();
+        this.BindInputAssemblerForDraw(ref vertexStart);
         if (_stableResourceSetUpdateFastPathEnabled && vertexCount != 0 && instanceCount != 0) {
             this.MarkGraphicsResourceSetBuffersUsed();
         }
@@ -1032,6 +1033,7 @@ internal sealed class D3D12CommandList : CommandList {
     private protected override void DrawIndexedCore(uint indexCount, uint instanceCount, uint indexStart, int vertexOffset, uint instanceStart) {
         long startTicks = D3D12CommandListPerfTracker.Enabled ? Stopwatch.GetTimestamp() : 0;
         this.PreDrawCommand();
+        this.BindInputAssemblerForIndexedDraw(ref indexStart, ref vertexOffset);
         if (_stableResourceSetUpdateFastPathEnabled && indexCount != 0 && instanceCount != 0) {
             this.MarkGraphicsResourceSetBuffersUsed();
         }
@@ -1227,6 +1229,86 @@ internal sealed class D3D12CommandList : CommandList {
         VertexBufferView view = new(bindingInfo.GpuVirtualAddress, bindingInfo.BindableSize, stride);
         this.SetVertexBufferNoAlloc(index, ref view);
         this._inputAssembler.SetVertexBufferStride(index, stride);
+    }
+
+    /// <summary>
+    /// Rebinds input-assembler vertex views at the draw start for dynamic buffers updated after binding.
+    /// </summary>
+    /// <param name="vertexStart">The draw vertex start, rewritten when views are shifted.</param>
+    private void BindInputAssemblerForDraw(ref uint vertexStart) {
+        if (vertexStart == 0 || !this._inputAssembler.HasDynamicInputAssemblerBuffer) {
+            return;
+        }
+
+        this.BindVertexBuffersForDrawStart(vertexStart);
+        vertexStart = 0;
+    }
+
+    /// <summary>
+    /// Rebinds input-assembler views at the draw start for dynamic buffers updated after binding.
+    /// </summary>
+    /// <param name="indexStart">The draw index start, rewritten when the index view is shifted.</param>
+    /// <param name="vertexOffset">The draw vertex offset, rewritten when vertex views are shifted.</param>
+    private void BindInputAssemblerForIndexedDraw(ref uint indexStart, ref int vertexOffset) {
+        if (!this._inputAssembler.HasDynamicInputAssemblerBuffer) {
+            return;
+        }
+
+        if (vertexOffset > 0) {
+            this.BindVertexBuffersForDrawStart((uint)vertexOffset);
+            vertexOffset = 0;
+        }
+
+        if (indexStart == 0 || !this._inputAssembler.HasIndexBuffer) {
+            return;
+        }
+
+        D3D12DeviceBuffer indexBuffer = this._inputAssembler.IndexBuffer;
+        if (indexBuffer == null) {
+            return;
+        }
+
+        uint shiftedOffset = this._inputAssembler.IndexBufferOffset + indexStart * GetIndexFormatSizeInBytes(this._inputAssembler.IndexFormat);
+        D3D12BufferBindingInfo bindingInfo = this.GetBufferBindingInfo(indexBuffer, shiftedOffset);
+        this.TransitionBuffer(indexBuffer, ResourceStates.IndexBuffer);
+        IndexBufferView indexView = new(bindingInfo.GpuVirtualAddress, bindingInfo.BindableSize, D3D12Formats.ToDxgiFormat(this._inputAssembler.IndexFormat));
+        this.SetIndexBufferNoAlloc(ref indexView);
+        indexStart = 0;
+        if (D3D12CommandListPerfTracker.Enabled) {
+            this._perf.IndexBufferBinds++;
+        }
+    }
+
+    /// <summary>
+    /// Binds vertex buffer views at a draw-relative vertex start and leaves cached logical bindings unchanged.
+    /// </summary>
+    /// <param name="vertexStart">The vertex start used by the draw call.</param>
+    private void BindVertexBuffersForDrawStart(uint vertexStart) {
+        for (uint index = 0; index < this._inputAssembler.MaxBoundVertexBufferSlot; index++) {
+            D3D12DeviceBuffer buffer = this._inputAssembler.GetVertexBuffer(index);
+            if (buffer == null) {
+                continue;
+            }
+
+            uint stride = this._inputAssembler.GetVertexBufferStride(index);
+            uint shiftedOffset = this._inputAssembler.GetVertexBufferOffset(index) + vertexStart * stride;
+            D3D12BufferBindingInfo bindingInfo = this.GetBufferBindingInfo(buffer, shiftedOffset);
+            this.TransitionBuffer(buffer, ResourceStates.VertexAndConstantBuffer);
+            VertexBufferView view = new(bindingInfo.GpuVirtualAddress, bindingInfo.BindableSize, stride);
+            this.SetVertexBufferNoAlloc(index, ref view);
+            if (D3D12CommandListPerfTracker.Enabled) {
+                this._perf.VertexBufferBinds++;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the byte width of an index format.
+    /// </summary>
+    /// <param name="format">The index format.</param>
+    /// <returns>The index width in bytes.</returns>
+    private static uint GetIndexFormatSizeInBytes(IndexFormat format) {
+        return format == IndexFormat.UInt32 ? 4u : 2u;
     }
 
     /// <summary>
