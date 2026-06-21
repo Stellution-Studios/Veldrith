@@ -1,5 +1,7 @@
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
+using SharpGen.Runtime;
 using Vortice.Direct3D12;
 
 namespace Veldrith.D3D12;
@@ -15,9 +17,27 @@ internal sealed class D3D12Fence : Fence {
     private readonly ID3D12Fence _nativeFence;
 
     /// <summary>
+    /// Stores the graphics device that owns the queue used to signal this fence.
+    /// </summary>
+    private readonly D3D12GraphicsDevice _gd;
+
+    /// <summary>
     /// Stores the wait event state used by this instance.
     /// </summary>
     private readonly AutoResetEvent _waitEvent;
+
+    /// <summary>
+    /// Stores the native wait event handle.
+    /// </summary>
+    private readonly nint _waitEventHandle;
+
+    /// <summary>
+    /// Stores the native fence pointer.
+    /// </summary>
+    private readonly nint _nativeFencePointer;
+
+    private readonly unsafe delegate* unmanaged[Stdcall]<void*, ulong> _getCompletedValue;
+    private readonly unsafe delegate* unmanaged[Stdcall]<void*, ulong, nint, int> _setEventOnCompletion;
 
     /// <summary>
     /// Stores the disposed state used by this instance.
@@ -36,15 +56,24 @@ internal sealed class D3D12Fence : Fence {
     /// <param name="signaled">The signaled value used by this operation.</param>
     public D3D12Fence(D3D12GraphicsDevice gd, bool signaled) {
         ulong initialValue = signaled ? 1UL : 0UL;
+        this._gd = gd;
         this._nativeFence = gd.Device.CreateFence(initialValue);
         this._waitEvent = new AutoResetEvent(false);
+        this._waitEventHandle = this._waitEvent.SafeWaitHandle.DangerousGetHandle();
+        unsafe {
+            this._nativeFencePointer = this._nativeFence.NativePointer;
+            void** vtbl = *(void***)this._nativeFencePointer;
+            this._getCompletedValue = (delegate* unmanaged[Stdcall]<void*, ulong>)vtbl[8];
+            this._setEventOnCompletion = (delegate* unmanaged[Stdcall]<void*, ulong, nint, int>)vtbl[9];
+        }
+
         this._fenceValue = initialValue;
     }
 
     /// <summary>
     /// Gets or sets Signaled.
     /// </summary>
-    public override bool Signaled => this._nativeFence.CompletedValue >= this._fenceValue;
+    public override bool Signaled => this.GetCompletedValueNoAlloc() >= this._fenceValue;
 
     /// <summary>
     /// Gets or sets IsDisposed.
@@ -73,19 +102,19 @@ internal sealed class D3D12Fence : Fence {
     /// Resets this instance to its initial state.
     /// </summary>
     public override void Reset() {
-        this._fenceValue = this._nativeFence.CompletedValue + 1;
+        this._fenceValue = this.GetCompletedValueNoAlloc() + 1;
     }
 
     /// <summary>
     /// Executes the signal logic for this backend.
     /// </summary>
-    /// <param name="commandQueue">The command queue value used by this operation.</param>
-    internal void Signal(ID3D12CommandQueue commandQueue) {
-        if (this._fenceValue <= this._nativeFence.CompletedValue) {
-            this._fenceValue = this._nativeFence.CompletedValue + 1;
+    internal void Signal() {
+        ulong completedValue = this.GetCompletedValueNoAlloc();
+        if (this._fenceValue <= completedValue) {
+            this._fenceValue = completedValue + 1;
         }
 
-        commandQueue.Signal(this._nativeFence, this._fenceValue).CheckError();
+        this._gd.SignalQueueFenceNoAlloc(this._nativeFence, this._fenceValue);
     }
 
     /// <summary>
@@ -98,7 +127,7 @@ internal sealed class D3D12Fence : Fence {
             return true;
         }
 
-        this._nativeFence.SetEventOnCompletion(this._fenceValue, this._waitEvent.SafeWaitHandle.DangerousGetHandle()).CheckError();
+        this.SetEventOnCompletionNoAlloc(this._fenceValue);
 
         if (nanosecondTimeout == ulong.MaxValue) {
             this._waitEvent.WaitOne();
@@ -107,5 +136,23 @@ internal sealed class D3D12Fence : Fence {
 
         int milliseconds = nanosecondTimeout > 0 ? (int)Math.Min(int.MaxValue, nanosecondTimeout / 1_000_000) : 0;
         return this._waitEvent.WaitOne(milliseconds);
+    }
+
+    /// <summary>
+    /// Reads the completed fence value without going through the managed COM wrapper.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe ulong GetCompletedValueNoAlloc() {
+        return this._getCompletedValue((void*)this._nativeFencePointer);
+    }
+
+    /// <summary>
+    /// Registers the wait event without going through the managed COM wrapper.
+    /// </summary>
+    /// <param name="value">The fence value that should signal the event.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe void SetEventOnCompletionNoAlloc(ulong value) {
+        Result result = new(this._setEventOnCompletion((void*)this._nativeFencePointer, value, this._waitEventHandle));
+        result.CheckError();
     }
 }

@@ -77,7 +77,7 @@ internal sealed class D3D12CommandListFrameState : IDisposable {
         this._currentFrameSlot = (this._currentFrameSlot + 1) % this._allocatorSlots.Length;
         AllocatorSlot slot = this._allocatorSlots[this._currentFrameSlot];
         this.WaitForFrameSlot(slot, perf);
-        ResetCommandAllocatorNoAlloc(slot.Allocator);
+        slot.Reset();
         return slot.Allocator;
     }
 
@@ -144,18 +144,6 @@ internal sealed class D3D12CommandListFrameState : IDisposable {
     }
 
     /// <summary>
-    /// Resets a command allocator without going through the managed COM wrapper.
-    /// </summary>
-    /// <param name="allocator">The allocator to reset.</param>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static unsafe void ResetCommandAllocatorNoAlloc(ID3D12CommandAllocator allocator) {
-        void** vtbl = *(void***)allocator.NativePointer;
-        delegate* unmanaged[Stdcall]<void*, int> reset = (delegate* unmanaged[Stdcall]<void*, int>)vtbl[8];
-        Result result = new(reset((void*)allocator.NativePointer));
-        result.CheckError();
-    }
-
-    /// <summary>
     /// Reads the fixed command allocator slot count from the environment.
     /// </summary>
     /// <returns>The configured allocator slot count.</returns>
@@ -174,11 +162,23 @@ internal sealed class D3D12CommandListFrameState : IDisposable {
     private sealed class AllocatorSlot {
 
         /// <summary>
+        /// Stores the native command allocator pointer.
+        /// </summary>
+        private readonly nint _allocatorPointer;
+
+        private readonly unsafe delegate* unmanaged[Stdcall]<void*, int> _reset;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="AllocatorSlot" /> class.
         /// </summary>
         /// <param name="allocator">The command allocator owned by this slot.</param>
         public AllocatorSlot(ID3D12CommandAllocator allocator) {
             this.Allocator = allocator;
+            unsafe {
+                this._allocatorPointer = allocator.NativePointer;
+                void** vtbl = *(void***)this._allocatorPointer;
+                this._reset = (delegate* unmanaged[Stdcall]<void*, int>)vtbl[8];
+            }
         }
 
         /// <summary>
@@ -190,5 +190,14 @@ internal sealed class D3D12CommandListFrameState : IDisposable {
         /// Gets or sets the submission fence value that must complete before reuse.
         /// </summary>
         public ulong FenceValue { get; set; }
+
+        /// <summary>
+        /// Resets the allocator without going through the managed COM wrapper.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe void Reset() {
+            Result result = new(this._reset((void*)this._allocatorPointer));
+            result.CheckError();
+        }
     }
 }

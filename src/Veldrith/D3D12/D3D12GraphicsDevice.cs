@@ -37,6 +37,11 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     private const int DefaultDeferredDisposalPumpInterval = 4;
 
     /// <summary>
+    /// Stores the default number of submissions covered by one internal submission fence signal.
+    /// </summary>
+    private const int DefaultSubmissionFenceSignalInterval = 3;
+
+    /// <summary>
     /// Stores the maximum number of pending deferred-disposal batches before throttling is bypassed.
     /// </summary>
     private const int DeferredDisposalPumpHighWatermark = 64;
@@ -45,6 +50,11 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// Stores the number of submits between deferred-disposal fence polls.
     /// </summary>
     private static readonly int _deferredDisposalPumpInterval = ReadDeferredDisposalPumpInterval();
+
+    /// <summary>
+    /// Stores the number of submissions batched behind one internal D3D12 fence signal.
+    /// </summary>
+    private static readonly int _submissionFenceSignalInterval = ReadSubmissionFenceSignalInterval();
 
     /// <summary>
     /// Gets whether persistent D3D12 pipeline library caching is enabled.
@@ -97,6 +107,20 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     }
 
     /// <summary>
+    /// Reads the internal submission fence signal interval from the environment.
+    /// </summary>
+    /// <returns>The configured signal interval.</returns>
+    private static int ReadSubmissionFenceSignalInterval() {
+        string value = Environment.GetEnvironmentVariable("VELDRID_D3D12_SUBMISSION_FENCE_SIGNAL_INTERVAL");
+
+        if (int.TryParse(value, out int parsed)) {
+            return Math.Clamp(parsed, 1, 16);
+        }
+
+        return DefaultSubmissionFenceSignalInterval;
+    }
+
+    /// <summary>
     /// Gets whether small immediate buffer updates should use the experimental shared-page batcher.
     /// </summary>
     private static readonly bool _immediateBufferUpdateBatcherEnabled = string.Equals(Environment.GetEnvironmentVariable("VELDRID_D3D12_IMMEDIATE_BUFFER_BATCHER"), "1", StringComparison.Ordinal);
@@ -145,6 +169,15 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// Serializes direct command queue, presentation, and swapchain resize operations.
     /// </summary>
     private readonly object _commandQueueLock = new();
+
+    /// <summary>
+    /// Stores the native D3D12 command queue pointer for no-alloc hotpath calls.
+    /// </summary>
+    private readonly nint _commandQueuePointer;
+
+    private readonly unsafe delegate* unmanaged[Stdcall]<void*, uint, void*, void> _executeCommandLists;
+    private readonly unsafe delegate* unmanaged[Stdcall]<void*, void*, ulong, int> _signalQueueFence;
+    private readonly unsafe delegate* unmanaged[Stdcall]<void*, ulong> _getFenceCompletedValue;
 
     /// <summary>
     /// Caches root signature cache to avoid repeated allocations and lookups.
@@ -605,6 +638,16 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     private ulong _nextSubmissionFenceValue = 1;
 
     /// <summary>
+    /// Stores the unsignaled submission fence value currently shared by a small submit batch.
+    /// </summary>
+    private ulong _pendingSubmissionSignalValue;
+
+    /// <summary>
+    /// Stores the number of submissions covered by <see cref="_pendingSubmissionSignalValue" />.
+    /// </summary>
+    private int _pendingSubmissionSignalCount;
+
+    /// <summary>
     /// Stores the latest fence value signaled for user command-list submissions.
     /// </summary>
     private ulong _lastSubmissionFenceValue;
@@ -647,6 +690,15 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         this._submissionFenceEvent = new AutoResetEvent(false);
         this._immediateCopyFence = this._device.CreateFence();
         this._immediateCopyFenceEvent = new AutoResetEvent(false);
+        unsafe {
+            this._commandQueuePointer = this.CommandQueue.NativePointer;
+            void** queueVTable = *(void***)this._commandQueuePointer;
+            this._executeCommandLists = (delegate* unmanaged[Stdcall]<void*, uint, void*, void>)queueVTable[10];
+            this._signalQueueFence = (delegate* unmanaged[Stdcall]<void*, void*, ulong, int>)queueVTable[14];
+            void** fenceVTable = *(void***)this._submissionFence.NativePointer;
+            this._getFenceCompletedValue = (delegate* unmanaged[Stdcall]<void*, ulong>)fenceVTable[8];
+        }
+
         this.MemoryManager = new D3D12DeviceMemoryManager(this._device);
         this.SrvUavDescriptorAllocator = new D3D12CpuDescriptorAllocator(this._device, DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView, 4096);
         this.SamplerDescriptorAllocator = new D3D12CpuDescriptorAllocator(this._device, DescriptorHeapType.Sampler, 1024);
@@ -767,9 +819,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     internal unsafe void ExecuteCommandListNoAlloc(ID3D12GraphicsCommandList commandList) {
         IntPtr* commandLists = stackalloc IntPtr[1];
         commandLists[0] = commandList.NativePointer;
-        void** vtbl = *(void***)this.CommandQueue.NativePointer;
-        delegate* unmanaged[Stdcall]<void*, uint, void*, void> executeCommandLists = (delegate* unmanaged[Stdcall]<void*, uint, void*, void>)vtbl[10];
-        executeCommandLists((void*)this.CommandQueue.NativePointer, 1u, commandLists);
+        this._executeCommandLists((void*)this._commandQueuePointer, 1u, commandLists);
     }
 
     /// <summary>
@@ -778,9 +828,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// <param name="fence">The fence to signal.</param>
     /// <param name="value">The fence value to signal.</param>
     internal unsafe void SignalQueueFenceNoAlloc(ID3D12Fence fence, ulong value) {
-        void** vtbl = *(void***)this.CommandQueue.NativePointer;
-        delegate* unmanaged[Stdcall]<void*, void*, ulong, int> signal = (delegate* unmanaged[Stdcall]<void*, void*, ulong, int>)vtbl[14];
-        Result result = new(signal((void*)this.CommandQueue.NativePointer, (void*)fence.NativePointer, value));
+        Result result = new(this._signalQueueFence((void*)this._commandQueuePointer, (void*)fence.NativePointer, value));
         result.CheckError();
     }
 
@@ -944,10 +992,60 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private unsafe ulong GetCompletedValueNoAlloc(ID3D12Fence fence) {
-        void** vtbl = *(void***)fence.NativePointer;
-        delegate* unmanaged[Stdcall]<void*, ulong> getCompletedValue =
-            (delegate* unmanaged[Stdcall]<void*, ulong>)vtbl[8];
-        return getCompletedValue((void*)fence.NativePointer);
+        return this._getFenceCompletedValue((void*)fence.NativePointer);
+    }
+
+    /// <summary>
+    /// Assigns the current submission to an internal fence batch and signals the batch when full.
+    /// </summary>
+    /// <param name="signaled">Receives whether a native queue signal was emitted.</param>
+    /// <returns>The fence value that protects the submitted command list.</returns>
+    private ulong TrackSubmissionFenceQueueLocked(out bool signaled) {
+        ulong signalValue = this._pendingSubmissionSignalValue;
+        if (signalValue == 0) {
+            signalValue = this._nextSubmissionFenceValue++;
+            this._pendingSubmissionSignalValue = signalValue;
+        }
+
+        this._pendingSubmissionSignalCount++;
+        signaled = _submissionFenceSignalInterval <= 1 || this._pendingSubmissionSignalCount >= _submissionFenceSignalInterval;
+        if (signaled) {
+            this.SignalPendingSubmissionFenceQueueLocked();
+        }
+
+        return signalValue;
+    }
+
+    /// <summary>
+    /// Signals the currently pending internal submission fence batch.
+    /// </summary>
+    /// <returns><see langword="true" /> when a native queue signal was emitted.</returns>
+    private bool SignalPendingSubmissionFenceQueueLocked() {
+        ulong signalValue = this._pendingSubmissionSignalValue;
+        if (signalValue == 0) {
+            return false;
+        }
+
+        this.SignalQueueFenceNoAlloc(this._submissionFence, signalValue);
+        this._pendingSubmissionSignalValue = 0;
+        this._pendingSubmissionSignalCount = 0;
+        return true;
+    }
+
+    /// <summary>
+    /// Ensures a fence value that belongs to the current pending batch has been signaled.
+    /// </summary>
+    /// <param name="value">The fence value that may need to be signaled.</param>
+    private void EnsureSubmissionFenceValueSignaled(ulong value) {
+        if (value == 0 || this._pendingSubmissionSignalValue != value) {
+            return;
+        }
+
+        lock (this._commandQueueLock) {
+            if (this._pendingSubmissionSignalValue == value) {
+                this.SignalPendingSubmissionFenceQueueLocked();
+            }
+        }
     }
 
     /// <summary>
@@ -955,6 +1053,11 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// </summary>
     /// <param name="value">The value used by this operation.</param>
     internal void WaitForSubmissionFence(ulong value) {
+        if (this.GetCompletedValueNoAlloc(this._submissionFence) >= value) {
+            return;
+        }
+
+        this.EnsureSubmissionFenceValueSignaled(value);
         if (this.GetCompletedValueNoAlloc(this._submissionFence) >= value) {
             return;
         }
@@ -996,8 +1099,8 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
                 PrepareImmediateCopyContext(context);
 
                 recordCommands(context.CommandList);
-                context.CommandList.Close();
-                this.CommandQueue.ExecuteCommandList(context.CommandList);
+                context.Close();
+                this.ExecuteCommandListNoAlloc(context.CommandList);
                 signalValue = this._nextImmediateCopyFenceValue++;
                 this.SignalQueueFenceNoAlloc(this._immediateCopyFence, signalValue);
                 context.FenceValue = signalValue;
@@ -1180,8 +1283,8 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
             this._batchedImmediateCopyHasWork = false;
 
             this._immediateBufferUpdateBatcher.FlushLocked(context.CommandList);
-            context.CommandList.Close();
-            this.CommandQueue.ExecuteCommandList(context.CommandList);
+            context.Close();
+            this.ExecuteCommandListNoAlloc(context.CommandList);
             signalValue = this._nextImmediateCopyFenceValue++;
             this.SignalQueueFenceNoAlloc(this._immediateCopyFence, signalValue);
             context.FenceValue = signalValue;
@@ -1916,18 +2019,18 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
                     }
 
                     long signalStartTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
-                    ulong signalValue = this._nextSubmissionFenceValue++;
-                    this.SignalQueueFenceNoAlloc(this._submissionFence, signalValue);
+                    ulong signalValue = this.TrackSubmissionFenceQueueLocked(out bool signaledSubmissionFence);
                     this._lastSubmissionFenceValue = signalValue;
                     if (_perfLogEnabled) {
-                        double signalMs = TicksToMilliseconds(Stopwatch.GetTimestamp() - signalStartTicks);
-                        this._perfAccumSubmitSignalMs += signalMs;
-                        this._perfMaxSubmitSignalMs = Math.Max(this._perfMaxSubmitSignalMs, signalMs);
+                        double signalMs = signaledSubmissionFence ? TicksToMilliseconds(Stopwatch.GetTimestamp() - signalStartTicks) : 0;
+                        if (signaledSubmissionFence) {
+                            this._perfAccumSubmitSignalMs += signalMs;
+                            this._perfMaxSubmitSignalMs = Math.Max(this._perfMaxSubmitSignalMs, signalMs);
+                        }
                     }
 
                     long markStartTicks = _perfLogEnabled ? Stopwatch.GetTimestamp() : 0;
                     d3d12CommandList.MarkSubmitted(signalValue);
-                    d3d12CommandList.ClearCachedState();
                     if (_perfLogEnabled) {
                         double markMs = TicksToMilliseconds(Stopwatch.GetTimestamp() - markStartTicks);
                         this._perfAccumSubmitMarkMs += markMs;
@@ -1936,7 +2039,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
                 }
 
                 if (fence is D3D12Fence d3d12Fence) {
-                    d3d12Fence.Signal(this.CommandQueue);
+                    d3d12Fence.Signal();
                 }
             }
             catch (SharpGenException ex) {
@@ -2517,6 +2620,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         lock (this._commandQueueLock) {
             this.FlushBatchedImmediateCommandsQueueLocked();
             try {
+                this.SignalPendingSubmissionFenceQueueLocked();
                 ulong signalValue = this._nextSubmissionFenceValue++;
                 this.SignalQueueFenceNoAlloc(this._submissionFence, signalValue);
                 if (this.GetCompletedValueNoAlloc(this._submissionFence) < signalValue) {
@@ -2574,8 +2678,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// <param name="context">The immediate copy context to prepare.</param>
     private static void PrepareImmediateCopyContext(ImmediateCopyContext context) {
         if (context.Initialized) {
-            context.Allocator.Reset();
-            context.CommandList.Reset(context.Allocator);
+            context.ResetForRecording();
             return;
         }
 
@@ -3024,6 +3127,20 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     private sealed class ImmediateCopyContext {
 
         /// <summary>
+        /// Stores the native command allocator pointer.
+        /// </summary>
+        private readonly nint _allocatorPointer;
+
+        /// <summary>
+        /// Stores the native command list pointer.
+        /// </summary>
+        private readonly nint _commandListPointer;
+
+        private readonly unsafe delegate* unmanaged[Stdcall]<void*, int> _resetAllocator;
+        private readonly unsafe delegate* unmanaged[Stdcall]<void*, void*, void*, int> _resetCommandList;
+        private readonly unsafe delegate* unmanaged[Stdcall]<void*, int> _closeCommandList;
+
+        /// <summary>
         /// Gets the command allocator owned by this context.
         /// </summary>
         public ID3D12CommandAllocator Allocator { get; }
@@ -3056,6 +3173,36 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         public ImmediateCopyContext(ID3D12CommandAllocator allocator, ID3D12GraphicsCommandList commandList) {
             this.Allocator = allocator;
             this.CommandList = commandList;
+            unsafe {
+                this._allocatorPointer = allocator.NativePointer;
+                void** allocatorVTable = *(void***)this._allocatorPointer;
+                this._resetAllocator = (delegate* unmanaged[Stdcall]<void*, int>)allocatorVTable[8];
+
+                this._commandListPointer = commandList.NativePointer;
+                void** commandListVTable = *(void***)this._commandListPointer;
+                this._closeCommandList = (delegate* unmanaged[Stdcall]<void*, int>)commandListVTable[9];
+                this._resetCommandList = (delegate* unmanaged[Stdcall]<void*, void*, void*, int>)commandListVTable[10];
+            }
+        }
+
+        /// <summary>
+        /// Resets the allocator and command list without going through managed COM wrappers.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe void ResetForRecording() {
+            Result allocatorResult = new(this._resetAllocator((void*)this._allocatorPointer));
+            allocatorResult.CheckError();
+            Result commandListResult = new(this._resetCommandList((void*)this._commandListPointer, (void*)this._allocatorPointer, null));
+            commandListResult.CheckError();
+        }
+
+        /// <summary>
+        /// Closes the command list without going through the managed COM wrapper.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe void Close() {
+            Result result = new(this._closeCommandList((void*)this._commandListPointer));
+            result.CheckError();
         }
     }
 }

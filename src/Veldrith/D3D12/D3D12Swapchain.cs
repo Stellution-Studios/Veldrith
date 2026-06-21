@@ -68,6 +68,16 @@ internal sealed class D3D12Swapchain : Swapchain {
     private bool _allowTearing;
 
     /// <summary>
+    /// Stores the cached present sync interval for the current swapchain settings.
+    /// </summary>
+    private uint _presentSyncInterval;
+
+    /// <summary>
+    /// Stores the cached present flags for the current swapchain settings.
+    /// </summary>
+    private PresentFlags _presentFlags;
+
+    /// <summary>
     /// Stores the sync-to-vblank state used by this instance.
     /// </summary>
     private bool _syncToVerticalBlank;
@@ -118,6 +128,14 @@ internal sealed class D3D12Swapchain : Swapchain {
     private IDXGISwapChain3 _dxgiSwapChain;
 
     /// <summary>
+    /// Stores the native DXGI swapchain pointer for no-alloc hotpath calls.
+    /// </summary>
+    private nint _dxgiSwapChainPointer;
+
+    private unsafe delegate* unmanaged[Stdcall]<void*, uint, uint, int> _present;
+    private unsafe delegate* unmanaged[Stdcall]<void*, uint> _getCurrentBackBufferIndex;
+
+    /// <summary>
     /// Stores the framebuffer state used by this instance.
     /// </summary>
     private Framebuffer _framebuffer;
@@ -152,6 +170,7 @@ internal sealed class D3D12Swapchain : Swapchain {
         }
 
         this._allowTearing = !description.SyncToVerticalBlank;
+        this.RefreshPresentParameters();
 
         using (IDXGIFactory3 factory3 = gd.DxgiFactory.QueryInterfaceOrNull<IDXGIFactory3>()) {
             this._canCreateFrameLatencyWaitableObject = factory3 != null;
@@ -189,6 +208,7 @@ internal sealed class D3D12Swapchain : Swapchain {
                 this._allowTearing = true;
             }
 
+            this.RefreshPresentParameters();
             if (this._hasNativeSwapchain && this._dxgiSwapChain != null) {
                 this.ConfigureFrameLatencyWaitableObject();
             }
@@ -206,6 +226,7 @@ internal sealed class D3D12Swapchain : Swapchain {
             }
 
             this._allowTearing = value;
+            this.RefreshPresentParameters();
         }
     }
 
@@ -260,16 +281,23 @@ internal sealed class D3D12Swapchain : Swapchain {
     /// </summary>
     internal void Present() {
         if (this._hasNativeSwapchain) {
-            PresentFlags presentFlags = PresentFlags.None;
-            if (this._allowTearing && this._canTear && !this.SyncToVerticalBlank) {
-                presentFlags = PresentFlags.AllowTearing;
-            }
-
+            uint syncInterval = this._presentSyncInterval;
+            PresentFlags presentFlags = this._presentFlags;
             lock (this._gd.CommandQueueLock) {
-                this.PresentNoAlloc(this.SyncToVerticalBlank ? 1u : 0u, presentFlags);
+                this.PresentNoAlloc(syncInterval, presentFlags);
                 this._currentBackBufferIndex = (int)this.GetCurrentBackBufferIndexNoAlloc();
             }
         }
+    }
+
+    /// <summary>
+    /// Refreshes cached DXGI present parameters after sync or tearing settings change.
+    /// </summary>
+    private void RefreshPresentParameters() {
+        this._presentSyncInterval = this._syncToVerticalBlank ? 1u : 0u;
+        this._presentFlags = !this._syncToVerticalBlank && this._allowTearing && this._canTear
+            ? PresentFlags.AllowTearing
+            : PresentFlags.None;
     }
 
     /// <summary>
@@ -278,10 +306,7 @@ internal sealed class D3D12Swapchain : Swapchain {
     /// <param name="syncInterval">The vertical sync interval.</param>
     /// <param name="presentFlags">The DXGI present flags.</param>
     private unsafe void PresentNoAlloc(uint syncInterval, PresentFlags presentFlags) {
-        void** vtbl = *(void***)this._dxgiSwapChain.NativePointer;
-        delegate* unmanaged[Stdcall]<void*, uint, uint, int> present =
-            (delegate* unmanaged[Stdcall]<void*, uint, uint, int>)vtbl[8];
-        Result result = new(present((void*)this._dxgiSwapChain.NativePointer, syncInterval, (uint)presentFlags));
+        Result result = new(this._present((void*)this._dxgiSwapChainPointer, syncInterval, (uint)presentFlags));
         result.CheckError();
     }
 
@@ -290,9 +315,7 @@ internal sealed class D3D12Swapchain : Swapchain {
     /// IDXGISwapChain3::GetCurrentBackBufferIndex is at vtable index 36.
     /// </summary>
     private unsafe uint GetCurrentBackBufferIndexNoAlloc() {
-        void** vtbl = *(void***)this._dxgiSwapChain.NativePointer;
-        delegate* unmanaged[Stdcall]<void*, uint> getIndex = (delegate* unmanaged[Stdcall]<void*, uint>)vtbl[36];
-        return getIndex((void*)this._dxgiSwapChain.NativePointer);
+        return this._getCurrentBackBufferIndex((void*)this._dxgiSwapChainPointer);
     }
 
     /// <summary>
@@ -426,10 +449,21 @@ internal sealed class D3D12Swapchain : Swapchain {
 
         IDXGISwapChain1 swapChain1 = this._gd.DxgiFactory.CreateSwapChainForHwnd(this._gd.CommandQueue, win32Source.Hwnd, swapChainDesc);
         this._dxgiSwapChain = swapChain1.QueryInterface<IDXGISwapChain3>();
+        this.CacheSwapchainHotpathCalls();
         swapChain1.Dispose();
         this.ConfigureFrameLatencyWaitableObject();
         this.CreateNativeRenderTargets();
         return true;
+    }
+
+    /// <summary>
+    /// Caches DXGI swapchain function pointers used every presented frame.
+    /// </summary>
+    private unsafe void CacheSwapchainHotpathCalls() {
+        this._dxgiSwapChainPointer = this._dxgiSwapChain.NativePointer;
+        void** vtbl = *(void***)this._dxgiSwapChainPointer;
+        this._present = (delegate* unmanaged[Stdcall]<void*, uint, uint, int>)vtbl[8];
+        this._getCurrentBackBufferIndex = (delegate* unmanaged[Stdcall]<void*, uint>)vtbl[36];
     }
 
     /// <summary>
