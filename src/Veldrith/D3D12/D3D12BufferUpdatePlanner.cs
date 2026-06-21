@@ -738,11 +738,9 @@ internal sealed class D3D12BufferUpdatePlanner {
     /// Checks whether a dynamic input-assembler buffer can be updated through its stable CPU-visible backing store.
     /// </summary>
     /// <param name="buffer">The buffer to inspect.</param>
-    /// <returns><see langword="true" /> when no previous draw can still read the old stable contents.</returns>
+    /// <returns><see langword="true" /> when the stable backing store is safe to overwrite.</returns>
     private bool CanUpdateStableInputAssemblerBufferWithoutSnapshot(D3D12DeviceBuffer buffer) {
-        return CanBeInputAssemblerBuffer(buffer)
-               && !CanBeResourceSetBuffer(buffer)
-               && !this._commandList.HasInputAssemblerBufferBeenUsedForInternalUse(buffer);
+        return false;
     }
 
     /// <summary>

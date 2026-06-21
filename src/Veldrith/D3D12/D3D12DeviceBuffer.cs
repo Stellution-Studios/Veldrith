@@ -15,11 +15,6 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     private const uint HostVisibleUniformBufferMaxSize = 4 * 1024 * 1024;
 
     /// <summary>
-    /// Gets whether small pure UniformBuffers should use CPU-visible memory by default.
-    /// </summary>
-    private static readonly bool PreferHostVisibleUniformBuffers = !string.Equals(Environment.GetEnvironmentVariable("VELDRID_D3D12_HOST_VISIBLE_UNIFORMS"), "0", StringComparison.Ordinal);
-
-    /// <summary>
     /// Tracks whether is dynamic is currently enabled.
     /// </summary>
     private readonly bool _isDynamic;
@@ -713,7 +708,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     /// <param name="sizeInBytes">The requested logical size.</param>
     /// <returns><see langword="true" /> when the buffer should use an upload heap.</returns>
     private static bool ShouldUseHostVisibleUniformBuffer(BufferUsage usage, uint sizeInBytes) {
-        if (!PreferHostVisibleUniformBuffers || sizeInBytes > HostVisibleUniformBufferMaxSize) {
+        if (sizeInBytes > HostVisibleUniformBufferMaxSize) {
             return false;
         }
 

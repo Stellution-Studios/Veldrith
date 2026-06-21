@@ -31,9 +31,9 @@ internal sealed class D3D12CommandList : CommandList {
     /// <summary>
     /// Controls the experimental stable ResourceSet buffer update bypass.
     /// </summary>
-    // The stable backing-store path is safe when the buffer has not been consumed yet
-    // and avoids unnecessary snapshot uploads on dynamic ResourceSet buffers.
-    private static readonly bool _stableResourceSetUpdateFastPathEnabled = !string.Equals(Environment.GetEnvironmentVariable("VELDRID_D3D12_STABLE_RESOURCESET_UPDATE_FASTPATH"), "0", StringComparison.Ordinal);
+    // Dynamic ResourceSet buffers must use command-list snapshots. Reusing the stable
+    // upload backing store can overwrite data still read by an in-flight frame.
+    private const bool _stableResourceSetUpdateFastPathEnabled = false;
 
     /// <summary>
     /// Stores the begin event method state used by this instance.
@@ -436,7 +436,7 @@ internal sealed class D3D12CommandList : CommandList {
     internal D3D12BoundResourceSetState GraphicsResourceSets => this._graphicsResourceSets;
 
     /// <summary>
-    /// Gets whether experimental stable ResourceSet buffer update bypass tracking is enabled.
+    /// Gets whether stable ResourceSet buffer updates may bypass command-list snapshots.
     /// </summary>
     internal static bool StableResourceSetUpdateFastPathEnabled => _stableResourceSetUpdateFastPathEnabled;
 
