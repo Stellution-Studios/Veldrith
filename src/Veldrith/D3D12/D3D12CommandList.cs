@@ -1152,9 +1152,16 @@ internal sealed class D3D12CommandList : CommandList {
     /// </summary>
     /// <param name="vertexStart">The vertex start used by the draw call.</param>
     private void BindVertexBuffersForDrawStart(uint vertexStart) {
+        D3D12Pipeline currentGraphicsPipeline = this.CurrentGraphicsPipeline;
         for (uint index = 0; index < this._inputAssembler.MaxBoundVertexBufferSlot; index++) {
             D3D12DeviceBuffer buffer = this._inputAssembler.GetVertexBuffer(index);
             if (buffer == null) {
+                continue;
+            }
+
+            if (currentGraphicsPipeline != null
+                && index < currentGraphicsPipeline.VertexInstanceStepRates.Length
+                && currentGraphicsPipeline.VertexInstanceStepRates[index] != 0) {
                 continue;
             }
 
@@ -1253,6 +1260,21 @@ internal sealed class D3D12CommandList : CommandList {
     /// <param name="buffer">The dynamic buffer whose binding version changed.</param>
     internal void RefreshDynamicBufferBindingsForInternalUse(D3D12DeviceBuffer buffer) {
         this.MarkDynamicBufferBindingsDirty(buffer);
+    }
+
+    /// <summary>
+    /// Gets whether an input-assembler binding currently references the specified buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer to inspect.</param>
+    /// <returns><see langword="true" /> when a vertex or index binding references the buffer.</returns>
+    internal bool IsInputAssemblerBufferBoundForInternalUse(D3D12DeviceBuffer buffer) {
+        for (uint index = 0; index < this._inputAssembler.MaxBoundVertexBufferSlot; index++) {
+            if (ReferenceEquals(this._inputAssembler.GetVertexBuffer(index), buffer)) {
+                return true;
+            }
+        }
+
+        return this._inputAssembler.HasIndexBuffer && ReferenceEquals(this._inputAssembler.IndexBuffer, buffer);
     }
 
     /// <summary>

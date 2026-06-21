@@ -79,8 +79,10 @@ internal sealed class D3D12Pipeline : Pipeline {
         this.StencilReference = description.DepthStencilState.StencilReference;
         this.UsesStencilReference = description.DepthStencilState.StencilTestEnabled;
         this.VertexStrides = new uint[description.ShaderSet.VertexLayouts.Length];
+        this.VertexInstanceStepRates = new uint[description.ShaderSet.VertexLayouts.Length];
         for (uint i = 0; i < this.VertexStrides.Length; i++) {
             this.VertexStrides[i] = description.ShaderSet.VertexLayouts[i].Stride;
+            this.VertexInstanceStepRates[i] = description.ShaderSet.VertexLayouts[i].InstanceStepRate;
         }
 
         this._pipelineResourceLayouts = description.ResourceLayouts;
@@ -132,6 +134,11 @@ internal sealed class D3D12Pipeline : Pipeline {
     /// Gets or sets VertexStrides.
     /// </summary>
     public uint[] VertexStrides { get; } = Array.Empty<uint>();
+
+    /// <summary>
+    /// Gets the instance step rate for each vertex input slot.
+    /// </summary>
+    public uint[] VertexInstanceStepRates { get; } = Array.Empty<uint>();
 
     /// <summary>
     /// Gets the stencil reference value used by this graphics pipeline.

@@ -333,6 +333,16 @@ internal sealed class D3D12BufferUpdatePlanner {
         }
         else {
             if (d3D12Buffer.UsesCommandListSnapshots) {
+                if (d3D12Buffer.UsesStablePreBindUpdateForDynamicInputAssembler
+                    && !this._commandList.IsInputAssemblerBufferBoundForInternalUse(d3D12Buffer)) {
+                    d3D12Buffer.WriteMappedCpuVisibleDataForInternalUse(source, bufferOffsetInBytes, sizeInBytes);
+                    if (D3D12CommandListPerfTracker.Enabled) {
+                        this._perf.UploadRecordMs += D3D12CommandListPerfTracker.TicksToMilliseconds(Stopwatch.GetTimestamp() - startTicks);
+                    }
+
+                    return pendingUploadDirtyMayHaveChanged;
+                }
+
                 IntPtr snapshotSource = source;
                 uint snapshotOffset = bufferOffsetInBytes;
                 uint snapshotSize = sizeInBytes;
