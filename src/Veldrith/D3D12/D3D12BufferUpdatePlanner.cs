@@ -333,25 +333,19 @@ internal sealed class D3D12BufferUpdatePlanner {
         }
         else {
             if (d3D12Buffer.UsesCommandListSnapshots) {
-                if (this.CanUpdateStableInputAssemblerBufferWithoutSnapshot(d3D12Buffer)
-                    || this.CanUpdateStableResourceSetBufferWithoutSnapshot(d3D12Buffer)) {
-                    d3D12Buffer.Update(null, source, bufferOffsetInBytes, sizeInBytes);
+                IntPtr snapshotSource = source;
+                uint snapshotOffset = bufferOffsetInBytes;
+                uint snapshotSize = sizeInBytes;
+                d3D12Buffer.ValidateBufferUpdateRange(bufferOffsetInBytes, sizeInBytes);
+                if (d3D12Buffer.RequiresCommandListSnapshotCpuMirror) {
+                    d3D12Buffer.WriteMappedCpuVisibleDataForInternalUse(source, bufferOffsetInBytes, sizeInBytes);
                 }
-                else {
-                    IntPtr snapshotSource = source;
-                    uint snapshotOffset = bufferOffsetInBytes;
-                    uint snapshotSize = sizeInBytes;
-                    d3D12Buffer.ValidateBufferUpdateRange(bufferOffsetInBytes, sizeInBytes);
-                    if (d3D12Buffer.RequiresCommandListSnapshotCpuMirror) {
-                        d3D12Buffer.WriteMappedCpuVisibleDataForInternalUse(source, bufferOffsetInBytes, sizeInBytes);
-                    }
 
-                    DynamicSnapshotUploadSlice snapshot = this.AllocateDynamicSnapshotUpload(d3D12Buffer, snapshotSize);
-                    CopySnapshotPayload(snapshotSource, snapshot.MappedPointer, snapshotSize);
-                    this.TrackDynamicSnapshot(d3D12Buffer, snapshot.Resource, snapshot.Offset, snapshot.GpuVirtualAddress, snapshotOffset, snapshotSize);
-                    bindingAddressChanged = true;
-                    this.RecordDynamicSnapshotMetrics(snapshotSize);
-                }
+                DynamicSnapshotUploadSlice snapshot = this.AllocateDynamicSnapshotUpload(d3D12Buffer, snapshotSize);
+                CopySnapshotPayload(snapshotSource, snapshot.MappedPointer, snapshotSize);
+                this.TrackDynamicSnapshot(d3D12Buffer, snapshot.Resource, snapshot.Offset, snapshot.GpuVirtualAddress, snapshotOffset, snapshotSize);
+                bindingAddressChanged = true;
+                this.RecordDynamicSnapshotMetrics(snapshotSize);
             }
             else {
                 d3D12Buffer.Update(null, source, bufferOffsetInBytes, sizeInBytes);
@@ -720,27 +714,6 @@ internal sealed class D3D12BufferUpdatePlanner {
         if (CanBeInputAssemblerBuffer(buffer)) {
             this._commandList.RefreshDynamicBufferBindingsForInternalUse(buffer);
         }
-    }
-
-    /// <summary>
-    /// Checks whether a dynamic ResourceSet buffer can be updated through its stable CPU-visible backing store.
-    /// </summary>
-    /// <param name="buffer">The buffer to inspect.</param>
-    /// <returns><see langword="true" /> when no previous draw or dispatch can still read the old stable contents.</returns>
-    private bool CanUpdateStableResourceSetBufferWithoutSnapshot(D3D12DeviceBuffer buffer) {
-        return D3D12CommandList.StableResourceSetUpdateFastPathEnabled
-               && buffer.RequiresCommandListSnapshotCpuMirror
-               && !CanBeInputAssemblerBuffer(buffer)
-               && !this._commandList.HasResourceSetBufferBeenUsedForInternalUse(buffer);
-    }
-
-    /// <summary>
-    /// Checks whether a dynamic input-assembler buffer can be updated through its stable CPU-visible backing store.
-    /// </summary>
-    /// <param name="buffer">The buffer to inspect.</param>
-    /// <returns><see langword="true" /> when the stable backing store is safe to overwrite.</returns>
-    private bool CanUpdateStableInputAssemblerBufferWithoutSnapshot(D3D12DeviceBuffer buffer) {
-        return false;
     }
 
     /// <summary>
