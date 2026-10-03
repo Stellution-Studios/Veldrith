@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Text;
+using Vortice.Dxc;
 
 namespace Veldrith.D3D12;
 
@@ -12,7 +12,7 @@ namespace Veldrith.D3D12;
 internal sealed class D3D12Shader : Shader {
 
     /// <summary>
-    /// Caches compiled HLSL bytecode so identical shader descriptions do not invoke D3DCompile repeatedly.
+    /// Caches compiled HLSL bytecode so identical shader descriptions do not invoke DXC repeatedly.
     /// </summary>
     private static readonly Dictionary<string, byte[]> _compiledBytecodeCache = new(StringComparer.Ordinal);
 
@@ -29,10 +29,7 @@ internal sealed class D3D12Shader : Shader {
     /// <summary>
     /// Stores the persistent D3D12 shader bytecode cache directory.
     /// </summary>
-    private static readonly string _persistentBytecodeCacheDirectory = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "Veldrith",
-        "D3D12ShaderCache");
+    private static readonly string _persistentBytecodeCacheDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Veldrith", "D3D12ShaderCache");
 
     /// <summary>
     /// Stores the disposed state used by this instance.
@@ -183,7 +180,7 @@ internal sealed class D3D12Shader : Shader {
     /// </summary>
     /// <param name="stage">The shader stage.</param>
     /// <param name="entryPoint">The entry point name.</param>
-    /// <param name="targetProfile">The D3D compiler target profile.</param>
+    /// <param name="targetProfile">The DXC target profile.</param>
     /// <param name="source">The HLSL source bytes.</param>
     /// <returns>The compiled bytecode cache key.</returns>
     private static string BuildCompiledBytecodeCacheKey(ShaderStages stage, string entryPoint, string targetProfile, byte[] source) {
@@ -209,12 +206,12 @@ internal sealed class D3D12Shader : Shader {
     /// <returns>The value produced by this operation.</returns>
     private static string GetTargetProfile(ShaderStages stage) {
         switch (stage) {
-            case ShaderStages.Vertex: return "vs_5_0";
-            case ShaderStages.Fragment: return "ps_5_0";
-            case ShaderStages.Geometry: return "gs_5_0";
-            case ShaderStages.TessellationControl: return "hs_5_0";
-            case ShaderStages.TessellationEvaluation: return "ds_5_0";
-            case ShaderStages.Compute: return "cs_5_0";
+            case ShaderStages.Vertex: return "vs_6_0";
+            case ShaderStages.Fragment: return "ps_6_0";
+            case ShaderStages.Geometry: return "gs_6_0";
+            case ShaderStages.TessellationControl: return "hs_6_0";
+            case ShaderStages.TessellationEvaluation: return "ds_6_0";
+            case ShaderStages.Compute: return "cs_6_0";
             default: throw new VeldridException($"Unsupported D3D12 shader stage: {stage}.");
         }
     }
@@ -227,81 +224,12 @@ internal sealed class D3D12Shader : Shader {
     /// <param name="target">The target value used by this operation.</param>
     /// <returns>The value produced by this operation.</returns>
     private static byte[] CompileHlsl(string sourceCode, string entryPoint, string target) {
-        byte[] sourceBytes = Encoding.UTF8.GetBytes(sourceCode ?? string.Empty);
-        int result = D3DCompile(sourceBytes, (nuint)sourceBytes.Length, null, IntPtr.Zero, IntPtr.Zero, entryPoint, target, 0, 0, out IntPtr codeBlobPtr, out IntPtr errorBlobPtr);
-
-        string errorMessage = null;
-        if (errorBlobPtr != IntPtr.Zero) {
-            try {
-                ID3DBlob errorBlob = (ID3DBlob)Marshal.GetObjectForIUnknown(errorBlobPtr);
-                IntPtr errorPtr = errorBlob.GetBufferPointer();
-                int errorSize = checked((int)errorBlob.GetBufferSize());
-                if (errorSize > 0) {
-                    byte[] errorBytes = new byte[errorSize];
-                    Marshal.Copy(errorPtr, errorBytes, 0, errorSize);
-                    errorMessage = Encoding.UTF8.GetString(errorBytes).TrimEnd('\0', '\r', '\n');
-                }
-            }
-            finally {
-                Marshal.Release(errorBlobPtr);
-            }
-        }
-
-        if (result < 0 || codeBlobPtr == IntPtr.Zero) {
-            throw new VeldridException($"Failed to compile D3D12 shader entry '{entryPoint}' target '{target}'. {errorMessage}");
-        }
-
-        try {
-            ID3DBlob codeBlob = (ID3DBlob)Marshal.GetObjectForIUnknown(codeBlobPtr);
-            IntPtr codePtr = codeBlob.GetBufferPointer();
-            int codeSize = checked((int)codeBlob.GetBufferSize());
-            byte[] shaderBytes = new byte[codeSize];
-            Marshal.Copy(codePtr, shaderBytes, 0, codeSize);
-            return shaderBytes;
-        }
-        finally {
-            Marshal.Release(codeBlobPtr);
-        }
-    }
-    
-    /// <summary>
-    /// Executes the d3 dcompile logic for this backend.
-    /// </summary>
-    /// <param name="srcData">The src data value used by this operation.</param>
-    /// <param name="srcDataSize">The src data size value used by this operation.</param>
-    /// <param name="sourceName">The source name value used by this operation.</param>
-    /// <param name="defines">The defines value used by this operation.</param>
-    /// <param name="include">The include value used by this operation.</param>
-    /// <param name="entryPoint">The entry point value used by this operation.</param>
-    /// <param name="target">The target value used by this operation.</param>
-    /// <param name="flags1">The flags1 value used by this operation.</param>
-    /// <param name="flags2">The flags2 value used by this operation.</param>
-    /// <param name="code">The code value used by this operation.</param>
-    /// <param name="errorMsgs">The error msgs value used by this operation.</param>
-    /// <returns>The value produced by this operation.</returns>
-    [DllImport("d3dcompiler_47.dll", CharSet = CharSet.Ansi)]
-    private static extern int D3DCompile(byte[] srcData, nuint srcDataSize, string sourceName, IntPtr defines, IntPtr include, string entryPoint, string target, uint flags1, uint flags2, out IntPtr code, out IntPtr errorMsgs);
-
-    /// <summary>
-    /// Defines the ID3DBlob interface.
-    /// </summary>
-    [ComImport]
-    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    [Guid("8BA5FB08-5195-40E2-AC58-0D989C3A0102")]
-    private interface ID3DBlob {
+        using IDxcResult result = DxcCompiler.Compile(sourceCode ?? string.Empty, ["-E", entryPoint, "-T", target, "-O3", "-HV", "2016"]);
         
-        /// <summary>
-        /// Gets the buffer pointer value.
-        /// </summary>
-        /// <returns>The value produced by this operation.</returns>
-        [PreserveSig]
-        IntPtr GetBufferPointer();
+        if (result.GetStatus().Failure) {
+            throw new VeldridException($"Failed to compile D3D12 shader entry '{entryPoint}' target '{target}'. {result.GetErrors()}");
+        }
         
-        /// <summary>
-        /// Gets the buffer size value.
-        /// </summary>
-        /// <returns>The value produced by this operation.</returns>
-        [PreserveSig]
-        nuint GetBufferSize();
+        return result.GetObjectBytecodeArray();
     }
 }
