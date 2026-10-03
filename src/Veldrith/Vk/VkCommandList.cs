@@ -378,6 +378,7 @@ internal unsafe class VkCommandList : CommandList {
         this.PreDispatchCommand();
 
         this._deviceApi.vkCmdDispatch(this.CommandBuffer, groupCountX, groupCountY, groupCountZ);
+        this.EmitComputeWriteBarrier();
     }
 
     /// <summary>
@@ -888,6 +889,7 @@ internal unsafe class VkCommandList : CommandList {
         VkBuffer vkBuffer = Util.AssertSubtype<DeviceBuffer, VkBuffer>(indirectBuffer);
         this._currentStagingInfo.Resources.Add(vkBuffer.RefCount);
         this._deviceApi.vkCmdDispatchIndirect(this.CommandBuffer, vkBuffer.DeviceBuffer, offset);
+        this.EmitComputeWriteBarrier();
     }
 
     /// <summary>
@@ -1103,6 +1105,29 @@ internal unsafe class VkCommandList : CommandList {
         }
 
         this.FlushNewResourceSets(this._currentComputeResourceSets, this._computeResourceSetsChanged, this._currentComputePipeline.ResourceSetCount, VkPipelineBindPoint.Compute, this._currentComputePipeline.PipelineLayout);
+    }
+
+    /// <summary>
+    /// Makes compute writes visible to subsequent shader, vertex/index, indirect, and transfer accesses.
+    /// </summary>
+    private void EmitComputeWriteBarrier() {
+        VkMemoryBarrier barrier = new() {
+            sType = VkStructureType.MemoryBarrier,
+            srcAccessMask = VkAccessFlags.ShaderWrite,
+            dstAccessMask = VkAccessFlags.MemoryRead | VkAccessFlags.MemoryWrite
+        };
+        
+        this._deviceApi.vkCmdPipelineBarrier(this.CommandBuffer,
+            VkPipelineStageFlags.ComputeShader,
+            VkPipelineStageFlags.AllCommands,
+            VkDependencyFlags.None,
+            1,
+            &barrier,
+            0,
+            null,
+            0,
+            null
+        );
     }
 
     /// <summary>
