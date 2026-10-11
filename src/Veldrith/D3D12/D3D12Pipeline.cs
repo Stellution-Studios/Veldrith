@@ -850,7 +850,7 @@ internal sealed class D3D12Pipeline : Pipeline {
             GeometryShader = geometryShader,
             HullShader = hullShader,
             DomainShader = domainShader,
-            BlendState = BuildBlendState(ref description.BlendState),
+            BlendState = BuildBlendState(ref description.BlendState, description.Outputs.ColorAttachments.Length),
             RasterizerState = BuildRasterizerState(ref description.RasterizerState, description.Outputs.SampleCount),
             DepthStencilState = BuildDepthStencilState(ref description.DepthStencilState),
             SampleMask = uint.MaxValue,
@@ -886,14 +886,21 @@ internal sealed class D3D12Pipeline : Pipeline {
     /// </summary>
     /// <param name="description">The description used to configure this operation.</param>
     /// <returns>The value produced by this operation.</returns>
-    private static BlendDescription BuildBlendState(ref BlendStateDescription description) {
+    private static BlendDescription BuildBlendState(ref BlendStateDescription description, int colorAttachmentCount) {
         BlendDescription blendDescription = BlendDescription.Opaque;
         blendDescription.AlphaToCoverageEnable = description.AlphaToCoverageEnabled;
         blendDescription.IndependentBlendEnable = true;
-
-        int count = Math.Min(description.AttachmentStates?.Length ?? 0, 8);
+        
+        BlendAttachmentDescription[] blendStates = description.AttachmentStates ?? [];
+        
+        // The count comes from the outputs, so every color attachment gets a fully defined state.
+        int count = Math.Min(colorAttachmentCount, 8);
+        
         for (int i = 0; i < count; i++) {
-            BlendAttachmentDescription attachment = description.AttachmentStates![i];
+            
+            // Use the provided state if there is one. Otherwise fall back to disabled blending, which writes all channels.
+            BlendAttachmentDescription attachment = i < blendStates.Length ? blendStates[i] : BlendAttachmentDescription.DISABLED;
+            
             blendDescription.RenderTarget[i] = new RenderTargetBlendDescription {
                 BlendEnable = attachment.BlendEnabled,
                 LogicOpEnable = false,
@@ -907,7 +914,7 @@ internal sealed class D3D12Pipeline : Pipeline {
                 RenderTargetWriteMask = D3D12Formats.ToColorWriteMask(attachment.ColorWriteMask.GetOrDefault())
             };
         }
-
+        
         return blendDescription;
     }
 

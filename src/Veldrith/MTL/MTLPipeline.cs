@@ -129,9 +129,14 @@ internal class MtlPipeline : Pipeline {
                 mtlDesc.StencilAttachmentPixelFormat = mtlDepthFormat;
             }
         }
-
+        
+        BlendAttachmentDescription[] blendStates = blendStateDesc.AttachmentStates;
+        
         for (uint i = 0; i < outputs.ColorAttachments.Length; i++) {
-            BlendAttachmentDescription attachmentBlendDesc = blendStateDesc.AttachmentStates[i];
+            
+            // Use the provided state if there is one. Otherwise fall back to disabled blending, which writes all channels.
+            BlendAttachmentDescription attachmentBlendDesc = i < blendStates.Length ? blendStates[i] : BlendAttachmentDescription.DISABLED;
+            
             MTLRenderPipelineColorAttachmentDescriptor colorDesc = mtlDesc.ColorAttachments[i];
             colorDesc.PixelFormat = MtlFormats.VdToMtlPixelFormat(outputs.ColorAttachments[i].Format, false);
             colorDesc.BlendingEnabled = attachmentBlendDesc.BlendEnabled;
@@ -139,14 +144,14 @@ internal class MtlPipeline : Pipeline {
             colorDesc.AlphaBlendOperation = MtlFormats.VdToMtlBlendOp(attachmentBlendDesc.AlphaFunction);
             colorDesc.SourceAlphaBlendFactor = MtlFormats.VdToMtlBlendFactor(attachmentBlendDesc.SourceAlphaFactor);
             colorDesc.DestinationAlphaBlendFactor = MtlFormats.VdToMtlBlendFactor(attachmentBlendDesc.DestinationAlphaFactor);
-
+            
             colorDesc.RgbBlendOperation = MtlFormats.VdToMtlBlendOp(attachmentBlendDesc.ColorFunction);
             colorDesc.SourceRgbBlendFactor = MtlFormats.VdToMtlBlendFactor(attachmentBlendDesc.SourceColorFactor);
             colorDesc.DestinationRgbBlendFactor = MtlFormats.VdToMtlBlendFactor(attachmentBlendDesc.DestinationColorFactor);
         }
-
+        
         mtlDesc.AlphaToCoverageEnabled = blendStateDesc.AlphaToCoverageEnabled;
-
+        
         this.RenderPipelineState = gd.Device.NewRenderPipelineStateWithDescriptor(mtlDesc);
         ObjectiveCRuntime.Release(mtlDesc.NativePtr);
 

@@ -56,14 +56,18 @@ internal unsafe class VkPipeline : Pipeline {
         this.RefCount = new ResourceRefCount(this.DisposeCore);
 
         VkGraphicsPipelineCreateInfo pipelineCi = new VkGraphicsPipelineCreateInfo();
-
-        // Blend State
+        
+        // Blend State.
         VkPipelineColorBlendStateCreateInfo blendStateCi = new VkPipelineColorBlendStateCreateInfo();
-        int attachmentsCount = description.BlendState.AttachmentStates.Length;
+        int attachmentsCount = description.Outputs.ColorAttachments.Length;
+        BlendAttachmentDescription[] blendStates = description.BlendState.AttachmentStates;
         VkPipelineColorBlendAttachmentState* attachmentsPtr = stackalloc VkPipelineColorBlendAttachmentState[attachmentsCount];
-
+        
         for (int i = 0; i < attachmentsCount; i++) {
-            BlendAttachmentDescription vdDesc = description.BlendState.AttachmentStates[i];
+            
+            // Use the provided state if there is one. Otherwise fall back to disabled blending, which writes all channels.
+            BlendAttachmentDescription vdDesc = i < blendStates.Length ? blendStates[i] : BlendAttachmentDescription.DISABLED;
+            
             VkPipelineColorBlendAttachmentState attachmentState = new() {
                 srcColorBlendFactor = VkFormats.VdToVkBlendFactor(vdDesc.SourceColorFactor),
                 dstColorBlendFactor = VkFormats.VdToVkBlendFactor(vdDesc.DestinationColorFactor),
@@ -76,7 +80,7 @@ internal unsafe class VkPipeline : Pipeline {
             };
             attachmentsPtr[i] = attachmentState;
         }
-
+        
         blendStateCi.attachmentCount = (uint)attachmentsCount;
         blendStateCi.pAttachments = attachmentsPtr;
         RgbaFloat blendFactor = description.BlendState.BlendFactor;
@@ -84,9 +88,9 @@ internal unsafe class VkPipeline : Pipeline {
         blendStateCi.blendConstants[1] = blendFactor.G;
         blendStateCi.blendConstants[2] = blendFactor.B;
         blendStateCi.blendConstants[3] = blendFactor.A;
-
+        
         pipelineCi.pColorBlendState = &blendStateCi;
-
+        
         // Rasterizer State
         RasterizerStateDescription rsDesc = description.RasterizerState;
         VkPipelineRasterizationStateCreateInfo rsCi = new VkPipelineRasterizationStateCreateInfo();
