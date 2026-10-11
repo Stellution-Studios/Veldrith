@@ -276,8 +276,7 @@ internal unsafe class VkSwapchain : Swapchain {
         this._framebuffer.SetImageIndex(this._currentImageIndex);
 
         if (result == VkResult.ErrorOutOfDateKHR || result == VkResult.SuboptimalKHR) {
-            return this.CreateSwapchain(this._framebuffer.Width, this._framebuffer.Height)
-                   && this.AcquireNextImage(device, semaphore, fence);
+            return this.CreateSwapchain(this._framebuffer.Width, this._framebuffer.Height) && this.AcquireNextImage(device, semaphore, fence);
         }
 
         if (result != VkResult.Success) {
@@ -311,8 +310,7 @@ internal unsafe class VkSwapchain : Swapchain {
             throw new VeldridException("The Swapchain's underlying surface has been lost.");
         }
 
-        if (surfaceCapabilities.minImageExtent.width == 0 && surfaceCapabilities.minImageExtent.height == 0
-                                                          && surfaceCapabilities.maxImageExtent.width == 0 && surfaceCapabilities.maxImageExtent.height == 0) {
+        if (surfaceCapabilities.minImageExtent.width == 0 && surfaceCapabilities.minImageExtent.height == 0 && surfaceCapabilities.maxImageExtent.width == 0 && surfaceCapabilities.maxImageExtent.height == 0) {
             return false;
         }
 
@@ -368,11 +366,11 @@ internal unsafe class VkSwapchain : Swapchain {
         VkPresentModeKHR presentMode = VkPresentModeKHR.Fifo;
 
         if (this._syncToVBlank) {
-            if (presentModes.Contains(VkPresentModeKHR.FifoRelaxed)) {
+            if (this._allowTearing && presentModes.Contains(VkPresentModeKHR.FifoRelaxed)) {
                 presentMode = VkPresentModeKHR.FifoRelaxed;
             }
         }
-        else if (presentModes.Contains(VkPresentModeKHR.Immediate)) {
+        else if (this._allowTearing && presentModes.Contains(VkPresentModeKHR.Immediate)) {
             presentMode = VkPresentModeKHR.Immediate;
         }
         else if (presentModes.Contains(VkPresentModeKHR.Mailbox)) {
