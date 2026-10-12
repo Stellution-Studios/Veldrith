@@ -351,6 +351,20 @@ internal sealed class D3D12BufferUpdatePlanner {
                     d3D12Buffer.WriteMappedCpuVisibleDataForInternalUse(source, bufferOffsetInBytes, sizeInBytes);
                 }
 
+                if ((d3D12Buffer.Usage & BufferUsage.StructuredBufferReadOnly) != 0
+                    && (bufferOffsetInBytes != 0 || sizeInBytes != d3D12Buffer.SizeInBytes)) {
+                    // A root SRV exposes the entire buffer from its binding address. Separate
+                    // header/element uploads must therefore share one complete snapshot.
+                    // The CPU mirror above contains this update and all preceding updates;
+                    // copying it also keeps snapshots used by earlier draws immutable.
+                    if (!d3D12Buffer.TryGetCpuReadPointer(out snapshotSource)) {
+                        throw new VeldridException("Dynamic structured buffer snapshots require a CPU-visible buffer.");
+                    }
+
+                    snapshotOffset = 0;
+                    snapshotSize = d3D12Buffer.SizeInBytes;
+                }
+
                 DynamicSnapshotUploadSlice snapshot = this.AllocateDynamicSnapshotUpload(d3D12Buffer, snapshotSize);
                 CopySnapshotPayload(snapshotSource, snapshot.MappedPointer, snapshotSize);
                 this.TrackDynamicSnapshot(d3D12Buffer, snapshot.Resource, snapshot.Offset, snapshot.GpuVirtualAddress, snapshotOffset, snapshotSize);

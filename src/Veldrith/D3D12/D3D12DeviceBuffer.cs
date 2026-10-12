@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Vortice.Direct3D12;
 
 namespace Veldrith.D3D12;
@@ -53,6 +54,12 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     /// Stores the placed-resource allocation block when this buffer is allocated from the D3D12 memory manager.
     /// </summary>
     private D3D12ResourceAllocation _allocation;
+
+    /// <summary>
+    /// Keeps dynamic structured buffer contents in cacheable RAM. Upload heaps are
+    /// write-combined, so reading them to preserve untouched snapshot data is expensive.
+    /// </summary>
+    private readonly IntPtr _structuredBufferCpuData;
 
     /// <summary>
     /// Stores the gd state used by this instance.
@@ -122,6 +129,17 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         }
 
         this._gpuVirtualAddress = this.NativeBuffer.GPUVirtualAddress;
+        if (this._isDynamic && (this.Usage & BufferUsage.StructuredBufferReadOnly) != 0) {
+            try {
+                unsafe {
+                    this._structuredBufferCpuData = (IntPtr)NativeMemory.AllocZeroed(this.sizeInBytes);
+                }
+            }
+            catch {
+                this._allocation.Dispose();
+                throw;
+            }
+        }
     }
 
     /// <summary>
@@ -224,6 +242,10 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         }
         else {
             this.gd.ReleaseAfterLastSubmission(this._allocation);
+        }
+
+        unsafe {
+            NativeMemory.Free(this._structuredBufferCpuData.ToPointer());
         }
 
         this._disposed = true;
@@ -339,6 +361,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         }
 
         CopyMemory(source.ToPointer(), destination, sizeInBytes);
+        this.MirrorStructuredBufferCpuData(source, destinationOffset, sizeInBytes);
         if (this._isStaging) {
             this._staging.MarkWriteBufferChanged(destinationOffset, sizeInBytes, this.sizeInBytes);
         }
@@ -433,7 +456,9 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         }
 
         if (this._isDynamic) {
-            pointer = this._allocation.MappedPointer;
+            pointer = this._structuredBufferCpuData != IntPtr.Zero
+                ? this._structuredBufferCpuData
+                : this._allocation.MappedPointer;
             return true;
         }
 
@@ -452,6 +477,12 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     internal void Unmap() {
         if (!this._activeMapMode.HasValue) {
             return;
+        }
+
+        if (this._structuredBufferCpuData != IntPtr.Zero) {
+            unsafe {
+                CopyMemory(this._structuredBufferCpuData.ToPointer(), this._allocation.MappedPointer.ToPointer(), this.sizeInBytes);
+            }
         }
 
         if (this._isStaging) {
@@ -478,7 +509,9 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
                 throw new VeldridException("Dynamic D3D12 buffers only support MapMode.Write.");
             }
 
-            return this._allocation.MappedPointer;
+            return this._structuredBufferCpuData != IntPtr.Zero
+                ? this._structuredBufferCpuData
+                : this._allocation.MappedPointer;
         }
 
         if (this._isStaging) {
@@ -503,6 +536,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         if (this._isDynamic) {
             byte* dst = (byte*)this._allocation.MappedPointer + destinationOffset;
             CopyMemory(source.ToPointer(), dst, copySize);
+            this.MirrorStructuredBufferCpuData(source, destinationOffset, copySize);
             return;
         }
 
@@ -577,6 +611,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         byte* src = (byte*)sourcePtr + sourceOffset;
         byte* dst = (byte*)destinationPtr + destinationOffset;
         Buffer.MemoryCopy(src, dst, destination.SizeInBytes - destinationOffset, copySize);
+        destination.MirrorStructuredBufferCpuData((IntPtr)src, destinationOffset, copySize);
         if (destination._isStaging) {
             destination._staging.MarkWriteBufferChanged(destinationOffset, copySize, destination.sizeInBytes);
         }
@@ -628,6 +663,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
             byte* src = (byte*)readbackAllocation.MappedPointer.ToPointer();
             byte* dst = (byte*)destinationPtr + destinationOffset;
             Buffer.MemoryCopy(src, dst, destination.SizeInBytes - destinationOffset, copySize);
+            destination.MirrorStructuredBufferCpuData((IntPtr)src, destinationOffset, copySize);
         }
         finally {
             readbackAllocation.Dispose();
@@ -635,6 +671,18 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
 
         if (destination._isStaging) {
             destination._staging.MarkWriteBufferChanged(destinationOffset, copySize, destination.sizeInBytes);
+        }
+    }
+
+    /// <summary>
+    /// Preserves CPU writes for complete structured buffer snapshots without reading upload memory.
+    /// </summary>
+    private unsafe void MirrorStructuredBufferCpuData(IntPtr source, uint destinationOffset, uint copySize) {
+        if (this._structuredBufferCpuData != IntPtr.Zero) {
+            byte* destination = (byte*)this._structuredBufferCpuData + destinationOffset;
+            if (source.ToPointer() != destination) {
+                Buffer.MemoryCopy(source.ToPointer(), destination, this.sizeInBytes - destinationOffset, copySize);
+            }
         }
     }
 
