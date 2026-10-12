@@ -247,7 +247,7 @@ internal sealed class D3D12BufferUpdatePlanner {
     /// <returns>The command-list-local GPU virtual address.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal ulong GetGpuVirtualAddress(D3D12DeviceBuffer buffer, uint offset) {
-        if (!buffer.UsesCommandListSnapshots || this._dynamicSnapshots.Count == 0) {
+        if (!buffer.UsesCommandListSnapshots) {
             return buffer.GetGpuVirtualAddress(offset);
         }
 
@@ -255,6 +255,17 @@ internal sealed class D3D12BufferUpdatePlanner {
         if (index >= 0) {
             DynamicSnapshotBinding snapshot = this._dynamicSnapshots[index];
             return snapshot.GpuVirtualAddress + (offset - snapshot.DestinationOffset);
+        }
+
+        if ((buffer.Usage & BufferUsage.UniformBuffer) != 0
+            && buffer.TryGetCpuReadPointer(out IntPtr source)) {
+            // A first draw can use data supplied by GraphicsDevice.UpdateBuffer.
+            // Freeze that data too, before a later deferred update changes the CPU mirror.
+            DynamicSnapshotUploadSlice snapshot = this.AllocateDynamicSnapshotUpload(buffer, buffer.SizeInBytes);
+            CopySnapshotPayload(source, snapshot.MappedPointer, buffer.SizeInBytes);
+            this.TrackDynamicSnapshot(buffer, snapshot.Resource, snapshot.Offset, snapshot.GpuVirtualAddress, 0, buffer.SizeInBytes);
+            this.RecordDynamicSnapshotMetrics(buffer.SizeInBytes);
+            return snapshot.GpuVirtualAddress + offset;
         }
 
         return buffer.GetGpuVirtualAddress(offset);
@@ -351,14 +362,14 @@ internal sealed class D3D12BufferUpdatePlanner {
                     d3D12Buffer.WriteMappedCpuVisibleDataForInternalUse(source, bufferOffsetInBytes, sizeInBytes);
                 }
 
-                if ((d3D12Buffer.Usage & BufferUsage.StructuredBufferReadOnly) != 0
+                if ((d3D12Buffer.Usage & BufferUsage.UniformBuffer) != 0
                     && (bufferOffsetInBytes != 0 || sizeInBytes != d3D12Buffer.SizeInBytes)) {
-                    // A root SRV exposes the entire buffer from its binding address. Separate
-                    // header/element uploads must therefore share one complete snapshot.
+                    // A root CBV exposes more than the updated range. Partial uniform
+                    // uploads must preserve the rest of the buffer in the snapshot.
                     // The CPU mirror above contains this update and all preceding updates;
                     // copying it also keeps snapshots used by earlier draws immutable.
                     if (!d3D12Buffer.TryGetCpuReadPointer(out snapshotSource)) {
-                        throw new VeldridException("Dynamic structured buffer snapshots require a CPU-visible buffer.");
+                        throw new VeldridException("Uniform buffer snapshots require a CPU-visible buffer.");
                     }
 
                     snapshotOffset = 0;

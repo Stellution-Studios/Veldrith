@@ -11,9 +11,10 @@ namespace Veldrith.D3D12;
 internal sealed class D3D12DeviceBuffer : DeviceBuffer {
 
     /// <summary>
-    /// Stores the largest pure UniformBuffer that should prefer CPU-visible upload memory, matching Vulkan's host-visible small-uniform policy.
+    /// Stores the largest UniformBuffer that should use upload snapshots. Larger
+    /// uniform arenas use ordered GPU updates to avoid copying the arena for each edit.
     /// </summary>
-    private const uint HostVisibleUniformBufferMaxSize = 4 * 1024 * 1024;
+    private const uint HostVisibleUniformBufferMaxSize = 64 * 1024;
 
     /// <summary>
     /// Tracks whether is dynamic is currently enabled.
@@ -36,7 +37,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     private readonly bool _isStaging;
 
     /// <summary>
-    /// Tracks whether this non-dynamic UniformBuffer follows Vulkan's small host-visible allocation policy.
+    /// Tracks whether this non-dynamic UniformBuffer uses CPU-visible upload memory.
     /// </summary>
     private readonly bool _isCpuVisibleUniform;
 
@@ -56,10 +57,15 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     private D3D12ResourceAllocation _allocation;
 
     /// <summary>
-    /// Keeps dynamic structured buffer contents in cacheable RAM. Upload heaps are
-    /// write-combined, so reading them to preserve untouched snapshot data is expensive.
+    /// Keeps CPU-visible uniform contents in cacheable RAM for partial upload snapshots.
+    /// Upload heaps are write-combined and should never be read to rebuild a snapshot.
     /// </summary>
-    private readonly IntPtr _structuredBufferCpuData;
+    private readonly IntPtr _uniformBufferCpuData;
+
+    /// <summary>
+    /// Allocates readback memory only when a dynamic GPU-local buffer is mapped.
+    /// </summary>
+    private D3D12ResourceAllocation _dynamicMapReadback;
 
     /// <summary>
     /// Stores the gd state used by this instance.
@@ -100,9 +106,15 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         this._isDynamic = (description.Usage & BufferUsage.Dynamic) == BufferUsage.Dynamic;
         this._isStaging = (description.Usage & BufferUsage.Staging) == BufferUsage.Staging;
         this._isCpuVisibleUniform = ShouldUseHostVisibleUniformBuffer(description.Usage, description.SizeInBytes);
-        this.CanTransitionState = !this._isDynamic && !this._isStaging && !this._isCpuVisibleUniform;
-        this._usesCommandListSnapshots = ShouldUseCommandListSnapshots(description.Usage);
-        this._requiresCommandListSnapshotCpuMirror = ShouldMirrorCommandListSnapshotsToCpuBuffer(description.Usage);
+        // Structured buffers stay GPU-local so deferred partial updates execute in
+        // command order, rather than rebuilding and rebinding the entire buffer.
+        bool isStructured = (description.Usage & (BufferUsage.StructuredBufferReadOnly | BufferUsage.StructuredBufferReadWrite)) != 0;
+        bool isLargeUniform = (description.Usage & BufferUsage.UniformBuffer) != 0
+                              && description.SizeInBytes > HostVisibleUniformBufferMaxSize;
+        this.CanTransitionState = !this._isStaging && !this._isCpuVisibleUniform && (!this._isDynamic || isStructured || isLargeUniform);
+        this._usesCommandListSnapshots = !this.CanTransitionState
+                                        && (this._isCpuVisibleUniform || ShouldUseCommandListSnapshots(description.Usage));
+        this._requiresCommandListSnapshotCpuMirror = this._usesCommandListSnapshots;
         uint nativeSizeInBytes = description.SizeInBytes;
 
         ResourceDescription resourceDescription = ResourceDescription.Buffer(nativeSizeInBytes, GetResourceFlags(description.Usage));
@@ -113,7 +125,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
             this._staging = new D3D12StagingBufferState(stagingWriteAllocation, stagingReadAllocation);
             this.NativeBuffer = this._staging.WriteBuffer;
         }
-        else if (this._isDynamic) {
+        else if (this._isDynamic && !this.CanTransitionState) {
             this._allocation = gd.MemoryManager.CreateResource(ref resourceDescription, ResourceStates.GenericRead, HeapType.Upload, HeapFlags.AllowOnlyBuffers);
             this.NativeBuffer = this._allocation.Resource;
         }
@@ -129,10 +141,10 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         }
 
         this._gpuVirtualAddress = this.NativeBuffer.GPUVirtualAddress;
-        if (this._isDynamic && (this.Usage & BufferUsage.StructuredBufferReadOnly) != 0) {
+        if (this._usesCommandListSnapshots && (this.Usage & BufferUsage.UniformBuffer) != 0) {
             try {
                 unsafe {
-                    this._structuredBufferCpuData = (IntPtr)NativeMemory.AllocZeroed(this.sizeInBytes);
+                    this._uniformBufferCpuData = (IntPtr)NativeMemory.AllocZeroed(this.sizeInBytes);
                 }
             }
             catch {
@@ -245,7 +257,10 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         }
 
         unsafe {
-            NativeMemory.Free(this._structuredBufferCpuData.ToPointer());
+            NativeMemory.Free(this._uniformBufferCpuData.ToPointer());
+        }
+        if (this._dynamicMapReadback != null) {
+            this.gd.ReleaseAfterLastSubmission(this._dynamicMapReadback);
         }
 
         this._disposed = true;
@@ -361,7 +376,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         }
 
         CopyMemory(source.ToPointer(), destination, sizeInBytes);
-        this.MirrorStructuredBufferCpuData(source, destinationOffset, sizeInBytes);
+        this.MirrorUniformBufferCpuData(source, destinationOffset, sizeInBytes);
         if (this._isStaging) {
             this._staging.MarkWriteBufferChanged(destinationOffset, sizeInBytes, this.sizeInBytes);
         }
@@ -455,15 +470,10 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
             return true;
         }
 
-        if (this._isDynamic) {
-            pointer = this._structuredBufferCpuData != IntPtr.Zero
-                ? this._structuredBufferCpuData
+        if (!this.CanTransitionState && (this._isDynamic || this._isCpuVisibleUniform)) {
+            pointer = this._uniformBufferCpuData != IntPtr.Zero
+                ? this._uniformBufferCpuData
                 : this._allocation.MappedPointer;
-            return true;
-        }
-
-        if (this._isCpuVisibleUniform) {
-            pointer = this._allocation.MappedPointer;
             return true;
         }
 
@@ -479,9 +489,12 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
             return;
         }
 
-        if (this._structuredBufferCpuData != IntPtr.Zero) {
+        if (this._isDynamic && this.CanTransitionState) {
+            this.gd.UpdateBuffer(this, 0, this._dynamicMapReadback.MappedPointer, this.sizeInBytes);
+        }
+        else if (this._uniformBufferCpuData != IntPtr.Zero) {
             unsafe {
-                CopyMemory(this._structuredBufferCpuData.ToPointer(), this._allocation.MappedPointer.ToPointer(), this.sizeInBytes);
+                CopyMemory(this._uniformBufferCpuData.ToPointer(), this._allocation.MappedPointer.ToPointer(), this.sizeInBytes);
             }
         }
 
@@ -509,8 +522,12 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
                 throw new VeldridException("Dynamic D3D12 buffers only support MapMode.Write.");
             }
 
-            return this._structuredBufferCpuData != IntPtr.Zero
-                ? this._structuredBufferCpuData
+            if (this.CanTransitionState) {
+                return this.GetDynamicGpuMapPointer();
+            }
+
+            return this._uniformBufferCpuData != IntPtr.Zero
+                ? this._uniformBufferCpuData
                 : this._allocation.MappedPointer;
         }
 
@@ -527,6 +544,26 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     }
 
     /// <summary>
+    /// Maps a GPU-local dynamic buffer through reusable readback memory, preserving
+    /// untouched bytes even after command-list updates or GPU copies.
+    /// </summary>
+    private IntPtr GetDynamicGpuMapPointer() {
+        if (this._dynamicMapReadback == null) {
+            ResourceDescription description = ResourceDescription.Buffer(this.sizeInBytes);
+            this._dynamicMapReadback = this.gd.MemoryManager.CreateResource(ref description, ResourceStates.CopyDest, HeapType.Readback, HeapFlags.AllowOnlyBuffers);
+        }
+
+        this.gd.ExecuteImmediateCommand(commandList => {
+            ResourceStates previousState = this.CurrentState;
+            this.Transition(commandList, previousState, ResourceStates.CopySource);
+            commandList.CopyBufferRegion(this._dynamicMapReadback.Resource, 0, this.NativeBuffer, 0, this.sizeInBytes);
+            this.Transition(commandList, ResourceStates.CopySource, previousState);
+        }, waitForCompletion: true);
+
+        return this._dynamicMapReadback.MappedPointer;
+    }
+
+    /// <summary>
     /// Executes the write cpu data logic for this backend.
     /// </summary>
     /// <param name="source">The source value or resource.</param>
@@ -536,13 +573,14 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         if (this._isDynamic) {
             byte* dst = (byte*)this._allocation.MappedPointer + destinationOffset;
             CopyMemory(source.ToPointer(), dst, copySize);
-            this.MirrorStructuredBufferCpuData(source, destinationOffset, copySize);
+            this.MirrorUniformBufferCpuData(source, destinationOffset, copySize);
             return;
         }
 
         if (this._isCpuVisibleUniform) {
             byte* dst = (byte*)this._allocation.MappedPointer + destinationOffset;
             CopyMemory(source.ToPointer(), dst, copySize);
+            this.MirrorUniformBufferCpuData(source, destinationOffset, copySize);
             return;
         }
 
@@ -611,7 +649,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         byte* src = (byte*)sourcePtr + sourceOffset;
         byte* dst = (byte*)destinationPtr + destinationOffset;
         Buffer.MemoryCopy(src, dst, destination.SizeInBytes - destinationOffset, copySize);
-        destination.MirrorStructuredBufferCpuData((IntPtr)src, destinationOffset, copySize);
+        destination.MirrorUniformBufferCpuData((IntPtr)src, destinationOffset, copySize);
         if (destination._isStaging) {
             destination._staging.MarkWriteBufferChanged(destinationOffset, copySize, destination.sizeInBytes);
         }
@@ -663,7 +701,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
             byte* src = (byte*)readbackAllocation.MappedPointer.ToPointer();
             byte* dst = (byte*)destinationPtr + destinationOffset;
             Buffer.MemoryCopy(src, dst, destination.SizeInBytes - destinationOffset, copySize);
-            destination.MirrorStructuredBufferCpuData((IntPtr)src, destinationOffset, copySize);
+            destination.MirrorUniformBufferCpuData((IntPtr)src, destinationOffset, copySize);
         }
         finally {
             readbackAllocation.Dispose();
@@ -675,11 +713,11 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     }
 
     /// <summary>
-    /// Preserves CPU writes for complete structured buffer snapshots without reading upload memory.
+    /// Preserves CPU writes for complete uniform buffer snapshots without reading upload memory.
     /// </summary>
-    private unsafe void MirrorStructuredBufferCpuData(IntPtr source, uint destinationOffset, uint copySize) {
-        if (this._structuredBufferCpuData != IntPtr.Zero) {
-            byte* destination = (byte*)this._structuredBufferCpuData + destinationOffset;
+    private unsafe void MirrorUniformBufferCpuData(IntPtr source, uint destinationOffset, uint copySize) {
+        if (this._uniformBufferCpuData != IntPtr.Zero) {
+            byte* destination = (byte*)this._uniformBufferCpuData + destinationOffset;
             if (source.ToPointer() != destination) {
                 Buffer.MemoryCopy(source.ToPointer(), destination, this.sizeInBytes - destinationOffset, copySize);
             }
@@ -763,7 +801,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     }
 
     /// <summary>
-    /// Checks whether a buffer should follow Vulkan's small host-visible UniformBuffer policy.
+    /// Checks whether a non-dynamic uniform buffer should use upload snapshots.
     /// </summary>
     /// <param name="usage">The declared buffer usage.</param>
     /// <param name="sizeInBytes">The requested logical size.</param>
@@ -785,17 +823,7 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
         return (usage & BufferUsage.Dynamic) == BufferUsage.Dynamic
                && (((usage & BufferUsage.VertexBuffer) == BufferUsage.VertexBuffer)
                    || ((usage & BufferUsage.IndexBuffer) == BufferUsage.IndexBuffer)
-                   || ((usage & BufferUsage.UniformBuffer) == BufferUsage.UniformBuffer)
-                   || ((usage & BufferUsage.StructuredBufferReadOnly) == BufferUsage.StructuredBufferReadOnly));
-    }
-
-    /// <summary>
-    /// Checks whether command-list snapshots should also update the stable CPU-visible dynamic buffer immediately.
-    /// </summary>
-    /// <param name="usage">The declared buffer usage.</param>
-    /// <returns><see langword="true" /> when future non-IA bindings may need the stable buffer contents.</returns>
-    private static bool ShouldMirrorCommandListSnapshotsToCpuBuffer(BufferUsage usage) {
-        return ShouldUseCommandListSnapshots(usage);
+                   || ((usage & BufferUsage.UniformBuffer) == BufferUsage.UniformBuffer));
     }
 
 }
