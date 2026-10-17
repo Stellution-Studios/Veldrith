@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Veldrith.MetalBindings;
 
 namespace Veldrith.MTL;
@@ -140,7 +141,12 @@ internal class MtlBuffer : DeviceBuffer {
             }
 
             unsafe {
+                void* previousContents = this.Pointer;
                 this.Pointer = this.DeviceBuffer.Contents();
+                // Renaming must preserve bytes outside the next update's range,
+                // including when the replacement backing is recycled from an older frame.
+                // The previous backing remains alive in _pendingRenamedBuffers.
+                Unsafe.CopyBlock(this.Pointer, previousContents, this.SizeInBytes);
             }
         }
     }

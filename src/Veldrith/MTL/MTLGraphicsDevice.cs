@@ -843,7 +843,7 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
             return;
         }
 
-        bool isBlitAligned = (bufferOffsetInBytes & 3) == 0;
+        bool isBlitAligned = ((bufferOffsetInBytes | sizeInBytes) & 3) == 0;
         if (!isBlitAligned) {
             this.UploadPrivateBufferViaOneShotCommandList(buffer, bufferOffsetInBytes, source, sizeInBytes);
             return;
@@ -853,8 +853,7 @@ internal unsafe class MtlGraphicsDevice : GraphicsDevice {
             this.EnsureImmediateUploadEncoder_NoLock();
             MtlBuffer staging = this.GetFreeImmediateUploadBuffer_NoLock(sizeInBytes);
             this.UpdateBuffer(staging, 0, source, sizeInBytes);
-            uint copySize = sizeInBytes + ((4 - sizeInBytes % 4) % 4);
-            this._immediateUploadBce.Copy(staging.DeviceBuffer, UIntPtr.Zero, mtlBuffer.DeviceBuffer, bufferOffsetInBytes, copySize);
+            this._immediateUploadBce.Copy(staging.DeviceBuffer, UIntPtr.Zero, mtlBuffer.DeviceBuffer, bufferOffsetInBytes, sizeInBytes);
             this._submittedImmediateUploadBuffers.Add(this._immediateUploadCb, staging);
         }
     }
