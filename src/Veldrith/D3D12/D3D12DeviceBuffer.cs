@@ -164,19 +164,6 @@ internal sealed class D3D12DeviceBuffer : DeviceBuffer {
     internal bool RequiresCommandListSnapshotCpuMirror => this._requiresCommandListSnapshotCpuMirror;
 
     /// <summary>
-    /// Gets whether this dynamic input-assembler buffer should update the stable upload resource before it is bound.
-    /// </summary>
-    internal bool UsesStablePreBindUpdateForDynamicInputAssembler {
-        get {
-            const BufferUsage pureDynamicVertexBuffer = BufferUsage.Dynamic | BufferUsage.VertexBuffer;
-            return (this.Usage & BufferUsage.Dynamic) == BufferUsage.Dynamic
-                   && (this.Usage & BufferUsage.VertexBuffer) == BufferUsage.VertexBuffer
-                   && (this.Usage & ~pureDynamicVertexBuffer) == 0
-                   && this.Name == "InstanceVertexBuffer";
-        }
-    }
-
-    /// <summary>
     /// Gets or sets IsDisposed.
     /// </summary>
     public override bool IsDisposed => this._disposed;
