@@ -77,6 +77,11 @@ internal sealed class D3D12TextureView : TextureView {
     /// Gets or sets TargetTexture.
     /// </summary>
     internal D3D12Texture TargetTexture { get; }
+    
+    /// <summary>
+    /// Internal mip generation samples cube faces independently
+    /// </summary>
+    internal bool UseArrayView { get; init; }
 
     /// <summary>
     /// Checks whether this view is already known to be fully in the requested state.
@@ -185,6 +190,17 @@ internal sealed class D3D12TextureView : TextureView {
             Shader4ComponentMapping = ShaderComponentMapping.Default
         };
 
+        if (this.UseArrayView && this.TargetTexture.Type == TextureType.Texture1D) {
+            description.ViewDimension = ShaderResourceViewDimension.Texture1DArray;
+            description.Texture1DArray = new Texture1DArrayShaderResourceView {
+                MostDetailedMip = this.BaseMipLevel,
+                MipLevels = this.MipLevels,
+                FirstArraySlice = this.BaseArrayLayer,
+                ArraySize = this.ArrayLayers
+            };
+            return description;
+        }
+
         if (this.TargetTexture.Type == TextureType.Texture3D) {
             description.ViewDimension = ShaderResourceViewDimension.Texture3D;
             description.Texture3D = new Texture3DShaderResourceView {
@@ -196,7 +212,7 @@ internal sealed class D3D12TextureView : TextureView {
         }
 
         bool isMultisampled = this.TargetTexture.SampleCount != TextureSampleCount.Count1;
-        bool isCube = (this.TargetTexture.Usage & TextureUsage.Cubemap) == TextureUsage.Cubemap;
+        bool isCube = !this.UseArrayView && (this.TargetTexture.Usage & TextureUsage.Cubemap) == TextureUsage.Cubemap;
 
         if (isCube) {
             if (this.ArrayLayers > 1) {
@@ -221,7 +237,7 @@ internal sealed class D3D12TextureView : TextureView {
             return description;
         }
 
-        if (this.ArrayLayers > 1) {
+        if (this.ArrayLayers > 1 || this.UseArrayView) {
             description.ViewDimension = isMultisampled
                 ? ShaderResourceViewDimension.Texture2DMultisampledArray
                 : ShaderResourceViewDimension.Texture2DArray;

@@ -2495,17 +2495,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
             return false;
         }
 
-        if (FormatHelpers.IsCompressedFormat(format)) {
-            return false;
-        }
-
-        if ((usage & TextureUsage.Cubemap) != 0) {
-            return false;
-        }
-
-        if (type != TextureType.Texture1D
-            && type != TextureType.Texture2D
-            && type != TextureType.Texture3D) {
+        if (!D3D12GpuMipmapGenerator.SupportsBufferMipmaps(format, type) || (usage & TextureUsage.Staging) != 0) {
             return false;
         }
 

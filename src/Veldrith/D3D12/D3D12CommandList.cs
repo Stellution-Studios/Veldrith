@@ -959,7 +959,7 @@ internal sealed class D3D12CommandList : CommandList {
         }
 
         if (!d3D12Texture.GenerateMipmapsCpu()) {
-            throw new PlatformNotSupportedException("D3D12 mip generation currently supports only uncompressed color textures.");
+            throw new PlatformNotSupportedException($"D3D12 mip generation is not supported for {texture.Format}, {texture.Type}, usage {texture.Usage}.");
         }
 
         d3D12Texture.UploadGeneratedMipmaps();
@@ -1761,7 +1761,7 @@ internal sealed class D3D12CommandList : CommandList {
         uint mipEnd = mipStart + textureView.MipLevels;
         uint layerStart = textureView.BaseArrayLayer;
         uint layerEnd = layerStart + textureView.ArrayLayers;
-        if ((texture.Usage & TextureUsage.Cubemap) != 0) {
+        if ((texture.Usage & TextureUsage.Cubemap) != 0 && !textureView.UseArrayView) {
             layerStart *= 6;
             layerEnd *= 6;
         }

@@ -11,7 +11,7 @@ namespace Veldrith.D3D12;
 /// <summary>
 /// Owns the D3D12 compute path used to generate mipmaps on the GPU.
 /// </summary>
-internal sealed class D3D12GpuMipmapGenerator : IDisposable {
+internal sealed partial class D3D12GpuMipmapGenerator : IDisposable {
 
     /// <summary>
     /// Stores the HLSL compute shader used to downsample one mip level into the next mip level.
@@ -136,6 +136,7 @@ internal sealed class D3D12GpuMipmapGenerator : IDisposable {
     /// Releases lazily created pipeline resources.
     /// </summary>
     public void Dispose() {
+        this.DisposeBufferMipmapResources();
         this.ClearMipmapResourceSetCache();
         this._pipeline?.Dispose();
         this._arrayPipeline?.Dispose();
@@ -150,8 +151,11 @@ internal sealed class D3D12GpuMipmapGenerator : IDisposable {
     /// <returns><see langword="true" /> when GPU generation was recorded; otherwise, <see langword="false" />.</returns>
     [SupportedOSPlatform("windows")]
     internal bool TryGenerate(D3D12Texture texture) {
-        if (!this.CanUseGpuPath(texture) || !this.EnsureResources()) {
-            return false;
+        if (!this.CanUseGpuPath(texture)) {
+            return this.TryGenerateThroughBuffer(texture);
+        }
+        if (!this.EnsureResources()) {
+            return this.TryGenerateThroughBuffer(texture);
         }
 
         this.Generate(texture);
@@ -170,6 +174,7 @@ internal sealed class D3D12GpuMipmapGenerator : IDisposable {
                && (texture.Usage & (TextureUsage.Sampled | TextureUsage.Storage)) == (TextureUsage.Sampled | TextureUsage.Storage)
                && this._gd.GetPixelFormatSupport(texture.Format, texture.Type, TextureUsage.Sampled | TextureUsage.Storage)
                && !FormatHelpers.IsCompressedFormat(texture.Format)
+               && !texture.Format.ToString().EndsWith("Int", StringComparison.Ordinal)
                && (texture.Usage & TextureUsage.DepthStencil) == 0;
     }
 
@@ -195,6 +200,7 @@ internal sealed class D3D12GpuMipmapGenerator : IDisposable {
             this._commandList.SetComputeRootSignatureNoAllocForInternalUse(mipPipeline.RootSignature);
             this._commandList.CurrentGraphicsPipeline = null;
             this._commandList.CurrentComputePipeline = mipPipeline;
+            this._commandList.RootBindingCache.InvalidateCompute();
 
             if (useArrayPipeline) {
                 for (uint mipLevel = 1; mipLevel < texture.MipLevels; mipLevel++) {
@@ -239,7 +245,7 @@ internal sealed class D3D12GpuMipmapGenerator : IDisposable {
 
         ResourceSet mipResourceSet = this.GetOrCreateMipmapResourceSet(texture, mipLevel, layer, 1);
 
-        this._commandList.SetComputeResourceSet(0, mipResourceSet);
+        this.SetMipmapResourceSet(mipResourceSet);
         Util.GetMipDimensions(texture, mipLevel, out uint mipWidth, out uint mipHeight, out _);
         uint groupCountX = (mipWidth + 7) / 8;
         uint groupCountY = (mipHeight + 7) / 8;
@@ -277,7 +283,7 @@ internal sealed class D3D12GpuMipmapGenerator : IDisposable {
 
         ResourceSet mipResourceSet = this.GetOrCreateMipmapResourceSet(texture, mipLevel, 0, layerCount);
 
-        this._commandList.SetComputeResourceSet(0, mipResourceSet);
+        this.SetMipmapResourceSet(mipResourceSet);
         Util.GetMipDimensions(texture, mipLevel, out uint mipWidth, out uint mipHeight, out _);
         uint groupCountX = (mipWidth + 7) / 8;
         uint groupCountY = (mipHeight + 7) / 8;
