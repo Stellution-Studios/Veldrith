@@ -9,9 +9,8 @@ namespace Veldrith.D3D12;
 /// Records mipmap generation through a temporary buffer when the texture cannot be written through a typed UAV.
 /// </summary>
 internal sealed partial class D3D12GpuMipmapGenerator {
-
     /// <summary>
-    /// Caches compute pipelines for each pixel format and texture dimension.
+    /// Caches references to device-owned compute pipelines for each pixel format and texture dimension.
     /// </summary>
     private readonly Dictionary<(PixelFormat, TextureType), D3D12Pipeline> _bufferPipelines = new();
 
@@ -21,12 +20,12 @@ internal sealed partial class D3D12GpuMipmapGenerator {
     private readonly Dictionary<D3D12Texture, BufferMipResources> _bufferMipResources = new();
 
     /// <summary>
-    /// Stores the layout shared by the source texture, output buffer, and filtering sampler.
+    /// Stores the device-owned layout shared by the source texture, output buffer, and filtering sampler.
     /// </summary>
     private ResourceLayout _bufferLayout;
 
     /// <summary>
-    /// Stores the linear clamp sampler used to filter the source mip level.
+    /// Stores the device-owned linear clamp sampler used to filter the source mip level.
     /// </summary>
     private Sampler _bufferSampler;
 
@@ -156,27 +155,17 @@ internal sealed partial class D3D12GpuMipmapGenerator {
             return pipeline;
         }
 
-        if (this._bufferLayout == null) {
-            this._bufferLayout = this._gd.ResourceFactory.CreateResourceLayout(new ResourceLayoutDescription(
-                new ResourceLayoutElementDescription("SourceTexture", ResourceKind.TextureReadOnly, ShaderStages.Compute),
-                new ResourceLayoutElementDescription("Output", ResourceKind.StructuredBufferReadWrite, ShaderStages.Compute),
-                new ResourceLayoutElementDescription("LinearSampler", ResourceKind.Sampler, ShaderStages.Compute)
-            ));
-
-            SamplerDescription sampler = SamplerDescription.LINEAR;
-            sampler.AddressModeU = SamplerAddressMode.Clamp;
-            sampler.AddressModeV = SamplerAddressMode.Clamp;
-            sampler.AddressModeW = SamplerAddressMode.Clamp;
-            this._bufferSampler = this._gd.ResourceFactory.CreateSampler(sampler);
-        }
-
-        byte[] code = CompileComputeShader(CreateBufferMipmapShader(format, type), "cs_main", "cs_5_0");
-        using Shader shader = this._gd.ResourceFactory.CreateShader(new ShaderDescription(ShaderStages.Compute, code, "cs_main"));
-
-        pipeline = (D3D12Pipeline)this._gd.ResourceFactory.CreateComputePipeline(
-            new ComputePipelineDescription(shader, new[] { this._bufferLayout }, 8, 8, 1)
+        // A loader may create a fresh command list for every texture. Pipeline lifetime must
+        // follow the device so shader compilation is not repeated for each of those command lists.
+        D3D12MipmapPipelineCache.Entry entry = this._gd.MipmapPipelines.GetOrCreate(
+            CreateBufferMipmapShader(format, type),
+            true,
+            static sourceCode => CompileComputeShader(sourceCode, "cs_main", "cs_5_0")
         );
 
+        pipeline = entry.Pipeline;
+        this._bufferLayout = entry.Layout;
+        this._bufferSampler = entry.Sampler;
         this._bufferPipelines.Add((format, type), pipeline);
         return pipeline;
     }
@@ -239,7 +228,7 @@ internal sealed partial class D3D12GpuMipmapGenerator {
     }
 
     /// <summary>
-    /// Releases cached buffers, source bindings, pipelines, and shared filtering resources.
+    /// Releases command-list-owned buffers and source bindings, and drops references to shared pipelines.
     /// </summary>
     private void DisposeBufferMipmapResources() {
         foreach (BufferMipResources resources in this._bufferMipResources.Values) {
@@ -248,13 +237,8 @@ internal sealed partial class D3D12GpuMipmapGenerator {
 
         this._bufferMipResources.Clear();
 
-        foreach (D3D12Pipeline pipeline in this._bufferPipelines.Values) {
-            pipeline.Dispose();
-        }
-
+        // Pipelines, layouts, and samplers belong to the graphics device and outlive this command list.
         this._bufferPipelines.Clear();
-        this._bufferLayout?.Dispose();
-        this._bufferSampler?.Dispose();
     }
 
     /// <summary>
@@ -270,7 +254,6 @@ internal sealed partial class D3D12GpuMipmapGenerator {
     /// Owns a texture's reusable mipmap output buffer and per-mip source bindings.
     /// </summary>
     private sealed class BufferMipResources : IDisposable {
-        
         /// <summary>
         /// Stores the raw UAV buffer containing the encoded destination mip.
         /// </summary>

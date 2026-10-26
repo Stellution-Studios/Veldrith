@@ -93,22 +93,22 @@ internal sealed partial class D3D12GpuMipmapGenerator : IDisposable {
     private readonly Dictionary<MipmapResourceSetCacheKey, MipmapResourceSetCacheEntry> _mipmapResourceSetCache = new();
 
     /// <summary>
-    /// Stores the compute pipeline used to generate one destination mip from one source mip.
+    /// Stores the device-owned compute pipeline used to generate one destination mip from one source mip.
     /// </summary>
     private D3D12Pipeline _pipeline;
 
     /// <summary>
-    /// Stores the compute pipeline used to generate one destination mip for all array layers.
+    /// Stores the device-owned compute pipeline used to generate one destination mip for all array layers.
     /// </summary>
     private D3D12Pipeline _arrayPipeline;
 
     /// <summary>
-    /// Stores the resource layout expected by the mipmap compute shader.
+    /// Stores the device-owned resource layout expected by the mipmap compute shader.
     /// </summary>
     private ResourceLayout _resourceLayout;
 
     /// <summary>
-    /// Stores the linear clamp sampler used by the mipmap compute shader.
+    /// Stores the device-owned linear clamp sampler used by the mipmap compute shader.
     /// </summary>
     private Sampler _sampler;
 
@@ -133,15 +133,11 @@ internal sealed partial class D3D12GpuMipmapGenerator : IDisposable {
     }
 
     /// <summary>
-    /// Releases lazily created pipeline resources.
+    /// Releases command-list-owned mipmap bindings while the device retains shared pipeline resources.
     /// </summary>
     public void Dispose() {
         this.DisposeBufferMipmapResources();
         this.ClearMipmapResourceSetCache();
-        this._pipeline?.Dispose();
-        this._arrayPipeline?.Dispose();
-        this._resourceLayout?.Dispose();
-        this._sampler?.Dispose();
     }
 
     /// <summary>
@@ -463,25 +459,22 @@ internal sealed partial class D3D12GpuMipmapGenerator : IDisposable {
 
         this._resourcesInitialized = true;
         try {
-            byte[] shaderBytes = CompileComputeShader(MipmapComputeShaderCode, "cs_main", "cs_5_0");
-            byte[] arrayShaderBytes = CompileComputeShader(MipmapArrayComputeShaderCode, "cs_main", "cs_5_0");
-            using Shader mipShader = this._gd.ResourceFactory.CreateShader(new ShaderDescription(ShaderStages.Compute, shaderBytes, "cs_main"));
-            using Shader mipArrayShader = this._gd.ResourceFactory.CreateShader(new ShaderDescription(ShaderStages.Compute, arrayShaderBytes, "cs_main"));
+            D3D12MipmapPipelineCache.Entry mip = this._gd.MipmapPipelines.GetOrCreate(
+                MipmapComputeShaderCode,
+                false,
+                static sourceCode => CompileComputeShader(sourceCode, "cs_main", "cs_5_0")
+            );
 
-            ResourceLayoutDescription resourceLayoutDescription = new(new ResourceLayoutElementDescription("SourceTexture", ResourceKind.TextureReadOnly, ShaderStages.Compute), new ResourceLayoutElementDescription("DestinationTexture", ResourceKind.TextureReadWrite, ShaderStages.Compute), new ResourceLayoutElementDescription("LinearSampler", ResourceKind.Sampler, ShaderStages.Compute));
+            D3D12MipmapPipelineCache.Entry mipArray = this._gd.MipmapPipelines.GetOrCreate(
+                MipmapArrayComputeShaderCode,
+                false,
+                static sourceCode => CompileComputeShader(sourceCode, "cs_main", "cs_5_0")
+            );
 
-            this._resourceLayout = this._gd.ResourceFactory.CreateResourceLayout(resourceLayoutDescription);
-            SamplerDescription samplerDescription = SamplerDescription.LINEAR;
-            samplerDescription.AddressModeU = SamplerAddressMode.Clamp;
-            samplerDescription.AddressModeV = SamplerAddressMode.Clamp;
-            samplerDescription.AddressModeW = SamplerAddressMode.Clamp;
-            this._sampler = this._gd.ResourceFactory.CreateSampler(samplerDescription);
-
-            ComputePipelineDescription computePipelineDescription = new(mipShader, [this._resourceLayout], 8, 8, 1);
-            ComputePipelineDescription arrayComputePipelineDescription = new(mipArrayShader, [this._resourceLayout], 8, 8, 1);
-
-            this._pipeline = Util.AssertSubtype<Pipeline, D3D12Pipeline>(this._gd.ResourceFactory.CreateComputePipeline(computePipelineDescription));
-            this._arrayPipeline = Util.AssertSubtype<Pipeline, D3D12Pipeline>(this._gd.ResourceFactory.CreateComputePipeline(arrayComputePipelineDescription));
+            this._pipeline = mip.Pipeline;
+            this._arrayPipeline = mipArray.Pipeline;
+            this._resourceLayout = mip.Layout;
+            this._sampler = mip.Sampler;
             this._resourcesAvailable = true;
         }
         catch {

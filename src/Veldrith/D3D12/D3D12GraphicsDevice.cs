@@ -695,6 +695,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
         this._supportsDirectWriteBufferImmediate = this.CheckDirectWriteBufferImmediateSupport();
         this._supportsRenderPasses = this.CheckRenderPassSupport();
         this._resourceFactory = new D3D12ResourceFactory(this, this.Features);
+        this.MipmapPipelines = new D3D12MipmapPipelineCache(this);
         this._uploadBufferPool = new D3D12UploadBufferPool(this);
         this._immediateBufferUpdateBatcher = new D3D12ImmediateBufferUpdateBatcher(this);
 
@@ -750,6 +751,11 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// Gets or sets ResourceFactory.
     /// </summary>
     public override ResourceFactory ResourceFactory => this._resourceFactory;
+
+    /// <summary>
+    /// Gets the device-owned mipmap pipelines reused by short-lived texture-loading command lists.
+    /// </summary>
+    internal D3D12MipmapPipelineCache MipmapPipelines { get; }
 
     /// <summary>
     /// Gets or sets MainSwapchain.
@@ -1920,6 +1926,7 @@ internal sealed class D3D12GraphicsDevice : GraphicsDevice {
     /// </summary>
     protected override void PlatformDispose() {
         this.WaitForQueueIdle();
+        this.MipmapPipelines.Dispose();
         this.PumpSubmissionDeferredDisposals();
         this.PumpImmediateDeferredDisposals();
         this.DisposeAllDeferredDisposals();
